@@ -1,8 +1,9 @@
 class BudgetMonth < ApplicationRecord
+  belongs_to :user
   has_many :expense_entries, dependent: :destroy
 
   validates :label, presence: true
-  validates :month_on, presence: true, uniqueness: true
+  validates :month_on, presence: true, uniqueness: { scope: :user_id }
 
   scope :recent_first, -> { order(month_on: :desc) }
 

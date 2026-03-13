@@ -1,4 +1,5 @@
 class ExpenseEntry < ApplicationRecord
+  belongs_to :user
   belongs_to :budget_month
 
   enum :section, {
@@ -19,6 +20,9 @@ class ExpenseEntry < ApplicationRecord
 
   validates :section, presence: true
   validates :status, presence: true
+  validate :user_matches_budget_month
+
+  before_validation :assign_user_from_budget_month
 
   scope :chronological, -> { order(:occurred_on, :created_at) }
 
@@ -28,5 +32,18 @@ class ExpenseEntry < ApplicationRecord
 
   def cashflow_amount
     income? ? effective_amount : -effective_amount
+  end
+
+  private
+
+  def assign_user_from_budget_month
+    self.user ||= budget_month&.user
+  end
+
+  def user_matches_budget_month
+    return if user.blank? || budget_month.blank?
+    return if user_id == budget_month.user_id
+
+    errors.add(:user, "must match the budget month owner")
   end
 end

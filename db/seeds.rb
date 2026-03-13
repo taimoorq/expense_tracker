@@ -3,6 +3,15 @@ require "csv"
 seed_file = Rails.root.join("db/seeds/march_2026_transactions.csv")
 seed_source = "seed:march_2026_inflated_income_60"
 income_multiplier = BigDecimal("1.6")
+seed_email = ENV.fetch("SEED_USER_EMAIL", "demo@example.com")
+seed_password = ENV.fetch("SEED_USER_PASSWORD", "password123!")
+
+seed_user = User.find_or_initialize_by(email: seed_email)
+if seed_user.new_record?
+	seed_user.password = seed_password
+	seed_user.password_confirmation = seed_password
+	seed_user.save!
+end
 
 unless File.exist?(seed_file)
 	puts "Seed file not found: #{seed_file}"
@@ -27,12 +36,12 @@ parsed_months = rows.filter_map do |row|
 end.uniq
 
 budget_months = parsed_months.map do |month_on|
-	BudgetMonth.find_or_create_by!(month_on: month_on) do |month|
+	seed_user.budget_months.find_or_create_by!(month_on: month_on) do |month|
 		month.label = month_on.strftime("%B %Y")
 	end
 end
 
-BudgetMonth.where(id: budget_months.map(&:id)).find_each do |month|
+seed_user.budget_months.where(id: budget_months.map(&:id)).find_each do |month|
 	month.expense_entries.where(source_file: seed_source).delete_all
 end
 
@@ -106,3 +115,4 @@ rows.each do |row|
 end
 
 puts "Seeded #{rows_created} March 2026 entries with income inflated by 60%."
+puts "Demo user: #{seed_email} / #{seed_password}"

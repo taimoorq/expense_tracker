@@ -1,4 +1,6 @@
 class PaymentPlan < ApplicationRecord
+  belongs_to :user
+
   validates :name, presence: true
   validates :total_due, presence: true
   validates :amount_paid, presence: true

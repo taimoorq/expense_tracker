@@ -1,0 +1,30 @@
+<% content_for :title, "Reset password" %>
+
+<div class="space-y-6">
+  <div class="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-sm leading-6 text-amber-900">
+    Enter the email address for your account and we’ll send password reset instructions.
+  </div>
+
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "space-y-5" }) do |form| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+
+    <div>
+      <%= form.label :email, class: "fb-label" %>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("mail", classes: "h-4 w-4") %></span>
+        <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "ta-auth-input pl-11", placeholder: "you@example.com" %>
+      </div>
+    </div>
+
+    <%= form.button type: :submit, class: "ta-auth-submit from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400" do %>
+      <%= tabler_icon("lock", classes: "h-4 w-4") %>
+      <span>Send me reset password instructions</span>
+    <% end %>
+  <% end %>
+
+  <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+    Remembered your password? <%= link_to "Log in", new_session_path(resource_name), class: "font-semibold text-slate-900 hover:text-amber-600" %>
+  </div>
+
+  <%= render "devise/shared/links" %>
+</div>

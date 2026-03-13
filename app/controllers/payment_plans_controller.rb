@@ -2,28 +2,28 @@ class PaymentPlansController < ApplicationController
   before_action :set_budget_month
 
   def create
-    @payment_plan = PaymentPlan.new(payment_plan_params)
+    @payment_plan = current_user.payment_plans.new(payment_plan_params)
     if @payment_plan.save
-      @payment_plan = PaymentPlan.new
-      @payment_plans = PaymentPlan.order(:due_day, :name)
+      @payment_plan = current_user.payment_plans.new
+      @payment_plans = current_user.payment_plans.order(:due_day, :name)
       respond_success("Payment plan saved.")
     else
-      @payment_plans = PaymentPlan.order(:due_day, :name)
+      @payment_plans = current_user.payment_plans.order(:due_day, :name)
       respond_error(@payment_plan.errors.full_messages.join(", "))
     end
   end
 
   def destroy
-    PaymentPlan.find(params[:id]).destroy
-    @payment_plan = PaymentPlan.new
-    @payment_plans = PaymentPlan.order(:due_day, :name)
+    current_user.payment_plans.find(params[:id]).destroy
+    @payment_plan = current_user.payment_plans.new
+    @payment_plans = current_user.payment_plans.order(:due_day, :name)
     respond_success("Payment plan removed.")
   end
 
   private
 
   def set_budget_month
-    @budget_month = BudgetMonth.find_by(id: params[:budget_month_id])
+    @budget_month = current_user.budget_months.find_by(id: params[:budget_month_id])
   end
 
   def redirect_target

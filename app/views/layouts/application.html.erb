@@ -36,32 +36,35 @@
 
     <aside class="ta-sidebar">
       <div class="ta-sidebar-brand">
-        <%= link_to root_path, class: "inline-flex items-center gap-2.5 text-white", title: "Expense Tracker" do %>
+        <%= link_to(user_signed_in? ? root_path : new_user_session_path, class: "inline-flex items-center gap-2.5 text-white", title: "Expense Tracker") do %>
           <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-7 w-7 rounded" %>
           <span class="ta-sidebar-brand-text">Expense Tracker</span>
         <% end %>
       </div>
-      <nav class="ta-sidebar-nav">
-        <%= link_to root_path, class: ["ta-sidebar-link", (months_active ? "ta-sidebar-link-active" : nil)], title: "Budget Months" do %>
-          <%= tabler_icon("home", classes: "ta-sidebar-link-icon") %>
-          <span class="ta-sidebar-label">Budget Months</span>
-        <% end %>
+      <% if user_signed_in? %>
+        <nav class="ta-sidebar-nav">
+          <%= link_to root_path, class: ["ta-sidebar-link", (months_active ? "ta-sidebar-link-active" : nil)], title: "Budget Months" do %>
+            <%= tabler_icon("home", classes: "ta-sidebar-link-icon") %>
+            <span class="ta-sidebar-label">Budget Months</span>
+          <% end %>
 
-        <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Manage Templates" do %>
-          <%= tabler_icon("template", classes: "ta-sidebar-link-icon") %>
-          <span class="ta-sidebar-label">Manage Templates</span>
-        <% end %>
+          <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Manage Templates" do %>
+            <%= tabler_icon("template", classes: "ta-sidebar-link-icon") %>
+            <span class="ta-sidebar-label">Manage Templates</span>
+          <% end %>
 
-        <%= link_to new_budget_month_path, class: ["ta-sidebar-link", (new_month_active ? "ta-sidebar-link-active" : nil)], title: "Create New Month" do %>
-          <%= tabler_icon("calendar-plus", classes: "ta-sidebar-link-icon") %>
-          <span class="ta-sidebar-label">Create New Month</span>
-        <% end %>
-      </nav>
+          <%= link_to new_budget_month_path, class: ["ta-sidebar-link", (new_month_active ? "ta-sidebar-link-active" : nil)], title: "Create New Month" do %>
+            <%= tabler_icon("calendar-plus", classes: "ta-sidebar-link-icon") %>
+            <span class="ta-sidebar-label">Create New Month</span>
+          <% end %>
+        </nav>
+      <% end %>
     </aside>
 
     <main class="ta-main">
       <header class="ta-topbar">
-        <div class="flex w-full items-center gap-3">
+        <div class="flex w-full flex-wrap items-center justify-between gap-3">
+          <div class="flex min-w-0 flex-1 items-center gap-3">
           <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" data-action="click->sidebar#toggle">
             <span data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "h-4 w-4") %></span>
             <span data-sidebar-target="collapseIcon" class="hidden"><%= tabler_icon("chevron-left", classes: "h-4 w-4") %></span>
@@ -81,6 +84,28 @@
               </div>
             <% end %>
           </div>
+          </div>
+
+          <% if user_signed_in? %>
+            <div class="flex items-center gap-2">
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600"><%= current_user.email %></span>
+              <%= button_to destroy_user_session_path, method: :delete, class: "fb-btn-secondary ta-action-btn" do %>
+                <%= tabler_icon("x", classes: "h-4 w-4 text-slate-600") %>
+                <span>Sign out</span>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="flex items-center gap-2">
+              <%= link_to new_user_session_path, class: "fb-btn-secondary ta-action-btn" do %>
+                <%= tabler_icon("login", classes: "h-4 w-4 text-slate-600") %>
+                <span>Sign in</span>
+              <% end %>
+              <%= link_to new_user_registration_path, class: "fb-btn-primary ta-action-btn" do %>
+                <%= tabler_icon("user-plus", classes: "h-4 w-4 text-indigo-100") %>
+                <span>Create account</span>
+              <% end %>
+            </div>
+          <% end %>
         </div>
       </header>
 

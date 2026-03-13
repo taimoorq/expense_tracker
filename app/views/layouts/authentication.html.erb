@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Expense Tracker" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Expense Tracker">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0F172A">
+
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="/icon.png" sizes="512x512" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <% theme = auth_page_theme %>
+  <body class="ta-auth-shell">
+    <div class="ta-auth-backdrop"></div>
+    <div class="ta-auth-orb <%= theme[:glow] %> left-[-5rem] top-[-4rem] h-56 w-56"></div>
+    <div class="ta-auth-orb <%= theme[:glow] %> bottom-[-5rem] right-[-4rem] h-72 w-72 opacity-70"></div>
+
+    <div class="ta-auth-grid">
+      <section class="ta-auth-showcase bg-gradient-to-br <%= theme[:gradient] %>">
+        <div class="absolute inset-0 bg-gradient-to-br <%= theme[:panel_tint] %>"></div>
+        <div class="relative z-10 flex min-h-[680px] flex-col justify-between">
+          <div>
+            <%= link_to root_path, class: "inline-flex items-center gap-3 text-white" do %>
+              <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-11 w-11 rounded-2xl border border-white/15 bg-white/10 p-2 shadow-lg shadow-slate-950/20" %>
+              <div>
+                <p class="text-lg font-semibold tracking-tight">Expense Tracker</p>
+                <p class="text-sm text-white/70">Private monthly budgeting</p>
+              </div>
+            <% end %>
+
+            <div class="mt-12 max-w-lg">
+              <span class="ta-auth-badge <%= theme[:chip] %>">
+                <%= tabler_icon(theme[:feature_icon], classes: "h-4 w-4") %>
+                <span><%= theme[:badge] %></span>
+              </span>
+              <h1 class="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-5xl"><%= theme[:title] %></h1>
+              <p class="mt-4 max-w-md text-base leading-7 <%= theme[:accent] %>"><%= theme[:description] %></p>
+            </div>
+
+            <div class="mt-10 grid gap-4 sm:grid-cols-2">
+              <div class="ta-auth-stat">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Designed for focus</p>
+                <p class="mt-2 text-lg font-semibold text-white">One clean place for months, recurring items, and forecasting.</p>
+              </div>
+              <div class="ta-auth-stat">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Private by default</p>
+                <p class="mt-2 text-lg font-semibold text-white">Tenant-scoped data keeps each account isolated and secure.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <div class="ta-auth-showcase-card">
+              <div class="flex items-start gap-3">
+                <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
+                  <%= tabler_icon(theme[:feature_icon], classes: "h-5 w-5") %>
+                </span>
+                <div>
+                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-white/50"><%= theme[:feature_title] %></p>
+                  <p class="mt-2 text-sm leading-6 text-white/80"><%= theme[:feature_copy] %></p>
+                </div>
+              </div>
+            </div>
+            <div class="ta-auth-showcase-card">
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">What you can do</p>
+              <ul class="mt-3 space-y-3 text-sm text-white/80">
+                <li class="flex items-start gap-2"><%= tabler_icon("sparkles", classes: "mt-0.5 h-4 w-4 shrink-0 text-white") %><span>Track monthly cashflow and leftover trends.</span></li>
+                <li class="flex items-start gap-2"><%= tabler_icon("sparkles", classes: "mt-0.5 h-4 w-4 shrink-0 text-white") %><span>Generate plans from recurring templates in one click.</span></li>
+                <li class="flex items-start gap-2"><%= tabler_icon("sparkles", classes: "mt-0.5 h-4 w-4 shrink-0 text-white") %><span>Import CSV history without exposing another user’s data.</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ta-auth-form-wrap">
+        <div class="ta-auth-form-card">
+          <div class="ta-auth-form-top">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400"><%= theme[:badge] %></p>
+                <h2 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950"><%= theme[:title] %></h2>
+              </div>
+              <%= link_to root_path, class: "ta-icon-btn" do %>
+                <%= tabler_icon("arrow-left", classes: "h-4 w-4") %>
+              <% end %>
+            </div>
+            <p class="mt-4 max-w-lg text-sm leading-6 text-slate-500"><%= theme[:description] %></p>
+          </div>
+
+          <div class="ta-auth-form-body">
+            <%= render "shared/flash" %>
+            <div class="mt-4">
+              <%= yield %>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

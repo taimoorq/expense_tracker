@@ -2,28 +2,28 @@ class SubscriptionsController < ApplicationController
   before_action :set_budget_month
 
   def create
-    @subscription = Subscription.new(subscription_params)
+    @subscription = current_user.subscriptions.new(subscription_params)
     if @subscription.save
-      @subscription = Subscription.new
-      @subscriptions = Subscription.order(:due_day, :name)
+      @subscription = current_user.subscriptions.new
+      @subscriptions = current_user.subscriptions.order(:due_day, :name)
       respond_success("Subscription saved.")
     else
-      @subscriptions = Subscription.order(:due_day, :name)
+      @subscriptions = current_user.subscriptions.order(:due_day, :name)
       respond_error(@subscription.errors.full_messages.join(", "))
     end
   end
 
   def destroy
-    Subscription.find(params[:id]).destroy
-    @subscription = Subscription.new
-    @subscriptions = Subscription.order(:due_day, :name)
+    current_user.subscriptions.find(params[:id]).destroy
+    @subscription = current_user.subscriptions.new
+    @subscriptions = current_user.subscriptions.order(:due_day, :name)
     respond_success("Subscription removed.")
   end
 
   private
 
   def set_budget_month
-    @budget_month = BudgetMonth.find_by(id: params[:budget_month_id])
+    @budget_month = current_user.budget_months.find_by(id: params[:budget_month_id])
   end
 
   def redirect_target

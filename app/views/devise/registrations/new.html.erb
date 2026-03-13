@@ -1,0 +1,64 @@
+<% content_for :title, "Create account" %>
+
+<div class="space-y-6">
+  <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm leading-6 text-emerald-900">
+    Create a private workspace for your monthly budgets, recurring plans, and imports. You can start with fresh data or use the seeded demo patterns as a guide.
+  </div>
+
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "space-y-5" }) do |form| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+
+    <div>
+      <%= form.label :email, class: "fb-label" %>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("mail", classes: "h-4 w-4") %></span>
+        <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "ta-auth-input pl-11", placeholder: "you@example.com" %>
+      </div>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <%= form.label :password, class: "fb-label !mb-0" %>
+          <% if @minimum_password_length %>
+            <span class="text-xs font-medium uppercase tracking-[0.15em] text-slate-400"><%= @minimum_password_length %>+ chars</span>
+          <% end %>
+        </div>
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("lock", classes: "h-4 w-4") %></span>
+          <%= form.password_field :password, autocomplete: "new-password", class: "ta-auth-input pl-11", placeholder: "Choose a password" %>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :password_confirmation, class: "fb-label" %>
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("shield-lock", classes: "h-4 w-4") %></span>
+          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "ta-auth-input pl-11", placeholder: "Confirm password" %>
+        </div>
+      </div>
+    </div>
+
+    <%= form.button type: :submit, class: "ta-auth-submit from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500" do %>
+      <%= tabler_icon("user-plus", classes: "h-4 w-4") %>
+      <span>Sign up</span>
+    <% end %>
+  <% end %>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+      <p class="font-semibold text-slate-900">Months</p>
+      <p class="mt-1">Track planned vs. actual money each month.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+      <p class="font-semibold text-slate-900">Templates</p>
+      <p class="mt-1">Reuse schedules, subscriptions, bills, and plans.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+      <p class="font-semibold text-slate-900">Privacy</p>
+      <p class="mt-1">Keep every user’s budgeting data isolated.</p>
+    </div>
+  </div>
+
+  <%= render "devise/shared/links" %>
+</div>

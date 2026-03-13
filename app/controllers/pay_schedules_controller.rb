@@ -2,29 +2,29 @@ class PaySchedulesController < ApplicationController
   before_action :set_budget_month
 
   def create
-    @pay_schedule = PaySchedule.new(pay_schedule_params)
+    @pay_schedule = current_user.pay_schedules.new(pay_schedule_params)
 
     if @pay_schedule.save
-      @pay_schedule = PaySchedule.new
-      @pay_schedules = PaySchedule.order(:name)
+      @pay_schedule = current_user.pay_schedules.new
+      @pay_schedules = current_user.pay_schedules.order(:name)
       respond_success("Pay schedule saved.")
     else
-      @pay_schedules = PaySchedule.order(:name)
+      @pay_schedules = current_user.pay_schedules.order(:name)
       respond_error(@pay_schedule.errors.full_messages.join(", "))
     end
   end
 
   def destroy
-    PaySchedule.find(params[:id]).destroy
-    @pay_schedule = PaySchedule.new
-    @pay_schedules = PaySchedule.order(:name)
+    current_user.pay_schedules.find(params[:id]).destroy
+    @pay_schedule = current_user.pay_schedules.new
+    @pay_schedules = current_user.pay_schedules.order(:name)
     respond_success("Pay schedule removed.")
   end
 
   private
 
   def set_budget_month
-    @budget_month = BudgetMonth.find_by(id: params[:budget_month_id])
+    @budget_month = current_user.budget_months.find_by(id: params[:budget_month_id])
   end
 
   def redirect_target

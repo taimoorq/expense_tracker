@@ -1,5 +1,5 @@
 class EstimateMonthCreditCards
-  def initialize(budget_month:, cards: CreditCard.active_only)
+  def initialize(budget_month:, cards: budget_month.user.credit_cards.active_only)
     @budget_month = budget_month
     @cards = cards.to_a
   end

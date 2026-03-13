@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  devise_for :users
   root "budget_months#index"
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
 

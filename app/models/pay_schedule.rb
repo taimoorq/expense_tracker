@@ -1,4 +1,6 @@
 class PaySchedule < ApplicationRecord
+  belongs_to :user
+
   enum :cadence, {
     weekly: 0,
     biweekly: 1,

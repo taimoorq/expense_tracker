@@ -210,7 +210,7 @@ class ExpenseEntriesController < ApplicationController
   private
 
   def set_budget_month
-    @budget_month = BudgetMonth.find(params[:budget_month_id])
+    @budget_month = current_user.budget_months.find(params[:budget_month_id])
   end
 
   def set_expense_entry
@@ -235,15 +235,15 @@ class ExpenseEntriesController < ApplicationController
   def template_record_for_entry(entry)
     case entry.source_file
     when "pay_schedule"
-      PaySchedule.find_by(name: entry.payee)
+      current_user.pay_schedules.find_by(name: entry.payee)
     when "subscription"
-      Subscription.find_by(name: entry.payee)
+      current_user.subscriptions.find_by(name: entry.payee)
     when "monthly_bill"
-      MonthlyBill.find_by(name: entry.payee)
+      current_user.monthly_bills.find_by(name: entry.payee)
     when "payment_plan"
-      PaymentPlan.find_by(name: entry.payee)
+      current_user.payment_plans.find_by(name: entry.payee)
     when "credit_card_estimate"
-      CreditCard.find_by(name: entry.payee)
+      current_user.credit_cards.find_by(name: entry.payee)
     else
       nil
     end

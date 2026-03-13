@@ -1,4 +1,6 @@
 class MonthlyBill < ApplicationRecord
+  belongs_to :user
+
   enum :kind, {
     fixed_payment: 0,
     variable_bill: 1

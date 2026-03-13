@@ -1,4 +1,69 @@
 module ApplicationHelper
+	def auth_page_theme
+		case [controller_name, action_name]
+		when ["sessions", "new"]
+			{
+				badge: "Welcome back",
+				title: "Sign in to your workspace",
+				description: "Pick up where you left off, review the month, and keep your budgeting private.",
+				gradient: "from-indigo-700 via-violet-700 to-sky-600",
+				panel_tint: "from-indigo-500/20 via-violet-500/10 to-sky-400/20",
+				glow: "bg-indigo-400/30",
+				accent: "text-indigo-200",
+				chip: "bg-indigo-500/15 text-indigo-100 ring-indigo-300/30",
+				button: "from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500",
+				feature_icon: "login",
+				feature_title: "Secure access",
+				feature_copy: "Your budgets, templates, and imports stay scoped to your account."
+			}
+		when ["registrations", "new"]
+			{
+				badge: "New account",
+				title: "Create your budget workspace",
+				description: "Start with a clean, private dashboard built for monthly planning and recurring expenses.",
+				gradient: "from-emerald-700 via-teal-700 to-cyan-600",
+				panel_tint: "from-emerald-500/20 via-teal-500/10 to-cyan-400/20",
+				glow: "bg-emerald-400/30",
+				accent: "text-emerald-200",
+				chip: "bg-emerald-500/15 text-emerald-100 ring-emerald-300/30",
+				button: "from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500",
+				feature_icon: "user-plus",
+				feature_title: "Fast onboarding",
+				feature_copy: "Get a focused workspace for months, templates, imports, and forecasts in minutes."
+			}
+		when ["passwords", "new"]
+			{
+				badge: "Password recovery",
+				title: "Reset your password",
+				description: "We’ll help you get back into your budgeting workspace with a secure reset link.",
+				gradient: "from-amber-600 via-orange-600 to-rose-600",
+				panel_tint: "from-amber-500/20 via-orange-500/10 to-rose-400/20",
+				glow: "bg-amber-400/30",
+				accent: "text-amber-100",
+				chip: "bg-amber-500/15 text-amber-50 ring-amber-200/30",
+				button: "from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400",
+				feature_icon: "lock",
+				feature_title: "Recovery made simple",
+				feature_copy: "Request a reset securely and keep your account protected while you regain access."
+			}
+		else
+			{
+				badge: "Expense Tracker",
+				title: "Welcome",
+				description: "Personal budgeting with private monthly planning.",
+				gradient: "from-slate-800 via-indigo-700 to-sky-600",
+				panel_tint: "from-slate-500/20 via-indigo-500/10 to-sky-400/20",
+				glow: "bg-indigo-400/30",
+				accent: "text-slate-200",
+				chip: "bg-white/10 text-white ring-white/20",
+				button: "from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500",
+				feature_icon: "shield-lock",
+				feature_title: "Private by default",
+				feature_copy: "Your budgeting data stays isolated per user."
+			}
+		end
+	end
+
 	def tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 2)
 		path_data = tabler_icon_paths[name.to_s] || tabler_icon_paths["list"]
 		svg_options = {
@@ -164,6 +229,37 @@ module ApplicationHelper
 				{ d: "M12 14a2 2 0 1 0 -2 -2" },
 				{ d: "M12 14v-1.5" },
 				{ d: "M8 4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4v-8a4 4 0 0 1 4 -4" }
+			],
+			"login" => [
+				{ d: "M15 12h-9" },
+				{ d: "M12 9l-3 3l3 3" },
+				{ d: "M6 4h9a2 2 0 0 1 2 2v2" },
+				{ d: "M17 16v2a2 2 0 0 1 -2 2h-9" }
+			],
+			"user-plus" => [
+				{ d: "M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" },
+				{ d: "M16 19a6 6 0 0 0 -12 0" },
+				{ d: "M19 8v6" },
+				{ d: "M22 11h-6" }
+			],
+			"mail" => [
+				{ d: "M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" },
+				{ d: "M3 8l9 6l9 -6" }
+			],
+			"lock" => [
+				{ d: "M8 11v-3a4 4 0 1 1 8 0v3" },
+				{ d: "M6 11m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" },
+				{ d: "M12 15l0 2" }
+			],
+			"shield-lock" => [
+				{ d: "M12 3l7 4v5c0 5 -3.5 8.5 -7 10c-3.5 -1.5 -7 -5 -7 -10v-5z" },
+				{ d: "M10 11v-1a2 2 0 1 1 4 0v1" },
+				{ d: "M9 11h6v4h-6z" }
+			],
+			"sparkles" => [
+				{ d: "M12 3l1.8 4.2l4.2 1.8l-4.2 1.8l-1.8 4.2l-1.8 -4.2l-4.2 -1.8l4.2 -1.8z" },
+				{ d: "M5 16l.8 1.7l1.7 .8l-1.7 .8l-.8 1.7l-.8 -1.7l-1.7 -.8l1.7 -.8z" },
+				{ d: "M18 15l.8 1.7l1.7 .8l-1.7 .8l-.8 1.7l-.8 -1.7l-1.7 -.8l1.7 -.8z" }
 			]
 		}
 	end

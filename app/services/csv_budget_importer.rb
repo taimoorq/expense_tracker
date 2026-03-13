@@ -1,8 +1,9 @@
 require "csv"
 
 class CsvBudgetImporter
-  def initialize(file:)
+  def initialize(file:, user:)
     @file = file
+    @user = user
   end
 
   def call
@@ -74,7 +75,7 @@ class CsvBudgetImporter
   end
 
   def find_or_build_month(month_on)
-    BudgetMonth.find_or_create_by!(month_on: month_on.beginning_of_month) do |month|
+    @user.budget_months.find_or_create_by!(month_on: month_on.beginning_of_month) do |month|
       month.label = month_on.strftime("%B %Y")
     end
   end

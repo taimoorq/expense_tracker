@@ -1,0 +1,57 @@
+<% content_for :title, "Sign in" %>
+
+<div class="space-y-6">
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Monthly planning</p>
+      <p class="mt-2 text-sm leading-6 text-slate-600">Review income, planned expenses, templates, and leftover trends in one place.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Private workspace</p>
+      <p class="mt-2 text-sm leading-6 text-slate-600">Every record stays scoped to your account with multi-tenant protections in place.</p>
+    </div>
+  </div>
+
+  <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-5" }) do |form| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+
+    <div>
+      <%= form.label :email, class: "fb-label" %>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("mail", classes: "h-4 w-4") %></span>
+        <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "ta-auth-input pl-11", placeholder: "you@example.com" %>
+      </div>
+    </div>
+
+    <div>
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <%= form.label :password, class: "fb-label !mb-0" %>
+        <%= link_to "Forgot your password?", new_password_path(resource_name), class: "text-sm font-medium text-slate-500 hover:text-slate-900" %>
+      </div>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("lock", classes: "h-4 w-4") %></span>
+        <%= form.password_field :password, autocomplete: "current-password", class: "ta-auth-input pl-11", placeholder: "Enter your password" %>
+      </div>
+    </div>
+
+    <% if devise_mapping.rememberable? %>
+      <label class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <%= form.check_box :remember_me, class: "fb-checkbox" %>
+        <span>Remember me</span>
+      </label>
+    <% end %>
+
+    <%= form.button type: :submit, class: "ta-auth-submit from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500" do %>
+      <%= tabler_icon("login", classes: "h-4 w-4") %>
+      <span>Log in</span>
+    <% end %>
+  <% end %>
+
+  <div class="ta-auth-divider">or continue with</div>
+
+  <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+    New here? <%= link_to "Create account", new_registration_path(resource_name), class: "font-semibold text-slate-900 hover:text-indigo-600" %>
+  </div>
+
+  <%= render "devise/shared/links" %>
+</div>

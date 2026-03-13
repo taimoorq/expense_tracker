@@ -2,28 +2,28 @@ class MonthlyBillsController < ApplicationController
   before_action :set_budget_month
 
   def create
-    @monthly_bill = MonthlyBill.new(monthly_bill_params)
+    @monthly_bill = current_user.monthly_bills.new(monthly_bill_params)
     if @monthly_bill.save
-      @monthly_bill = MonthlyBill.new
-      @monthly_bills = MonthlyBill.order(:kind, :due_day, :name)
+      @monthly_bill = current_user.monthly_bills.new
+      @monthly_bills = current_user.monthly_bills.order(:kind, :due_day, :name)
       respond_success("Monthly bill template saved.")
     else
-      @monthly_bills = MonthlyBill.order(:kind, :due_day, :name)
+      @monthly_bills = current_user.monthly_bills.order(:kind, :due_day, :name)
       respond_error(@monthly_bill.errors.full_messages.join(", "))
     end
   end
 
   def destroy
-    MonthlyBill.find(params[:id]).destroy
-    @monthly_bill = MonthlyBill.new
-    @monthly_bills = MonthlyBill.order(:kind, :due_day, :name)
+    current_user.monthly_bills.find(params[:id]).destroy
+    @monthly_bill = current_user.monthly_bills.new
+    @monthly_bills = current_user.monthly_bills.order(:kind, :due_day, :name)
     respond_success("Monthly bill template removed.")
   end
 
   private
 
   def set_budget_month
-    @budget_month = BudgetMonth.find_by(id: params[:budget_month_id])
+    @budget_month = current_user.budget_months.find_by(id: params[:budget_month_id])
   end
 
   def redirect_target

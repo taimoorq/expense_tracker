@@ -1,5 +1,5 @@
 class GenerateMonthSubscriptions
-  def initialize(budget_month:, subscriptions: Subscription.active_only)
+  def initialize(budget_month:, subscriptions: budget_month.user.subscriptions.active_only)
     @budget_month = budget_month
     @subscriptions = subscriptions
   end

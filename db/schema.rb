@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_203000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,7 +23,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
     t.text "notes"
     t.decimal "planned_income", precision: 12, scale: 2
     t.datetime "updated_at", null: false
-    t.index ["month_on"], name: "index_budget_months_on_month_on", unique: true
+    t.bigint "user_id", null: false
+    t.index ["user_id", "month_on"], name: "index_budget_months_on_user_id_and_month_on", unique: true
+    t.index ["user_id"], name: "index_budget_months_on_user_id"
   end
 
   create_table "credit_cards", force: :cascade do |t|
@@ -35,8 +37,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
     t.text "notes"
     t.integer "priority", default: 1, null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["active"], name: "index_credit_cards_on_active"
     t.index ["priority"], name: "index_credit_cards_on_priority"
+    t.index ["user_id"], name: "index_credit_cards_on_user_id"
   end
 
   create_table "expense_entries", force: :cascade do |t|
@@ -54,10 +58,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
     t.string "source_file"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["budget_month_id"], name: "index_expense_entries_on_budget_month_id"
     t.index ["occurred_on"], name: "index_expense_entries_on_occurred_on"
     t.index ["section"], name: "index_expense_entries_on_section"
     t.index ["status"], name: "index_expense_entries_on_status"
+    t.index ["user_id"], name: "index_expense_entries_on_user_id"
   end
 
   create_table "monthly_bills", force: :cascade do |t|
@@ -70,8 +76,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
     t.string "name", null: false
     t.text "notes"
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["active"], name: "index_monthly_bills_on_active"
     t.index ["kind"], name: "index_monthly_bills_on_kind"
+    t.index ["user_id"], name: "index_monthly_bills_on_user_id"
   end
 
   create_table "pay_schedules", force: :cascade do |t|
@@ -85,9 +93,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
     t.date "first_pay_on", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.integer "weekend_adjustment", default: 1, null: false
     t.index ["active"], name: "index_pay_schedules_on_active"
     t.index ["cadence"], name: "index_pay_schedules_on_cadence"
+    t.index ["user_id"], name: "index_pay_schedules_on_user_id"
   end
 
   create_table "payment_plans", force: :cascade do |t|
@@ -101,7 +111,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
     t.text "notes"
     t.decimal "total_due", precision: 12, scale: 2, null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["active"], name: "index_payment_plans_on_active"
+    t.index ["user_id"], name: "index_payment_plans_on_user_id"
   end
 
   create_table "subscriptions", force: :cascade do |t|
@@ -113,8 +125,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_000007) do
     t.string "name", null: false
     t.text "notes"
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["active"], name: "index_subscriptions_on_active"
+    t.index ["user_id"], name: "index_subscriptions_on_user_id"
   end
 
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at"
+    t.string "reset_password_token"
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+  end
+
+  add_foreign_key "budget_months", "users"
+  add_foreign_key "credit_cards", "users"
   add_foreign_key "expense_entries", "budget_months"
+  add_foreign_key "expense_entries", "users"
+  add_foreign_key "monthly_bills", "users"
+  add_foreign_key "pay_schedules", "users"
+  add_foreign_key "payment_plans", "users"
+  add_foreign_key "subscriptions", "users"
 end

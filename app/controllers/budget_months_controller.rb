@@ -1,22 +1,22 @@
 class BudgetMonthsController < ApplicationController
   def index
-    @budget_months = BudgetMonth.includes(:expense_entries).recent_first
+    @budget_months = current_user.budget_months.includes(:expense_entries).recent_first
   end
 
   def show
-    @budget_month = BudgetMonth.find(params[:id])
+    @budget_month = current_user.budget_months.find(params[:id])
     @expense_entries = @budget_month.expense_entries.chronological
     @expense_entry = @budget_month.expense_entries.new
   end
 
   def new
-    @source_budget_month = BudgetMonth.find_by(id: params[:source_month_id])
-    @budget_month = BudgetMonth.new(new_month_defaults)
+    @source_budget_month = current_user.budget_months.find_by(id: params[:source_month_id])
+    @budget_month = current_user.budget_months.new(new_month_defaults)
   end
 
   def create
-    @budget_month = BudgetMonth.new(budget_month_params)
-    @source_budget_month = BudgetMonth.find_by(id: params[:source_month_id])
+    @budget_month = current_user.budget_months.new(budget_month_params)
+    @source_budget_month = current_user.budget_months.find_by(id: params[:source_month_id])
     @budget_month.label = @budget_month.month_on.strftime("%B %Y") if @budget_month.label.blank? && @budget_month.month_on.present?
 
     if @budget_month.save
@@ -34,31 +34,31 @@ class BudgetMonthsController < ApplicationController
   end
 
   def generate_paychecks
-    budget_month = BudgetMonth.find(params[:id])
+    budget_month = current_user.budget_months.find(params[:id])
     created_count = GenerateMonthPaychecks.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} paycheck entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def generate_subscriptions
-    budget_month = BudgetMonth.find(params[:id])
+    budget_month = current_user.budget_months.find(params[:id])
     created_count = GenerateMonthSubscriptions.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} subscription entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def generate_monthly_bills
-    budget_month = BudgetMonth.find(params[:id])
+    budget_month = current_user.budget_months.find(params[:id])
     created_count = GenerateMonthMonthlyBills.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} monthly bill entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def generate_payment_plans
-    budget_month = BudgetMonth.find(params[:id])
+    budget_month = current_user.budget_months.find(params[:id])
     created_count = GenerateMonthPaymentPlans.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} payment-plan entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def estimate_credit_cards
-    budget_month = BudgetMonth.find(params[:id])
+    budget_month = current_user.budget_months.find(params[:id])
     created_count = EstimateMonthCreditCards.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Estimated #{created_count} credit-card payment entr#{created_count == 1 ? 'y' : 'ies'}.")
   end

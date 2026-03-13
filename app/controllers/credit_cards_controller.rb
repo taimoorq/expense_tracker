@@ -2,28 +2,28 @@ class CreditCardsController < ApplicationController
   before_action :set_budget_month
 
   def create
-    @credit_card = CreditCard.new(credit_card_params)
+    @credit_card = current_user.credit_cards.new(credit_card_params)
     if @credit_card.save
-      @credit_card = CreditCard.new
-      @credit_cards = CreditCard.order(:priority, :name)
+      @credit_card = current_user.credit_cards.new
+      @credit_cards = current_user.credit_cards.order(:priority, :name)
       respond_success("Credit card saved.")
     else
-      @credit_cards = CreditCard.order(:priority, :name)
+      @credit_cards = current_user.credit_cards.order(:priority, :name)
       respond_error(@credit_card.errors.full_messages.join(", "))
     end
   end
 
   def destroy
-    CreditCard.find(params[:id]).destroy
-    @credit_card = CreditCard.new
-    @credit_cards = CreditCard.order(:priority, :name)
+    current_user.credit_cards.find(params[:id]).destroy
+    @credit_card = current_user.credit_cards.new
+    @credit_cards = current_user.credit_cards.order(:priority, :name)
     respond_success("Credit card removed.")
   end
 
   private
 
   def set_budget_month
-    @budget_month = BudgetMonth.find_by(id: params[:budget_month_id])
+    @budget_month = current_user.budget_months.find_by(id: params[:budget_month_id])
   end
 
   def redirect_target
