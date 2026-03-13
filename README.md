@@ -11,6 +11,7 @@ A Rails 8 budgeting app for planning and tracking monthly income, bills, subscri
 	- [Run Locally](#run-locally)
 	- [Run with Docker](#run-with-docker)
 - [Authentication](#authentication)
+- [Screenshots](#screenshots)
 - [How to Use the App](#how-to-use-the-app)
 	- [1. Start at the Dashboard](#1-start-at-the-dashboard)
 	- [2. Create a Month](#2-create-a-month)
@@ -138,6 +139,43 @@ You can:
 - use the seeded demo account after running `bin/rails db:seed`
 
 All budget months, entries, imports, and recurring templates are scoped to the signed-in user.
+
+## Screenshots
+
+<table>
+	<tr>
+		<td align="center">
+			<img src="app/assets/images/screenshots/dashboard.png" alt="Dashboard" width="100%">
+			<br>
+			<strong>Dashboard</strong>
+			<br>
+			Existing months and quick CSV import.
+		</td>
+		<td align="center">
+			<img src="app/assets/images/screenshots/clone-month-view.png" alt="Month creation wizard" width="100%">
+			<br>
+			<strong>Month Creation Wizard</strong>
+			<br>
+			Clone preview and fresh month flow.
+		</td>
+	</tr>
+	<tr>
+		<td align="center">
+			<img src="app/assets/images/screenshots/monthly-overview.png" alt="Monthly overview" width="100%">
+			<br>
+			<strong>Monthly Overview</strong>
+			<br>
+			Timeline totals, grouped entries, and charts.
+		</td>
+		<td align="center">
+			<img src="app/assets/images/screenshots/monthly-calendar-view.png" alt="Calendar view" width="100%">
+			<br>
+			<strong>Calendar View</strong>
+			<br>
+			Day-by-day entry layout with reason pills.
+		</td>
+	</tr>
+</table>
 
 ## How to Use the App
 
