@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   devise_for :users
   root "budget_months#index"
+  get "help", to: "help#show", as: :help
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
 
   resources :budget_months, only: [ :index, :show, :new, :create ] do

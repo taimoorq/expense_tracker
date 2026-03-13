@@ -51,6 +51,21 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Drop a CSV here")
   end
 
+  it "shows a help and documentation page from the sidebar" do
+    user = create(:user, email: "help@example.com")
+
+    sign_in_as(user)
+    visit root_path
+
+    click_link "Help & Documentation"
+
+    expect(page).to have_content("Help & Documentation")
+    expect(page).to have_content("A guided overview of what each part of the app does")
+    expect(page).to have_content("Creating and cloning months")
+    expect(page).to have_content("Planning templates")
+    expect(page).to have_content("Reviewing a month")
+  end
+
   it "hides generation actions when a past month looks complete" do
     user = create(:user, email: "complete@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.prev_month.beginning_of_month, label: Date.current.prev_month.strftime("%B %Y"))

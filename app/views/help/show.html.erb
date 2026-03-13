@@ -1,0 +1,161 @@
+<div class="space-y-6">
+  <% content_for :page_header do %>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-2xl font-semibold text-slate-900">Help & Documentation</h2>
+        <p class="mt-1 text-sm text-slate-500">A guided overview of what each part of the app does and when to use it.</p>
+      </div>
+      <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+        <span>Back to Months</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <section class="rounded-xl border border-indigo-100 bg-indigo-50 p-5 shadow-sm">
+    <div class="flex flex-wrap items-start gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white">
+        <%= tabler_icon("help", classes: "h-5 w-5") %>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h3 class="text-lg font-semibold text-slate-900">Start here</h3>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Expense Tracker is organized around monthly planning. Most people begin on the dashboard, create or clone a month, add or import entries, and then review the month using the Timeline, Calendar, and Entries views.</p>
+      </div>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <a href="#dashboard" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Dashboard</a>
+      <a href="#months" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Months</a>
+      <a href="#entries" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Entries</a>
+      <a href="#templates" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Templates</a>
+      <a href="#review" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Review</a>
+    </div>
+  </section>
+
+  <div class="grid gap-6 xl:grid-cols-[1.5fr,1fr]">
+    <div class="space-y-6">
+      <section id="dashboard" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Dashboard</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-600">The dashboard is the main home screen. It shows existing months on the left and a quick CSV import card on the right.</p>
+        <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+          <li><strong class="text-slate-900">Use it to open a month fast:</strong> jump back into an active month or revisit an older one.</li>
+          <li><strong class="text-slate-900">Use quick import:</strong> drag and drop a CSV when you want to populate a month faster.</li>
+          <li><strong class="text-slate-900">Use it as your control center:</strong> the dashboard is usually the best starting point for everyday use.</li>
+        </ul>
+      </section>
+
+      <section id="months" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Creating and cloning months</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Each month is its own working budget. The month wizard helps decide whether to start fresh or clone a previous month.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h4 class="font-medium text-slate-900">Start fresh</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Best when income, notes, or the overall budget structure is changing. You manually enter the month basics before building out entries.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h4 class="font-medium text-slate-900">Clone an existing month</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Best when the next month will mostly follow the same pattern. The app copies entries forward, clears actual amounts, resets them to planned, and chooses the next available month automatically.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="entries" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Adding and managing entries</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments.</p>
+        <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+          <li><strong class="text-slate-900">Manual entry form:</strong> useful for quick edits and one-off transactions.</li>
+          <li><strong class="text-slate-900">Entry wizard:</strong> useful when you want a more guided flow through the fields.</li>
+          <li><strong class="text-slate-900">CSV import:</strong> useful when you already have transaction data outside the app and want to avoid retyping it.</li>
+          <li><strong class="text-slate-900">Planned vs actual amounts:</strong> planned helps with forecasting, actual helps track what really happened.</li>
+          <li><strong class="text-slate-900">Status:</strong> use planned, paid, and other statuses to track progress through the month.</li>
+        </ul>
+      </section>
+
+      <section id="templates" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Planning templates</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Templates save recurring budget items so common parts of a month can be generated instead of rebuilt by hand.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border border-slate-200 p-4">
+            <h4 class="font-medium text-slate-900">Paycheck schedules</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">For recurring income sources like payroll or other regular deposits.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-4">
+            <h4 class="font-medium text-slate-900">Subscriptions</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">For recurring monthly services such as streaming, mobile plans, and software.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-4">
+            <h4 class="font-medium text-slate-900">Monthly bills</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">For fixed or variable bills that return every month, such as rent, utilities, or car payments.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-4">
+            <h4 class="font-medium text-slate-900">Payment plans</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">For balances paid down over time, such as installment plans or tax plans.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 p-4 md:col-span-2">
+            <h4 class="font-medium text-slate-900">Credit cards</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">For minimum-payment and priority settings used by the card estimate feature when there is leftover cash to allocate.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="review" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Reviewing a month</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Once entries are in place, the app gives several ways to review and manage the month.</p>
+        <div class="mt-4 space-y-4">
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h4 class="font-medium text-slate-900">Timeline view</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Use this for a grouped, list-style view with totals, filters, and quick scanning across the month.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h4 class="font-medium text-slate-900">Calendar view</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Use this when dates matter most and you want to see activity distributed across the month.</p>
+          </div>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h4 class="font-medium text-slate-900">Entries view</h4>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Use this for direct editing and table-style management.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="space-y-6">
+      <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Helpful app behaviors</h3>
+        <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+          <li><strong class="text-slate-900">Reason-based pills:</strong> filters are based on the values that actually exist in the current month, making focused review easier.</li>
+          <li><strong class="text-slate-900">Card estimate recalculation:</strong> the app can recompute estimated credit-card payments from available leftover cash.</li>
+          <li><strong class="text-slate-900">Generation safeguards:</strong> older months that look complete hide generation buttons to reduce accidental duplication.</li>
+          <li><strong class="text-slate-900">Private account data:</strong> each signed-in user only sees their own months, entries, imports, and templates.</li>
+        </ul>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Recommended first steps</h3>
+        <ol class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+          <li>1. Create a month or clone the most recent one.</li>
+          <li>2. Add recurring templates if the month has regular income or bills.</li>
+          <li>3. Import a CSV or add entries manually.</li>
+          <li>4. Review the month in Timeline and Calendar views.</li>
+          <li>5. Recalculate card estimates if leftover cash changes.</li>
+        </ol>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">Where to go next</h3>
+        <div class="mt-4 space-y-2 text-sm">
+          <%= link_to root_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
+            <span>Go to Budget Months</span>
+            <%= tabler_icon("arrow-right", classes: "h-4 w-4") %>
+          <% end %>
+          <%= link_to planning_templates_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
+            <span>Open Planning Templates</span>
+            <%= tabler_icon("arrow-right", classes: "h-4 w-4") %>
+          <% end %>
+          <%= link_to new_budget_month_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
+            <span>Create a New Month</span>
+            <%= tabler_icon("arrow-right", classes: "h-4 w-4") %>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
