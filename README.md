@@ -1,6 +1,6 @@
 # Expense Tracker
 
-A Rails 8 budgeting app for planning and tracking monthly income, bills, subscriptions, debt payments, manual adjustments, and credit-card estimates.
+A budgeting app for building month-by-month spending plans, tracking real activity, and reusing the recurring parts of a household budget.
 
 ## Table of Contents
 
@@ -30,13 +30,17 @@ A Rails 8 budgeting app for planning and tracking monthly income, bills, subscri
 
 ## Overview
 
-Expense Tracker is a personal budgeting app built around monthly planning. Each signed-in user gets private data and can:
+Expense Tracker is built for people who budget by month and want one place to plan income, fixed bills, variable spending, debt payments, and carry-over decisions.
 
-- create months from scratch or clone an existing month
-- track income and expenses in timeline, calendar, and table views
-- import historical CSV data
-- generate recurring entries from saved templates
-- estimate credit card payments from available leftover cash
+With it, a user can:
+
+- build a fresh month or start from a previous month instead of recreating the same structure every time
+- review the same budget in a timeline, calendar, or editable list depending on how they like to think about money
+- import transactions from CSV files to get a month filled in faster
+- reuse recurring items so routine planning takes less manual work
+- estimate credit-card payments based on the cash left in the month rather than guessing in isolation
+
+The sections below are split between user-focused guidance for using the app and developer-focused guidance for running, testing, and publishing the project.
 
 ## Screenshots
 
@@ -77,19 +81,20 @@ Expense Tracker is a personal budgeting app built around monthly planning. Each 
 
 ## Features
 
-- Private per-user budgeting data with authentication
-- Dashboard with month list plus quick CSV import card
-- Monthly budget views with Timeline, Calendar, and Entries tabs
-- Guided month-creation wizard with fresh and clone flows
-- Clone preview showing target month and copied entry count
-- Standard add-entry form plus guided entry wizard
-- CSV import support with downloadable sample files
-- Recurring template support for pay schedules, subscriptions, monthly bills, payment plans, and credit cards
-- Complete-month safeguards that hide generation actions on older completed months
-- Seeded March 2026 demo data
-- Docker support for local development with PostgreSQL
+- Plan each month in one place so income, bills, subscriptions, debt payments, and discretionary spending stay visible together
+- Start a new month quickly by cloning an existing one, which saves time when your budget structure stays mostly the same
+- See your budget in multiple views so you can review the same data as a timeline, a calendar, or a detailed entry list
+- Add transactions the way that fits your workflow, whether that means entering them manually, using the guided wizard, or importing a CSV
+- Upload past transactions to get a month populated faster instead of rebuilding everything by hand
+- Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
+- Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
+- Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
+- Avoid accidental duplicate generation on older completed months with safeguards that hide actions you likely no longer need
+- Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
 ## Tech Stack
+
+For developers and contributors, the app is built with:
 
 - Ruby 4.0.1
 - Rails 8.1.2
@@ -100,6 +105,8 @@ Expense Tracker is a personal budgeting app built around monthly planning. Each 
 - RSpec + FactoryBot
 
 ## Getting Started
+
+This section is for running the project locally as a developer or contributor.
 
 ### Run Locally
 
@@ -128,11 +135,11 @@ Make sure PostgreSQL is running before starting the app.
 4. Start the development server
 	 - `bin/dev`
 
-Open http://localhost:3000
+Open http://localhost:3000 and sign in to start creating budget months.
 
 ### Run with Docker
 
-This repository includes a Docker-based development setup intended to run on any local machine with Docker and Docker Compose.
+This repository also includes a Docker-based development setup for contributors who prefer a containerized local environment.
 
 #### Prerequisites
 
@@ -168,7 +175,7 @@ To also remove the database volume:
 
 ## Authentication
 
-The app requires sign-in.
+The app requires sign-in so each account only sees its own months, entries, imports, and recurring templates.
 
 You can:
 
@@ -176,13 +183,13 @@ You can:
 - sign in with your own account
 - use the seeded demo account after running `bin/rails db:seed`
 
-All budget months, entries, imports, and recurring templates are scoped to the signed-in user.
-
 ## Demo and Sample Data
+
+This project includes demo data for evaluation and sample files for testing imports.
 
 ### Sample User
 
-Seeding creates or updates a demo user you can sign in with:
+Running `bin/rails db:seed` creates or updates a demo user you can sign in with:
 
 - Email: `demo@example.com`
 - Password: `password123!`
@@ -194,22 +201,22 @@ You can override these when seeding with:
 
 ### Seeded Demo Month
 
-Seeding also imports:
+The seed process also imports:
 
 - `db/seeds/march_2026_transactions.csv`
 
-The demo seed also:
+The demo data also:
 
 - attaches all seeded records to the sample user
 - creates starter recurring templates for pay, subscriptions, bills, plans, and cards
 - keeps demo cashflow positive for the seeded month
 - prints a summary of what was created or refreshed
 
-Income values in that demo seed are inflated by 60% for privacy-friendly sample data.
+Income values in the demo seed are inflated by 60% so the sample data stays privacy-friendly while still feeling realistic.
 
 ### Sample CSV Files
 
-Available in `public/samples/` and downloadable from the app:
+Sample import files are available in `public/samples/` and downloadable from the app:
 
 - `monthly_transactions_template.csv`
 - `sample_month_common_payments.csv`
@@ -230,9 +237,11 @@ Expected transaction columns:
 
 ## Workflow
 
+This section explains the main user flow through the app.
+
 ### Dashboard
 
-The dashboard is the main landing page after sign-in.
+The dashboard is the main starting point after sign-in.
 
 It shows:
 
@@ -240,13 +249,13 @@ It shows:
 - a quick CSV import card on the right
 - shortcuts to open or clone a month
 
-Use the quick import card to drag and drop a CSV file or click to browse for one.
+Use the quick import card to drag and drop a CSV file or click to browse when you want to bring in transactions quickly.
 
 ### Create a Month
 
 Click `New Month` to open the month wizard.
 
-The wizard supports two flows:
+The wizard gives two ways to begin:
 
 - `Clone an existing month`
 	- choose a source month
@@ -256,11 +265,11 @@ The wizard supports two flows:
 	- go to the next step
 	- enter the month date, label, income, and notes manually
 
-Cloning is useful when you want to carry a previous month’s structure forward.
+Cloning is useful when most of the next month will look like the last one.
 
 ### Clone Month Behavior
 
-When cloning a month into a new month:
+When a month is cloned into a new month:
 
 - all entries are copied
 - dates are shifted into the target month
@@ -271,7 +280,7 @@ When cloning a month into a new month:
 
 ### Add or Import Entries
 
-Once a month exists, open it and use one of these methods:
+Once a month exists, entries can be added in the way that best matches the situation:
 
 - `Entries` tab
 	- add entries manually with the standard form
@@ -281,7 +290,7 @@ Once a month exists, open it and use one of these methods:
 	- import a file from the dashboard
 	- imported rows create or update the correct month automatically
 
-Entry fields include:
+Common entry fields include:
 
 - date
 - payee
@@ -294,7 +303,7 @@ Entry fields include:
 
 ### Configure Recurring Templates
 
-Use the planning templates area to define recurring items that can generate month entries.
+Use the recurring templates area to save items that should show up again in future months.
 
 Template types include:
 
@@ -304,11 +313,11 @@ Template types include:
 - payment plans
 - credit cards
 
-These templates let the app create common entries for a month without entering each one by hand.
+This reduces repetitive data entry and keeps recurring planning consistent from month to month.
 
 ### Review a Month
 
-Each budget month has three main views:
+Each budget month can be reviewed in three main views:
 
 - `Timeline`
 	- grouped view of entries with totals by group
@@ -320,7 +329,7 @@ Each budget month has three main views:
 - `Entries`
 	- form and tabular management view for direct editing
 
-Additional month actions:
+Additional month actions help keep planning current:
 
 - `Clone Month`
 	- create a new month from the current one
@@ -331,6 +340,8 @@ Additional month actions:
 	- recomputes estimated credit-card payments from available leftover cash
 
 ## Open Source Readiness
+
+This section is for maintainers preparing the repository for public sharing.
 
 This repo is already set up to avoid committing the usual local-only files, including:
 
@@ -367,6 +378,8 @@ Recommended pre-publish commands:
 
 ## Development Commands
 
+These commands are mainly for local development, debugging, and contribution work.
+
 ### Local
 
 - Start app: `bin/dev`
@@ -386,6 +399,8 @@ Recommended pre-publish commands:
 
 ## Troubleshooting
 
+These notes are intended for contributors running the project locally.
+
 ### Port 3000 already in use
 
 Stop the process using it, or change the published port in `docker-compose.yml`.
@@ -400,6 +415,8 @@ Stop the process using it, or change the published port in `docker-compose.yml`.
 - `docker compose up --build`
 
 ## Docker Files
+
+These files matter primarily for developers working on the project locally or preparing deployment-related changes.
 
 - `Dockerfile` — production-oriented image
 - `Dockerfile.dev` — local development image
