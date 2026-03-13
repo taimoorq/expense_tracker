@@ -9,6 +9,6 @@ class AddUserOwnershipToBudgetData < ActiveRecord::Migration[8.1]
     add_reference :credit_cards, :user, null: false, foreign_key: true
 
     remove_index :budget_months, :month_on
-    add_index :budget_months, [:user_id, :month_on], unique: true
+    add_index :budget_months, [ :user_id, :month_on ], unique: true
   end
 end

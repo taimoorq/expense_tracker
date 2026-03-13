@@ -6,7 +6,7 @@ RSpec.describe "CSV imports", type: :request do
   before { sign_in user }
 
   it "imports rows into the signed in user's months only" do
-    file = Tempfile.new(["budget-import", ".csv"])
+    file = Tempfile.new([ "budget-import", ".csv" ])
     file.write(<<~CSV)
       Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Account,Status,Need or Want,Notes
       2026-03,2026-03-02,fixed,Utilities,Pepco,91.22,,Checking,planned,Need,Imported row

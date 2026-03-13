@@ -6,7 +6,7 @@ RSpec.describe CsvBudgetImporter do
     other_user = create(:user)
     create(:budget_month, user: other_user, month_on: Date.new(2026, 3, 1), label: "March 2026")
 
-    file = Tempfile.new(["budget-importer", ".csv"])
+    file = Tempfile.new([ "budget-importer", ".csv" ])
     file.write(<<~CSV)
       Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Account,Status,Need or Want,Notes
       2026-03,2026-03-10,fixed,Utilities,Pepco,95.18,,Checking,planned,Need,Importer spec

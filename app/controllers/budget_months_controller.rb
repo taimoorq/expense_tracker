@@ -172,7 +172,7 @@ class BudgetMonthsController < ApplicationController
   def shifted_date(date, target_month_on)
     return nil if date.blank?
 
-    day = [date.day, target_month_on.end_of_month.day].min
+    day = [ date.day, target_month_on.end_of_month.day ].min
     Date.new(target_month_on.year, target_month_on.month, day)
   end
 
