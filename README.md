@@ -5,28 +5,28 @@ A Rails 8 budgeting app for planning and tracking monthly income, bills, subscri
 ## Table of Contents
 
 - [Overview](#overview)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 	- [Run Locally](#run-locally)
 	- [Run with Docker](#run-with-docker)
 - [Authentication](#authentication)
-- [Screenshots](#screenshots)
-- [How to Use the App](#how-to-use-the-app)
-	- [1. Start at the Dashboard](#1-start-at-the-dashboard)
-	- [2. Create a Month](#2-create-a-month)
-	- [3. Add or Import Entries](#3-add-or-import-entries)
-	- [4. Configure Recurring Templates](#4-configure-recurring-templates)
-	- [5. Review and Manage a Month](#5-review-and-manage-a-month)
 - [Demo and Sample Data](#demo-and-sample-data)
 	- [Sample User](#sample-user)
 	- [Seeded Demo Month](#seeded-demo-month)
 	- [Sample CSV Files](#sample-csv-files)
+- [Workflow](#workflow)
+	- [Dashboard](#dashboard)
+	- [Create a Month](#create-a-month)
+	- [Clone Month Behavior](#clone-month-behavior)
+	- [Add or Import Entries](#add-or-import-entries)
+	- [Configure Recurring Templates](#configure-recurring-templates)
+	- [Review a Month](#review-a-month)
 - [Open Source Readiness](#open-source-readiness)
-- [Clone Month Behavior](#clone-month-behavior)
-- [Testing and Useful Commands](#testing-and-useful-commands)
+- [Development Commands](#development-commands)
 - [Troubleshooting](#troubleshooting)
-- [Docker Files in this Repo](#docker-files-in-this-repo)
+- [Docker Files](#docker-files)
 
 ## Overview
 
@@ -37,6 +37,43 @@ Expense Tracker is a personal budgeting app built around monthly planning. Each 
 - import historical CSV data
 - generate recurring entries from saved templates
 - estimate credit card payments from available leftover cash
+
+## Screenshots
+
+<table>
+	<tr>
+		<td align="center">
+			<img src="app/assets/images/screenshots/dashboard.png" alt="Dashboard" width="100%">
+			<br>
+			<strong>Dashboard</strong>
+			<br>
+			Existing months and quick CSV import.
+		</td>
+		<td align="center">
+			<img src="app/assets/images/screenshots/clone-month-view.png" alt="Month creation wizard" width="100%">
+			<br>
+			<strong>Month Creation Wizard</strong>
+			<br>
+			Clone preview and fresh month flow.
+		</td>
+	</tr>
+	<tr>
+		<td align="center">
+			<img src="app/assets/images/screenshots/monthly-overview.png" alt="Monthly overview" width="100%">
+			<br>
+			<strong>Monthly Overview</strong>
+			<br>
+			Timeline totals, grouped entries, and charts.
+		</td>
+		<td align="center">
+			<img src="app/assets/images/screenshots/monthly-calendar-view.png" alt="Calendar view" width="100%">
+			<br>
+			<strong>Calendar View</strong>
+			<br>
+			Day-by-day entry layout with reason pills.
+		</td>
+	</tr>
+</table>
 
 ## Features
 
@@ -141,139 +178,11 @@ You can:
 
 All budget months, entries, imports, and recurring templates are scoped to the signed-in user.
 
-## Screenshots
-
-<table>
-	<tr>
-		<td align="center">
-			<img src="app/assets/images/screenshots/dashboard.png" alt="Dashboard" width="100%">
-			<br>
-			<strong>Dashboard</strong>
-			<br>
-			Existing months and quick CSV import.
-		</td>
-		<td align="center">
-			<img src="app/assets/images/screenshots/clone-month-view.png" alt="Month creation wizard" width="100%">
-			<br>
-			<strong>Month Creation Wizard</strong>
-			<br>
-			Clone preview and fresh month flow.
-		</td>
-	</tr>
-	<tr>
-		<td align="center">
-			<img src="app/assets/images/screenshots/monthly-overview.png" alt="Monthly overview" width="100%">
-			<br>
-			<strong>Monthly Overview</strong>
-			<br>
-			Timeline totals, grouped entries, and charts.
-		</td>
-		<td align="center">
-			<img src="app/assets/images/screenshots/monthly-calendar-view.png" alt="Calendar view" width="100%">
-			<br>
-			<strong>Calendar View</strong>
-			<br>
-			Day-by-day entry layout with reason pills.
-		</td>
-	</tr>
-</table>
-
-## How to Use the App
-
-### 1. Start at the Dashboard
-
-The dashboard is the main landing page after sign-in.
-
-It shows:
-
-- a list of your existing months on the left
-- a quick CSV import card on the right
-- shortcuts to open or clone a month
-
-Use the quick import card to drag and drop a CSV file or click to browse for one.
-
-### 2. Create a Month
-
-Click `New Month` to open the month wizard.
-
-The wizard supports two flows:
-
-- `Clone an existing month`
-	- choose a source month
-	- review the success preview
-	- create the next available month automatically
-- `Start fresh`
-	- go to the next step
-	- enter the month date, label, income, and notes manually
-
-Cloning is useful when you want to carry a previous month’s structure forward.
-
-### 3. Add or Import Entries
-
-Once a month exists, open it and use one of these methods:
-
-- `Entries` tab
-	- add entries manually with the standard form
-- `Add Entry with Wizard`
-	- use the guided multi-step entry flow
-- CSV import
-	- import a file from the dashboard
-	- imported rows create or update the correct month automatically
-
-Entry fields include:
-
-- date
-- payee
-- reason/category
-- status
-- planned amount
-- actual amount
-- account
-- notes
-
-### 4. Configure Recurring Templates
-
-Use the planning templates area to define recurring items that can generate month entries.
-
-Template types include:
-
-- pay schedules
-- subscriptions
-- monthly bills
-- payment plans
-- credit cards
-
-These templates let the app create common entries for a month without entering each one by hand.
-
-### 5. Review and Manage a Month
-
-Each budget month has three main views:
-
-- `Timeline`
-	- grouped view of entries with totals by group
-	- row-level filters for date, payee, reason, and status
-	- pill filters based on the actual reason values in that month
-- `Calendar`
-	- date-based view of entries
-	- pill filters using the same month-specific reason values
-- `Entries`
-	- form and tabular management view for direct editing
-
-Additional month actions:
-
-- `Clone Month`
-	- create a new month from the current one
-- generation actions
-	- available for active or incomplete months
-	- hidden when an older month appears complete
-- `Recalculate Card Estimates`
-	- recomputes estimated credit-card payments from available leftover cash
-
 ## Demo and Sample Data
 
 ### Sample User
 
-Running `bin/rails db:seed` creates or updates a demo user you can sign in with:
+Seeding creates or updates a demo user you can sign in with:
 
 - Email: `demo@example.com`
 - Password: `password123!`
@@ -285,7 +194,7 @@ You can override these when seeding with:
 
 ### Seeded Demo Month
 
-Running `bin/rails db:seed` imports:
+Seeding also imports:
 
 - `db/seeds/march_2026_transactions.csv`
 
@@ -318,6 +227,108 @@ Expected transaction columns:
 - `Status`
 - `Need or Want`
 - `Notes`
+
+## Workflow
+
+### Dashboard
+
+The dashboard is the main landing page after sign-in.
+
+It shows:
+
+- a list of your existing months on the left
+- a quick CSV import card on the right
+- shortcuts to open or clone a month
+
+Use the quick import card to drag and drop a CSV file or click to browse for one.
+
+### Create a Month
+
+Click `New Month` to open the month wizard.
+
+The wizard supports two flows:
+
+- `Clone an existing month`
+	- choose a source month
+	- review the success preview
+	- create the next available month automatically
+- `Start fresh`
+	- go to the next step
+	- enter the month date, label, income, and notes manually
+
+Cloning is useful when you want to carry a previous month’s structure forward.
+
+### Clone Month Behavior
+
+When cloning a month into a new month:
+
+- all entries are copied
+- dates are shifted into the target month
+- `actual_amount` is cleared
+- `status` is reset to `planned`
+- `planned_amount` uses the source `actual_amount` when present, otherwise the source `planned_amount`
+- the target month is the next available month that does not already exist for that user
+
+### Add or Import Entries
+
+Once a month exists, open it and use one of these methods:
+
+- `Entries` tab
+	- add entries manually with the standard form
+- `Add Entry with Wizard`
+	- use the guided multi-step entry flow
+- CSV import
+	- import a file from the dashboard
+	- imported rows create or update the correct month automatically
+
+Entry fields include:
+
+- date
+- payee
+- reason/category
+- status
+- planned amount
+- actual amount
+- account
+- notes
+
+### Configure Recurring Templates
+
+Use the planning templates area to define recurring items that can generate month entries.
+
+Template types include:
+
+- pay schedules
+- subscriptions
+- monthly bills
+- payment plans
+- credit cards
+
+These templates let the app create common entries for a month without entering each one by hand.
+
+### Review a Month
+
+Each budget month has three main views:
+
+- `Timeline`
+	- grouped view of entries with totals by group
+	- row-level filters for date, payee, reason, and status
+	- pill filters based on the actual reason values in that month
+- `Calendar`
+	- date-based view of entries
+	- pill filters using the same month-specific reason values
+- `Entries`
+	- form and tabular management view for direct editing
+
+Additional month actions:
+
+- `Clone Month`
+	- create a new month from the current one
+- generation actions
+	- available for active or incomplete months
+	- hidden when an older month appears complete
+- `Recalculate Card Estimates`
+	- recomputes estimated credit-card payments from available leftover cash
 
 ## Open Source Readiness
 
@@ -354,18 +365,7 @@ Recommended pre-publish commands:
 - `git grep -n "password"`
 - `git grep -n "/Users/"`
 
-## Clone Month Behavior
-
-When cloning a month into a new month:
-
-- all entries are copied
-- dates are shifted into the target month
-- `actual_amount` is cleared
-- `status` is reset to `planned`
-- `planned_amount` uses the source `actual_amount` when present, otherwise the source `planned_amount`
-- the target month is the next available month that does not already exist for that user
-
-## Testing and Useful Commands
+## Development Commands
 
 ### Local
 
@@ -399,7 +399,7 @@ Stop the process using it, or change the published port in `docker-compose.yml`.
 
 - `docker compose up --build`
 
-## Docker Files in this Repo
+## Docker Files
 
 - `Dockerfile` — production-oriented image
 - `Dockerfile.dev` — local development image
