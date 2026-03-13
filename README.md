@@ -5,12 +5,13 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 ## Table of Contents
 
 - [Overview](#overview)
+- [Quick Start (Docker)](#quick-start-docker)
 - [Screenshots](#screenshots)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
-	- [Run Locally](#run-locally)
 	- [Run with Docker](#run-with-docker)
+	- [Run Locally](#run-locally)
 - [Authentication](#authentication)
 - [Demo and Sample Data](#demo-and-sample-data)
 	- [Sample User](#sample-user)
@@ -41,6 +42,22 @@ With it, a user can:
 - estimate credit-card payments based on the cash left in the month rather than guessing in isolation
 
 The sections below are split between user-focused guidance for using the app and developer-focused guidance for running, testing, and publishing the project.
+
+For most people, the easiest way to try the app is the Docker setup below because it avoids local Ruby, PostgreSQL, and system package setup.
+
+## Quick Start (Docker)
+
+If the goal is to get the app running as quickly as possible, use Docker:
+
+1. Install Docker Desktop
+2. Start the app
+	- `docker compose up --build`
+3. Open the app
+	- http://localhost:3000
+4. Optional: load the demo data in another terminal
+	- `docker compose exec web bin/rails db:seed`
+
+After seeding, sign in with the demo account described in the [Sample User](#sample-user) section.
 
 ## Screenshots
 
@@ -106,9 +123,55 @@ For developers and contributors, the app is built with:
 
 ## Getting Started
 
-This section is for running the project locally as a developer or contributor.
+For most users, Docker is the recommended way to run the app.
+
+Use Docker if you want the quickest path to opening the app without manually setting up Ruby, PostgreSQL, or system dependencies.
+
+Use the local setup only if you plan to develop on the project or prefer managing those dependencies yourself.
+
+### Run with Docker
+
+This is the recommended setup for most users.
+
+The repository includes a Docker-based environment that starts the Rails app and PostgreSQL together.
+
+#### Prerequisites
+
+- Docker Desktop, or Docker Engine + Docker Compose
+
+#### Start the app
+
+1. Build and start the containers
+	 - `docker compose up --build`
+2. Open the app
+	 - http://localhost:3000
+
+Services included:
+
+- `web` — Rails app running via `bin/dev`
+- `db` — PostgreSQL 16
+
+The container entrypoint automatically runs `bin/rails db:prepare` when the app starts.
+
+#### Optional: load demo data
+
+In another terminal:
+
+- `docker compose exec web bin/rails db:seed`
+
+This creates a demo account and sample month so you can explore the app right away.
+
+#### Stop the app
+
+- `docker compose down`
+
+To also remove the database volume:
+
+- `docker compose down -v`
 
 ### Run Locally
+
+This setup is mainly for developers and contributors.
 
 #### Prerequisites
 
@@ -136,42 +199,6 @@ Make sure PostgreSQL is running before starting the app.
 	 - `bin/dev`
 
 Open http://localhost:3000 and sign in to start creating budget months.
-
-### Run with Docker
-
-This repository also includes a Docker-based development setup for contributors who prefer a containerized local environment.
-
-#### Prerequisites
-
-- Docker Desktop, or Docker Engine + Docker Compose
-
-#### Start the app
-
-1. Build and start the containers
-	 - `docker compose up --build`
-2. Open the app
-	 - http://localhost:3000
-
-Services included:
-
-- `web` — Rails app running via `bin/dev`
-- `db` — PostgreSQL 16
-
-The container entrypoint automatically runs `bin/rails db:prepare` when the app starts.
-
-#### Seed demo data in Docker
-
-In another terminal:
-
-- `docker compose exec web bin/rails db:seed`
-
-#### Stop the stack
-
-- `docker compose down`
-
-To also remove the database volume:
-
-- `docker compose down -v`
 
 ## Authentication
 
