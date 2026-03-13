@@ -4,8 +4,18 @@
 # belong in git's global ignore instead:
 # `$XDG_CONFIG_HOME/git/ignore` or `~/.config/git/ignore`
 
+# macOS / OS-generated files
+.DS_Store
+
+# Editor directories and local tooling
+.idea/
+.vscode/
+.ruby-lsp/
+.byebug_history
+
 # Ignore bundler config.
 /.bundle
+/vendor/bundle
 
 # Ignore all environment files.
 /.env*
@@ -20,6 +30,13 @@
 /tmp/pids/*
 !/tmp/pids/
 !/tmp/pids/.keep
+/tmp/cache/*
+/tmp/sockets/*
+
+# Ignore local database dumps / misc exports
+/*.sql
+/*.sqlite3
+/*.sqlite3-*
 
 # Ignore storage (uploaded files in development and any SQLite databases).
 /storage/*
@@ -28,11 +45,20 @@
 !/tmp/storage/
 !/tmp/storage/.keep
 
+# Ignore compiled assets and frontend package directories
+/node_modules/
 /public/assets
 
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
-
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Ignore local Docker and deployment runtime state
+.kamal/
+
+# Ignore test and coverage artifacts
+/coverage/
+/capybara-*.html
+/rerun.txt
