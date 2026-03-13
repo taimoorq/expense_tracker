@@ -1,0 +1,70 @@
+<div class="mx-auto max-w-3xl space-y-4">
+  <% content_for :page_header do %>
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="text-2xl font-semibold">Edit Entry</h2>
+      <%= link_to budget_month_path(@budget_month), class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+        <span>Back to Month</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <%= form_with model: [@budget_month, @expense_entry], class: "grid gap-3 sm:grid-cols-2" do |form| %>
+      <div>
+        <%= form.label :occurred_on, class: "fb-label" %>
+        <%= form.date_field :occurred_on, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :section, class: "fb-label" %>
+        <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+      </div>
+
+      <div>
+        <%= form.label :category, class: "fb-label" %>
+        <%= form.text_field :category, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :payee, class: "fb-label" %>
+        <%= form.text_field :payee, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :planned_amount, class: "fb-label" %>
+        <%= form.number_field :planned_amount, step: 0.01, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :actual_amount, class: "fb-label" %>
+        <%= form.number_field :actual_amount, step: 0.01, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :account, class: "fb-label" %>
+        <%= form.text_field :account, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :status, class: "fb-label" %>
+        <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+      </div>
+
+      <div>
+        <%= form.label :need_or_want, class: "fb-label" %>
+        <%= form.text_field :need_or_want, class: "fb-input" %>
+      </div>
+
+      <div class="sm:col-span-2">
+        <%= form.label :notes, class: "fb-label" %>
+        <%= form.text_area :notes, rows: 4, class: "fb-textarea" %>
+      </div>
+
+      <div class="sm:col-span-2 flex items-center gap-2">
+        <%= form.submit "Update Entry", class: "fb-btn-primary" %>
+        <%= link_to "Cancel", budget_month_path(@budget_month), class: "fb-btn-secondary" %>
+      </div>
+    <% end %>
+  </section>
+</div>

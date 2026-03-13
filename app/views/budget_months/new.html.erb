@@ -1,0 +1,52 @@
+<% content_for :page_header do %>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-2xl font-semibold"><%= @source_budget_month ? "Clone Budget Month" : "Create Budget Month" %></h2>
+      <% if @source_budget_month %>
+        <p class="ta-muted mt-1">Creating a new month using <%= @source_budget_month.label %> as the template.</p>
+      <% end %>
+    </div>
+    <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
+      <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+      <span>Back to Months</span>
+    <% end %>
+  </div>
+<% end %>
+
+<%= form_with model: @budget_month, class: "rounded-xl border border-slate-200 bg-white p-4 shadow-sm" do |form| %>
+  <% if @source_budget_month %>
+    <%= hidden_field_tag :source_month_id, @source_budget_month.id %>
+
+    <div class="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+      All entries from <strong><%= @source_budget_month.label %></strong> will be copied into the new month.
+      Dates will shift into the selected month, actual amounts will be cleared, and statuses will reset to planned.
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :month_on, "Month", class: "fb-label" %>
+    <%= form.date_field :month_on, class: "fb-input" %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :label, class: "fb-label" %>
+    <%= form.text_field :label, placeholder: "March 2026", class: "fb-input" %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :planned_income, class: "fb-label" %>
+    <%= form.number_field :planned_income, step: 0.01, class: "fb-input" %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :actual_income, class: "fb-label" %>
+    <%= form.number_field :actual_income, step: 0.01, class: "fb-input" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :notes, class: "fb-label" %>
+    <%= form.text_area :notes, rows: 3, class: "fb-textarea" %>
+  </div>
+
+  <%= form.submit "Create", class: "fb-btn-primary" %>
+<% end %>

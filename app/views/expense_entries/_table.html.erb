@@ -1,0 +1,26 @@
+<%= turbo_frame_tag "entries_table" do %>
+  <section class="ta-card">
+    <h3 class="ta-section-title mb-3 inline-flex items-center gap-2"><%= tabler_icon("list") %> Month Entries</h3>
+    <div class="overflow-x-auto">
+      <table class="ta-table">
+        <thead class="ta-table-head">
+          <tr>
+            <th class="ta-th">Date</th>
+            <th class="ta-th">Section</th>
+            <th class="ta-th">Category</th>
+            <th class="ta-th">Payee</th>
+            <th class="ta-th text-right">Planned</th>
+            <th class="ta-th text-right">Actual</th>
+            <th class="ta-th">Status</th>
+            <th class="ta-th">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% expense_entries.each do |entry| %>
+            <%= render "expense_entries/row", budget_month: budget_month, entry: entry %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

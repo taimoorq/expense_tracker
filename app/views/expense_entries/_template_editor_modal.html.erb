@@ -1,0 +1,90 @@
+<%= turbo_frame_tag "template_editor_modal" do %>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close click->template-modal#backdropClose">
+    <div class="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("file-pencil", classes: "h-4 w-4 text-violet-600") %> Edit Template: <%= template_record.class.model_name.human %></h3>
+        <button type="button" class="ta-icon-btn" aria-label="Close template editor" title="Close" data-action="click->template-modal#close">
+          <%= tabler_icon("x", classes: "h-4 w-4 text-slate-500") %>
+        </button>
+      </div>
+
+      <% if template_record.is_a?(PaySchedule) %>
+        <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2" do |form| %>
+          <%= form.text_field :name, placeholder: "Employer/Source", required: true, class: "fb-input" %>
+          <%= form.select :cadence, PaySchedule.cadences.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+          <%= form.number_field :amount, step: 0.01, required: true, class: "fb-input" %>
+          <%= form.date_field :first_pay_on, required: true, class: "fb-input" %>
+          <%= form.number_field :day_of_month_one, class: "fb-input", placeholder: "Day #1" %>
+          <%= form.number_field :day_of_month_two, class: "fb-input", placeholder: "Day #2" %>
+          <%= form.select :weekend_adjustment, PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
+            <%= form.submit "Save", class: "fb-btn-primary" %>
+          </div>
+        <% end %>
+      <% elsif template_record.is_a?(Subscription) %>
+        <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2" do |form| %>
+          <%= form.text_field :name, required: true, class: "fb-input", placeholder: "Subscription name" %>
+          <%= form.number_field :amount, step: 0.01, required: true, class: "fb-input", placeholder: "Amount" %>
+          <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
+          <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
+            <%= form.submit "Save", class: "fb-btn-primary" %>
+          </div>
+        <% end %>
+      <% elsif template_record.is_a?(MonthlyBill) %>
+        <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2" do |form| %>
+          <%= form.text_field :name, required: true, class: "fb-input", placeholder: "Bill name" %>
+          <%= form.select :kind, MonthlyBill.kinds.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+          <%= form.number_field :default_amount, step: 0.01, class: "fb-input", placeholder: "Default amount" %>
+          <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
+          <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
+            <%= form.submit "Save", class: "fb-btn-primary" %>
+          </div>
+        <% end %>
+      <% elsif template_record.is_a?(PaymentPlan) %>
+        <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2" do |form| %>
+          <%= form.text_field :name, required: true, class: "fb-input", placeholder: "Plan name" %>
+          <%= form.number_field :total_due, step: 0.01, required: true, class: "fb-input", placeholder: "Total due" %>
+          <%= form.number_field :amount_paid, step: 0.01, class: "fb-input", placeholder: "Amount paid" %>
+          <%= form.number_field :monthly_target, step: 0.01, class: "fb-input", placeholder: "Monthly target" %>
+          <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
+          <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
+            <%= form.submit "Save", class: "fb-btn-primary" %>
+          </div>
+        <% end %>
+      <% elsif template_record.is_a?(CreditCard) %>
+        <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2" do |form| %>
+          <%= form.text_field :name, required: true, class: "fb-input", placeholder: "Card name" %>
+          <%= form.number_field :minimum_payment, step: 0.01, class: "fb-input", placeholder: "Minimum payment" %>
+          <%= form.number_field :priority, min: 1, required: true, class: "fb-input", placeholder: "Priority" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
+          <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
+            <%= form.submit "Save", class: "fb-btn-primary" %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="ta-muted">No editable template found for this entry.</p>
+        <div class="mt-3 flex justify-end">
+          <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Close</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,71 @@
+<% content_for :page_header do %>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-2xl font-semibold">Budget Months</h2>
+    <%= link_to new_budget_month_path, class: "fb-btn-primary ta-action-btn" do %>
+      <%= tabler_icon("plus", classes: "h-4 w-4 text-indigo-100") %>
+      <span>New Month</span>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="ta-card mb-6">
+  <h2 class="ta-section-title mb-2">Import historical CSV</h2>
+  <%= form_with url: import_csv_path, method: :post, multipart: true, class: "flex flex-wrap items-center gap-2" do |form| %>
+    <%= form.file_field :file, accept: ".csv", class: "fb-input" %>
+    <%= form.submit "Import CSV", class: "fb-btn-primary" %>
+  <% end %>
+
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <a href="/samples/monthly_transactions_template.csv" download class="fb-btn-secondary ta-action-btn">
+      <%= tabler_icon("device-floppy", classes: "h-4 w-4 text-slate-600") %>
+      <span>Download CSV Template</span>
+    </a>
+    <a href="/samples/sample_month_common_payments.csv" download class="fb-btn-secondary ta-action-btn">
+      <%= tabler_icon("list", classes: "h-4 w-4 text-indigo-600") %>
+      <span>Download Sample Month</span>
+    </a>
+  </div>
+
+  <p class="ta-muted mt-2">Import one of the sample files (or your own file) with the same columns: Month, Date, Section, Category, Payee, Planned Amount, Actual Amount, Account, Status, Need or Want, Notes.</p>
+</section>
+
+<section class="ta-card">
+  <div class="overflow-x-auto">
+    <table class="ta-table">
+      <thead class="ta-table-head">
+      <tr>
+        <th class="ta-th">Month</th>
+        <th class="ta-th text-right">Income</th>
+        <th class="ta-th text-right">Outflow</th>
+        <th class="ta-th text-right">Leftover</th>
+        <th class="ta-th text-right">Entries</th>
+        <th class="ta-th text-right">Actions</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+      <% @budget_months.each do |month| %>
+        <tr>
+          <td class="ta-td"><%= link_to month.label, budget_month_path(month), class: "font-medium text-indigo-600 hover:text-indigo-500" %></td>
+          <td class="ta-td text-right"><%= number_to_currency(month.income_total) %></td>
+          <td class="ta-td text-right"><%= number_to_currency(month.outflow_total) %></td>
+          <td class="ta-td text-right"><%= number_to_currency(month.calculated_leftover) %></td>
+          <td class="ta-td text-right"><%= month.expense_entries.count %></td>
+          <td class="ta-td">
+            <div class="flex justify-end gap-2">
+              <%= link_to budget_month_path(month), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                <%= tabler_icon("calendar-month", classes: "h-4 w-4 text-sky-600") %>
+                <span>Open</span>
+              <% end %>
+
+              <%= link_to new_budget_month_path(source_month_id: month.id), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                <%= tabler_icon("copy", classes: "h-4 w-4 text-slate-600") %>
+                <span>Clone</span>
+              <% end %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

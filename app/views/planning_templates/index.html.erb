@@ -1,0 +1,268 @@
+<div class="space-y-6">
+  <% content_for :page_header do %>
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="text-2xl font-semibold">Planning Templates</h2>
+      <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+        <span>Back to Months</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold">Paycheck Schedules</h3>
+      <button type="button" class="ta-icon-btn" aria-label="Paycheck Schedules Help" title="Paycheck Schedules Help" data-action="click->help-modal#open" data-help-title="Paycheck Schedules Help" data-help-body="Use this to define recurring income.
+
+Cadence: weekly, biweekly, semimonthly, or monthly.
+First Pay On: anchor date for recurrence.
+Day #1 and Day #2: used for semimonthly schedules.
+Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("help") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">Template only. Generated into each month using the month action buttons.</p>
+    <%= form_with model: @pay_schedule, url: pay_schedules_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+      <%= hidden_field_tag :return_to, planning_templates_path %>
+      <%= form.text_field :name, placeholder: "Employer/Source", required: true, class: "fb-input" %>
+      <%= form.select :cadence, PaySchedule.cadences.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+      <%= form.number_field :amount, step: 0.01, placeholder: "Amount", required: true, class: "fb-input" %>
+      <%= form.date_field :first_pay_on, required: true, class: "fb-input" %>
+      <%= form.number_field :day_of_month_one, placeholder: "Day #1", class: "fb-input" %>
+      <%= form.number_field :day_of_month_two, placeholder: "Day #2", class: "fb-input" %>
+      <%= form.select :weekend_adjustment, PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
+      <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+      <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+        <%= tabler_icon("device-floppy") %>
+        <span>Save Schedule</span>
+      <% end %>
+    <% end %>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50"><tr><th class="px-3 py-2 text-left">Name</th><th class="px-3 py-2 text-left">Cadence</th><th class="px-3 py-2 text-right">Amount</th><th class="px-3 py-2 text-left">Action</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @pay_schedules.each do |item| %>
+            <tr>
+              <td class="px-3 py-2"><%= item.name %></td>
+              <td class="px-3 py-2"><%= item.cadence.humanize %></td>
+              <td class="px-3 py-2 text-right"><%= number_to_currency(item.amount) %></td>
+              <td class="px-3 py-2">
+                <%= button_to pay_schedule_path(item, return_to: planning_templates_path),
+                              method: :delete,
+                              class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                              title: "Delete schedule",
+                              aria: { label: "Delete schedule" },
+                              form: { data: { turbo_confirm: "Delete this schedule?" } } do %>
+                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold">Subscriptions</h3>
+      <button type="button" class="ta-icon-btn" aria-label="Subscriptions Help" title="Subscriptions Help" data-action="click->help-modal#open" data-help-title="Subscriptions Help" data-help-body="For recurring monthly items with no fixed end date.
+
+Amount: expected monthly amount.
+Due day: day of month this usually charges.
+Keep Active checked unless this subscription has been cancelled."><%= tabler_icon("help") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">Use for Netflix, phone plans, cloud storage, and other recurring charges.</p>
+    <%= form_with model: @subscription, url: subscriptions_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-6" do |form| %>
+      <%= hidden_field_tag :return_to, planning_templates_path %>
+      <%= form.text_field :name, placeholder: "Netflix, Google Fi...", required: true, class: "fb-input" %>
+      <%= form.number_field :amount, step: 0.01, placeholder: "Amount", required: true, class: "fb-input" %>
+      <%= form.number_field :due_day, min: 1, max: 31, placeholder: "Due day", required: true, class: "fb-input" %>
+      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
+      <%= form.text_field :notes, placeholder: "Notes", class: "fb-input" %>
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+        <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("device-floppy") %>
+          <span>Save</span>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50"><tr><th class="px-3 py-2 text-left">Name</th><th class="px-3 py-2 text-right">Amount</th><th class="px-3 py-2 text-right">Due Day</th><th class="px-3 py-2 text-left">Action</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @subscriptions.each do |item| %>
+            <tr>
+              <td class="px-3 py-2"><%= item.name %></td>
+              <td class="px-3 py-2 text-right"><%= number_to_currency(item.amount) %></td>
+              <td class="px-3 py-2 text-right"><%= item.due_day %></td>
+              <td class="px-3 py-2">
+                <%= button_to subscription_path(item, return_to: planning_templates_path),
+                              method: :delete,
+                              class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                              title: "Delete subscription",
+                              aria: { label: "Delete subscription" },
+                              form: { data: { turbo_confirm: "Delete this subscription?" } } do %>
+                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold">Monthly Bills (fixed + variable)</h3>
+      <button type="button" class="ta-icon-btn" aria-label="Monthly Bills Help" title="Monthly Bills Help" data-action="click->help-modal#open" data-help-title="Monthly Bills Help" data-help-body="Fixed Payment: stable bills like mortgage or car payment.
+Variable Bill: amounts that vary monthly like utilities.
+
+Default amount is your estimate and can be adjusted later in the month entries."><%= tabler_icon("help") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">These are turned into planned month entries when you run generation.</p>
+    <%= form_with model: @monthly_bill, url: monthly_bills_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-6" do |form| %>
+      <%= hidden_field_tag :return_to, planning_templates_path %>
+      <%= form.text_field :name, placeholder: "Mortgage, Pepco, Car payment...", required: true, class: "fb-input" %>
+      <%= form.select :kind, MonthlyBill.kinds.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+      <%= form.number_field :default_amount, step: 0.01, placeholder: "Default/Estimated Amount", class: "fb-input" %>
+      <%= form.number_field :due_day, min: 1, max: 31, placeholder: "Due day", required: true, class: "fb-input" %>
+      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+        <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("device-floppy") %>
+          <span>Save</span>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50"><tr><th class="px-3 py-2 text-left">Name</th><th class="px-3 py-2 text-left">Type</th><th class="px-3 py-2 text-right">Default</th><th class="px-3 py-2 text-left">Action</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @monthly_bills.each do |item| %>
+            <tr>
+              <td class="px-3 py-2"><%= item.name %></td>
+              <td class="px-3 py-2"><%= item.kind.humanize %></td>
+              <td class="px-3 py-2 text-right"><%= number_to_currency(item.default_amount || 0) %></td>
+              <td class="px-3 py-2">
+                <%= button_to monthly_bill_path(item, return_to: planning_templates_path),
+                              method: :delete,
+                              class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                              title: "Delete monthly bill",
+                              aria: { label: "Delete monthly bill" },
+                              form: { data: { turbo_confirm: "Delete this bill?" } } do %>
+                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold">Payment Plans</h3>
+      <button type="button" class="ta-icon-btn" aria-label="Payment Plans Help" title="Payment Plans Help" data-action="click->help-modal#open" data-help-title="Payment Plans Help" data-help-body="Use for balances you are paying down over time.
+
+Total Due: full balance.
+Amount Paid: how much already paid so far.
+Custom Monthly: optional planned monthly payment amount.
+The app caps generated payment to remaining balance."><%= tabler_icon("help") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">Great for tax plans, financing, and installment balances.</p>
+    <%= form_with model: @payment_plan, url: payment_plans_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-7" do |form| %>
+      <%= hidden_field_tag :return_to, planning_templates_path %>
+      <%= form.text_field :name, placeholder: "Plan name", required: true, class: "fb-input" %>
+      <%= form.number_field :total_due, step: 0.01, placeholder: "Total Due", required: true, class: "fb-input" %>
+      <%= form.number_field :amount_paid, step: 0.01, placeholder: "Amount Paid", class: "fb-input" %>
+      <%= form.number_field :monthly_target, step: 0.01, placeholder: "Custom Monthly", class: "fb-input" %>
+      <%= form.number_field :due_day, min: 1, max: 31, placeholder: "Due day", required: true, class: "fb-input" %>
+      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+        <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("device-floppy") %>
+          <span>Save</span>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50"><tr><th class="px-3 py-2 text-left">Name</th><th class="px-3 py-2 text-right">Total Due</th><th class="px-3 py-2 text-right">Remaining</th><th class="px-3 py-2 text-left">Action</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @payment_plans.each do |item| %>
+            <tr>
+              <td class="px-3 py-2"><%= item.name %></td>
+              <td class="px-3 py-2 text-right"><%= number_to_currency(item.total_due) %></td>
+              <td class="px-3 py-2 text-right"><%= number_to_currency(item.remaining_balance) %></td>
+              <td class="px-3 py-2">
+                <%= button_to payment_plan_path(item, return_to: planning_templates_path),
+                              method: :delete,
+                              class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                              title: "Delete payment plan",
+                              aria: { label: "Delete payment plan" },
+                              form: { data: { turbo_confirm: "Delete this plan?" } } do %>
+                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold">Credit Cards</h3>
+      <button type="button" class="ta-icon-btn" aria-label="Credit Cards Help" title="Credit Cards Help" data-action="click->help-modal#open" data-help-title="Credit Cards Help" data-help-body="Used by 'Estimate Cards' in month view.
+
+Minimum: minimum amount to prioritize first.
+Priority: lower number gets allocated first.
+After minimums, leftover can be spread across cards."><%= tabler_icon("help") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">These settings drive automatic estimated card payments from leftover cash.</p>
+    <%= form_with model: @credit_card, url: credit_cards_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+      <%= hidden_field_tag :return_to, planning_templates_path %>
+      <%= form.text_field :name, placeholder: "Card name", required: true, class: "fb-input" %>
+      <%= form.number_field :minimum_payment, step: 0.01, placeholder: "Minimum", class: "fb-input" %>
+      <%= form.number_field :priority, min: 1, placeholder: "Priority", required: true, class: "fb-input" %>
+      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+        <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("device-floppy") %>
+          <span>Save</span>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50"><tr><th class="px-3 py-2 text-left">Card</th><th class="px-3 py-2 text-right">Minimum</th><th class="px-3 py-2 text-right">Priority</th><th class="px-3 py-2 text-left">Action</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @credit_cards.each do |item| %>
+            <tr>
+              <td class="px-3 py-2"><%= item.name %></td>
+              <td class="px-3 py-2 text-right"><%= number_to_currency(item.minimum_payment) %></td>
+              <td class="px-3 py-2 text-right"><%= item.priority %></td>
+              <td class="px-3 py-2">
+                <%= button_to credit_card_path(item, return_to: planning_templates_path),
+                              method: :delete,
+                              class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                              title: "Delete card",
+                              aria: { label: "Delete card" },
+                              form: { data: { turbo_confirm: "Delete this card?" } } do %>
+                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Expense Tracker" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Expense Tracker">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0F172A">
+
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="/icon.png" sizes="512x512" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
+    <script src="/sw-register.js" defer></script>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="ta-shell ta-shell-collapsed" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc" data-sidebar-target="shell">
+    <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
+    <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
+    <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
+    <% show_back_nav = !(controller_name == "budget_months" && action_name == "index") %>
+
+    <aside class="ta-sidebar">
+      <div class="ta-sidebar-brand">
+        <%= link_to root_path, class: "inline-flex items-center gap-2.5 text-white", title: "Expense Tracker" do %>
+          <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-7 w-7 rounded" %>
+          <span class="ta-sidebar-brand-text">Expense Tracker</span>
+        <% end %>
+      </div>
+      <nav class="ta-sidebar-nav">
+        <%= link_to root_path, class: ["ta-sidebar-link", (months_active ? "ta-sidebar-link-active" : nil)], title: "Budget Months" do %>
+          <%= tabler_icon("home", classes: "ta-sidebar-link-icon") %>
+          <span class="ta-sidebar-label">Budget Months</span>
+        <% end %>
+
+        <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Manage Templates" do %>
+          <%= tabler_icon("template", classes: "ta-sidebar-link-icon") %>
+          <span class="ta-sidebar-label">Manage Templates</span>
+        <% end %>
+
+        <%= link_to new_budget_month_path, class: ["ta-sidebar-link", (new_month_active ? "ta-sidebar-link-active" : nil)], title: "Create New Month" do %>
+          <%= tabler_icon("calendar-plus", classes: "ta-sidebar-link-icon") %>
+          <span class="ta-sidebar-label">Create New Month</span>
+        <% end %>
+      </nav>
+    </aside>
+
+    <main class="ta-main">
+      <header class="ta-topbar">
+        <div class="flex w-full items-center gap-3">
+          <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" data-action="click->sidebar#toggle">
+            <span data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "h-4 w-4") %></span>
+            <span data-sidebar-target="collapseIcon" class="hidden"><%= tabler_icon("chevron-left", classes: "h-4 w-4") %></span>
+          </button>
+          <div class="min-w-0 flex-1">
+            <% if content_for?(:page_header) %>
+              <%= yield :page_header %>
+            <% else %>
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <h1 class="text-xl font-semibold tracking-tight text-slate-900"><%= content_for(:title) || "Expense Tracker" %></h1>
+                <% if show_back_nav %>
+                  <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
+                    <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+                    <span>Back to Months</span>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </header>
+
+      <section class="ta-content">
+        <%= render "shared/flash" %>
+
+        <div class="mt-4">
+          <%= yield %>
+        </div>
+      </section>
+    </main>
+
+    <%= render "shared/help_modal" %>
+  </body>
+</html>

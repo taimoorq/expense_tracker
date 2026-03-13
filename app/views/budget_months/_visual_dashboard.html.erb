@@ -1,0 +1,143 @@
+<%= turbo_frame_tag "visual_dashboard" do %>
+  <% compact = local_assigns.fetch(:compact, false) %>
+  <% entries = expense_entries.to_a %>
+  <% outflow_entries = entries.reject(&:income?) %>
+
+  <% section_totals = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.effective_amount.to_f } }.sort_by { |_k, v| -v } %>
+  <% section_labels = section_totals.map { |k, _v| k.humanize } %>
+  <% section_values = section_totals.map { |_k, v| v.round(2) } %>
+
+  <% planned_by_section = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.planned_amount.to_f } } %>
+  <% actual_by_section = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.actual_amount.to_f } } %>
+  <% section_keys = (planned_by_section.keys + actual_by_section.keys).uniq %>
+  <% section_compare_labels = section_keys.map(&:humanize) %>
+  <% planned_compare_values = section_keys.map { |key| planned_by_section[key].to_f.round(2) } %>
+  <% actual_compare_values = section_keys.map { |key| actual_by_section[key].to_f.round(2) } %>
+
+  <% running = 0.0 %>
+  <% ordered_entries = entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
+  <% line_labels = [] %>
+  <% line_values = [] %>
+  <% ordered_entries.each do |entry| %>
+    <% running += entry.cashflow_amount.to_f %>
+    <% line_labels << (entry.occurred_on&.strftime("%b %-d") || "No Date") %>
+    <% line_values << running.round(2) %>
+  <% end %>
+
+  <% income = budget_month.income_total.to_f %>
+  <% leftover = budget_month.calculated_leftover.to_f %>
+  <% savings_pct = income.positive? ? ((leftover / income) * 100).round(1) : 0 %>
+  <% top_category = section_totals.first %>
+
+  <section class="ta-card">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("chart-bar") %> Visual Budget Breakdown</h3>
+      <p class="ta-muted"><%= compact ? "Compact chart view" : "QuickBooks-style insight cards + interactive charts" %></p>
+    </div>
+
+    <% unless compact %>
+      <div class="mb-4 grid gap-3 md:grid-cols-3">
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Budget Health</p>
+          <p class="mt-1 text-lg font-semibold <%= leftover >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
+            <%= leftover >= 0 ? "On Track" : "Over Budget" %>
+          </p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Savings Rate</p>
+          <p class="mt-1 text-lg font-semibold"><%= savings_pct %>%</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Top Outflow Bucket</p>
+          <p class="mt-1 text-lg font-semibold">
+            <%= top_category ? "#{top_category[0].humanize} (#{number_to_currency(top_category[1])})" : "—" %>
+          </p>
+        </div>
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-3">
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="h-72">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="doughnut"
+              data-chart-title-value="Outflow by Section"
+              data-chart-labels-value="<%= section_labels.to_json %>"
+              data-chart-data-value="<%= section_values.to_json %>"></canvas>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="h-72">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="bar"
+              data-chart-title-value="Planned vs Actual by Section"
+              data-chart-labels-value="<%= section_compare_labels.to_json %>"
+              data-chart-datasets-value="<%= [
+                { label: 'Planned', data: planned_compare_values, backgroundColor: 'rgba(79, 70, 229, 0.6)' },
+                { label: 'Actual', data: actual_compare_values, backgroundColor: 'rgba(14, 165, 233, 0.6)' }
+              ].to_json %>"></canvas>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="h-72">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="line"
+              data-chart-title-value="Running Net Cashflow"
+              data-chart-labels-value="<%= line_labels.to_json %>"
+              data-chart-data-value="<%= line_values.to_json %>"></canvas>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <div class="space-y-4">
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Budget Health</p>
+          <p class="mt-1 text-base font-semibold <%= leftover >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
+            <%= leftover >= 0 ? "On Track" : "Over Budget" %>
+          </p>
+          <p class="mt-1 text-xs text-slate-500">Savings rate: <%= savings_pct %>%</p>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="h-56">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="doughnut"
+              data-chart-title-value="Outflow by Section"
+              data-chart-labels-value="<%= section_labels.to_json %>"
+              data-chart-data-value="<%= section_values.to_json %>"></canvas>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="h-56">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="bar"
+              data-chart-title-value="Planned vs Actual"
+              data-chart-labels-value="<%= section_compare_labels.to_json %>"
+              data-chart-datasets-value="<%= [
+                { label: 'Planned', data: planned_compare_values, backgroundColor: 'rgba(79, 70, 229, 0.6)' },
+                { label: 'Actual', data: actual_compare_values, backgroundColor: 'rgba(14, 165, 233, 0.6)' }
+              ].to_json %>"></canvas>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="h-56">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="line"
+              data-chart-title-value="Running Net"
+              data-chart-labels-value="<%= line_labels.to_json %>"
+              data-chart-data-value="<%= line_values.to_json %>"></canvas>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </section>
+<% end %>

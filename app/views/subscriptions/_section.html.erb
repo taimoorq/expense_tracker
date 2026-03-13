@@ -1,0 +1,46 @@
+<%= turbo_frame_tag "subscriptions_section" do %>
+  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <h3 class="mb-3 text-lg font-semibold">2) Subscriptions (monthly, no end date)</h3>
+    <%= form_with model: subscription, url: subscriptions_path, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-6" do |form| %>
+      <%= hidden_field_tag :budget_month_id, budget_month.id %>
+      <%= form.text_field :name, placeholder: "Netflix, Google Fi...", required: true, class: "fb-input" %>
+      <%= form.number_field :amount, step: 0.01, placeholder: "Amount", required: true, class: "fb-input" %>
+      <%= form.number_field :due_day, min: 1, max: 31, placeholder: "Due day", required: true, class: "fb-input" %>
+      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
+      <%= form.text_field :notes, placeholder: "Notes", class: "fb-input" %>
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+        <%= form.submit "Save", class: "fb-btn-primary" %>
+      </div>
+    <% end %>
+
+    <div class="mt-3">
+      <%= button_to "Generate Subscriptions for #{budget_month.label}", generate_subscriptions_budget_month_path(budget_month), method: :post, class: "rounded-md bg-slate-800 px-3 py-2 text-white hover:bg-slate-700" %>
+    </div>
+
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-3 py-2 text-left font-medium text-slate-600">Name</th>
+            <th class="px-3 py-2 text-right font-medium text-slate-600">Amount</th>
+            <th class="px-3 py-2 text-right font-medium text-slate-600">Due Day</th>
+            <th class="px-3 py-2 text-left font-medium text-slate-600">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% subscriptions.each do |item| %>
+            <tr>
+              <td class="px-3 py-2"><%= item.name %></td>
+              <td class="px-3 py-2 text-right"><%= number_to_currency(item.amount) %></td>
+              <td class="px-3 py-2 text-right"><%= item.due_day %></td>
+              <td class="px-3 py-2">
+                <%= button_to "Delete", subscription_path(item, budget_month_id: budget_month.id), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this subscription?" } } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>

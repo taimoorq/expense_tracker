@@ -1,0 +1,187 @@
+<%= turbo_frame_tag "timeline_section" do %>
+  <% timeline_leftover = local_assigns[:budget_month]&.calculated_leftover || expense_entries.sum(&:cashflow_amount) %>
+  <section class="ta-card" data-controller="collapsible-groups timeline-category-filter">
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Month Timeline</h3>
+      <div class="flex items-center gap-2">
+        <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#expandAll">
+          <%= tabler_icon("chevron-down", classes: "h-4 w-4 text-slate-600") %>
+          <span>Expand all</span>
+        </button>
+        <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#collapseAll">
+          <%= tabler_icon("chevron-up", classes: "h-4 w-4 text-slate-600") %>
+          <span>Collapse all</span>
+        </button>
+      </div>
+    </div>
+    <p class="ta-muted mb-3">Grouped by budget buckets with per-group totals</p>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2 text-xs">
+      <button type="button" class="rounded-full border border-slate-300 bg-white px-2 py-1 font-medium text-slate-700" data-timeline-category-filter-target="filter" data-group="all" data-action="click->timeline-category-filter#toggle" aria-pressed="true">All</button>
+      <button type="button" class="rounded-full bg-emerald-100 px-2 py-1 font-medium text-emerald-700" data-timeline-category-filter-target="filter" data-group="income" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Income</button>
+      <button type="button" class="rounded-full bg-indigo-100 px-2 py-1 font-medium text-indigo-700" data-timeline-category-filter-target="filter" data-group="recurring" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Recurring</button>
+      <button type="button" class="rounded-full bg-sky-100 px-2 py-1 font-medium text-sky-700" data-timeline-category-filter-target="filter" data-group="bills" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Bills</button>
+      <button type="button" class="rounded-full bg-violet-100 px-2 py-1 font-medium text-violet-700" data-timeline-category-filter-target="filter" data-group="plans" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Plans</button>
+      <button type="button" class="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-700" data-timeline-category-filter-target="filter" data-group="cards" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Cards</button>
+      <button type="button" class="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700" data-timeline-category-filter-target="filter" data-group="other" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Other</button>
+    </div>
+
+    <% ordered_entries = expense_entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
+    <% remaining_entries = ordered_entries.dup %>
+    <% template_sources = %w[pay_schedule subscription monthly_bill payment_plan credit_card_estimate] %>
+
+    <% group_rules = [
+      ["Income & Paychecks", ->(entry) { entry.income? || entry.source_file == "pay_schedule" || entry.category.to_s.downcase.include?("paycheck") }],
+      ["Recurring Subscriptions", ->(entry) { entry.source_file == "subscription" || entry.category.to_s.downcase.include?("subscription") }],
+      ["Monthly Fixed Bills", ->(entry) { entry.source_file == "monthly_bill" && entry.category.to_s.downcase.include?("monthly payment") }],
+      ["Monthly Variable Bills", ->(entry) { entry.source_file == "monthly_bill" && entry.category.to_s.downcase.include?("variable") }],
+      ["Payment Plans", ->(entry) { entry.source_file == "payment_plan" || entry.category.to_s.downcase.include?("payment plan") }],
+      ["Credit Card Payments", ->(entry) { entry.source_file == "credit_card_estimate" || entry.category.to_s.downcase.include?("credit card") }]
+    ] %>
+
+    <% grouped_entries = [] %>
+    <% group_rules.each do |group_name, matcher| %>
+      <% matches, remaining_entries = remaining_entries.partition { |entry| matcher.call(entry) } %>
+      <% grouped_entries << [group_name, matches] if matches.any? %>
+    <% end %>
+
+    <% grouped_entries << ["Other Entries", remaining_entries] if remaining_entries.any? %>
+
+    <% if grouped_entries.any? %>
+      <div class="space-y-4">
+        <% grouped_entries.each_with_index do |(group_name, entries), index| %>
+          <% group_total = entries.sum(&:cashflow_amount) %>
+          <% group_key = case group_name
+                         when "Income & Paychecks" then "income"
+                         when "Recurring Subscriptions" then "recurring"
+                         when "Monthly Fixed Bills", "Monthly Variable Bills" then "bills"
+                         when "Payment Plans" then "plans"
+                         when "Credit Card Payments" then "cards"
+                         else "other"
+                         end %>
+          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" data-group="<%= group_key %>" <%= "open" if index.zero? %>>
+            <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
+              <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <%= tabler_icon("list") %>
+                <%= group_name %>
+              </span>
+              <div class="flex items-center gap-3 text-xs sm:text-sm">
+                <span class="text-slate-500"><%= pluralize(entries.count, "entry") %></span>
+                <span class="font-semibold <%= group_total >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
+                  Net: <%= group_total >= 0 ? "+" : "" %><%= number_to_currency(group_total) %>
+                </span>
+                <span class="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
+                  Toggle
+                </span>
+              </div>
+            </summary>
+
+            <div class="overflow-x-auto border-t border-slate-200" data-controller="timeline-filter">
+              <table class="ta-table">
+                <thead class="bg-white">
+                  <tr>
+                    <th class="ta-th">Date</th>
+                    <th class="ta-th">Payee</th>
+                    <th class="ta-th">Reason</th>
+                    <th class="ta-th">Status</th>
+                    <th class="ta-th text-right">Impact</th>
+                    <th class="ta-th text-right">Actions</th>
+                  </tr>
+                  <tr class="border-t border-slate-200 bg-slate-50">
+                    <th class="px-3 py-2">
+                      <input type="date" class="fb-input !py-1.5 !text-xs" data-timeline-filter-target="date" data-action="input->timeline-filter#filter change->timeline-filter#filter" />
+                    </th>
+                    <th class="px-3 py-2">
+                      <input type="text" placeholder="Filter payee" class="fb-input !py-1.5 !text-xs" data-timeline-filter-target="payee" data-action="input->timeline-filter#filter" />
+                    </th>
+                    <th class="px-3 py-2">
+                      <input type="text" placeholder="Filter reason" class="fb-input !py-1.5 !text-xs" data-timeline-filter-target="reason" data-action="input->timeline-filter#filter" />
+                    </th>
+                    <th class="px-3 py-2">
+                      <select class="fb-select !py-1.5 !text-xs" data-timeline-filter-target="status" data-action="change->timeline-filter#filter">
+                        <option value="">All statuses</option>
+                        <% ExpenseEntry.statuses.keys.each do |status_key| %>
+                          <option value="<%= status_key %>"><%= status_key.humanize %></option>
+                        <% end %>
+                      </select>
+                    </th>
+                    <th class="px-3 py-2"></th>
+                    <th class="px-3 py-2 text-right">
+                      <button type="button" class="fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" data-action="click->timeline-filter#clearFilters">
+                        <%= tabler_icon("arrow-left") %>
+                        <span>Clear filters</span>
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <% entries.each do |entry| %>
+                    <% impact = entry.cashflow_amount %>
+                    <% generated_from_template = template_sources.include?(entry.source_file.to_s) %>
+                    <tr
+                      data-timeline-filter-target="row"
+                      data-date="<%= entry.occurred_on&.iso8601 %>"
+                      data-payee="<%= entry.payee.to_s %>"
+                      data-reason="<%= (entry.category.presence || entry.section.humanize).to_s %>"
+                      data-status="<%= entry.status %>">
+                      <td class="px-3 py-2"><%= entry.occurred_on || "—" %></td>
+                      <td class="px-3 py-2"><%= entry.payee.presence || "—" %></td>
+                      <td class="px-3 py-2"><%= entry.category.presence || entry.section.humanize %></td>
+                      <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
+                      <td class="px-3 py-2 text-right <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
+                        <%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %>
+                      </td>
+                      <td class="px-3 py-2">
+                        <div class="flex justify-end gap-2">
+                          <%= link_to edit_budget_month_expense_entry_path(entry.budget_month, entry),
+                                      class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                                      title: "Edit entry",
+                                      aria: { label: "Edit entry" },
+                                      data: { turbo_frame: "entry_editor_modal" } do %>
+                            <%= tabler_icon("pencil", classes: "h-4 w-4 text-indigo-600") %>
+                          <% end %>
+
+                          <%= button_to budget_month_expense_entry_path(entry.budget_month, entry),
+                                        method: :delete,
+                                        class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                                        title: "Delete entry",
+                                        aria: { label: "Delete entry" },
+                                        form: { data: { turbo_confirm: "Delete this entry?" } } do %>
+                            <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                          <% end %>
+
+                          <% if generated_from_template %>
+                            <%= link_to edit_template_budget_month_expense_entry_path(entry.budget_month, entry),
+                                        class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                                        title: "Edit template",
+                                        aria: { label: "Edit template" },
+                                        data: { turbo_frame: "template_editor_modal" } do %>
+                              <%= tabler_icon("file-pencil", classes: "h-4 w-4 text-violet-600") %>
+                              <span>Template</span>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        <% end %>
+      </div>
+      <p class="hidden rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500" data-timeline-category-filter-target="empty">No matching timeline groups for the selected filters.</p>
+    <% else %>
+      <p class="ta-muted">No timeline entries for this month yet.</p>
+    <% end %>
+
+    <div class="mt-4 border-t border-slate-200 pt-3">
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <span class="font-medium text-slate-600">Leftover</span>
+        <span class="text-base font-semibold <%= timeline_leftover >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
+          <%= number_to_currency(timeline_leftover) %>
+        </span>
+      </div>
+    </div>
+  </section>
+<% end %>

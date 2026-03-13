@@ -1,0 +1,69 @@
+<%= turbo_frame_tag "entry_editor_modal" do %>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close click->template-modal#backdropClose">
+    <div class="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("pencil", classes: "h-4 w-4 text-indigo-600") %> Edit Entry</h3>
+        <button type="button" class="ta-icon-btn" aria-label="Close entry editor" title="Close" data-action="click->template-modal#close">
+          <%= tabler_icon("x", classes: "h-4 w-4 text-slate-500") %>
+        </button>
+      </div>
+
+      <%= form_with model: [budget_month, expense_entry], class: "grid gap-3 sm:grid-cols-2" do |form| %>
+        <div>
+          <%= form.label :occurred_on, class: "fb-label" %>
+          <%= form.date_field :occurred_on, class: "fb-input" %>
+        </div>
+
+        <div>
+          <%= form.label :section, class: "fb-label" %>
+          <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+        </div>
+
+        <div>
+          <%= form.label :category, class: "fb-label" %>
+          <%= form.text_field :category, class: "fb-input" %>
+        </div>
+
+        <div>
+          <%= form.label :payee, class: "fb-label" %>
+          <%= form.text_field :payee, class: "fb-input" %>
+        </div>
+
+        <div>
+          <%= form.label :planned_amount, class: "fb-label" %>
+          <%= form.number_field :planned_amount, step: 0.01, class: "fb-input" %>
+        </div>
+
+        <div>
+          <%= form.label :actual_amount, class: "fb-label" %>
+          <%= form.number_field :actual_amount, step: 0.01, class: "fb-input" %>
+        </div>
+
+        <div>
+          <%= form.label :account, class: "fb-label" %>
+          <%= form.text_field :account, class: "fb-input" %>
+        </div>
+
+        <div>
+          <%= form.label :status, class: "fb-label" %>
+          <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+        </div>
+
+        <div>
+          <%= form.label :need_or_want, class: "fb-label" %>
+          <%= form.text_field :need_or_want, class: "fb-input" %>
+        </div>
+
+        <div class="sm:col-span-2">
+          <%= form.label :notes, class: "fb-label" %>
+          <%= form.text_area :notes, rows: 4, class: "fb-textarea" %>
+        </div>
+
+        <div class="sm:col-span-2 flex items-center justify-end gap-2">
+          <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
+          <%= form.submit "Update Entry", class: "fb-btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

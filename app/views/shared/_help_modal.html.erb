@@ -1,0 +1,11 @@
+<div data-help-modal-target="backdrop" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4" data-action="click->help-modal#backdropClick">
+  <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl" data-help-modal-target="dialog">
+    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+      <h3 class="text-lg font-semibold text-slate-900" data-help-modal-target="title">Help</h3>
+      <button type="button" class="rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700 hover:bg-slate-100" data-action="click->help-modal#close">Close</button>
+    </div>
+    <div class="px-5 py-4">
+      <p class="whitespace-pre-line text-sm text-slate-700" data-help-modal-target="content"></p>
+    </div>
+  </div>
+</div>

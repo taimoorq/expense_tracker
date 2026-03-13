@@ -1,0 +1,86 @@
+<div class="space-y-6">
+  <% has_generated_paychecks = @expense_entries.any? { |entry| entry.source_file == "pay_schedule" } %>
+  <% has_generated_subscriptions = @expense_entries.any? { |entry| entry.source_file == "subscription" } %>
+  <% has_generated_monthly_bills = @expense_entries.any? { |entry| entry.source_file == "monthly_bill" } %>
+  <% has_generated_payment_plans = @expense_entries.any? { |entry| entry.source_file == "payment_plan" } %>
+
+  <% content_for :page_header do %>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="text-2xl font-semibold"><%= @budget_month.label %></h2>
+      <div class="flex flex-wrap items-center gap-2">
+        <%= link_to new_budget_month_path(source_month_id: @budget_month.id), class: "fb-btn-secondary ta-action-btn" do %>
+          <%= tabler_icon("copy", classes: "h-4 w-4 text-slate-600") %>
+          <span>Clone Month</span>
+        <% end %>
+        <% unless has_generated_paychecks %>
+          <%= button_to generate_paychecks_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
+            <%= tabler_icon("cash", classes: "h-4 w-4 text-emerald-600") %>
+            <span>Generate Paychecks</span>
+          <% end %>
+        <% end %>
+        <% unless has_generated_subscriptions %>
+          <%= button_to generate_subscriptions_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
+            <%= tabler_icon("repeat", classes: "h-4 w-4 text-indigo-600") %>
+            <span>Generate Subscriptions</span>
+          <% end %>
+        <% end %>
+        <% unless has_generated_monthly_bills %>
+          <%= button_to generate_monthly_bills_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
+            <%= tabler_icon("calendar-plus", classes: "h-4 w-4 text-sky-600") %>
+            <span>Generate Monthly Bills</span>
+          <% end %>
+        <% end %>
+        <% unless has_generated_payment_plans %>
+          <%= button_to generate_payment_plans_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
+            <%= tabler_icon("template", classes: "h-4 w-4 text-violet-600") %>
+            <span>Generate Plans</span>
+          <% end %>
+        <% end %>
+        <%= button_to estimate_credit_cards_budget_month_path(@budget_month), method: :post, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("chart-bar", classes: "h-4 w-4 text-indigo-100") %>
+          <span>Estimate Cards</span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <section class="ta-card" data-controller="tabs" data-tabs-default-tab-value="timeline">
+    <div class="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Month view tabs">
+      <button type="button" class="fb-btn-primary" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="timeline" data-action="click->tabs#switch" data-tabs-name-param="timeline">
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "h-4 w-4 text-indigo-100") %> Timeline</span>
+      </button>
+      <button type="button" class="fb-btn-secondary" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="calendar" data-action="click->tabs#switch" data-tabs-name-param="calendar">
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "h-4 w-4 text-sky-600") %> Calendar</span>
+      </button>
+      <button type="button" class="fb-btn-secondary" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="entries" data-action="click->tabs#switch" data-tabs-name-param="entries">
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("list", classes: "h-4 w-4 text-slate-600") %> Entries</span>
+      </button>
+    </div>
+
+    <div data-tabs-target="panel" data-panel-name="timeline" role="tabpanel" class="space-y-6">
+      <%= render "summary_cards", budget_month: @budget_month, expense_entries: @expense_entries %>
+
+      <div class="grid gap-4 xl:grid-cols-3">
+        <div class="space-y-4 xl:col-span-2">
+          <%= render "expense_entries/timeline", expense_entries: @expense_entries, budget_month: @budget_month %>
+        </div>
+        <div class="space-y-4 xl:col-span-1">
+          <%= render "visual_dashboard", budget_month: @budget_month, expense_entries: @expense_entries, compact: true %>
+        </div>
+      </div>
+    </div>
+
+    <div data-tabs-target="panel" data-panel-name="calendar" role="tabpanel" class="hidden space-y-4">
+      <%= render "expense_entries/calendar", expense_entries: @expense_entries, budget_month: @budget_month %>
+    </div>
+
+    <div data-tabs-target="panel" data-panel-name="entries" role="tabpanel" class="hidden space-y-4">
+      <%= render "expense_entries/form", budget_month: @budget_month, expense_entry: @expense_entry %>
+      <%= render "expense_entries/table", budget_month: @budget_month, expense_entries: @expense_entries %>
+    </div>
+  </section>
+
+  <%= render "expense_entries/template_editor_empty" %>
+  <%= render "expense_entries/entry_editor_empty" %>
+  <%= render "expense_entries/entry_wizard_empty" %>
+</div>
