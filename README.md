@@ -22,6 +22,7 @@ A Rails 8 budgeting app for planning and tracking monthly income, bills, subscri
 	- [Sample User](#sample-user)
 	- [Seeded Demo Month](#seeded-demo-month)
 	- [Sample CSV Files](#sample-csv-files)
+- [Open Source Readiness](#open-source-readiness)
 - [Clone Month Behavior](#clone-month-behavior)
 - [Testing and Useful Commands](#testing-and-useful-commands)
 - [Troubleshooting](#troubleshooting)
@@ -317,6 +318,41 @@ Expected transaction columns:
 - `Status`
 - `Need or Want`
 - `Notes`
+
+## Open Source Readiness
+
+This repo is already set up to avoid committing the usual local-only files, including:
+
+- `config/*.key`
+- `.env*`
+- `log/*`
+- `tmp/*`
+- `storage/*`
+- `.vscode/`
+
+Before publishing, review this checklist:
+
+1. Confirm secrets were never committed
+	- `config/master.key` is ignored and is not currently tracked.
+	- If a real secret was ever committed in the past, rotate it before publishing.
+2. Keep deployment config as example-only
+	- [config/deploy.yml](config/deploy.yml) now uses placeholder hosts and registry values.
+3. Review sample data and screenshots
+	- Seed/sample CSVs use generic names and demo content.
+	- Screenshots currently show demo data and a demo account identity.
+4. Regenerate credentials if needed
+	- [config/credentials.yml.enc](config/credentials.yml.enc) is safe to publish only if the matching key is never shared.
+	- If you are unsure what is inside, create fresh credentials before publishing.
+5. Check git history one more time before pushing
+	- Review for accidental secrets, exported data, or personal notes.
+
+Recommended pre-publish commands:
+
+- `git log -- config/master.key`
+- `git log -- log/test.log`
+- `git grep -n "@"`
+- `git grep -n "password"`
+- `git grep -n "/Users/"`
 
 ## Clone Month Behavior
 

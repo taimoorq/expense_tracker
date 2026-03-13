@@ -1,16 +1,18 @@
 # Name of your application. Used to uniquely configure containers.
 service: expense_tracker
 
-# Name of the container image (use your-user/app-name on external registries).
-image: expense_tracker
+# Name of the container image.
+# Update this to your own registry namespace before using Kamal.
+image: your-registry-user/expense_tracker
 
 # Deploy to these servers.
+# Replace the example hostnames below with your real deployment targets.
 servers:
   web:
-    - 192.168.0.1
+    - app1.example.com
   # job:
   #   hosts:
-  #     - 192.168.0.1
+  #     - jobs1.example.com
   #   cmd: bin/jobs
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
@@ -27,7 +29,7 @@ servers:
 # Where you keep your container images.
 registry:
   # Alternatives: hub.docker.com / registry.digitalocean.com / ghcr.io / ...
-  server: localhost:5555
+  server: registry.example.com
 
   # Needed for authenticated registries.
   # username: your-user
@@ -53,7 +55,7 @@ env:
 
     # Match this to any external database server to configure Active Record correctly
     # Use expense_tracker-db for a db accessory server on same machine via local kamal docker network.
-    # DB_HOST: 192.168.0.2
+    # DB_HOST: db.example.internal
 
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
@@ -92,13 +94,13 @@ builder:
 
 # Use a different ssh user than root
 # ssh:
-#   user: app
+#   user: deploy
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:
 #   db:
 #     image: mysql:8.0
-#     host: 192.168.0.2
+#     host: db.example.internal
 #     # Change to 3306 to expose port to the world instead of just local network.
 #     port: "127.0.0.1:3306:3306"
 #     env:
@@ -113,7 +115,7 @@ builder:
 #       - data:/var/lib/mysql
 #   redis:
 #     image: valkey/valkey:8
-#     host: 192.168.0.2
+#     host: redis.example.internal
 #     port: 6379
 #     directories:
 #       - data:/data

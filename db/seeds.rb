@@ -83,7 +83,7 @@ template_upsert.call(
 		monthly_target: 200,
 		due_day: 20,
 		account: "Checking",
-		notes: "IRS installment plan",
+		notes: "Sample installment plan",
 		active: true
 	}
 )

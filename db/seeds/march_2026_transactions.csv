@@ -1,9 +1,9 @@
 Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Account,Status,Need or Want,Notes
-2026-03,2026-03-07,Income,Paycheck,Primary Employer,4200,4200,Checking,Paid,Need,Incoming
-2026-03,2026-03-13,Income,Other,Freelance Project,1000,1000,Checking,Paid,Need,Incoming
-2026-03,2026-03-22,Income,Paycheck,Primary Employer,4200,4200,Checking,Paid,Need,Incoming
-2026-03,2026-03-01,Fixed,Phone,Mobile Carrier,97.74,,Card,Planned,Need,
-2026-03,2026-03-01,Fixed,Utilities,Neighborhood Trash Service,26,,Checking,Planned,Need,
+2026-03,2026-03-07,Income,Paycheck,Employer A,4200,4200,Checking,Paid,Need,Incoming
+2026-03,2026-03-13,Income,Other,Contract Work,1000,1000,Checking,Paid,Need,Incoming
+2026-03,2026-03-22,Income,Paycheck,Employer A,4200,4200,Checking,Paid,Need,Incoming
+2026-03,2026-03-01,Fixed,Phone,Wireless Carrier,97.74,,Card,Planned,Need,
+2026-03,2026-03-01,Fixed,Utilities,Local Trash Service,26,,Checking,Planned,Need,
 2026-03,2026-03-01,Fixed,Subscription,Music Streaming,22.99,,Card,Planned,Need,
 2026-03,2026-03-01,Fixed,Subscription,Email Hosting,1,,Card,Planned,Need,
 2026-03,2026-03-01,Fixed,Subscription,Web Hosting,12.86,,Card,Planned,Need,
@@ -27,11 +27,11 @@ Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Account,Status,Ne
 2026-03,2026-03-19,Fixed,Phone,Family Mobile Plan,119.21,,Card,Planned,Need,
 2026-03,2026-03-31,Fixed,Lawn,Landscape Service,50,,Checking,Planned,Need,
 2026-03,2026-03-30,Fixed,Subscription,Live TV Service,80,,Card,Planned,Want,
-2026-03,2026-03-31,Debt,Installment,State Tax Plan,389.9,,Checking,Planned,Need,Ends 11/2028
+2026-03,2026-03-31,Debt,Installment,Tax Installment Plan,389.9,,Checking,Planned,Need,Multi-year sample plan
 2026-03,2026-03-15,Debt,Installment,Furniture Financing,89.84,89.84,Checking,Paid,Need,
-2026-03,2026-03-10,Debt,Installment,Home Furnishing Financing,,,,Planned,Need,Amount blank in source note
+2026-03,2026-03-10,Debt,Installment,Home Furnishing Financing,,,,Planned,Need,Amount intentionally blank in sample data
 2026-03,2026-03-15,Debt,Installment,Device Financing,107.41,107.41,Card,Paid,Need,
-2026-03,2026-03-07,Debt,Credit Card,Department Store Card,71,71,Card,Paid,Need,
+2026-03,2026-03-07,Debt,Credit Card,Retail Store Card,71,71,Card,Paid,Need,
 2026-03,2026-03-31,Auto,Registration,Vehicle Registration,316.5,316.5,Checking,Paid,Need,
 2026-03,2026-03-31,Manual,Utilities,Gas Utility,,,Checking,Planned,Need,
 2026-03,2026-03-31,Manual,Auto,Auto Loan,876.3,876.3,Checking,Paid,Need,
