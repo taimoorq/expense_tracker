@@ -2,15 +2,93 @@ require "csv"
 
 seed_file = Rails.root.join("db/seeds/march_2026_transactions.csv")
 seed_source = "seed:march_2026_inflated_income_60"
+seed_buffer_source = "seed:cashflow_buffer"
 income_multiplier = BigDecimal("1.6")
+target_leftover = BigDecimal("1200")
 seed_email = ENV.fetch("SEED_USER_EMAIL", "demo@example.com")
 seed_password = ENV.fetch("SEED_USER_PASSWORD", "password123!")
 
 seed_user = User.find_or_initialize_by(email: seed_email)
-if seed_user.new_record?
+if seed_user.new_record? || !seed_user.valid_password?(seed_password)
 	seed_user.password = seed_password
 	seed_user.password_confirmation = seed_password
 	seed_user.save!
+end
+
+template_upsert = lambda do |scope, lookup_attrs, assign_attrs = {}|
+	record = scope.find_or_initialize_by(lookup_attrs)
+	record.assign_attributes(assign_attrs)
+	record.save!
+	record
+end
+
+seed_user.pay_schedules.where(name: ["Primary Paycheck"]).delete_all
+seed_user.subscriptions.where(name: ["Netflix", "Google One", "Apple iCloud"]).delete_all
+seed_user.monthly_bills.where(name: ["Rent"]).delete_all
+seed_user.payment_plans.where(name: ["Tax Payment Plan"]).delete_all
+seed_user.credit_cards.where(name: ["Visa Everyday", "Chase Freedom"]).delete_all
+
+template_upsert.call(
+	seed_user.pay_schedules,
+	{ name: "Main Paycheck" },
+	{
+		cadence: :semimonthly,
+		amount: 2500,
+		first_pay_on: Date.new(2026, 1, 15),
+		day_of_month_one: 15,
+		day_of_month_two: 30,
+		weekend_adjustment: :previous_friday,
+		account: "Checking",
+		active: true
+	}
+)
+
+[
+	{ name: "Streaming Service", amount: 21.19, due_day: 19, account: "Card", notes: "Streaming subscription" },
+	{ name: "Cloud Storage", amount: 24.99, due_day: 25, account: "Card", notes: "Cloud storage" },
+	{ name: "Device Backup", amount: 1.00, due_day: 24, account: "Card", notes: "Device backup" }
+].each do |subscription_attrs|
+	template_upsert.call(
+		seed_user.subscriptions,
+		{ name: subscription_attrs[:name] },
+		subscription_attrs.merge(active: true)
+	)
+end
+
+[
+	{ name: "Housing Payment", kind: :fixed_payment, default_amount: 1850, due_day: 1, account: "Checking", notes: "Housing" },
+	{ name: "Electric", kind: :variable_bill, default_amount: 135, due_day: 18, account: "Checking", notes: "Utility estimate" }
+].each do |bill_attrs|
+	template_upsert.call(
+		seed_user.monthly_bills,
+		{ name: bill_attrs[:name] },
+		bill_attrs.merge(active: true)
+	)
+end
+
+template_upsert.call(
+	seed_user.payment_plans,
+	{ name: "Installment Plan" },
+	{
+		total_due: 2400,
+		amount_paid: 600,
+		monthly_target: 200,
+		due_day: 20,
+		account: "Checking",
+		notes: "IRS installment plan",
+		active: true
+	}
+)
+
+[
+	{ name: "Everyday Visa", minimum_payment: 45, priority: 1, account: "Visa" },
+	{ name: "Rewards Mastercard", minimum_payment: 35, priority: 2, account: "Mastercard" }
+].each do |card_attrs|
+	template_upsert.call(
+		seed_user.credit_cards,
+		{ name: card_attrs[:name] },
+		card_attrs.merge(active: true, notes: "Seeded starter card")
+	)
 end
 
 unless File.exist?(seed_file)
@@ -43,6 +121,7 @@ end
 
 seed_user.budget_months.where(id: budget_months.map(&:id)).find_each do |month|
 	month.expense_entries.where(source_file: seed_source).delete_all
+	month.expense_entries.where(source_file: seed_buffer_source).delete_all
 end
 
 parse_date = lambda do |value|
@@ -114,5 +193,30 @@ rows.each do |row|
 	rows_created += 1
 end
 
+buffer_entries_created = 0
+
+budget_months.each do |budget_month|
+	leftover = budget_month.calculated_leftover.to_d
+	next if leftover >= target_leftover
+
+	buffer_amount = (target_leftover - leftover).round(2)
+	budget_month.expense_entries.create!(
+		occurred_on: budget_month.month_on.end_of_month,
+		section: :income,
+		category: "Seed Adjustment",
+		payee: "Cashflow Buffer",
+		planned_amount: buffer_amount,
+		actual_amount: buffer_amount,
+		account: "Checking",
+		status: :paid,
+		need_or_want: "Need",
+		notes: "Automatically added so demo seed data shows positive cashflow.",
+		source_file: seed_buffer_source
+	)
+	buffer_entries_created += 1
+end
+
 puts "Seeded #{rows_created} March 2026 entries with income inflated by 60%."
+puts "Added #{buffer_entries_created} cashflow buffer entr#{buffer_entries_created == 1 ? 'y' : 'ies'} to keep demo data cashflow positive."
 puts "Demo user: #{seed_email} / #{seed_password}"
+puts "Starter templates ready: #{seed_user.pay_schedules.count} pay schedules, #{seed_user.subscriptions.count} subscriptions, #{seed_user.monthly_bills.count} monthly bills, #{seed_user.payment_plans.count} payment plans, #{seed_user.credit_cards.count} credit cards."

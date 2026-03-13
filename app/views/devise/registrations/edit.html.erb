@@ -1,0 +1,64 @@
+<% content_for :title, "Account settings" %>
+
+<div class="space-y-6">
+  <div class="rounded-2xl border border-sky-100 bg-sky-50/70 p-4 text-sm leading-6 text-sky-900">
+    Update your account details here. Your budgets and templates remain tied to this account unless you choose to cancel it.
+  </div>
+
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "space-y-5" }) do |form| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+
+    <div>
+      <%= form.label :email, class: "fb-label" %>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("mail", classes: "h-4 w-4") %></span>
+        <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "ta-auth-input pl-11", placeholder: "you@example.com" %>
+      </div>
+      <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
+        <p class="mt-2 text-sm text-amber-700">Currently waiting confirmation for: <%= resource.unconfirmed_email %></p>
+      <% end %>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :password, class: "fb-label" %>
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("lock", classes: "h-4 w-4") %></span>
+          <%= form.password_field :password, autocomplete: "new-password", class: "ta-auth-input pl-11", placeholder: "Leave blank to keep current" %>
+        </div>
+      </div>
+      <div>
+        <%= form.label :password_confirmation, class: "fb-label" %>
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("shield-lock", classes: "h-4 w-4") %></span>
+          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "ta-auth-input pl-11", placeholder: "Confirm new password" %>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <%= form.label :current_password, class: "fb-label" %>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("lock", classes: "h-4 w-4") %></span>
+        <%= form.password_field :current_password, autocomplete: "current-password", class: "ta-auth-input pl-11", placeholder: "Enter current password to confirm changes" %>
+      </div>
+    </div>
+
+    <%= form.button type: :submit, class: "ta-auth-submit from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500" do %>
+      <%= tabler_icon("pencil", classes: "h-4 w-4") %>
+      <span>Update account</span>
+    <% end %>
+  <% end %>
+
+  <div class="rounded-2xl border border-rose-200 bg-rose-50 p-5">
+    <p class="text-sm font-semibold text-rose-900">Cancel my account</p>
+    <p class="mt-2 text-sm leading-6 text-rose-700">This permanently removes your access and deletes the user record.</p>
+    <div class="mt-4">
+      <%= button_to "Cancel my account", registration_path(resource_name), data: { turbo_confirm: "Are you sure?" }, method: :delete, class: "fb-btn-danger" %>
+    </div>
+  </div>
+
+  <div>
+    <%= link_to "Back to app", root_path, class: "ta-auth-link" %>
+  </div>
+</div>

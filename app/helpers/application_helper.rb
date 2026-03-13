@@ -46,6 +46,36 @@ module ApplicationHelper
 				feature_title: "Recovery made simple",
 				feature_copy: "Request a reset securely and keep your account protected while you regain access."
 			}
+		when ["passwords", "edit"]
+			{
+				badge: "Choose a new password",
+				title: "Set a fresh password",
+				description: "Create a strong password so you can get back to tracking months, imports, and recurring plans.",
+				gradient: "from-fuchsia-700 via-violet-700 to-indigo-700",
+				panel_tint: "from-fuchsia-500/20 via-violet-500/10 to-indigo-400/20",
+				glow: "bg-fuchsia-400/30",
+				accent: "text-fuchsia-100",
+				chip: "bg-fuchsia-500/15 text-fuchsia-50 ring-fuchsia-200/30",
+				button: "from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500",
+				feature_icon: "shield-lock",
+				feature_title: "Secure reset",
+				feature_copy: "Update your credentials without exposing any budgeting data outside your account."
+			}
+		when ["registrations", "edit"]
+			{
+				badge: "Account settings",
+				title: "Manage your account",
+				description: "Update your email, refresh your password, or close your account from one secure place.",
+				gradient: "from-sky-700 via-indigo-700 to-slate-800",
+				panel_tint: "from-sky-500/20 via-indigo-500/10 to-slate-400/20",
+				glow: "bg-sky-400/30",
+				accent: "text-sky-100",
+				chip: "bg-sky-500/15 text-sky-50 ring-sky-200/30",
+				button: "from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500",
+				feature_icon: "pencil",
+				feature_title: "Profile control",
+				feature_copy: "Keep your login details current while preserving your private budgeting workspace."
+			}
 		else
 			{
 				badge: "Expense Tracker",
@@ -260,6 +290,11 @@ module ApplicationHelper
 				{ d: "M12 3l1.8 4.2l4.2 1.8l-4.2 1.8l-1.8 4.2l-1.8 -4.2l-4.2 -1.8l4.2 -1.8z" },
 				{ d: "M5 16l.8 1.7l1.7 .8l-1.7 .8l-.8 1.7l-.8 -1.7l-1.7 -.8l1.7 -.8z" },
 				{ d: "M18 15l.8 1.7l1.7 .8l-1.7 .8l-.8 1.7l-.8 -1.7l-1.7 -.8l1.7 -.8z" }
+			],
+			"user-circle" => [
+				{ d: "M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" },
+				{ d: "M6 21a6 6 0 0 1 12 0" },
+				{ d: "M12 3a9 9 0 1 1 0 18a9 9 0 0 1 0 -18" }
 			]
 		}
 	end

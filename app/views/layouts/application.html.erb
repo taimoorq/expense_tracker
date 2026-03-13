@@ -88,7 +88,10 @@
 
           <% if user_signed_in? %>
             <div class="flex items-center gap-2">
-              <span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600"><%= current_user.email %></span>
+              <%= link_to edit_user_registration_path, class: "inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-200 hover:text-slate-900" do %>
+                <%= tabler_icon("user-circle", classes: "h-4 w-4") %>
+                <span><%= current_user.email %></span>
+              <% end %>
               <%= button_to destroy_user_session_path, method: :delete, class: "fb-btn-secondary ta-action-btn" do %>
                 <%= tabler_icon("x", classes: "h-4 w-4 text-slate-600") %>
                 <span>Sign out</span>

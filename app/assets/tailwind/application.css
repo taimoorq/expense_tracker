@@ -142,12 +142,20 @@
 		@apply relative min-h-screen overflow-hidden bg-slate-950 text-white;
 	}
 
+	.ta-auth-shell::before {
+		content: "";
+		@apply absolute inset-0 opacity-40;
+		background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+		background-size: 36px 36px;
+		mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+	}
+
 	.ta-auth-backdrop {
 		@apply absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.06),transparent_28%)];
 	}
 
 	.ta-auth-orb {
-		@apply absolute rounded-full blur-3xl;
+		@apply absolute rounded-full blur-3xl transition-transform duration-700 ease-out;
 	}
 
 	.ta-auth-grid {
@@ -164,6 +172,15 @@
 
 	.ta-auth-form-wrap {
 		@apply relative mx-auto w-full max-w-xl;
+	}
+
+	.ta-auth-float {
+		animation: ta-auth-float 8s ease-in-out infinite;
+	}
+
+	.ta-auth-float-delayed {
+		animation: ta-auth-float 10s ease-in-out infinite;
+		animation-delay: 1.25s;
 	}
 
 	.ta-auth-form-card {
@@ -206,5 +223,14 @@
 
 	.ta-auth-stat {
 		@apply rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur;
+	}
+}
+
+@keyframes ta-auth-float {
+	0%, 100% {
+		transform: translate3d(0, 0, 0);
+	}
+	50% {
+		transform: translate3d(0, -10px, 0);
 	}
 }

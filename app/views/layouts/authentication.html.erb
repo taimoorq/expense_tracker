@@ -26,13 +26,13 @@
   </head>
 
   <% theme = auth_page_theme %>
-  <body class="ta-auth-shell">
+  <body class="ta-auth-shell" data-controller="auth-scene" data-action="pointermove->auth-scene#move">
     <div class="ta-auth-backdrop"></div>
-    <div class="ta-auth-orb <%= theme[:glow] %> left-[-5rem] top-[-4rem] h-56 w-56"></div>
-    <div class="ta-auth-orb <%= theme[:glow] %> bottom-[-5rem] right-[-4rem] h-72 w-72 opacity-70"></div>
+    <div class="ta-auth-orb ta-auth-float <%= theme[:glow] %> left-[-5rem] top-[-4rem] h-56 w-56" data-auth-scene-target="layer" data-depth="18"></div>
+    <div class="ta-auth-orb ta-auth-float-delayed <%= theme[:glow] %> bottom-[-5rem] right-[-4rem] h-72 w-72 opacity-70" data-auth-scene-target="layer" data-depth="26"></div>
 
     <div class="ta-auth-grid">
-      <section class="ta-auth-showcase bg-gradient-to-br <%= theme[:gradient] %>">
+      <section class="ta-auth-showcase bg-gradient-to-br <%= theme[:gradient] %>" data-auth-scene-target="layer" data-depth="8">
         <div class="absolute inset-0 bg-gradient-to-br <%= theme[:panel_tint] %>"></div>
         <div class="relative z-10 flex min-h-[680px] flex-col justify-between">
           <div>
