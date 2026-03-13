@@ -75,11 +75,12 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     expect(page).to have_content("looks complete")
-    expect(page).not_to have_button("Generate Paychecks")
-    expect(page).not_to have_button("Generate Subscriptions")
-    expect(page).not_to have_button("Generate Monthly Bills")
-    expect(page).not_to have_button("Generate Plans")
-    expect(page).not_to have_button("Recalculate Card Estimates")
+    expect(page).not_to have_content("Add from planning templates")
+    expect(page).not_to have_button("Add Paychecks")
+    expect(page).not_to have_button("Add Subscriptions")
+    expect(page).not_to have_button("Add Monthly Bills")
+    expect(page).not_to have_button("Add Payment Plans")
+    expect(page).not_to have_button("Estimate Card Payments")
   end
 
   it "renames the card estimate action for active months" do
@@ -89,7 +90,8 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_button("Recalculate Card Estimates")
+    expect(page).to have_content("Add from planning templates")
+    expect(page).to have_button("Estimate Card Payments")
   end
 
   it "shows reason pills from the month data" do

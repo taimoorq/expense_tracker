@@ -360,11 +360,12 @@ Additional month actions help keep planning current:
 
 - `Clone Month`
 	- create a new month from the current one
-- generation actions
-	- available for active or incomplete months
+- `Add from planning templates`
+	- adds planned entries from saved paychecks, subscriptions, monthly bills, and payment plans
+	- shown in a lower-priority template actions area on active or incomplete months
 	- hidden when an older month appears complete
-- `Recalculate Card Estimates`
-	- recomputes estimated credit-card payments from available leftover cash
+- `Estimate Card Payments`
+	- recomputes estimated credit-card payment entries from available leftover cash
 
 ## Open Source Readiness
 
