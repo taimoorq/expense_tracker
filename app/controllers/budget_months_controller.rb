@@ -1,10 +1,12 @@
 class BudgetMonthsController < ApplicationController
   def index
+    auto_complete_due_recurring_entries(current_user.expense_entries)
     @budget_months = current_user.budget_months.includes(:expense_entries).recent_first
   end
 
   def show
     @budget_month = current_user.budget_months.find(params[:id])
+    auto_complete_due_recurring_entries(@budget_month.expense_entries)
     @expense_entries = @budget_month.expense_entries.chronological
     @expense_entry = @budget_month.expense_entries.new
   end
@@ -178,6 +180,7 @@ class BudgetMonthsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         @budget_month = budget_month
+        auto_complete_due_recurring_entries(@budget_month.expense_entries)
         @expense_entries = @budget_month.expense_entries.chronological
         @expense_entry = @budget_month.expense_entries.new
         flash.now[:notice] = message
@@ -193,6 +196,10 @@ class BudgetMonthsController < ApplicationController
       end
       format.html { redirect_to budget_month, notice: message }
     end
+  end
+
+  def auto_complete_due_recurring_entries(entries)
+    AutoCompleteRecurringEntries.new(entries: entries, as_of: Date.current).call
   end
 
   def budget_month_params

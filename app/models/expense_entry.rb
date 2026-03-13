@@ -1,4 +1,6 @@
 class ExpenseEntry < ApplicationRecord
+  RECURRING_TEMPLATE_SOURCES = %w[pay_schedule subscription monthly_bill payment_plan].freeze
+
   belongs_to :user
   belongs_to :budget_month
 
@@ -25,6 +27,8 @@ class ExpenseEntry < ApplicationRecord
   before_validation :assign_user_from_budget_month
 
   scope :chronological, -> { order(:occurred_on, :created_at) }
+  scope :recurring_templates, -> { where(source_file: RECURRING_TEMPLATE_SOURCES) }
+  scope :due_on_or_before, ->(date) { where(occurred_on: ..date) }
 
   def effective_amount
     actual_amount.presence || planned_amount.presence || 0
@@ -32,6 +36,10 @@ class ExpenseEntry < ApplicationRecord
 
   def cashflow_amount
     income? ? effective_amount : -effective_amount
+  end
+
+  def auto_completable_recurring?
+    planned? && source_file.in?(RECURRING_TEMPLATE_SOURCES) && occurred_on.present? && occurred_on <= Date.current
   end
 
   private

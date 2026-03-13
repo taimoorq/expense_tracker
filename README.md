@@ -161,6 +161,22 @@ In another terminal:
 
 This creates a demo account and sample month so you can explore the app right away.
 
+#### Automatic recurring completion
+
+Due recurring template-generated entries are automatically marked as done by setting their status to `paid` and copying the planned amount into the actual amount when needed.
+
+This works in two ways:
+
+- month pages run a small sync when opened, so self-hosted installs still update during normal use
+- production also schedules a daily Solid Queue job for unattended auto-completion
+
+For self-hosted production:
+
+- single-server installs can keep using the existing `SOLID_QUEUE_IN_PUMA=true` setup so jobs run inside Puma
+- multi-server installs should move job processing to a dedicated `bin/jobs` process or job host
+
+The recurring schedule lives in [config/recurring.yml](config/recurring.yml).
+
 #### Stop the app
 
 - `docker compose down`
