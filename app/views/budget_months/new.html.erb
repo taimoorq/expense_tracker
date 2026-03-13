@@ -1,10 +1,8 @@
 <% content_for :page_header do %>
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h2 class="text-2xl font-semibold"><%= @source_budget_month ? "Clone Budget Month" : "Create Budget Month" %></h2>
-      <% if @source_budget_month %>
-        <p class="ta-muted mt-1">Creating a new month using <%= @source_budget_month.label %> as the template.</p>
-      <% end %>
+      <h2 class="text-2xl font-semibold">New Budget Month</h2>
+      <p class="ta-muted mt-1">Choose a quick clone workflow or start a month from scratch with guided details.</p>
     </div>
     <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
       <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
@@ -13,40 +11,156 @@
   </div>
 <% end %>
 
-<%= form_with model: @budget_month, class: "rounded-xl border border-slate-200 bg-white p-4 shadow-sm" do |form| %>
-  <% if @source_budget_month %>
-    <%= hidden_field_tag :source_month_id, @source_budget_month.id %>
+<%= form_with model: @budget_month,
+  class: "ta-wizard-shell",
+  data: { controller: "month-wizard", month_wizard_start_step_value: @wizard_step } do |form| %>
+  <div class="ta-wizard-header">
+    <div class="flex items-center justify-between gap-3">
+      <div class="text-sm font-medium text-slate-700" data-month-wizard-target="progress">Step 1 of 2</div>
+      <div data-month-wizard-target="error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
+    </div>
 
-    <div class="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-      All entries from <strong><%= @source_budget_month.label %></strong> will be copied into the new month.
-      Dates will shift into the selected month, actual amounts will be cleared, and statuses will reset to planned.
+    <div class="ta-wizard-steps mt-4">
+      <div class="ta-wizard-step" data-month-wizard-target="stepIndicator">
+        <span class="ta-wizard-step-badge">1</span>
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Choose your path</p>
+          <p class="mt-1 text-sm text-slate-500">Clone an existing month or start fresh.</p>
+        </div>
+      </div>
+      <div class="ta-wizard-step" data-month-wizard-target="stepIndicator">
+        <span class="ta-wizard-step-badge">2</span>
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Enter details</p>
+          <p class="mt-1 text-sm text-slate-500">Only needed for a fresh month setup.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if @budget_month.errors.any? %>
+    <div class="mt-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+      <%= @budget_month.errors.full_messages.join(", ") %>
     </div>
   <% end %>
 
-  <div class="mb-3">
-    <%= form.label :month_on, "Month", class: "fb-label" %>
-    <%= form.date_field :month_on, class: "fb-input" %>
-  </div>
+  <section data-month-wizard-target="step" class="mt-4 space-y-4">
+    <div>
+      <h3 class="text-lg font-semibold text-slate-900">1. How do you want to create this month?</h3>
+      <p class="ta-muted mt-1">Clone a previous month for a fast setup, or start fresh and enter the details manually.</p>
+    </div>
 
-  <div class="mb-3">
-    <%= form.label :label, class: "fb-label" %>
-    <%= form.text_field :label, placeholder: "March 2026", class: "fb-input" %>
-  </div>
+    <div class="grid gap-3 md:grid-cols-2">
+      <label class="ta-wizard-choice" data-month-wizard-target="choiceCard">
+        <div class="flex items-start gap-3">
+          <%= radio_button_tag :month_workflow, "clone", @month_workflow == "clone", class: "mt-1 h-4 w-4 text-indigo-600", data: { month_wizard_target: "workflow", action: "change->month-wizard#workflowChanged" } %>
+          <div>
+            <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <%= tabler_icon("copy", classes: "h-4 w-4 text-indigo-600") %>
+              <span>Clone an existing month</span>
+            </div>
+            <p class="mt-1 text-sm text-slate-600">Next will immediately create the next available month and copy entries from the month you pick.</p>
+          </div>
+        </div>
+      </label>
 
-  <div class="mb-3">
-    <%= form.label :planned_income, class: "fb-label" %>
-    <%= form.number_field :planned_income, step: 0.01, class: "fb-input" %>
-  </div>
+      <label class="ta-wizard-choice ta-wizard-choice-fresh" data-month-wizard-target="choiceCard">
+        <div class="flex items-start gap-3">
+          <%= radio_button_tag :month_workflow, "fresh", @month_workflow != "clone", class: "mt-1 h-4 w-4 text-emerald-600", data: { month_wizard_target: "workflow", action: "change->month-wizard#workflowChanged" } %>
+          <div>
+            <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <%= tabler_icon("sparkles", classes: "h-4 w-4 text-emerald-600") %>
+              <span>Start fresh</span>
+            </div>
+            <p class="mt-1 text-sm text-slate-600">Go to the next step and enter the month, label, income, and notes yourself.</p>
+          </div>
+        </div>
+      </label>
+    </div>
 
-  <div class="mb-3">
-    <%= form.label :actual_income, class: "fb-label" %>
-    <%= form.number_field :actual_income, step: 0.01, class: "fb-input" %>
-  </div>
+    <div data-month-wizard-target="clonePanel" class="ta-wizard-panel">
+      <div class="mb-3 flex items-center gap-2">
+        <h4 class="text-sm font-semibold text-slate-900">Choose a month to clone</h4>
+        <button type="button" class="ta-icon-btn" aria-label="Clone month help" title="Clone month help" data-action="click->help-modal#open" data-help-title="Clone Month Help" data-help-body="Pick an existing month to copy its entries into the next available month. Entry dates will be shifted into the new month, actual amounts will be cleared, and statuses will reset to planned."><%= tabler_icon("help") %></button>
+      </div>
 
-  <div class="mb-4">
-    <%= form.label :notes, class: "fb-label" %>
-    <%= form.text_area :notes, rows: 3, class: "fb-textarea" %>
-  </div>
+      <%= select_tag :source_month_id,
+        options_for_select(@cloneable_month_options.map { |option| ["#{option[:source_label]} → #{option[:target_label]}", option[:id], { "data-target-label": option[:target_label], "data-entry-count": option[:entry_count], "data-source-label": option[:source_label] }] }, @source_budget_month&.id),
+        include_blank: "Choose a month",
+        class: "fb-select",
+        data: { month_wizard_target: "sourceSelect", action: "change->month-wizard#sourceChanged" } %>
 
-  <%= form.submit "Create", class: "fb-btn-primary" %>
+      <p class="mt-3 text-sm text-slate-600" data-month-wizard-target="cloneSummary">
+        <% if @clone_preview %>
+          Next will create <strong><%= @clone_preview[:target_label] %></strong> by copying entries from <strong><%= @clone_preview[:source_label] %></strong>.
+        <% else %>
+          Pick a source month to enable the quick clone path.
+        <% end %>
+      </p>
+
+      <div data-month-wizard-target="clonePreview" class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 <%= @clone_preview ? nil : 'hidden' %>">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Success preview</p>
+            <p class="mt-1 text-sm font-semibold text-emerald-950">
+              <span data-month-wizard-target="previewTargetLabel"><%= @clone_preview&.dig(:target_label) %></span>
+              will be ready with copied starter entries.
+            </p>
+          </div>
+          <div class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
+            <span data-month-wizard-target="previewEntryCount"><%= @clone_preview&.dig(:entry_count) || 0 %></span>
+            entries
+          </div>
+        </div>
+        <p class="mt-2 text-sm text-emerald-800">
+          Source: <strong data-month-wizard-target="previewSourceLabel"><%= @clone_preview&.dig(:source_label) %></strong>. Actual amounts will be cleared and statuses will reset to planned.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section data-month-wizard-target="step" class="mt-4 space-y-4">
+    <div>
+      <h3 class="text-lg font-semibold text-slate-900">2. Enter the month details</h3>
+      <p class="ta-muted mt-1">Use this path when you want a clean month without copied entries.</p>
+    </div>
+
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <%= form.label :month_on, "Month", class: "fb-label" %>
+        <%= form.date_field :month_on, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :label, class: "fb-label" %>
+        <%= form.text_field :label, placeholder: "March 2026", class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :planned_income, class: "fb-label" %>
+        <%= form.number_field :planned_income, step: 0.01, class: "fb-input" %>
+      </div>
+
+      <div>
+        <%= form.label :actual_income, class: "fb-label" %>
+        <%= form.number_field :actual_income, step: 0.01, class: "fb-input" %>
+      </div>
+    </div>
+
+    <div>
+      <%= form.label :notes, class: "fb-label" %>
+      <%= form.text_area :notes, rows: 3, class: "fb-textarea" %>
+    </div>
+  </section>
+
+  <div class="ta-wizard-footer">
+    <div class="flex items-center gap-2">
+      <button type="button" class="fb-btn-secondary hidden" data-month-wizard-target="backButton" data-action="click->month-wizard#back">Back</button>
+      <%= link_to "Cancel", root_path, class: "fb-btn-secondary" %>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" class="fb-btn-secondary hidden" data-month-wizard-target="nextButton" data-action="click->month-wizard#next">Next</button>
+      <%= form.submit "Create Month", class: "fb-btn-primary", data: { month_wizard_target: "submitButton" } %>
+    </div>
+  </div>
 <% end %>

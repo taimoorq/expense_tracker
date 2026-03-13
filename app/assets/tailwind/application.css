@@ -138,6 +138,70 @@
 		@apply inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-200;
 	}
 
+	.ta-wizard-shell {
+		@apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+	}
+
+	.ta-wizard-header {
+		@apply rounded-2xl border border-slate-200 bg-slate-50/80 p-4;
+	}
+
+	.ta-wizard-steps {
+		@apply grid gap-3 md:grid-cols-2;
+	}
+
+	.ta-wizard-step {
+		@apply flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition;
+	}
+
+	.ta-wizard-step-active {
+		@apply border-indigo-300 bg-indigo-50 shadow-sm;
+	}
+
+	.ta-wizard-step-complete {
+		@apply border-emerald-300 bg-emerald-50;
+	}
+
+	.ta-wizard-step-badge {
+		@apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-sm font-semibold text-slate-700;
+	}
+
+	.ta-wizard-step-active .ta-wizard-step-badge {
+		@apply border-indigo-500 bg-indigo-600 text-white;
+	}
+
+	.ta-wizard-step-complete .ta-wizard-step-badge {
+		@apply border-emerald-500 bg-emerald-600 text-white;
+	}
+
+	.ta-wizard-choice {
+		@apply cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:shadow-md;
+	}
+
+	.ta-wizard-choice-active {
+		@apply border-indigo-300 bg-indigo-50 shadow-md ring-2 ring-indigo-100;
+	}
+
+	.ta-wizard-choice-fresh.ta-wizard-choice-active {
+		@apply border-emerald-300 bg-emerald-50 ring-emerald-100;
+	}
+
+	.ta-wizard-panel {
+		@apply rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4;
+	}
+
+	.ta-wizard-footer {
+		@apply mt-6 flex items-center justify-between gap-3 border-t border-slate-200 pt-4;
+	}
+
+	.ta-upload-dropzone {
+		@apply flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center transition hover:border-indigo-300 hover:bg-indigo-50;
+	}
+
+	.ta-upload-dropzone-active {
+		@apply border-indigo-500 bg-indigo-50 shadow-inner;
+	}
+
 	.ta-auth-shell {
 		@apply relative min-h-screen overflow-hidden bg-slate-950 text-white;
 	}

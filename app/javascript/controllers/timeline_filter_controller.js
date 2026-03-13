@@ -24,7 +24,8 @@ export default class extends Controller {
       const matchesReason = reasonValue === "" || rowReason.includes(reasonValue)
       const matchesStatus = statusValue === "" || rowStatus === statusValue
 
-      row.classList.toggle("hidden", !(matchesDate && matchesPayee && matchesReason && matchesStatus))
+      row.dataset.searchHidden = matchesDate && matchesPayee && matchesReason && matchesStatus ? "false" : "true"
+      this.applyVisibility(row)
     })
   }
 
@@ -35,5 +36,13 @@ export default class extends Controller {
     if (this.hasStatusTarget) this.statusTarget.value = ""
 
     this.filter()
+  }
+
+  applyVisibility(row) {
+    row.classList.toggle("hidden", this.isHidden(row))
+  }
+
+  isHidden(row) {
+    return row.dataset.searchHidden === "true" || row.dataset.pillHidden === "true"
   }
 }

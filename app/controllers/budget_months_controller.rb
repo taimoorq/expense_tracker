@@ -10,26 +10,17 @@ class BudgetMonthsController < ApplicationController
   end
 
   def new
-    @source_budget_month = current_user.budget_months.find_by(id: params[:source_month_id])
+    prepare_month_form
     @budget_month = current_user.budget_months.new(new_month_defaults)
   end
 
   def create
-    @budget_month = current_user.budget_months.new(budget_month_params)
-    @source_budget_month = current_user.budget_months.find_by(id: params[:source_month_id])
-    @budget_month.label = @budget_month.month_on.strftime("%B %Y") if @budget_month.label.blank? && @budget_month.month_on.present?
+    prepare_month_form
 
-    if @budget_month.save
-      cloned_entries = clone_source_entries(@source_budget_month, @budget_month)
-      notice = if cloned_entries.positive?
-        "Budget month created and #{cloned_entries} entries cloned from #{@source_budget_month.label}."
-      else
-        "Budget month created."
-      end
-
-      redirect_to @budget_month, notice: notice
+    if clone_workflow?
+      create_cloned_month
     else
-      render :new, status: :unprocessable_entity
+      create_fresh_month
     end
   end
 
@@ -65,23 +56,90 @@ class BudgetMonthsController < ApplicationController
 
   private
 
+  def prepare_month_form
+    @cloneable_budget_months = current_user.budget_months.recent_first
+    @cloneable_month_options = @cloneable_budget_months.map do |month|
+      target_month = next_available_month_after(month.month_on)
+
+      {
+        id: month.id,
+        source_label: month.label,
+        target_label: target_month.strftime("%B %Y"),
+        entry_count: month.expense_entries.count
+      }
+    end
+    @source_budget_month = current_user.budget_months.find_by(id: params[:source_month_id])
+    @clone_preview = @cloneable_month_options.find { |option| option[:id] == @source_budget_month&.id }
+    @month_workflow = params[:month_workflow].presence_in(%w[fresh clone]) || (@source_budget_month.present? ? "clone" : "fresh")
+    @wizard_step = params[:wizard_step].to_i
+  end
+
+  def create_fresh_month
+    @budget_month = current_user.budget_months.new(budget_month_params)
+    normalize_budget_month_label(@budget_month)
+
+    if @budget_month.save
+      redirect_to @budget_month, notice: "Budget month created."
+    else
+      @wizard_step = 1
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def create_cloned_month
+    if @source_budget_month.blank?
+      @budget_month = current_user.budget_months.new(new_month_defaults)
+      @budget_month.errors.add(:base, "Choose a month to clone before continuing.")
+      @wizard_step = 0
+      render :new, status: :unprocessable_entity
+      return
+    end
+
+    @budget_month = current_user.budget_months.new(clone_month_attributes(@source_budget_month))
+    normalize_budget_month_label(@budget_month)
+
+    if @budget_month.save
+      cloned_entries = clone_source_entries(@source_budget_month, @budget_month)
+      redirect_to @budget_month, notice: "Budget month created and #{cloned_entries} entries cloned from #{@source_budget_month.label}."
+    else
+      @wizard_step = 0
+      render :new, status: :unprocessable_entity
+    end
+  end
+
   def new_month_defaults
     return {} unless @source_budget_month
 
-    target_month = begin
-      if params[:month_on].present?
-        Date.parse(params[:month_on]).beginning_of_month
-      else
-        @source_budget_month.month_on.next_month.beginning_of_month
-      end
-    rescue ArgumentError
-      @source_budget_month.month_on.next_month.beginning_of_month
-    end
+    clone_month_attributes(@source_budget_month).slice(:month_on, :label)
+  end
+
+  def clone_month_attributes(source_month)
+    target_month = next_available_month_after(source_month.month_on)
 
     {
       month_on: target_month,
-      label: target_month.strftime("%B %Y")
+      label: target_month.strftime("%B %Y"),
+      planned_income: source_month.planned_income,
+      notes: source_month.notes
     }
+  end
+
+  def next_available_month_after(month_on)
+    target_month = month_on.next_month.beginning_of_month
+
+    while current_user.budget_months.exists?(month_on: target_month)
+      target_month = target_month.next_month.beginning_of_month
+    end
+
+    target_month
+  end
+
+  def normalize_budget_month_label(budget_month)
+    budget_month.label = budget_month.month_on.strftime("%B %Y") if budget_month.label.blank? && budget_month.month_on.present?
+  end
+
+  def clone_workflow?
+    @month_workflow == "clone"
   end
 
   def clone_source_entries(source_month, target_month)

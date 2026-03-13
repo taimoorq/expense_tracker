@@ -1,5 +1,10 @@
 <%= turbo_frame_tag "timeline_section" do %>
   <% timeline_leftover = local_assigns[:budget_month]&.calculated_leftover || expense_entries.sum(&:cashflow_amount) %>
+  <% reason_for_entry = ->(entry) { entry.category.presence || entry.section.humanize } %>
+  <% reason_pills = expense_entries.filter_map { |entry| reason_for_entry.call(entry).to_s.strip.presence }
+                    .tally
+                    .sort_by { |reason, count| [-count, reason.downcase] }
+                    .first(8) %>
   <section class="ta-card" data-controller="collapsible-groups timeline-category-filter">
     <div class="mb-3 flex items-center justify-between">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Month Timeline</h3>
@@ -17,13 +22,13 @@
     <p class="ta-muted mb-3">Grouped by budget buckets with per-group totals</p>
 
     <div class="mb-4 flex flex-wrap items-center gap-2 text-xs">
-      <button type="button" class="rounded-full border border-slate-300 bg-white px-2 py-1 font-medium text-slate-700" data-timeline-category-filter-target="filter" data-group="all" data-action="click->timeline-category-filter#toggle" aria-pressed="true">All</button>
-      <button type="button" class="rounded-full bg-emerald-100 px-2 py-1 font-medium text-emerald-700" data-timeline-category-filter-target="filter" data-group="income" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Income</button>
-      <button type="button" class="rounded-full bg-indigo-100 px-2 py-1 font-medium text-indigo-700" data-timeline-category-filter-target="filter" data-group="recurring" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Recurring</button>
-      <button type="button" class="rounded-full bg-sky-100 px-2 py-1 font-medium text-sky-700" data-timeline-category-filter-target="filter" data-group="bills" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Bills</button>
-      <button type="button" class="rounded-full bg-violet-100 px-2 py-1 font-medium text-violet-700" data-timeline-category-filter-target="filter" data-group="plans" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Plans</button>
-      <button type="button" class="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-700" data-timeline-category-filter-target="filter" data-group="cards" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Cards</button>
-      <button type="button" class="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700" data-timeline-category-filter-target="filter" data-group="other" data-action="click->timeline-category-filter#toggle" aria-pressed="false">Other</button>
+      <button type="button" class="rounded-full border border-slate-300 bg-white px-2 py-1 font-medium text-slate-700" data-timeline-category-filter-target="filter" data-value="all" data-action="click->timeline-category-filter#toggle" aria-pressed="true">All</button>
+      <% reason_pills.each do |reason, count| %>
+        <button type="button" class="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700" data-timeline-category-filter-target="filter" data-value="<%= reason.downcase %>" data-action="click->timeline-category-filter#toggle" aria-pressed="false">
+          <span><%= reason %></span>
+          <span class="ml-1 text-slate-500"><%= count %></span>
+        </button>
+      <% end %>
     </div>
 
     <% ordered_entries = expense_entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
@@ -51,15 +56,7 @@
       <div class="space-y-4">
         <% grouped_entries.each_with_index do |(group_name, entries), index| %>
           <% group_total = entries.sum(&:cashflow_amount) %>
-          <% group_key = case group_name
-                         when "Income & Paychecks" then "income"
-                         when "Recurring Subscriptions" then "recurring"
-                         when "Monthly Fixed Bills", "Monthly Variable Bills" then "bills"
-                         when "Payment Plans" then "plans"
-                         when "Credit Card Payments" then "cards"
-                         else "other"
-                         end %>
-          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" data-group="<%= group_key %>" <%= "open" if index.zero? %>>
+          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" <%= "open" if index.zero? %>>
             <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
               <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <%= tabler_icon("list") %>
@@ -120,13 +117,15 @@
                     <% generated_from_template = template_sources.include?(entry.source_file.to_s) %>
                     <tr
                       data-timeline-filter-target="row"
+                      data-timeline-category-filter-target="row"
                       data-date="<%= entry.occurred_on&.iso8601 %>"
                       data-payee="<%= entry.payee.to_s %>"
-                      data-reason="<%= (entry.category.presence || entry.section.humanize).to_s %>"
+                      data-reason="<%= reason_for_entry.call(entry).to_s %>"
+                      data-value="<%= reason_for_entry.call(entry).to_s.downcase %>"
                       data-status="<%= entry.status %>">
                       <td class="px-3 py-2"><%= entry.occurred_on || "—" %></td>
                       <td class="px-3 py-2"><%= entry.payee.presence || "—" %></td>
-                      <td class="px-3 py-2"><%= entry.category.presence || entry.section.humanize %></td>
+                      <td class="px-3 py-2"><%= reason_for_entry.call(entry) %></td>
                       <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
                       <td class="px-3 py-2 text-right <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
                         <%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %>

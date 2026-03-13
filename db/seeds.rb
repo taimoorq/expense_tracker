@@ -8,12 +8,20 @@ target_leftover = BigDecimal("1200")
 seed_email = ENV.fetch("SEED_USER_EMAIL", "demo@example.com")
 seed_password = ENV.fetch("SEED_USER_PASSWORD", "password123!")
 
+puts "Seeding Expense Tracker demo data..."
+puts "- Demo user email: #{seed_email}"
+puts "- Seed transaction file: #{seed_file.relative_path_from(Rails.root)}"
+
 seed_user = User.find_or_initialize_by(email: seed_email)
+user_status = seed_user.new_record? ? "created" : "updated"
+
 if seed_user.new_record? || !seed_user.valid_password?(seed_password)
 	seed_user.password = seed_password
 	seed_user.password_confirmation = seed_password
 	seed_user.save!
 end
+
+puts "- Demo user #{user_status}: #{seed_user.email}"
 
 template_upsert = lambda do |scope, lookup_attrs, assign_attrs = {}|
 	record = scope.find_or_initialize_by(lookup_attrs)
@@ -102,6 +110,8 @@ if rows.headers.blank?
 	return
 end
 
+puts "- Loaded #{rows.size} transaction rows from CSV"
+
 parsed_months = rows.filter_map do |row|
 	month_value = row["Month"].to_s.strip
 	next if month_value.blank?
@@ -113,16 +123,23 @@ parsed_months = rows.filter_map do |row|
 	end
 end.uniq
 
+puts "- Target budget months: #{parsed_months.map { |month| month.strftime('%B %Y') }.join(', ')}"
+
 budget_months = parsed_months.map do |month_on|
 	seed_user.budget_months.find_or_create_by!(month_on: month_on) do |month|
 		month.label = month_on.strftime("%B %Y")
 	end
 end
 
+puts "- Prepared #{budget_months.count} budget month entr#{budget_months.count == 1 ? 'y' : 'ies'} for #{seed_user.email}"
+
+cleared_seed_entries = 0
 seed_user.budget_months.where(id: budget_months.map(&:id)).find_each do |month|
-	month.expense_entries.where(source_file: seed_source).delete_all
-	month.expense_entries.where(source_file: seed_buffer_source).delete_all
+	cleared_seed_entries += month.expense_entries.where(source_file: seed_source).delete_all
+	cleared_seed_entries += month.expense_entries.where(source_file: seed_buffer_source).delete_all
 end
+
+puts "- Cleared #{cleared_seed_entries} previously seeded entr#{cleared_seed_entries == 1 ? 'y' : 'ies'}"
 
 parse_date = lambda do |value|
 	text = value.to_s.strip
@@ -193,6 +210,8 @@ rows.each do |row|
 	rows_created += 1
 end
 
+puts "- Added #{rows_created} seeded transaction entr#{rows_created == 1 ? 'y' : 'ies'}"
+
 buffer_entries_created = 0
 
 budget_months.each do |budget_month|
@@ -216,7 +235,7 @@ budget_months.each do |budget_month|
 	buffer_entries_created += 1
 end
 
-puts "Seeded #{rows_created} March 2026 entries with income inflated by 60%."
-puts "Added #{buffer_entries_created} cashflow buffer entr#{buffer_entries_created == 1 ? 'y' : 'ies'} to keep demo data cashflow positive."
+puts "- Added #{buffer_entries_created} cashflow buffer entr#{buffer_entries_created == 1 ? 'y' : 'ies'} to keep demo data cashflow positive"
+puts "- Starter templates ready: #{seed_user.pay_schedules.count} pay schedules, #{seed_user.subscriptions.count} subscriptions, #{seed_user.monthly_bills.count} monthly bills, #{seed_user.payment_plans.count} payment plans, #{seed_user.credit_cards.count} credit cards"
+puts "Seed complete."
 puts "Demo user: #{seed_email} / #{seed_password}"
-puts "Starter templates ready: #{seed_user.pay_schedules.count} pay schedules, #{seed_user.subscriptions.count} subscriptions, #{seed_user.monthly_bills.count} monthly bills, #{seed_user.payment_plans.count} payment plans, #{seed_user.credit_cards.count} credit cards."

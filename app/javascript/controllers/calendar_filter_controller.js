@@ -9,15 +9,15 @@ export default class extends Controller {
   }
 
   toggle(event) {
-    const group = event.currentTarget.dataset.group
-    if (!group) return
+    const value = event.currentTarget.dataset.value
+    if (!value) return
 
-    if (group === "all") {
+    if (value === "all") {
       this.activeGroups.clear()
-    } else if (this.activeGroups.has(group)) {
-      this.activeGroups.delete(group)
+    } else if (this.activeGroups.has(value)) {
+      this.activeGroups.delete(value)
     } else {
-      this.activeGroups.add(group)
+      this.activeGroups.add(value)
     }
 
     this.refresh()
@@ -27,26 +27,20 @@ export default class extends Controller {
     const noFilters = this.activeGroups.size === 0
 
     this.filterTargets.forEach((button) => {
-      const group = button.dataset.group
-      const isActive = group === "all" ? noFilters : this.activeGroups.has(group)
+      const value = button.dataset.value
+      const isActive = value === "all" ? noFilters : this.activeGroups.has(value)
 
       button.setAttribute("aria-pressed", String(isActive))
       button.classList.toggle("ring-2", isActive)
       button.classList.toggle("ring-offset-1", isActive)
-      button.classList.toggle("ring-slate-300", isActive && group === "all")
-      button.classList.toggle("ring-emerald-300", isActive && group === "income")
-      button.classList.toggle("ring-indigo-300", isActive && group === "recurring")
-      button.classList.toggle("ring-sky-300", isActive && group === "bills")
-      button.classList.toggle("ring-violet-300", isActive && group === "plans")
-      button.classList.toggle("ring-amber-300", isActive && group === "cards")
-      button.classList.toggle("ring-slate-400", isActive && group === "other")
-      button.classList.toggle("opacity-60", !isActive && !noFilters && group !== "all")
+      button.classList.toggle("ring-slate-300", isActive)
+      button.classList.toggle("opacity-60", !isActive && !noFilters && value !== "all")
     })
 
     this.dayTargets.forEach((day) => {
       const chips = this.chipTargets.filter((chip) => chip.closest('[data-calendar-filter-target="day"]') === day)
       const visibleCount = chips.reduce((count, chip) => {
-        const matches = noFilters || this.activeGroups.has(chip.dataset.group)
+        const matches = noFilters || this.activeGroups.has((chip.dataset.value || "").toLowerCase())
         chip.classList.toggle("hidden", !matches)
         return matches ? count + 1 : count
       }, 0)

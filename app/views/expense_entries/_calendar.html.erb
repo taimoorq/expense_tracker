@@ -1,15 +1,20 @@
 <%= turbo_frame_tag "calendar_section" do %>
+  <% reason_for_entry = ->(entry) { entry.category.presence || entry.section.humanize } %>
+  <% reason_pills = expense_entries.filter_map { |entry| reason_for_entry.call(entry).to_s.strip.presence }
+                    .tally
+                    .sort_by { |reason, count| [-count, reason.downcase] }
+                    .first(8) %>
   <section class="ta-card" data-controller="calendar-filter">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("calendar-month") %> Timeline Calendar</h3>
       <div class="flex flex-wrap items-center gap-2 text-xs">
-        <button type="button" class="rounded-full bg-white px-2 py-1 font-medium text-slate-700 border border-slate-300" data-calendar-filter-target="filter" data-group="all" data-action="click->calendar-filter#toggle" aria-pressed="true">All</button>
-        <button type="button" class="rounded-full bg-emerald-100 px-2 py-1 font-medium text-emerald-700" data-calendar-filter-target="filter" data-group="income" data-action="click->calendar-filter#toggle" aria-pressed="false">Income</button>
-        <button type="button" class="rounded-full bg-indigo-100 px-2 py-1 font-medium text-indigo-700" data-calendar-filter-target="filter" data-group="recurring" data-action="click->calendar-filter#toggle" aria-pressed="false">Recurring</button>
-        <button type="button" class="rounded-full bg-sky-100 px-2 py-1 font-medium text-sky-700" data-calendar-filter-target="filter" data-group="bills" data-action="click->calendar-filter#toggle" aria-pressed="false">Bills</button>
-        <button type="button" class="rounded-full bg-violet-100 px-2 py-1 font-medium text-violet-700" data-calendar-filter-target="filter" data-group="plans" data-action="click->calendar-filter#toggle" aria-pressed="false">Plans</button>
-        <button type="button" class="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-700" data-calendar-filter-target="filter" data-group="cards" data-action="click->calendar-filter#toggle" aria-pressed="false">Cards</button>
-        <button type="button" class="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700" data-calendar-filter-target="filter" data-group="other" data-action="click->calendar-filter#toggle" aria-pressed="false">Other</button>
+        <button type="button" class="rounded-full bg-white px-2 py-1 font-medium text-slate-700 border border-slate-300" data-calendar-filter-target="filter" data-value="all" data-action="click->calendar-filter#toggle" aria-pressed="true">All</button>
+        <% reason_pills.each do |reason, count| %>
+          <button type="button" class="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700" data-calendar-filter-target="filter" data-value="<%= reason.downcase %>" data-action="click->calendar-filter#toggle" aria-pressed="false">
+            <span><%= reason %></span>
+            <span class="ml-1 text-slate-500"><%= count %></span>
+          </button>
+        <% end %>
       </div>
     </div>
 
@@ -20,37 +25,7 @@
     <% grid_end = month_end.end_of_week(:sunday) %>
     <% entries_by_day = expense_entries.select(&:occurred_on).group_by(&:occurred_on) %>
 
-    <% chip_style = lambda do |entry|
-      if entry.income? || entry.source_file == "pay_schedule" || entry.category.to_s.downcase.include?("paycheck")
-        "bg-emerald-100 text-emerald-700"
-      elsif entry.source_file == "subscription" || entry.category.to_s.downcase.include?("subscription")
-        "bg-indigo-100 text-indigo-700"
-      elsif entry.source_file == "monthly_bill"
-        "bg-sky-100 text-sky-700"
-      elsif entry.source_file == "payment_plan" || entry.category.to_s.downcase.include?("payment plan")
-        "bg-violet-100 text-violet-700"
-      elsif entry.source_file == "credit_card_estimate" || entry.category.to_s.downcase.include?("credit card")
-        "bg-amber-100 text-amber-700"
-      else
-        "bg-slate-100 text-slate-700"
-      end
-    end %>
-
-    <% chip_group = lambda do |entry|
-      if entry.income? || entry.source_file == "pay_schedule" || entry.category.to_s.downcase.include?("paycheck")
-        "income"
-      elsif entry.source_file == "subscription" || entry.category.to_s.downcase.include?("subscription")
-        "recurring"
-      elsif entry.source_file == "monthly_bill"
-        "bills"
-      elsif entry.source_file == "payment_plan" || entry.category.to_s.downcase.include?("payment plan")
-        "plans"
-      elsif entry.source_file == "credit_card_estimate" || entry.category.to_s.downcase.include?("credit card")
-        "cards"
-      else
-        "other"
-      end
-    end %>
+    <% chip_style = ->(_entry) { "bg-slate-100 text-slate-700" } %>
 
     <div class="overflow-x-auto">
       <div class="grid min-w-[960px] grid-cols-7 gap-2 text-sm">
@@ -75,7 +50,7 @@
                 <% amount = entry.cashflow_amount %>
                 <%= link_to edit_budget_month_expense_entry_path(budget_month, entry),
                             class: "block rounded px-2 py-1 text-xs font-medium #{chip_style.call(entry)}",
-                            data: { calendar_filter_target: "chip", group: chip_group.call(entry), turbo_frame: "entry_editor_modal" } do %>
+                            data: { calendar_filter_target: "chip", value: reason_for_entry.call(entry).to_s.downcase, turbo_frame: "entry_editor_modal" } do %>
                   <div class="flex items-center justify-between gap-2">
                     <span class="truncate"><%= entry.payee.presence || entry.category.presence || entry.section.humanize %></span>
                     <span><%= amount >= 0 ? "+" : "" %><%= number_to_currency(amount, precision: 0) %></span>

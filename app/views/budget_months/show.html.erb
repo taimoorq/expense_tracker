@@ -3,42 +3,50 @@
   <% has_generated_subscriptions = @expense_entries.any? { |entry| entry.source_file == "subscription" } %>
   <% has_generated_monthly_bills = @expense_entries.any? { |entry| entry.source_file == "monthly_bill" } %>
   <% has_generated_payment_plans = @expense_entries.any? { |entry| entry.source_file == "payment_plan" } %>
+  <% generation_actions_hidden = @budget_month.complete_for_generation? %>
 
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="text-2xl font-semibold"><%= @budget_month.label %></h2>
+      <div>
+        <h2 class="text-2xl font-semibold"><%= @budget_month.label %></h2>
+        <% if generation_actions_hidden %>
+          <p class="ta-muted mt-1">This month looks complete, so template generation actions are hidden to avoid unnecessary changes.</p>
+        <% end %>
+      </div>
       <div class="flex flex-wrap items-center gap-2">
         <%= link_to new_budget_month_path(source_month_id: @budget_month.id), class: "fb-btn-secondary ta-action-btn" do %>
           <%= tabler_icon("copy", classes: "h-4 w-4 text-slate-600") %>
           <span>Clone Month</span>
         <% end %>
-        <% unless has_generated_paychecks %>
+        <% unless generation_actions_hidden || has_generated_paychecks %>
           <%= button_to generate_paychecks_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("cash", classes: "h-4 w-4 text-emerald-600") %>
             <span>Generate Paychecks</span>
           <% end %>
         <% end %>
-        <% unless has_generated_subscriptions %>
+        <% unless generation_actions_hidden || has_generated_subscriptions %>
           <%= button_to generate_subscriptions_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("repeat", classes: "h-4 w-4 text-indigo-600") %>
             <span>Generate Subscriptions</span>
           <% end %>
         <% end %>
-        <% unless has_generated_monthly_bills %>
+        <% unless generation_actions_hidden || has_generated_monthly_bills %>
           <%= button_to generate_monthly_bills_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("calendar-plus", classes: "h-4 w-4 text-sky-600") %>
             <span>Generate Monthly Bills</span>
           <% end %>
         <% end %>
-        <% unless has_generated_payment_plans %>
+        <% unless generation_actions_hidden || has_generated_payment_plans %>
           <%= button_to generate_payment_plans_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("template", classes: "h-4 w-4 text-violet-600") %>
             <span>Generate Plans</span>
           <% end %>
         <% end %>
-        <%= button_to estimate_credit_cards_budget_month_path(@budget_month), method: :post, class: "fb-btn-primary ta-action-btn" do %>
-          <%= tabler_icon("chart-bar", classes: "h-4 w-4 text-indigo-100") %>
-          <span>Estimate Cards</span>
+        <% unless generation_actions_hidden %>
+          <%= button_to estimate_credit_cards_budget_month_path(@budget_month), method: :post, class: "fb-btn-primary ta-action-btn" do %>
+            <%= tabler_icon("chart-bar", classes: "h-4 w-4 text-indigo-100") %>
+            <span>Recalculate Card Estimates</span>
+          <% end %>
         <% end %>
       </div>
     </div>

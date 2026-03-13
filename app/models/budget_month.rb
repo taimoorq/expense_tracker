@@ -23,4 +23,8 @@ class BudgetMonth < ApplicationRecord
   def section_total(section_key)
     expense_entries.where(section: ExpenseEntry.sections[section_key]).sum(&:effective_amount)
   end
+
+  def complete_for_generation?
+    month_on.present? && month_on < Date.current.beginning_of_month && expense_entries.exists? && expense_entries.where(status: ExpenseEntry.statuses[:planned]).none?
+  end
 end
