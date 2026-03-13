@@ -53,9 +53,11 @@ If the goal is to get the app running as quickly as possible, use Docker:
 2. Start the app
 	- `docker compose up --build`
 3. Open the app
-	- http://localhost:3000
+	- http://localhost:4287
 4. Optional: load the demo data in another terminal
 	- `docker compose exec web bin/rails db:seed`
+
+If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
 
 After seeding, sign in with the demo account described in the [Sample User](#sample-user) section.
 
@@ -144,7 +146,16 @@ The repository includes a Docker-based environment that starts the Rails app and
 1. Build and start the containers
 	 - `docker compose up --build`
 2. Open the app
-	 - http://localhost:3000
+	 - http://localhost:4287
+
+The Docker setup publishes the app on host port `4287` by default to avoid the more commonly used `3000`.
+
+To override it, set `APP_PORT` in your shell or a local `.env` file before starting Docker.
+
+Examples:
+
+- `APP_PORT=4317 docker compose up --build`
+- `.env` file entry: `APP_PORT=4317`
 
 Services included:
 
@@ -445,9 +456,9 @@ These commands are mainly for local development, debugging, and contribution wor
 
 These notes are intended for contributors running the project locally.
 
-### Port 3000 already in use
+### Docker port 4287 already in use
 
-Stop the process using it, or change the published port in `docker-compose.yml`.
+Stop the process using it, or start Docker with a different `APP_PORT` value.
 
 ### Database connection problems
 

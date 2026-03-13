@@ -29,7 +29,7 @@ services:
       RUBY_DEBUG_OPEN: "true"
       RUBY_DEBUG_LAZY: "true"
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-4287}:3000"
     volumes:
       - .:/rails
       - bundle_data:/usr/local/bundle
