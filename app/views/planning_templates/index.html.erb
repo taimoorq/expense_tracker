@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between gap-3">
       <h2 class="text-2xl font-semibold">Planning Templates</h2>
       <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
-        <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
         <span>Back to Months</span>
       <% end %>
     </div>
@@ -16,8 +16,8 @@
 
 Cadence: weekly, biweekly, semimonthly, or monthly.
 First Pay On: anchor date for recurrence.
-Day #1 and Day #2: used for semimonthly schedules.
-Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("help") %></button>
+    Day #1 and Day #2: used for semimonthly schedules.
+    Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
     <p class="mb-3 text-sm text-slate-500">Template only. Generated into each month using the month action buttons.</p>
     <%= form_with model: @pay_schedule, url: pay_schedules_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
@@ -32,7 +32,7 @@ Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("he
       <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
       <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
       <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
-        <%= tabler_icon("device-floppy") %>
+        <%= tabler_icon("save", classes: "ta-action-icon") %>
         <span>Save Schedule</span>
       <% end %>
     <% end %>
@@ -52,7 +52,7 @@ Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("he
                               title: "Delete schedule",
                               aria: { label: "Delete schedule" },
                               form: { data: { turbo_confirm: "Delete this schedule?" } } do %>
-                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                  <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
                 <% end %>
               </td>
             </tr>
@@ -69,7 +69,7 @@ Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("he
 
 Amount: expected monthly amount.
 Due day: day of month this usually charges.
-Keep Active checked unless this subscription has been cancelled."><%= tabler_icon("help") %></button>
+    Keep Active checked unless this subscription has been cancelled."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
     <p class="mb-3 text-sm text-slate-500">Use for Netflix, phone plans, cloud storage, and other recurring charges.</p>
     <%= form_with model: @subscription, url: subscriptions_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-6" do |form| %>
@@ -82,7 +82,7 @@ Keep Active checked unless this subscription has been cancelled."><%= tabler_ico
       <div class="flex items-center gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
         <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
-          <%= tabler_icon("device-floppy") %>
+          <%= tabler_icon("save", classes: "ta-action-icon") %>
           <span>Save</span>
         <% end %>
       </div>
@@ -103,7 +103,7 @@ Keep Active checked unless this subscription has been cancelled."><%= tabler_ico
                               title: "Delete subscription",
                               aria: { label: "Delete subscription" },
                               form: { data: { turbo_confirm: "Delete this subscription?" } } do %>
-                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                  <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
                 <% end %>
               </td>
             </tr>
@@ -119,7 +119,7 @@ Keep Active checked unless this subscription has been cancelled."><%= tabler_ico
       <button type="button" class="ta-icon-btn" aria-label="Monthly Bills Help" title="Monthly Bills Help" data-action="click->help-modal#open" data-help-title="Monthly Bills Help" data-help-body="Fixed Payment: stable bills like mortgage or car payment.
 Variable Bill: amounts that vary monthly like utilities.
 
-Default amount is your estimate and can be adjusted later in the month entries."><%= tabler_icon("help") %></button>
+    Default amount is your estimate and can be adjusted later in the month entries."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
     <p class="mb-3 text-sm text-slate-500">These are turned into planned month entries when you run generation.</p>
     <%= form_with model: @monthly_bill, url: monthly_bills_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-6" do |form| %>
@@ -132,7 +132,7 @@ Default amount is your estimate and can be adjusted later in the month entries."
       <div class="flex items-center gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
         <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
-          <%= tabler_icon("device-floppy") %>
+          <%= tabler_icon("save", classes: "ta-action-icon") %>
           <span>Save</span>
         <% end %>
       </div>
@@ -153,7 +153,7 @@ Default amount is your estimate and can be adjusted later in the month entries."
                               title: "Delete monthly bill",
                               aria: { label: "Delete monthly bill" },
                               form: { data: { turbo_confirm: "Delete this bill?" } } do %>
-                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                  <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
                 <% end %>
               </td>
             </tr>
@@ -171,7 +171,7 @@ Default amount is your estimate and can be adjusted later in the month entries."
 Total Due: full balance.
 Amount Paid: how much already paid so far.
 Custom Monthly: optional planned monthly payment amount.
-The app caps generated payment to remaining balance."><%= tabler_icon("help") %></button>
+    The app caps generated payment to remaining balance."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
     <p class="mb-3 text-sm text-slate-500">Great for tax plans, financing, and installment balances.</p>
     <%= form_with model: @payment_plan, url: payment_plans_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-7" do |form| %>
@@ -185,7 +185,7 @@ The app caps generated payment to remaining balance."><%= tabler_icon("help") %>
       <div class="flex items-center gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
         <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
-          <%= tabler_icon("device-floppy") %>
+          <%= tabler_icon("save", classes: "ta-action-icon") %>
           <span>Save</span>
         <% end %>
       </div>
@@ -206,7 +206,7 @@ The app caps generated payment to remaining balance."><%= tabler_icon("help") %>
                               title: "Delete payment plan",
                               aria: { label: "Delete payment plan" },
                               form: { data: { turbo_confirm: "Delete this plan?" } } do %>
-                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                  <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
                 <% end %>
               </td>
             </tr>
@@ -223,7 +223,7 @@ The app caps generated payment to remaining balance."><%= tabler_icon("help") %>
 
 Minimum: minimum amount to prioritize first.
 Priority: lower number gets allocated first.
-After minimums, leftover can be spread across cards."><%= tabler_icon("help") %></button>
+    After minimums, leftover can be spread across cards."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
     <p class="mb-3 text-sm text-slate-500">These settings drive automatic estimated card payments from leftover cash.</p>
     <%= form_with model: @credit_card, url: credit_cards_path, local: true, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
@@ -235,7 +235,7 @@ After minimums, leftover can be spread across cards."><%= tabler_icon("help") %>
       <div class="flex items-center gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
         <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
-          <%= tabler_icon("device-floppy") %>
+          <%= tabler_icon("save", classes: "ta-action-icon") %>
           <span>Save</span>
         <% end %>
       </div>
@@ -256,7 +256,7 @@ After minimums, leftover can be spread across cards."><%= tabler_icon("help") %>
                               title: "Delete card",
                               aria: { label: "Delete card" },
                               form: { data: { turbo_confirm: "Delete this card?" } } do %>
-                  <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
+                  <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
                 <% end %>
               </td>
             </tr>

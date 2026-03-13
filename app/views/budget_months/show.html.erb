@@ -15,36 +15,36 @@
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <%= link_to new_budget_month_path(source_month_id: @budget_month.id), class: "fb-btn-secondary ta-action-btn" do %>
-          <%= tabler_icon("copy", classes: "h-4 w-4 text-slate-600") %>
+          <%= tabler_icon("copy", classes: "ta-action-icon text-slate-600") %>
           <span>Clone Month</span>
         <% end %>
         <% unless generation_actions_hidden || has_generated_paychecks %>
           <%= button_to generate_paychecks_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("cash", classes: "h-4 w-4 text-emerald-600") %>
+            <%= tabler_icon("cash", classes: "ta-action-icon text-emerald-600") %>
             <span>Generate Paychecks</span>
           <% end %>
         <% end %>
         <% unless generation_actions_hidden || has_generated_subscriptions %>
           <%= button_to generate_subscriptions_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("repeat", classes: "h-4 w-4 text-indigo-600") %>
+            <%= tabler_icon("repeat", classes: "ta-action-icon text-indigo-600") %>
             <span>Generate Subscriptions</span>
           <% end %>
         <% end %>
         <% unless generation_actions_hidden || has_generated_monthly_bills %>
           <%= button_to generate_monthly_bills_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("calendar-plus", classes: "h-4 w-4 text-sky-600") %>
+            <%= tabler_icon("calendar-plus", classes: "ta-action-icon text-sky-600") %>
             <span>Generate Monthly Bills</span>
           <% end %>
         <% end %>
         <% unless generation_actions_hidden || has_generated_payment_plans %>
           <%= button_to generate_payment_plans_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("template", classes: "h-4 w-4 text-violet-600") %>
+            <%= tabler_icon("template", classes: "ta-action-icon text-violet-600") %>
             <span>Generate Plans</span>
           <% end %>
         <% end %>
         <% unless generation_actions_hidden %>
           <%= button_to estimate_credit_cards_budget_month_path(@budget_month), method: :post, class: "fb-btn-primary ta-action-btn" do %>
-            <%= tabler_icon("chart-bar", classes: "h-4 w-4 text-indigo-100") %>
+            <%= tabler_icon("chart-bar", classes: "ta-action-icon-lg text-indigo-100") %>
             <span>Recalculate Card Estimates</span>
           <% end %>
         <% end %>
@@ -55,13 +55,13 @@
   <section class="ta-card" data-controller="tabs" data-tabs-default-tab-value="timeline">
     <div class="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Month view tabs">
       <button type="button" class="fb-btn-primary" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="timeline" data-action="click->tabs#switch" data-tabs-name-param="timeline">
-        <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "h-4 w-4 text-indigo-100") %> Timeline</span>
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "ta-action-icon-lg text-indigo-100") %> Timeline</span>
       </button>
       <button type="button" class="fb-btn-secondary" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="calendar" data-action="click->tabs#switch" data-tabs-name-param="calendar">
-        <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "h-4 w-4 text-sky-600") %> Calendar</span>
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "ta-action-icon-lg text-sky-600") %> Calendar</span>
       </button>
       <button type="button" class="fb-btn-secondary" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="entries" data-action="click->tabs#switch" data-tabs-name-param="entries">
-        <span class="inline-flex items-center gap-2"><%= tabler_icon("list", classes: "h-4 w-4 text-slate-600") %> Entries</span>
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("list", classes: "ta-action-icon-lg text-slate-600") %> Entries</span>
       </button>
     </div>
 

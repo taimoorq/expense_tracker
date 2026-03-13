@@ -1,4 +1,10 @@
 module ApplicationHelper
+	ICON_PARTIAL_PREFIXES = [
+		"shared/icons/heroicons",
+		"shared/icons/open",
+		"shared/icons"
+	].freeze
+
 	def auth_page_theme
 		case [controller_name, action_name]
 		when ["sessions", "new"]
@@ -94,8 +100,26 @@ module ApplicationHelper
 		end
 	end
 
-	def tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 2)
-		path_data = tabler_icon_paths[name.to_s] || tabler_icon_paths["list"]
+	def app_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)
+		partial_path = app_icon_partial_path(name)
+
+		if partial_path
+			render partial: partial_path, formats: [ :svg ], locals: {
+				classes: classes,
+				size: size,
+				title: title,
+				name: name.to_s
+			}
+		else
+			legacy_tabler_icon(name, classes: classes, size: size, stroke: stroke, title: title)
+		end
+	end
+
+	alias_method :tabler_icon, :app_icon
+
+	def legacy_tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)
+		canonical_name = app_icon_aliases[name.to_s] || name.to_s
+		path_data = app_icon_paths[canonical_name] || app_icon_paths["list-bullet"]
 		svg_options = {
 			xmlns: "http://www.w3.org/2000/svg",
 			viewBox: "0 0 24 24",
@@ -109,192 +133,255 @@ module ApplicationHelper
 			focusable: "false"
 		}
 
+		svg_options[:role] = "img" if title.present?
+
 		if size.present?
 			svg_options[:width] = size
 			svg_options[:height] = size
 		end
 
 		tag.svg(**svg_options) do
-			safe_join(path_data.map { |attrs| tag.path(**attrs) })
+			parts = []
+			parts << tag.title(title) if title.present?
+			parts.concat(path_data.map { |attrs| tag.path(**attrs) })
+			safe_join(parts)
 		end
 	end
 
 	private
 
-	def tabler_icon_paths
+	def app_icon_partial_path(name)
+		candidate_names = [ name.to_s, app_icon_aliases[name.to_s] ].compact.map { |icon_name| icon_name.tr("-", "_") }.uniq
+
+		candidate_names.each do |candidate_name|
+			prefix = ICON_PARTIAL_PREFIXES.find do |partial_prefix|
+				lookup_context.exists?("#{partial_prefix}/#{candidate_name}", [], true, [], formats: [ :svg ])
+			end
+
+			return "#{prefix}/#{candidate_name}" if prefix
+		end
+
+		nil
+	end
+
+	def app_icon_aliases
 		{
-			"timeline" => [
-				{ d: "M4 6l2 0" },
-				{ d: "M12 6l8 0" },
-				{ d: "M4 12l2 0" },
-				{ d: "M12 12l8 0" },
-				{ d: "M4 18l2 0" },
-				{ d: "M12 18l8 0" },
-				{ d: "M8 6l0 .01" },
-				{ d: "M8 12l0 .01" },
-				{ d: "M8 18l0 .01" }
+			"timeline" => "queue-list",
+			"list" => "list-bullet",
+			"adjustments" => "adjustments-horizontal",
+			"cash" => "banknotes",
+			"chart-bar" => "chart-bar",
+			"home" => "home",
+			"template" => "rectangle-stack",
+			"calendar-plus" => "calendar-plus",
+			"calendar-month" => "calendar-days",
+			"device-floppy" => "archive-box-arrow-down",
+			"trash" => "trash",
+			"pencil" => "pencil-square",
+			"file-pencil" => "pencil-square",
+			"edit" => "pencil-square",
+			"arrow-left" => "arrow-left",
+			"arrow-right" => "arrow-right",
+			"repeat" => "arrow-path",
+			"chevron-down" => "chevron-down",
+			"chevron-up" => "chevron-up",
+			"chevron-left" => "chevron-left",
+			"chevron-right" => "chevron-right",
+			"x" => "x-mark",
+			"plus" => "plus",
+			"copy" => "document-duplicate",
+			"help" => "question-mark-circle",
+			"login" => "arrow-right-on-rectangle",
+			"logout" => "arrow-left-on-rectangle",
+			"user-plus" => "user-plus",
+			"mail" => "envelope",
+			"lock" => "lock-closed",
+			"shield-lock" => "shield-check",
+			"sparkles" => "sparkles",
+			"user-circle" => "user-circle",
+			"upload" => "arrow-up-tray",
+			"download" => "arrow-down-tray",
+			"save" => "check-circle"
+		}
+	end
+
+	def app_icon_paths
+		{
+			"queue-list" => [
+				{ d: "M3.75 6.75h.008v.008H3.75z" },
+				{ d: "M7.5 6.75h12.75" },
+				{ d: "M3.75 12h.008v.008H3.75z" },
+				{ d: "M7.5 12h12.75" },
+				{ d: "M3.75 17.25h.008v.008H3.75z" },
+				{ d: "M7.5 17.25h12.75" }
 			],
-			"list" => [
-				{ d: "M9 6l11 0" },
-				{ d: "M9 12l11 0" },
-				{ d: "M9 18l11 0" },
-				{ d: "M5 6l0 .01" },
-				{ d: "M5 12l0 .01" },
-				{ d: "M5 18l0 .01" }
+			"list-bullet" => [
+				{ d: "M8.25 6.75h12" },
+				{ d: "M8.25 12h12" },
+				{ d: "M8.25 17.25h12" },
+				{ d: "M4.5 6.75h.008v.008H4.5z" },
+				{ d: "M4.5 12h.008v.008H4.5z" },
+				{ d: "M4.5 17.25h.008v.008H4.5z" }
 			],
-			"adjustments" => [
-				{ d: "M4 6l16 0" },
-				{ d: "M7 12l13 0" },
-				{ d: "M10 18l10 0" },
-				{ d: "M5 6l0 .01" },
-				{ d: "M4 12l0 .01" },
-				{ d: "M7 18l0 .01" }
+			"adjustments-horizontal" => [
+				{ d: "M3.75 6.75h6" },
+				{ d: "M14.25 6.75h6" },
+				{ d: "M3.75 12h3" },
+				{ d: "M11.25 12h9" },
+				{ d: "M3.75 17.25h9" },
+				{ d: "M17.25 17.25h3" },
+				{ d: "M9.75 5.25a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0 -3Z" },
+				{ d: "M8.25 10.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0 -3Z" },
+				{ d: "M15.75 15.75a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0 -3Z" }
 			],
-			"cash" => [
-				{ d: "M7 9m0 1a1 1 0 0 1 1 -1h8a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1z" },
-				{ d: "M10 13l4 0" },
-				{ d: "M12 3v3" },
-				{ d: "M6 6h12" },
-				{ d: "M4 20h16" }
+			"banknotes" => [
+				{ d: "M2.25 7.5A2.25 2.25 0 0 1 4.5 5.25h15A2.25 2.25 0 0 1 21.75 7.5v9A2.25 2.25 0 0 1 19.5 18.75h-15A2.25 2.25 0 0 1 2.25 16.5v-9Z" },
+				{ d: "M6.75 9.75h.008v.008H6.75z" },
+				{ d: "M17.25 14.25h.008v.008h-.008z" },
+				{ d: "M12 9.75a2.25 2.25 0 1 0 0 4.5a2.25 2.25 0 0 0 0 -4.5Z" },
+				{ d: "M4.5 12a3.75 3.75 0 0 0 3.75 -3.75" },
+				{ d: "M15.75 15.75A3.75 3.75 0 0 0 19.5 12" }
 			],
 			"chart-bar" => [
-				{ d: "M3 12m0 1a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1z" },
-				{ d: "M10 8m0 1a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v11a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1z" },
-				{ d: "M17 4m0 1a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v15a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1z" }
+				{ d: "M3.75 19.5h16.5" },
+				{ d: "M6.75 16.5V10.5" },
+				{ d: "M12 16.5V6.75" },
+				{ d: "M17.25 16.5V12" }
 			],
 			"home" => [
-				{ d: "M5 12l-2 0l9 -9l9 9l-2 0" },
-				{ d: "M5 12v7a2 2 0 0 0 2 2h3m4 0h3a2 2 0 0 0 2 -2v-7" },
-				{ d: "M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" }
+				{ d: "M2.25 12 9.204 5.046a1.125 1.125 0 0 1 1.592 0L21.75 12" },
+				{ d: "M4.5 9.75V19.5A2.25 2.25 0 0 0 6.75 21.75h10.5A2.25 2.25 0 0 0 19.5 19.5V9.75" },
+				{ d: "M9.75 21.75v-6a2.25 2.25 0 0 1 2.25 -2.25h0a2.25 2.25 0 0 1 2.25 2.25v6" }
 			],
-			"template" => [
-				{ d: "M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" },
-				{ d: "M7 7h10" },
-				{ d: "M7 12h10" },
-				{ d: "M7 17h6" }
+			"rectangle-stack" => [
+				{ d: "M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h10.5a2.25 2.25 0 0 1 2.25 2.25v4.5a2.25 2.25 0 0 1 -2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 11.25v-4.5Z" },
+				{ d: "M6.75 13.5h10.5A2.25 2.25 0 0 1 19.5 15.75v1.5a2.25 2.25 0 0 1 -2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 17.25v-1.5A2.25 2.25 0 0 1 6.75 13.5Z" }
 			],
 			"calendar-plus" => [
-				{ d: "M16 2v4" },
-				{ d: "M8 2v4" },
-				{ d: "M4 10h16" },
-				{ d: "M11 14h6" },
-				{ d: "M14 11v6" },
-				{ d: "M4 6m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-4" },
-				{ d: "M3 17h3" }
+				{ d: "M8.25 3.75v2.25" },
+				{ d: "M15.75 3.75v2.25" },
+				{ d: "M3.75 8.25h16.5" },
+				{ d: "M6.75 5.25h10.5A2.25 2.25 0 0 1 19.5 7.5v10.5a2.25 2.25 0 0 1 -2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 18V7.5a2.25 2.25 0 0 1 2.25 -2.25Z" },
+				{ d: "M12 11.25v5.25" },
+				{ d: "M9.375 13.875h5.25" }
 			],
-			"calendar-month" => [
-				{ d: "M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v11a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" },
-				{ d: "M16 3v4" },
-				{ d: "M8 3v4" },
-				{ d: "M4 11h16" },
-				{ d: "M8 15h2v2h-2z" },
-				{ d: "M12 15h2v2h-2z" },
-				{ d: "M16 15h2v2h-2z" }
+			"calendar-days" => [
+				{ d: "M8.25 3.75v2.25" },
+				{ d: "M15.75 3.75v2.25" },
+				{ d: "M3.75 8.25h16.5" },
+				{ d: "M6.75 5.25h10.5A2.25 2.25 0 0 1 19.5 7.5v10.5a2.25 2.25 0 0 1 -2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 18V7.5a2.25 2.25 0 0 1 2.25 -2.25Z" },
+				{ d: "M8.25 12h.008v.008H8.25z" },
+				{ d: "M12 12h.008v.008H12z" },
+				{ d: "M15.75 12h.008v.008h-.008z" },
+				{ d: "M8.25 15.75h.008v.008H8.25z" },
+				{ d: "M12 15.75h.008v.008H12z" },
+				{ d: "M15.75 15.75h.008v.008h-.008z" }
 			],
-			"device-floppy" => [
-				{ d: "M6 4m0 2a2 2 0 0 1 2 -2h8l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" },
-				{ d: "M10 4l0 4l4 0l0 -4" },
-				{ d: "M10 14l4 0" }
+			"archive-box-arrow-down" => [
+				{ d: "M3.75 7.5h16.5" },
+				{ d: "M4.5 7.5l1.05 11.025A2.25 2.25 0 0 0 7.79 20.25h8.42a2.25 2.25 0 0 0 2.24 -1.725L19.5 7.5" },
+				{ d: "M9 12.75l3 3m0 0l3 -3m-3 3v-6" }
 			],
 			"trash" => [
-				{ d: "M4 7l16 0" },
-				{ d: "M10 11l0 6" },
-				{ d: "M14 11l0 6" },
-				{ d: "M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" },
-				{ d: "M9 7l0 -3h6l0 3" }
+				{ d: "M14.74 9l-.346 9m-4.788 0L9.26 9m9.968 -3.21c.342.052.682.107 1.022.166" },
+				{ d: "M3.98 5.79c.34-.059.68-.114 1.022 -.165m0 0A48.108 48.108 0 0 1 12 5.25c2.291 0 4.536.16 6.718.46m-13.436 0L6 5.25m0 0A2.25 2.25 0 0 1 8.244 3h7.512A2.25 2.25 0 0 1 18 5.25m-12 0h12" }
 			],
-			"pencil" => [
-				{ d: "M7 21l3 -1l11 -11a2.828 2.828 0 1 0 -4 -4l-11 11l-1 3" },
-				{ d: "M17 5l4 4" }
-			],
-			"file-pencil" => [
-				{ d: "M14 3v4a1 1 0 0 0 1 1h4" },
-				{ d: "M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v3" },
-				{ d: "M12.5 14.5l4 4" },
-				{ d: "M14 17l-1 3l3 -1l5 -5a1.5 1.5 0 0 0 -3 -3z" }
-			],
-			"edit" => [
-				{ d: "M7 21l3 -1l11 -11a2.828 2.828 0 1 0 -4 -4l-11 11l-1 3" },
-				{ d: "M17 5l4 4" }
+			"pencil-square" => [
+				{ d: "M16.862 4.487a2.625 2.625 0 1 1 3.712 3.712L7.5 21.273l-4.5 1.125 1.125 -4.5L16.862 4.487Z" },
+				{ d: "M18.75 12.75V19.5A2.25 2.25 0 0 1 16.5 21.75H4.5A2.25 2.25 0 0 1 2.25 19.5V7.5A2.25 2.25 0 0 1 4.5 5.25h6.75" }
 			],
 			"arrow-left" => [
-				{ d: "M5 12l14 0" },
-				{ d: "M5 12l6 6" },
-				{ d: "M5 12l6 -6" }
+				{ d: "M10.5 19.5 3 12m0 0 7.5 -7.5M3 12h18" }
 			],
-			"repeat" => [
-				{ d: "M4 12v-3a3 3 0 0 1 3 -3h13" },
-				{ d: "M20 6l-3 -3" },
-				{ d: "M20 6l-3 3" },
-				{ d: "M20 12v3a3 3 0 0 1 -3 3h-13" },
-				{ d: "M4 18l3 3" },
-				{ d: "M4 18l3 -3" }
+			"arrow-right" => [
+				{ d: "M13.5 4.5 21 12m0 0 -7.5 7.5M21 12H3" }
+			],
+			"arrow-path" => [
+				{ d: "M16.023 9.348h4.992V4.356" },
+				{ d: "M2.985 19.644v-4.992h4.992" },
+				{ d: "M4.94 9.348A8.25 8.25 0 0 1 18.364 5.636L21.015 8.25" },
+				{ d: "M19.06 14.652A8.25 8.25 0 0 1 5.636 18.364L2.985 15.75" }
 			],
 			"chevron-down" => [
-				{ d: "M6 9l6 6l6 -6" }
+				{ d: "m19.5 8.25 -7.5 7.5 -7.5 -7.5" }
 			],
 			"chevron-up" => [
-				{ d: "M6 15l6 -6l6 6" }
+				{ d: "m4.5 15.75 7.5 -7.5 7.5 7.5" }
 			],
 			"chevron-left" => [
-				{ d: "M15 6l-6 6l6 6" }
+				{ d: "m15.75 19.5 -7.5 -7.5 7.5 -7.5" }
 			],
 			"chevron-right" => [
-				{ d: "M9 6l6 6l-6 6" }
+				{ d: "m8.25 4.5 7.5 7.5 -7.5 7.5" }
 			],
-			"x" => [
-				{ d: "M18 6l-12 12" },
-				{ d: "M6 6l12 12" }
+			"x-mark" => [
+				{ d: "M6 18 18 6M6 6l12 12" }
 			],
 			"plus" => [
-				{ d: "M12 5l0 14" },
-				{ d: "M5 12l14 0" }
+				{ d: "M12 4.5v15m7.5 -7.5h-15" }
 			],
-			"copy" => [
-				{ d: "M7 7m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" },
-				{ d: "M5 15h-1a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v1" }
+			"document-duplicate" => [
+				{ d: "M15.75 17.25v3.375c0 .621 -.504 1.125 -1.125 1.125H6.375a1.125 1.125 0 0 1 -1.125 -1.125V9.375c0 -.621 .504 -1.125 1.125 -1.125H9.75" },
+				{ d: "M15 3.75H10.5A2.25 2.25 0 0 0 8.25 6v8.25A2.25 2.25 0 0 0 10.5 16.5H17.25A2.25 2.25 0 0 0 19.5 14.25V8.25L15 3.75Z" },
+				{ d: "M15 3.75V8.25h4.5" }
 			],
-			"help" => [
-				{ d: "M12 18h.01" },
-				{ d: "M12 14a2 2 0 1 0 -2 -2" },
-				{ d: "M12 14v-1.5" },
-				{ d: "M8 4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4v-8a4 4 0 0 1 4 -4" }
+			"question-mark-circle" => [
+				{ d: "M12 18h.008v.008H12z" },
+				{ d: "M9.75 9a2.25 2.25 0 1 1 2.818 2.186c-.415.14 -.693.53 -.693.968V12.75" },
+				{ d: "M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0Z" }
 			],
-			"login" => [
-				{ d: "M15 12h-9" },
-				{ d: "M12 9l-3 3l3 3" },
-				{ d: "M6 4h9a2 2 0 0 1 2 2v2" },
-				{ d: "M17 16v2a2 2 0 0 1 -2 2h-9" }
+			"arrow-right-on-rectangle" => [
+				{ d: "M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0 -2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25 -2.25V15" },
+				{ d: "M18 12H9.75" },
+				{ d: "M15 9l3 3l-3 3" }
+			],
+			"arrow-left-on-rectangle" => [
+				{ d: "M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3H18a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 18 21h-7.5a2.25 2.25 0 0 1 -2.25 -2.25V15" },
+				{ d: "M15 12H6.75" },
+				{ d: "M9.75 9 6.75 12l3 3" }
 			],
 			"user-plus" => [
-				{ d: "M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" },
-				{ d: "M16 19a6 6 0 0 0 -12 0" },
-				{ d: "M19 8v6" },
-				{ d: "M22 11h-6" }
+				{ d: "M15 19.128a9.38 9.38 0 0 0 -3 -.478 9.38 9.38 0 0 0 -3 .478" },
+				{ d: "M12 15.75a4.5 4.5 0 1 0 0 -9a4.5 4.5 0 0 0 0 9Z" },
+				{ d: "M18.75 8.25v6" },
+				{ d: "M15.75 11.25h6" },
+				{ d: "M3 20.25a9 9 0 1 1 18 0" }
 			],
-			"mail" => [
-				{ d: "M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" },
-				{ d: "M3 8l9 6l9 -6" }
+			"envelope" => [
+				{ d: "M21.75 6.75v10.5A2.25 2.25 0 0 1 19.5 19.5H4.5A2.25 2.25 0 0 1 2.25 17.25V6.75A2.25 2.25 0 0 1 4.5 4.5h15A2.25 2.25 0 0 1 21.75 6.75Z" },
+				{ d: "m3 7.5 7.928 5.285a1.875 1.875 0 0 0 2.144 0L21 7.5" }
 			],
-			"lock" => [
-				{ d: "M8 11v-3a4 4 0 1 1 8 0v3" },
-				{ d: "M6 11m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" },
-				{ d: "M12 15l0 2" }
+			"lock-closed" => [
+				{ d: "M16.5 10.5V7.875a4.5 4.5 0 1 0 -9 0V10.5" },
+				{ d: "M5.25 10.5h13.5A2.25 2.25 0 0 1 21 12.75v6A2.25 2.25 0 0 1 18.75 21H5.25A2.25 2.25 0 0 1 3 18.75v-6A2.25 2.25 0 0 1 5.25 10.5Z" }
 			],
-			"shield-lock" => [
-				{ d: "M12 3l7 4v5c0 5 -3.5 8.5 -7 10c-3.5 -1.5 -7 -5 -7 -10v-5z" },
-				{ d: "M10 11v-1a2 2 0 1 1 4 0v1" },
-				{ d: "M9 11h6v4h-6z" }
+			"shield-check" => [
+				{ d: "M9 12.75 11.25 15 15 9.75" },
+				{ d: "M12 3.75c-2.239 1.498 -4.61 2.25 -7.125 2.25v5.25c0 5.014 3.452 9.22 8.1 10.374a1.125 1.125 0 0 0 .525 0c4.648 -1.154 8.1 -5.36 8.1 -10.374V6c-2.515 0 -4.886 -.752 -7.125 -2.25Z" }
 			],
 			"sparkles" => [
-				{ d: "M12 3l1.8 4.2l4.2 1.8l-4.2 1.8l-1.8 4.2l-1.8 -4.2l-4.2 -1.8l4.2 -1.8z" },
-				{ d: "M5 16l.8 1.7l1.7 .8l-1.7 .8l-.8 1.7l-.8 -1.7l-1.7 -.8l1.7 -.8z" },
-				{ d: "M18 15l.8 1.7l1.7 .8l-1.7 .8l-.8 1.7l-.8 -1.7l-1.7 -.8l1.7 -.8z" }
+				{ d: "M9.813 15.904 9 18l-.813 -2.096a4.5 4.5 0 0 0 -2.284 -2.284L3.75 12l2.153 -.813a4.5 4.5 0 0 0 2.284 -2.284L9 6.75l.813 2.153a4.5 4.5 0 0 0 2.284 2.284L14.25 12l-2.153 .813a4.5 4.5 0 0 0 -2.284 2.284Z" },
+				{ d: "M18.259 8.715 18 9.75l-.259 -1.035a3.375 3.375 0 0 0 -1.956 -1.956L14.75 6.5l1.035 -.259a3.375 3.375 0 0 0 1.956 -1.956L18 3.25l.259 1.035a3.375 3.375 0 0 0 1.956 1.956L21.25 6.5l-1.035 .259a3.375 3.375 0 0 0 -1.956 1.956Z" },
+				{ d: "M16.5 20.25h.008v.008H16.5z" }
 			],
 			"user-circle" => [
-				{ d: "M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" },
-				{ d: "M6 21a6 6 0 0 1 12 0" },
-				{ d: "M12 3a9 9 0 1 1 0 18a9 9 0 0 1 0 -18" }
+				{ d: "M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0 -5.982 2.975" },
+				{ d: "M12 13.5a4.125 4.125 0 1 0 0 -8.25a4.125 4.125 0 0 0 0 8.25Z" },
+				{ d: "M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0Z" }
+			],
+			"check-circle" => [
+				{ d: "M9 12.75 11.25 15 15 9.75" },
+				{ d: "M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0Z" }
+			],
+			"arrow-down-tray" => [
+				{ d: "M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5" },
+				{ d: "M12 3v12" },
+				{ d: "m8.25 11.25 3.75 3.75 3.75 -3.75" }
+			],
+			"arrow-up-tray" => [
+				{ d: "M3 15.75V18A2.25 2.25 0 0 0 5.25 20.25h13.5A2.25 2.25 0 0 0 21 18v-2.25" },
+				{ d: "M12 3.75v11.25" },
+				{ d: "m8.25 7.5 3.75 -3.75 3.75 3.75" }
 			]
 		}
 	end

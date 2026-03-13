@@ -5,7 +5,7 @@
       <p class="ta-muted mt-1">Choose a quick clone workflow or start a month from scratch with guided details.</p>
     </div>
     <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
-      <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+      <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
       <span>Back to Months</span>
     <% end %>
   </div>
@@ -56,7 +56,7 @@
           <%= radio_button_tag :month_workflow, "clone", @month_workflow == "clone", class: "mt-1 h-4 w-4 text-indigo-600", data: { month_wizard_target: "workflow", action: "change->month-wizard#workflowChanged" } %>
           <div>
             <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <%= tabler_icon("copy", classes: "h-4 w-4 text-indigo-600") %>
+              <%= tabler_icon("copy", classes: "ta-action-icon-lg text-indigo-600") %>
               <span>Clone an existing month</span>
             </div>
             <p class="mt-1 text-sm text-slate-600">Next will immediately create the next available month and copy entries from the month you pick.</p>
@@ -69,7 +69,7 @@
           <%= radio_button_tag :month_workflow, "fresh", @month_workflow != "clone", class: "mt-1 h-4 w-4 text-emerald-600", data: { month_wizard_target: "workflow", action: "change->month-wizard#workflowChanged" } %>
           <div>
             <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <%= tabler_icon("sparkles", classes: "h-4 w-4 text-emerald-600") %>
+              <%= tabler_icon("sparkles", classes: "ta-action-icon-lg text-emerald-600") %>
               <span>Start fresh</span>
             </div>
             <p class="mt-1 text-sm text-slate-600">Go to the next step and enter the month, label, income, and notes yourself.</p>
@@ -81,7 +81,7 @@
     <div data-month-wizard-target="clonePanel" class="ta-wizard-panel">
       <div class="mb-3 flex items-center gap-2">
         <h4 class="text-sm font-semibold text-slate-900">Choose a month to clone</h4>
-        <button type="button" class="ta-icon-btn" aria-label="Clone month help" title="Clone month help" data-action="click->help-modal#open" data-help-title="Clone Month Help" data-help-body="Pick an existing month to copy its entries into the next available month. Entry dates will be shifted into the new month, actual amounts will be cleared, and statuses will reset to planned."><%= tabler_icon("help") %></button>
+        <button type="button" class="ta-icon-btn" aria-label="Clone month help" title="Clone month help" data-action="click->help-modal#open" data-help-title="Clone Month Help" data-help-body="Pick an existing month to copy its entries into the next available month. Entry dates will be shifted into the new month, actual amounts will be cleared, and statuses will reset to planned."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
       </div>
 
       <%= select_tag :source_month_id,

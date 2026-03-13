@@ -72,8 +72,8 @@
         <div class="flex w-full flex-wrap items-center justify-between gap-3">
           <div class="flex min-w-0 flex-1 items-center gap-3">
           <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" data-action="click->sidebar#toggle">
-            <span data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "h-4 w-4") %></span>
-            <span data-sidebar-target="collapseIcon" class="hidden"><%= tabler_icon("chevron-left", classes: "h-4 w-4") %></span>
+            <span data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "ta-action-icon-lg") %></span>
+            <span data-sidebar-target="collapseIcon" class="hidden"><%= tabler_icon("chevron-left", classes: "ta-action-icon-lg") %></span>
           </button>
           <div class="min-w-0 flex-1">
             <% if content_for?(:page_header) %>
@@ -83,7 +83,7 @@
                 <h1 class="text-xl font-semibold tracking-tight text-slate-900"><%= content_for(:title) || "Expense Tracker" %></h1>
                 <% if show_back_nav %>
                   <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
-                    <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
+                    <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
                     <span>Back to Months</span>
                   <% end %>
                 <% end %>
@@ -95,22 +95,22 @@
           <% if user_signed_in? %>
             <div class="flex items-center gap-2">
               <%= link_to edit_user_registration_path, class: "inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-200 hover:text-slate-900" do %>
-                <%= tabler_icon("user-circle", classes: "h-4 w-4") %>
+                <%= tabler_icon("user-circle", classes: "ta-action-icon") %>
                 <span><%= current_user.email %></span>
               <% end %>
               <%= button_to destroy_user_session_path, method: :delete, class: "fb-btn-secondary ta-action-btn" do %>
-                <%= tabler_icon("x", classes: "h-4 w-4 text-slate-600") %>
+                <%= tabler_icon("logout", classes: "ta-action-icon text-slate-600") %>
                 <span>Sign out</span>
               <% end %>
             </div>
           <% else %>
             <div class="flex items-center gap-2">
               <%= link_to new_user_session_path, class: "fb-btn-secondary ta-action-btn" do %>
-                <%= tabler_icon("login", classes: "h-4 w-4 text-slate-600") %>
+                <%= tabler_icon("login", classes: "ta-action-icon text-slate-600") %>
                 <span>Sign in</span>
               <% end %>
               <%= link_to new_user_registration_path, class: "fb-btn-primary ta-action-btn" do %>
-                <%= tabler_icon("user-plus", classes: "h-4 w-4 text-indigo-100") %>
+                <%= tabler_icon("user-plus", classes: "ta-action-icon text-indigo-100") %>
                 <span>Create account</span>
               <% end %>
             </div>

@@ -26,7 +26,7 @@
 	}
 
 	.ta-sidebar-link {
-		@apply flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white;
+		@apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white;
 	}
 
 	.ta-sidebar-link-active {
@@ -34,7 +34,7 @@
 	}
 
 	.ta-sidebar-link-icon {
-		@apply h-4 w-4 shrink-0;
+		@apply h-5 w-5 shrink-0;
 	}
 
 	.ta-shell-collapsed .ta-sidebar-brand {
@@ -134,8 +134,24 @@
 		@apply inline-flex items-center gap-2;
 	}
 
+	.ta-action-icon-sm {
+		@apply h-3.5 w-3.5 shrink-0;
+	}
+
+	.ta-action-icon {
+		@apply h-4 w-4 shrink-0;
+	}
+
+	.ta-action-icon-lg {
+		@apply h-5 w-5 shrink-0;
+	}
+
+	.ta-panel-icon {
+		@apply h-6 w-6 shrink-0;
+	}
+
 	.ta-icon-btn {
-		@apply inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-200;
+		@apply inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-200;
 	}
 
 	.ta-wizard-shell {
