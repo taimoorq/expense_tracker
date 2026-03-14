@@ -6,11 +6,20 @@ export default class extends Controller {
 
   connect() {
     this.toggleListeners = new Map()
+    this.mutedGroups = new WeakSet()
     this.persistenceSuspended = false
     this.defaultState = this.captureState()
 
     this.groupTargets.forEach((group) => {
-      const listener = () => this.saveState()
+      const listener = () => {
+        if (this.mutedGroups.has(group)) {
+          this.mutedGroups.delete(group)
+          return
+        }
+
+        this.saveState()
+      }
+
       this.toggleListeners.set(group, listener)
       group.addEventListener("toggle", listener)
     })
@@ -28,7 +37,7 @@ export default class extends Controller {
 
   expandAll() {
     this.groupTargets.forEach((group) => {
-      group.open = true
+      this.setGroupOpen(group, true, { persist: false })
     })
 
     this.saveState()
@@ -36,7 +45,7 @@ export default class extends Controller {
 
   collapseAll() {
     this.groupTargets.forEach((group) => {
-      group.open = false
+      this.setGroupOpen(group, false, { persist: false })
     })
 
     this.saveState()
@@ -61,8 +70,16 @@ export default class extends Controller {
       const groupId = group.dataset.groupId
       if (!groupId || !(groupId in savedState)) return
 
-      group.open = savedState[groupId]
+      this.setGroupOpen(group, savedState[groupId], { persist: false })
     })
+  }
+
+  setGroupOpen(group, open, { persist = true } = {}) {
+    if (!persist) {
+      this.mutedGroups.add(group)
+    }
+
+    group.open = open
   }
 
   saveState() {

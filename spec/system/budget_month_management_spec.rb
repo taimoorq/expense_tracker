@@ -132,17 +132,19 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    subscription_group = find("details[data-group-id='recurring-subscriptions']", visible: :all)
-    expect(subscription_group[:open]).to be_nil
+    open_state = -> { page.evaluate_script("document.querySelector(\"details[data-group-id='recurring-subscriptions']\")?.open") }
+
+    expect(page).to have_css("details[data-group-id='recurring-subscriptions']", visible: :all)
+    expect(open_state.call).to be(false)
 
     fill_in "Filter payee", with: "Netflix"
 
     expect(page).to have_text("Netflix")
-    expect(subscription_group[:open]).to eq("true")
+    expect(open_state.call).to be(true)
 
     fill_in "Filter payee", with: ""
 
-    expect(subscription_group[:open]).to be_nil
+    expect(open_state.call).to be(false)
   end
 
   it "lets a user mark an entry as paid from the edit page" do
@@ -299,6 +301,8 @@ RSpec.describe "Budget month management", type: :system do
     user = create(:user, email: "signout@example.com")
 
     sign_in_as(user)
+    visit root_path
+
     click_button "Sign out"
 
     expect(page).to have_content("Signed out successfully")

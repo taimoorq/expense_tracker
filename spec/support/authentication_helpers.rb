@@ -1,12 +1,18 @@
 module AuthenticationHelpers
   def sign_in_as(user, password: "password123!")
-    visit new_user_session_path
-    fill_in "Email", with: user.email
-    fill_in "Password", with: password
-    click_button "Log in"
+    login_as(user, scope: :user)
   end
 end
 
 RSpec.configure do |config|
   config.include AuthenticationHelpers, type: :system
+  config.include Warden::Test::Helpers, type: :system
+
+  config.before(:each, type: :system) do
+    Warden.test_mode!
+  end
+
+  config.after(:each, type: :system) do
+    Warden.test_reset!
+  end
 end
