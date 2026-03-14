@@ -6,6 +6,23 @@ module ApplicationHelper
   ].freeze
 
   def auth_page_theme
+    if admin_auth_scope? && controller_name == "sessions" && action_name == "new"
+      return {
+        badge: "Admin access",
+        title: "Sign in to the admin console",
+        description: "Manage user access state and review audit history without exposing budgeting records.",
+        gradient: "from-slate-900 via-slate-800 to-cyan-700",
+        panel_tint: "from-cyan-500/15 via-slate-400/10 to-slate-500/15",
+        glow: "bg-cyan-400/20",
+        accent: "text-cyan-100",
+        chip: "bg-cyan-500/15 text-cyan-50 ring-cyan-200/30",
+        button: "from-slate-800 to-cyan-700 hover:from-slate-700 hover:to-cyan-600",
+        feature_icon: "shield-lock",
+        feature_title: "Restricted admin surface",
+        feature_copy: "This console is limited to access management and audit logging for administrator actions."
+      }
+    end
+
     case [ controller_name, action_name ]
     when [ "sessions", "new" ]
       {
@@ -117,6 +134,14 @@ module ApplicationHelper
 
   alias_method :tabler_icon, :app_icon
 
+  def authentication_brand_path
+    admin_auth_scope? ? new_admin_user_session_path : root_path
+  end
+
+  def authentication_brand_subtitle
+    admin_auth_scope? ? "Restricted admin access" : "Private monthly budgeting"
+  end
+
   def legacy_tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)
     canonical_name = app_icon_aliases[name.to_s] || name.to_s
     path_data = app_icon_paths[canonical_name] || app_icon_paths["list-bullet"]
@@ -157,6 +182,12 @@ module ApplicationHelper
   end
 
   private
+
+  def admin_auth_scope?
+    respond_to?(:resource_name) && resource_name.to_sym == :admin_user
+  rescue NoMethodError
+    false
+  end
 
   def templates_for_type(budget_month, template_type)
     case template_type

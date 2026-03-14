@@ -9,19 +9,27 @@ RSpec.describe "db/seeds" do
     original_mode = ENV["SEED_MODE"]
     original_email = ENV["SEED_USER_EMAIL"]
     original_password = ENV["SEED_USER_PASSWORD"]
+    original_admin_email = ENV["ADMIN_USER_EMAIL"]
+    original_admin_password = ENV["ADMIN_USER_PASSWORD"]
 
     ENV["SEED_MODE"] = seed_mode
     ENV["SEED_USER_EMAIL"] = seed_email
     ENV["SEED_USER_PASSWORD"] = seed_password
+    ENV["ADMIN_USER_EMAIL"] = admin_seed_email
+    ENV["ADMIN_USER_PASSWORD"] = admin_seed_password
 
     example.run
   ensure
     ENV["SEED_MODE"] = original_mode
     ENV["SEED_USER_EMAIL"] = original_email
     ENV["SEED_USER_PASSWORD"] = original_password
+    ENV["ADMIN_USER_EMAIL"] = original_admin_email
+    ENV["ADMIN_USER_PASSWORD"] = original_admin_password
   end
 
   let(:seed_password) { "password123!" }
+  let(:admin_seed_email) { nil }
+  let(:admin_seed_password) { nil }
 
   context "when seeding users only" do
     let(:seed_mode) { "users" }
@@ -42,6 +50,22 @@ RSpec.describe "db/seeds" do
       expect(user.credit_cards).to be_empty
       expect(user.accounts).to be_empty
       expect(user.account_snapshots).to be_empty
+      expect(AdminUser.count).to eq(0)
+    end
+  end
+
+  context "when admin seed credentials are provided" do
+    let(:seed_mode) { "users" }
+    let(:seed_email) { "with-admin@example.com" }
+    let(:admin_seed_email) { "admin@example.com" }
+    let(:admin_seed_password) { "password123!" }
+
+    it "creates or updates the admin user during seeding" do
+      expect { load_seed }.to change(User, :count).by(1).and change(AdminUser, :count).by(1)
+
+      admin_user = AdminUser.find_by!(email: admin_seed_email)
+
+      expect(admin_user.valid_password?(admin_seed_password)).to be(true)
     end
   end
 
@@ -84,6 +108,19 @@ RSpec.describe "db/seeds" do
       expect(user.credit_cards).to be_empty
       expect(user.accounts).to be_empty
       expect(user.account_snapshots).to be_empty
+    end
+  end
+
+  context "when only one admin seed variable is provided" do
+    let(:seed_mode) { "users" }
+    let(:seed_email) { "broken-admin-seed@example.com" }
+    let(:admin_seed_email) { "admin@example.com" }
+
+    it "raises an error" do
+      expect { load_seed }.to raise_error(
+        ArgumentError,
+        "ADMIN_USER_EMAIL and ADMIN_USER_PASSWORD must both be provided to seed an admin user"
+      )
     end
   end
 end

@@ -1,0 +1,57 @@
+<% content_for :title, "Manage User Access" %>
+
+<div class="space-y-6">
+  <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+    <div class="rounded-3xl border border-slate-200 bg-white p-6">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">User identity</p>
+      <dl class="mt-5 space-y-4 text-sm">
+        <div>
+          <dt class="text-slate-500">Email</dt>
+          <dd class="mt-1 font-medium text-slate-950"><%= @user.email %></dd>
+        </div>
+        <div>
+          <dt class="text-slate-500">Access state</dt>
+          <dd class="mt-1">
+            <span class="rounded-full px-3 py-1 text-xs font-semibold <%= @user.access_state_active? ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800" %>">
+              <%= @user.access_state.humanize %>
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-slate-500">Created</dt>
+          <dd class="mt-1 text-slate-900"><%= @user.created_at.strftime("%Y-%m-%d %H:%M") %></dd>
+        </div>
+        <div>
+          <dt class="text-slate-500">Last updated</dt>
+          <dd class="mt-1 text-slate-900"><%= @user.updated_at.strftime("%Y-%m-%d %H:%M") %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Access management</p>
+      <p class="mt-3 text-sm leading-6 text-slate-600">Use this only to change whether the user can sign in. Finance records remain outside the admin surface.</p>
+
+      <% action_path = @user.access_state_active? ? suspend_admin_user_path(@user) : restore_admin_user_path(@user) %>
+      <% action_label = @user.access_state_active? ? "Suspend access" : "Restore access" %>
+      <% action_classes = @user.access_state_active? ? "fb-btn-danger" : "fb-btn-primary" %>
+
+      <%= form_with url: action_path, method: :patch, class: "mt-5 space-y-4" do |form| %>
+        <div>
+          <%= form.label :audit_note, "Audit note", class: "fb-label" %>
+          <%= form.text_area :audit_note, rows: 4, class: "fb-input", placeholder: "Optional reason for this access change" %>
+        </div>
+
+        <%= form.submit action_label, class: action_classes %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-3xl border border-cyan-200 bg-cyan-50 p-5 text-sm leading-6 text-cyan-950">
+    This page intentionally omits budgeting data, templates, transaction history, and account balances. The admin console is limited to identity metadata and access-state changes.
+  </div>
+
+  <div>
+    <%= link_to "Back to users", admin_users_path, class: "font-semibold text-cyan-700 hover:text-cyan-900" %>
+  </div>
+</div>

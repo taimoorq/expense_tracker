@@ -1,5 +1,19 @@
 Rails.application.routes.draw do
+  devise_for :admin_users, path: "admin", controllers: {
+    sessions: "admin/sessions"
+  }
   devise_for :users
+
+  namespace :admin do
+    root "dashboard#show"
+    resources :users, only: [ :index, :show ] do
+      member do
+        patch :suspend
+        patch :restore
+      end
+    end
+  end
+
   root "budget_months#index"
   get "help", to: "help#show", as: :help
   get "planning_templates", to: "planning_templates#index", as: :planning_templates

@@ -1,0 +1,39 @@
+<% content_for :title, "Admin sign in" %>
+
+<div class="space-y-4">
+  <div class="rounded-2xl border border-cyan-100 bg-cyan-50/80 p-4 text-sm leading-6 text-cyan-950">
+    This sign-in is for administrator access only. The admin console is restricted to user access management and audit logging.
+  </div>
+
+  <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-5" }) do |form| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+
+    <div>
+      <%= form.label :email, class: "fb-label" %>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("mail", classes: "h-4 w-4") %></span>
+        <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "ta-auth-input pl-11", placeholder: "admin@example.com" %>
+      </div>
+    </div>
+
+    <div>
+      <%= form.label :password, class: "fb-label" %>
+      <div class="relative">
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("lock", classes: "h-4 w-4") %></span>
+        <%= form.password_field :password, autocomplete: "current-password", class: "ta-auth-input pl-11", placeholder: "Enter your password" %>
+      </div>
+    </div>
+
+    <% if devise_mapping.rememberable? %>
+      <label class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <%= form.check_box :remember_me, class: "fb-checkbox" %>
+        <span>Remember me</span>
+      </label>
+    <% end %>
+
+    <%= form.button type: :submit, class: "ta-auth-submit from-slate-800 to-cyan-700 hover:from-slate-700 hover:to-cyan-600" do %>
+      <%= tabler_icon("shield-lock", classes: "h-4 w-4") %>
+      <span>Sign in to admin</span>
+    <% end %>
+  <% end %>
+</div>

@@ -63,10 +63,12 @@ If the goal is to get the app running as quickly as possible, use Docker:
 5. Optional: load seed data in another terminal
 	- users only: `docker compose exec web bin/rails db:seed`
 	- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
+	- users plus admin: `docker compose exec web env ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD='strong-password' bin/rails db:seed`
+	- users, transactions, and admin: `docker compose exec web env SEED_MODE=users_with_transactions ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD='strong-password' bin/rails db:seed`
 
 If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
 
-After seeding, sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month, recurring demo templates, and manual account balance history.
+After seeding, sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month, recurring demo templates, and manual account balance history. If you set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD`, you can also sign in to the separate admin console at `/admin/sign_in`.
 
 ## Screenshots
 
@@ -191,8 +193,18 @@ In another terminal:
 
 - users only: `docker compose exec web bin/rails db:seed`
 - users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
+- users plus admin: `docker compose exec web env ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD='strong-password' bin/rails db:seed`
+- users, transactions, and admin: `docker compose exec web env SEED_MODE=users_with_transactions ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD='strong-password' bin/rails db:seed`
 
 The default command creates the demo account only. Use `SEED_MODE=users_with_transactions` to also create the sample month, recurring demo templates, and manual accounts with balance snapshots.
+
+If you prefer storing these overrides in `.env` before running Docker, set:
+
+- `SEED_MODE=users_with_transactions` when you want full demo data
+- `ADMIN_USER_EMAIL=admin@example.com`
+- `ADMIN_USER_PASSWORD=strong-password`
+
+After that, run `docker compose exec web bin/rails db:seed`. The admin user can then sign in through `/admin/sign_in`.
 
 #### Automatic recurring completion
 
@@ -261,11 +273,14 @@ Common local `.env` uses:
 - override `PORT` for `bin/dev`
 - override `APP_PORT` for Docker
 - set `SEED_MODE`, `SEED_USER_EMAIL`, and `SEED_USER_PASSWORD` before running `bin/rails db:seed`
+- optionally set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` if you want `db:seed` to create or update an admin user too
 - set `DATABASE_URL` if you want to connect to PostgreSQL over TCP instead of the default local socket setup
 
 ## Authentication
 
 The app requires sign-in so each account only sees its own months, entries, imports, and recurring templates.
+
+There is also a separate admin authentication surface for user-access management. The admin console is intentionally limited to identity metadata, access-state changes, and admin audit logs. It does not provide routes for viewing budget months, entries, templates, or account balances.
 
 You can:
 
@@ -274,6 +289,22 @@ You can:
 - use the seeded demo account after running `bin/rails db:seed`
 
 The default seed creates the account only. Use `SEED_MODE=users_with_transactions` if you want seeded month data, recurring templates, and manual account balance history as well.
+
+If you want `db:seed` to provision an administrator too, set both `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` before running the seed command.
+
+Examples:
+
+- `ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD=password123! bin/rails db:seed`
+- `SEED_MODE=users_with_transactions ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD=password123! bin/rails db:seed`
+
+If only one of those admin env vars is set, the seed command will fail fast so you do not end up with a half-configured admin setup.
+
+You can still create an admin manually from the Rails console if that fits your deployment workflow better:
+
+- `bin/rails console`
+- `AdminUser.create!(email: "admin@example.com", password: "password123!", password_confirmation: "password123!")`
+
+For stronger hardening in production, run the admin surface with a restricted PostgreSQL role that can only read `users`, `admin_users`, and `admin_audit_logs`, plus update `users.access_state`.
 
 ## Demo and Sample Data
 
@@ -285,6 +316,8 @@ Running `bin/rails db:seed` creates or updates a demo user you can sign in with.
 
 By default this is a users-only seed. To also load the sample month, recurring demo templates, and manual account balance history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
 
+If `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are present, the same seed run will also create or update an admin user for the separate `/admin` console.
+
 Seeded credentials:
 
 - Email: `demo@example.com`
@@ -295,6 +328,8 @@ You can override these when seeding with:
 - `SEED_MODE=users` or `SEED_MODE=users_with_transactions`
 - `SEED_USER_EMAIL=your-email@example.com`
 - `SEED_USER_PASSWORD=your-password`
+- `ADMIN_USER_EMAIL=admin@example.com`
+- `ADMIN_USER_PASSWORD=choose-a-strong-password`
 
 ### Seeded Demo Month
 
