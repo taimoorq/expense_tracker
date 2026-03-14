@@ -1,17 +1,6 @@
 <% content_for :title, "Sign in" %>
 
-<div class="space-y-6">
-  <div class="grid gap-3 sm:grid-cols-2">
-    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Monthly planning</p>
-      <p class="mt-2 text-sm leading-6 text-slate-600">Review income, planned expenses, templates, and leftover trends in one place.</p>
-    </div>
-    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Private workspace</p>
-      <p class="mt-2 text-sm leading-6 text-slate-600">Every record stays scoped to your account with multi-tenant protections in place.</p>
-    </div>
-  </div>
-
+<div class="space-y-3">
   <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-5" }) do |form| %>
     <%= render "devise/shared/error_messages", resource: resource %>
 
@@ -46,4 +35,15 @@
     <% end %>
   <% end %>
   <%= render "devise/shared/links" %>
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Monthly planning</p>
+      <p class="mt-2 text-sm leading-6 text-slate-600">Review income, planned expenses, templates, and leftover trends in one place.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Private workspace</p>
+      <p class="mt-2 text-sm leading-6 text-slate-600">Every record stays scoped to your account with multi-tenant protections in place.</p>
+    </div>
+  </div>
+
 </div>
