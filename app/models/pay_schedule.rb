@@ -45,7 +45,19 @@ class PaySchedule < ApplicationRecord
     dates.compact.map { |date| adjust_for_weekend(date) }.uniq.sort
   end
 
+  def matches_entry?(entry, month_on:)
+    return false if entry.blank? || entry.occurred_on.blank?
+    return false unless comparable_text(entry.payee) == comparable_text(name)
+    return false unless pay_dates_for_month(month_on).include?(entry.occurred_on)
+
+    entry.source_file == "pay_schedule" || entry.income?
+  end
+
   private
+
+  def comparable_text(value)
+    value.to_s.strip.downcase
+  end
 
   def recurring_dates(month_start, month_end, interval_days)
     current = first_pay_on

@@ -41,10 +41,8 @@ class GenerateMonthMonthlyBills
   end
 
   def exists?(bill, due_date)
-    @budget_month.expense_entries.exists?(
-      payee: bill.name,
-      occurred_on: due_date,
-      source_file: "monthly_bill"
-    )
+    @budget_month.expense_entries.any? do |entry|
+      bill.matches_entry?(entry, month_on: @budget_month.month_on) && entry.occurred_on == due_date
+    end
   end
 end

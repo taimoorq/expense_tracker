@@ -34,11 +34,8 @@ class GenerateMonthPaychecks
   private
 
   def already_exists?(schedule, pay_date)
-    @budget_month.expense_entries.exists?(
-      section: ExpenseEntry.sections[:income],
-      payee: schedule.name,
-      occurred_on: pay_date,
-      source_file: "pay_schedule"
-    )
+    @budget_month.expense_entries.any? do |entry|
+      schedule.matches_entry?(entry, month_on: @budget_month.month_on) && entry.occurred_on == pay_date
+    end
   end
 end

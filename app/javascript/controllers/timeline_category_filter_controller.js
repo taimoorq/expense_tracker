@@ -44,6 +44,7 @@ export default class extends Controller {
     const payeeValue = this.hasPayeeTarget ? this.payeeTarget.value.trim().toLowerCase() : ""
     const reasonValue = this.hasReasonTarget ? this.reasonTarget.value.trim().toLowerCase() : ""
     const statusValue = this.hasStatusTarget ? this.statusTarget.value.trim().toLowerCase() : ""
+    const filtersActive = !noFilters || dateValue !== "" || payeeValue !== "" || reasonValue !== "" || statusValue !== ""
 
     this.filterTargets.forEach((button) => {
       const value = button.dataset.value
@@ -94,6 +95,27 @@ export default class extends Controller {
       const visibleGroups = this.groupTargets.filter((group) => !group.classList.contains("hidden")).length
       this.emptyTarget.classList.toggle("hidden", visibleGroups > 0)
     }
+
+    this.syncExpandedGroups(filtersActive)
+  }
+
+  syncExpandedGroups(filtersActive) {
+    const collapsibleController = this.application.getControllerForElementAndIdentifier(this.element, "collapsible-groups")
+    if (!collapsibleController) return
+
+    collapsibleController.withPersistenceSuspended(() => {
+      if (filtersActive) {
+        this.groupTargets.forEach((group) => {
+          if (!group.classList.contains("hidden")) {
+            group.open = true
+          }
+        })
+
+        return
+      }
+
+      collapsibleController.restoreState()
+    })
   }
 
   applyVisibility(row) {

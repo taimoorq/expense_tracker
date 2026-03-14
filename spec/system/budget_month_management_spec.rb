@@ -123,6 +123,28 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_button("Fuel 1")
   end
 
+  it "expands matching timeline groups while filters are active", js: true do
+    user = create(:user, email: "timelinefilters@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Payroll", category: "Paycheck", section: :income, status: :planned, planned_amount: 2500)
+    create(:expense_entry, budget_month: month, user: user, payee: "Netflix", category: "Subscription", section: :fixed, status: :planned, planned_amount: 19.99, source_file: "subscription")
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    subscription_group = find("details[data-group-id='recurring-subscriptions']", visible: :all)
+    expect(subscription_group[:open]).to be_nil
+
+    fill_in "Filter payee", with: "Netflix"
+
+    expect(page).to have_text("Netflix")
+    expect(subscription_group[:open]).to eq("true")
+
+    fill_in "Filter payee", with: ""
+
+    expect(subscription_group[:open]).to be_nil
+  end
+
   it "lets a user mark an entry as paid from the edit page" do
     user = create(:user, email: "paid@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
@@ -180,6 +202,98 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Amount/date may change month to month.")
     expect(page).to have_content("Actual not set")
   end
+
+      it "recognizes imported entries that already match templates" do
+        user = create(:user, email: "importedmatches@example.com")
+        month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+        create(:pay_schedule,
+          user: user,
+          name: "Employer",
+          cadence: :semimonthly,
+          amount: 4200,
+          first_pay_on: Date.new(2026, 3, 7),
+          day_of_month_one: 7,
+          day_of_month_two: 22,
+          weekend_adjustment: :no_adjustment,
+          active: true)
+        create(:subscription, user: user, name: "Netflix", amount: 21.19, due_day: 19, account: "Card", active: true)
+        create(:monthly_bill, user: user, name: "Mortgage", kind: :fixed_payment, due_day: 31, account: "Checking", active: true)
+        create(:payment_plan, user: user, name: "Apple Financing", total_due: 1200, amount_paid: 300, monthly_target: 107.41, due_day: 15, account: "Card", active: true)
+        create(:credit_card, user: user, name: "Chase", minimum_payment: 50, priority: 1, active: true)
+
+        create(:expense_entry,
+          budget_month: month,
+          user: user,
+          source_file: "March 2026 Transactions.csv",
+          occurred_on: Date.new(2026, 3, 7),
+          section: :income,
+          category: "Paycheck",
+          payee: "Employer",
+          planned_amount: 4200,
+          actual_amount: 4200,
+          account: "Checking",
+          status: :paid)
+        create(:expense_entry,
+          budget_month: month,
+          user: user,
+          source_file: "March 2026 Transactions.csv",
+          occurred_on: Date.new(2026, 3, 19),
+          section: :fixed,
+          category: "Subscription",
+          payee: "Netflix",
+          planned_amount: 21.19,
+          account: "Card",
+          status: :planned)
+        create(:expense_entry,
+          budget_month: month,
+          user: user,
+          source_file: "March 2026 Transactions.csv",
+          occurred_on: Date.new(2026, 3, 31),
+          section: :manual,
+          category: "Housing",
+          payee: "Mortgage",
+          planned_amount: 3394.65,
+          actual_amount: 3394.65,
+          account: "Checking",
+          status: :paid)
+        create(:expense_entry,
+          budget_month: month,
+          user: user,
+          source_file: "March 2026 Transactions.csv",
+          occurred_on: Date.new(2026, 3, 15),
+          section: :debt,
+          category: "Installment",
+          payee: "Apple Financing",
+          planned_amount: 107.41,
+          actual_amount: 107.41,
+          account: "Card",
+          status: :paid)
+        create(:expense_entry,
+          budget_month: month,
+          user: user,
+          source_file: "March 2026 Transactions.csv",
+          occurred_on: Date.new(2026, 3, 31),
+          section: :debt,
+          category: "Credit Card",
+          payee: "Chase",
+          planned_amount: 250,
+          account: "Checking",
+          status: :planned)
+
+        sign_in_as(user)
+        visit budget_month_path(month)
+
+        expect(page).to have_content("Paycheck entries are already in this month.")
+        expect(page).to have_content("Subscription entries are already in this month.")
+        expect(page).to have_content("Monthly bill entries are already in this month.")
+        expect(page).to have_content("Payment-plan entries are already in this month.")
+        expect(page).to have_button("Re-estimate Card Payments")
+        expect(page).not_to have_button("Add Paychecks")
+        expect(page).not_to have_button("Add Subscriptions")
+        expect(page).not_to have_button("Add Monthly Bills")
+        expect(page).not_to have_button("Add Payment Plans")
+      end
 
   it "allows a signed in user to sign out" do
     user = create(:user, email: "signout@example.com")

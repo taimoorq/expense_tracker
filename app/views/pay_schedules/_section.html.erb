@@ -1,18 +1,52 @@
 <%= turbo_frame_tag "pay_schedules_section" do %>
   <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <h3 class="mb-3 text-lg font-semibold">1) Paycheck Schedules</h3>
-    <%= form_with model: pay_schedule, url: pay_schedules_path, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+    <%= form_with model: pay_schedule, url: pay_schedules_path, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
       <%= hidden_field_tag :budget_month_id, budget_month.id %>
-      <%= form.text_field :name, placeholder: "Employer/Source", required: true, class: "fb-input" %>
-      <%= form.select :cadence, PaySchedule.cadences.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
-      <%= form.number_field :amount, step: 0.01, placeholder: "Amount", required: true, class: "fb-input" %>
-      <%= form.date_field :first_pay_on, required: true, class: "fb-input" %>
-      <%= form.number_field :day_of_month_one, placeholder: "Day #1", class: "fb-input" %>
-      <%= form.number_field :day_of_month_two, placeholder: "Day #2", class: "fb-input" %>
-      <%= form.select :weekend_adjustment, PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
-      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
-      <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
-      <%= form.submit "Save Schedule", class: "fb-btn-primary" %>
+      <div>
+        <%= form.label :name, "Employer / Source", class: "fb-label" %>
+        <%= form.text_field :name, placeholder: "Employer/Source", required: true, class: "fb-input" %>
+      </div>
+      <div>
+        <%= form.label :cadence, class: "fb-label" %>
+        <%= form.select :cadence, PaySchedule.cadences.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+        <p class="mt-1 text-xs text-slate-500">Choose how often this income repeats.</p>
+      </div>
+      <div>
+        <%= form.label :amount, class: "fb-label" %>
+        <%= form.number_field :amount, step: 0.01, placeholder: "0.00", required: true, class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Enter the expected amount for each paycheck.</p>
+      </div>
+      <div>
+        <%= form.label :first_pay_on, "First Pay On", class: "fb-label" %>
+        <%= form.date_field :first_pay_on, required: true, class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Use the first known payday to anchor the schedule.</p>
+      </div>
+      <div>
+        <%= form.label :day_of_month_one, "Day #1", class: "fb-label" %>
+        <%= form.number_field :day_of_month_one, min: 1, max: 31, placeholder: "15", class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Used for semimonthly schedules.</p>
+      </div>
+      <div>
+        <%= form.label :day_of_month_two, "Day #2", class: "fb-label" %>
+        <%= form.number_field :day_of_month_two, min: 1, max: 31, placeholder: "30", class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Optional second semimonthly payday.</p>
+      </div>
+      <div>
+        <%= form.label :weekend_adjustment, class: "fb-label" %>
+        <%= form.select :weekend_adjustment, PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+        <p class="mt-1 text-xs text-slate-500">Adjusts the deposit date when it falls on a weekend.</p>
+      </div>
+      <div>
+        <%= form.label :account, class: "fb-label" %>
+        <%= form.text_field :account, placeholder: "Checking", class: "fb-input" %>
+      </div>
+      <div class="flex items-end">
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+      </div>
+      <div class="flex items-end">
+        <%= form.submit "Save Schedule", class: "fb-btn-primary" %>
+      </div>
     <% end %>
 
     <div class="mt-3">

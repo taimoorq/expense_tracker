@@ -1,13 +1,27 @@
 <%= turbo_frame_tag "credit_cards_section" do %>
   <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <h3 class="mb-3 text-lg font-semibold">5) Credit Cards (estimate from leftover)</h3>
-    <%= form_with model: credit_card, url: credit_cards_path, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+    <%= form_with model: credit_card, url: credit_cards_path, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
       <%= hidden_field_tag :budget_month_id, budget_month.id %>
-      <%= form.text_field :name, placeholder: "Card name", required: true, class: "fb-input" %>
-      <%= form.number_field :minimum_payment, step: 0.01, placeholder: "Minimum", class: "fb-input" %>
-      <%= form.number_field :priority, min: 1, placeholder: "Priority", required: true, class: "fb-input" %>
-      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
-      <div class="flex items-center gap-2">
+      <div>
+        <%= form.label :name, "Card Name", class: "fb-label" %>
+        <%= form.text_field :name, placeholder: "Card name", required: true, class: "fb-input" %>
+      </div>
+      <div>
+        <%= form.label :minimum_payment, "Minimum Payment", class: "fb-label" %>
+        <%= form.number_field :minimum_payment, step: 0.01, placeholder: "0.00", class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Minimum amount this card should receive first.</p>
+      </div>
+      <div>
+        <%= form.label :priority, class: "fb-label" %>
+        <%= form.number_field :priority, min: 1, placeholder: "1", required: true, class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Lower numbers are paid before higher priority values.</p>
+      </div>
+      <div>
+        <%= form.label :account, class: "fb-label" %>
+        <%= form.text_field :account, placeholder: "Credit Card", class: "fb-input" %>
+      </div>
+      <div class="flex items-end gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
         <%= form.submit "Save", class: "fb-btn-primary" %>
       </div>

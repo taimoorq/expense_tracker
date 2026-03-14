@@ -1,16 +1,21 @@
 <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
 <div class="space-y-6">
-  <% has_generated_paychecks = @expense_entries.any? { |entry| entry.source_file == "pay_schedule" } %>
-  <% has_generated_subscriptions = @expense_entries.any? { |entry| entry.source_file == "subscription" } %>
-  <% has_generated_monthly_bills = @expense_entries.any? { |entry| entry.source_file == "monthly_bill" } %>
-  <% has_generated_payment_plans = @expense_entries.any? { |entry| entry.source_file == "payment_plan" } %>
-  <% has_estimated_credit_cards = @expense_entries.any? { |entry| entry.source_file == "credit_card_estimate" } %>
-  <% paycheck_entry_count = @expense_entries.count { |entry| entry.source_file == "pay_schedule" } %>
-  <% subscription_entry_count = @expense_entries.count { |entry| entry.source_file == "subscription" } %>
-  <% monthly_bill_entry_count = @expense_entries.count { |entry| entry.source_file == "monthly_bill" } %>
-  <% payment_plan_entry_count = @expense_entries.count { |entry| entry.source_file == "payment_plan" } %>
-  <% credit_card_estimate_count = @expense_entries.count { |entry| entry.source_file == "credit_card_estimate" } %>
+  <% matching_paycheck_entries = matching_template_entries(@budget_month, :pay_schedules, @expense_entries) %>
+  <% matching_subscription_entries = matching_template_entries(@budget_month, :subscriptions, @expense_entries) %>
+  <% matching_monthly_bill_entries = matching_template_entries(@budget_month, :monthly_bills, @expense_entries) %>
+  <% matching_payment_plan_entries = matching_template_entries(@budget_month, :payment_plans, @expense_entries) %>
+  <% matching_credit_card_entries = matching_template_entries(@budget_month, :credit_cards, @expense_entries) %>
+  <% has_generated_paychecks = matching_paycheck_entries.any? %>
+  <% has_generated_subscriptions = matching_subscription_entries.any? %>
+  <% has_generated_monthly_bills = matching_monthly_bill_entries.any? %>
+  <% has_generated_payment_plans = matching_payment_plan_entries.any? %>
+  <% has_estimated_credit_cards = matching_credit_card_entries.any? %>
+  <% paycheck_entry_count = matching_paycheck_entries.count %>
+  <% subscription_entry_count = matching_subscription_entries.count %>
+  <% monthly_bill_entry_count = matching_monthly_bill_entries.count %>
+  <% payment_plan_entry_count = matching_payment_plan_entries.count %>
+  <% credit_card_estimate_count = matching_credit_card_entries.count %>
   <% generation_actions_hidden = @budget_month.complete_for_generation? %>
   <% default_tab = @expense_entries.empty? ? "entries" : "timeline" %>
   <% template_actions_completed = [has_generated_paychecks, has_generated_subscriptions, has_generated_monthly_bills, has_generated_payment_plans, has_estimated_credit_cards].count(true) %>

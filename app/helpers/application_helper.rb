@@ -148,7 +148,38 @@ module ApplicationHelper
     end
   end
 
+  def matching_template_entries(budget_month, template_type, entries = budget_month.expense_entries.to_a)
+    Array(entries).select do |entry|
+      templates_for_type(budget_month, template_type).any? do |template|
+        template_matches_entry?(template, entry, budget_month.month_on)
+      end
+    end
+  end
+
   private
+
+  def templates_for_type(budget_month, template_type)
+    case template_type
+    when :pay_schedules
+      budget_month.user.pay_schedules.active_only.to_a
+    when :subscriptions
+      budget_month.user.subscriptions.active_only.to_a
+    when :monthly_bills
+      budget_month.user.monthly_bills.active_only.to_a
+    when :payment_plans
+      budget_month.user.payment_plans.active_only.to_a
+    when :credit_cards
+      budget_month.user.credit_cards.active_only.to_a
+    else
+      []
+    end
+  end
+
+  def template_matches_entry?(template, entry, month_on)
+    return template.matches_entry?(entry) if template.is_a?(CreditCard)
+
+    template.matches_entry?(entry, month_on: month_on)
+  end
 
   def app_icon_partial_path(name)
     candidate_names = [ name.to_s, app_icon_aliases[name.to_s] ].compact.map { |icon_name| icon_name.tr("-", "_") }.uniq

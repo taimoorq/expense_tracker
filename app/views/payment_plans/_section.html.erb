@@ -1,15 +1,36 @@
 <%= turbo_frame_tag "payment_plans_section" do %>
   <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <h3 class="mb-3 text-lg font-semibold">4) Payment Plans (total due + custom monthly)</h3>
-    <%= form_with model: payment_plan, url: payment_plans_path, class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-7" do |form| %>
+    <%= form_with model: payment_plan, url: payment_plans_path, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-7" do |form| %>
       <%= hidden_field_tag :budget_month_id, budget_month.id %>
-      <%= form.text_field :name, placeholder: "Plan name", required: true, class: "fb-input" %>
-      <%= form.number_field :total_due, step: 0.01, placeholder: "Total Due", required: true, class: "fb-input" %>
-      <%= form.number_field :amount_paid, step: 0.01, placeholder: "Amount Paid", class: "fb-input" %>
-      <%= form.number_field :monthly_target, step: 0.01, placeholder: "Custom Monthly", class: "fb-input" %>
-      <%= form.number_field :due_day, min: 1, max: 31, placeholder: "Due day", required: true, class: "fb-input" %>
-      <%= form.text_field :account, placeholder: "Account", class: "fb-input" %>
-      <div class="flex items-center gap-2">
+      <div>
+        <%= form.label :name, class: "fb-label" %>
+        <%= form.text_field :name, placeholder: "Plan name", required: true, class: "fb-input" %>
+      </div>
+      <div>
+        <%= form.label :total_due, "Total Due", class: "fb-label" %>
+        <%= form.number_field :total_due, step: 0.01, placeholder: "0.00", required: true, class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Full balance still assigned to this plan.</p>
+      </div>
+      <div>
+        <%= form.label :amount_paid, "Amount Paid", class: "fb-label" %>
+        <%= form.number_field :amount_paid, step: 0.01, placeholder: "0.00", class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">How much has already been paid toward the balance.</p>
+      </div>
+      <div>
+        <%= form.label :monthly_target, "Monthly Target", class: "fb-label" %>
+        <%= form.number_field :monthly_target, step: 0.01, placeholder: "0.00", class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Optional custom payment amount to plan each month.</p>
+      </div>
+      <div>
+        <%= form.label :due_day, "Due Day", class: "fb-label" %>
+        <%= form.number_field :due_day, min: 1, max: 31, placeholder: "1", required: true, class: "fb-input" %>
+      </div>
+      <div>
+        <%= form.label :account, class: "fb-label" %>
+        <%= form.text_field :account, placeholder: "Checking", class: "fb-input" %>
+      </div>
+      <div class="flex items-end gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
         <%= form.submit "Save", class: "fb-btn-primary" %>
       </div>
