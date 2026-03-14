@@ -1,0 +1,122 @@
+require "rails_helper"
+
+RSpec.describe "Planning template CRUD", type: :request do
+  let(:user) { create(:user) }
+
+  before { sign_in user }
+
+  shared_examples "planning template resource" do |collection_name:, factory:, create_path_helper:, destroy_path_helper:, param_key:, valid_params:, create_notice:, destroy_notice:|
+    it "creates #{collection_name.tr('_', ' ')} records" do
+      params = valid_params.respond_to?(:call) ? instance_exec(&valid_params) : valid_params
+
+      expect do
+        post public_send(create_path_helper), params: { param_key => params }
+      end.to change { user.public_send(collection_name).count }.by(1)
+
+      expect(response).to redirect_to(planning_templates_path)
+      expect(flash[:notice]).to eq(create_notice)
+    end
+
+    it "destroys #{collection_name.tr('_', ' ')} records" do
+      record = create(factory, user: user)
+
+      expect do
+        delete public_send(destroy_path_helper, record)
+      end.to change { user.public_send(collection_name).count }.by(-1)
+
+      expect(response).to redirect_to(planning_templates_path)
+      expect(flash[:notice]).to eq(destroy_notice)
+    end
+  end
+
+  include_examples "planning template resource",
+    collection_name: "pay_schedules",
+    factory: :pay_schedule,
+    create_path_helper: :pay_schedules_path,
+    destroy_path_helper: :pay_schedule_path,
+    param_key: :pay_schedule,
+    valid_params: -> {
+      {
+        name: "Acme Payroll",
+        cadence: "monthly",
+        amount: "2500.00",
+        first_pay_on: "2026-01-15",
+        day_of_month_one: 15,
+        account: "Checking",
+        active: true
+      }
+    },
+    create_notice: "Pay schedule saved.",
+    destroy_notice: "Pay schedule removed."
+
+  include_examples "planning template resource",
+    collection_name: "subscriptions",
+    factory: :subscription,
+    create_path_helper: :subscriptions_path,
+    destroy_path_helper: :subscription_path,
+    param_key: :subscription,
+    valid_params: {
+      name: "Netflix",
+      amount: "19.99",
+      due_day: 8,
+      account: "Checking",
+      active: true,
+      notes: "Streaming"
+    },
+    create_notice: "Subscription saved.",
+    destroy_notice: "Subscription removed."
+
+  include_examples "planning template resource",
+    collection_name: "monthly_bills",
+    factory: :monthly_bill,
+    create_path_helper: :monthly_bills_path,
+    destroy_path_helper: :monthly_bill_path,
+    param_key: :monthly_bill,
+    valid_params: {
+      name: "Electric",
+      kind: "fixed_payment",
+      default_amount: "110.00",
+      due_day: 12,
+      account: "Checking",
+      active: true,
+      notes: "Utility"
+    },
+    create_notice: "Monthly bill template saved.",
+    destroy_notice: "Monthly bill template removed."
+
+  include_examples "planning template resource",
+    collection_name: "payment_plans",
+    factory: :payment_plan,
+    create_path_helper: :payment_plans_path,
+    destroy_path_helper: :payment_plan_path,
+    param_key: :payment_plan,
+    valid_params: {
+      name: "Tax Plan",
+      total_due: "1200.00",
+      amount_paid: "200.00",
+      monthly_target: "100.00",
+      due_day: 18,
+      account: "Checking",
+      active: true,
+      notes: "Installment"
+    },
+    create_notice: "Payment plan saved.",
+    destroy_notice: "Payment plan removed."
+
+  include_examples "planning template resource",
+    collection_name: "credit_cards",
+    factory: :credit_card,
+    create_path_helper: :credit_cards_path,
+    destroy_path_helper: :credit_card_path,
+    param_key: :credit_card,
+    valid_params: {
+      name: "Visa",
+      minimum_payment: "45.00",
+      priority: 1,
+      account: "Checking",
+      active: true,
+      notes: "Main card"
+    },
+    create_notice: "Credit card saved.",
+    destroy_notice: "Credit card removed."
+end
