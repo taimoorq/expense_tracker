@@ -21,10 +21,5 @@
       <span>Send me reset password instructions</span>
     <% end %>
   <% end %>
-
-  <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-    Remembered your password? <%= link_to "Log in", new_session_path(resource_name), class: "font-semibold text-slate-900 hover:text-amber-600" %>
-  </div>
-
   <%= render "devise/shared/links" %>
 </div>

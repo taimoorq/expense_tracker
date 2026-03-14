@@ -1,19 +1,46 @@
+<%
+  auth_links = []
+
+  if controller_name == "sessions"
+    auth_links << {
+      prompt: "New here?",
+      label: "Create account",
+      path: new_registration_path(resource_name),
+      accent: "hover:text-indigo-600"
+    } if devise_mapping.registerable?
+  else
+    auth_links << {
+      prompt: controller_name == "passwords" ? "Remembered your password?" : "Already have an account?",
+      label: "Log in",
+      path: new_session_path(resource_name),
+      accent: "hover:text-slate-900"
+    }
+  end
+
+  if devise_mapping.registerable? && controller_name != "registrations" && controller_name != "sessions"
+    auth_links << {
+      prompt: "Need an account?",
+      label: "Create account",
+      path: new_registration_path(resource_name),
+      accent: "hover:text-emerald-600"
+    }
+  end
+
+  if devise_mapping.recoverable? && controller_name != "passwords" && controller_name != "registrations"
+    auth_links << {
+      prompt: "Forgot your password?",
+      label: "Reset it",
+      path: new_password_path(resource_name),
+      accent: "hover:text-amber-600"
+    }
+  end
+%>
+
 <div class="space-y-3">
-  <% if controller_name != "sessions" %>
-    <div>
-      <%= link_to "Log in", new_session_path(resource_name), class: "ta-auth-link" %>
-    </div>
-  <% end %>
-
-  <% if devise_mapping.registerable? && controller_name != "registrations" %>
-    <div>
-      <%= link_to "Sign up", new_registration_path(resource_name), class: "ta-auth-link" %>
-    </div>
-  <% end %>
-
-  <% if devise_mapping.recoverable? && controller_name != "passwords" && controller_name != "registrations" %>
-    <div>
-      <%= link_to "Forgot your password?", new_password_path(resource_name), class: "ta-auth-link" %>
+  <% auth_links.each do |auth_link| %>
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+      <%= auth_link[:prompt] %>
+      <%= link_to auth_link[:label], auth_link[:path], class: ["font-semibold text-slate-900", auth_link[:accent]] %>
     </div>
   <% end %>
 </div>
