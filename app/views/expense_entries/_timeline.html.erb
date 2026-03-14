@@ -5,7 +5,7 @@
                     .tally
                     .sort_by { |reason, count| [-count, reason.downcase] }
                     .first(8) %>
-  <section class="ta-card" data-controller="collapsible-groups timeline-category-filter" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>">
+  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups timeline-category-filter" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>">
     <div class="mb-3 flex items-center justify-between">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Month Timeline</h3>
       <div class="flex items-center gap-2">
@@ -37,11 +37,11 @@
 
     <% group_rules = [
       ["Income & Paychecks", ->(entry) { entry.income? || entry.source_file == "pay_schedule" || entry.category.to_s.downcase.include?("paycheck") }],
+      ["Payment Plans", ->(entry) { entry.source_file == "payment_plan" || entry.category.to_s.downcase.include?("payment plan") }],
+      ["Credit Card Payments", ->(entry) { entry.source_file == "credit_card_estimate" || entry.category.to_s.downcase.include?("credit card") }],
       ["Recurring Subscriptions", ->(entry) { entry.source_file == "subscription" || entry.category.to_s.downcase.include?("subscription") }],
       ["Monthly Fixed Bills", ->(entry) { entry.source_file == "monthly_bill" && entry.category.to_s.downcase.include?("monthly payment") }],
-      ["Monthly Variable Bills", ->(entry) { entry.source_file == "monthly_bill" && entry.category.to_s.downcase.include?("variable") }],
-      ["Payment Plans", ->(entry) { entry.source_file == "payment_plan" || entry.category.to_s.downcase.include?("payment plan") }],
-      ["Credit Card Payments", ->(entry) { entry.source_file == "credit_card_estimate" || entry.category.to_s.downcase.include?("credit card") }]
+      ["Monthly Variable Bills", ->(entry) { entry.source_file == "monthly_bill" && entry.category.to_s.downcase.include?("variable") }]
     ] %>
 
     <% grouped_entries = [] %>
@@ -115,6 +115,7 @@
                   <% entries.each do |entry| %>
                     <% impact = entry.cashflow_amount %>
                     <% generated_from_template = template_sources.include?(entry.source_file.to_s) %>
+                    <% variable_payment_entry = entry.source_file.in?(["payment_plan", "credit_card_estimate"]) %>
                     <tr
                       data-timeline-filter-target="row"
                       data-timeline-category-filter-target="row"
@@ -124,11 +125,30 @@
                       data-value="<%= reason_for_entry.call(entry).to_s.downcase %>"
                       data-status="<%= entry.status %>">
                       <td class="px-3 py-2"><%= entry.occurred_on || "—" %></td>
-                      <td class="px-3 py-2"><%= entry.payee.presence || "—" %></td>
+                      <td class="px-3 py-2">
+                        <div>
+                          <div><%= entry.payee.presence || "—" %></div>
+                          <% if variable_payment_entry %>
+                            <p class="mt-1 text-xs text-slate-500">Amount/date may change month to month.</p>
+                          <% end %>
+                        </div>
+                      </td>
                       <td class="px-3 py-2"><%= reason_for_entry.call(entry) %></td>
                       <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
                       <td class="px-3 py-2 text-right <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
-                        <%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %>
+                        <div>
+                          <div><%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %></div>
+                          <% if variable_payment_entry %>
+                            <p class="mt-1 text-xs font-medium text-slate-500">
+                              Planned <%= number_to_currency(entry.planned_amount || 0) %>
+                              <% if entry.actual_amount.present? %>
+                                · Actual <%= number_to_currency(entry.actual_amount) %>
+                              <% else %>
+                                · Actual not set
+                              <% end %>
+                            </p>
+                          <% end %>
+                        </div>
                       </td>
                       <td class="px-3 py-2">
                         <div class="flex justify-end gap-2">
@@ -154,6 +174,9 @@
                                       aria: { label: "Edit entry" },
                                       data: { turbo_frame: "entry_editor_modal" } do %>
                             <%= tabler_icon("pencil", classes: "h-4 w-4 text-indigo-600") %>
+                            <% if variable_payment_entry %>
+                              <span>Edit</span>
+                            <% end %>
                           <% end %>
 
                           <%= button_to budget_month_expense_entry_path(entry.budget_month, entry),

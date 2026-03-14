@@ -164,6 +164,23 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_css("[data-collapsible-groups-storage-key-value='timeline-groups-#{month.id}']")
   end
 
+  it "shows payment sections above recurring subscriptions and highlights editable payment rows" do
+    user = create(:user, email: "paymentsections@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Netflix", category: "Subscription", section: :fixed, status: :planned, planned_amount: 20, source_file: "subscription")
+    create(:expense_entry, budget_month: month, user: user, payee: "IRS Plan", category: "Payment Plan", section: :debt, status: :planned, planned_amount: 100, source_file: "payment_plan")
+    create(:expense_entry, budget_month: month, user: user, payee: "Visa", category: "Credit Card", section: :debt, status: :planned, planned_amount: 75, source_file: "credit_card_estimate")
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    body = page.body
+    expect(body.index("Payment Plans")).to be < body.index("Recurring Subscriptions")
+    expect(body.index("Credit Card Payments")).to be < body.index("Recurring Subscriptions")
+    expect(page).to have_content("Amount/date may change month to month.")
+    expect(page).to have_content("Actual not set")
+  end
+
   it "allows a signed in user to sign out" do
     user = create(:user, email: "signout@example.com")
 

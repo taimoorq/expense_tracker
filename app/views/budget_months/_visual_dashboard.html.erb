@@ -29,7 +29,7 @@
   <% savings_pct = income.positive? ? ((leftover / income) * 100).round(1) : 0 %>
   <% top_category = section_totals.first %>
 
-  <section class="ta-card">
+  <section class="ta-card ta-surface-breakdown">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("chart-bar") %> Visual Budget Breakdown</h3>
       <p class="ta-muted"><%= compact ? "Compact chart view" : "QuickBooks-style insight cards + interactive charts" %></p>
@@ -37,17 +37,17 @@
 
     <% unless compact %>
       <div class="mb-4 grid gap-3 md:grid-cols-3">
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div class="rounded-lg border border-emerald-100 bg-white/80 p-3">
           <p class="text-xs uppercase tracking-wide text-slate-500">Budget Health</p>
           <p class="mt-1 text-lg font-semibold <%= leftover >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
             <%= leftover >= 0 ? "On Track" : "Over Budget" %>
           </p>
         </div>
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div class="rounded-lg border border-indigo-100 bg-white/80 p-3">
           <p class="text-xs uppercase tracking-wide text-slate-500">Savings Rate</p>
           <p class="mt-1 text-lg font-semibold"><%= savings_pct %>%</p>
         </div>
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div class="rounded-lg border border-fuchsia-100 bg-white/80 p-3">
           <p class="text-xs uppercase tracking-wide text-slate-500">Top Outflow Bucket</p>
           <p class="mt-1 text-lg font-semibold">
             <%= top_category ? "#{top_category[0].humanize} (#{number_to_currency(top_category[1])})" : "—" %>
@@ -56,7 +56,7 @@
       </div>
 
       <div class="grid gap-4 xl:grid-cols-3">
-        <div class="rounded-lg border border-slate-200 p-3">
+        <div class="rounded-lg border border-indigo-100 bg-white/90 p-3">
           <div class="h-72">
             <canvas
               data-controller="chart"
@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <div class="rounded-lg border border-slate-200 p-3">
+        <div class="rounded-lg border border-sky-100 bg-white/90 p-3">
           <div class="h-72">
             <canvas
               data-controller="chart"
@@ -81,7 +81,7 @@
           </div>
         </div>
 
-        <div class="rounded-lg border border-slate-200 p-3">
+        <div class="rounded-lg border border-violet-100 bg-white/90 p-3">
           <div class="h-72">
             <canvas
               data-controller="chart"
@@ -94,7 +94,7 @@
       </div>
     <% else %>
       <div class="space-y-4">
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div class="rounded-lg border border-emerald-100 bg-white/80 p-3">
           <p class="text-xs uppercase tracking-wide text-slate-500">Budget Health</p>
           <p class="mt-1 text-base font-semibold <%= leftover >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
             <%= leftover >= 0 ? "On Track" : "Over Budget" %>
@@ -102,7 +102,7 @@
           <p class="mt-1 text-xs text-slate-500">Savings rate: <%= savings_pct %>%</p>
         </div>
 
-        <div class="rounded-lg border border-slate-200 p-3">
+        <div class="rounded-lg border border-indigo-100 bg-white/90 p-3">
           <div class="h-56">
             <canvas
               data-controller="chart"
@@ -113,7 +113,7 @@
           </div>
         </div>
 
-        <div class="rounded-lg border border-slate-200 p-3">
+        <div class="rounded-lg border border-sky-100 bg-white/90 p-3">
           <div class="h-56">
             <canvas
               data-controller="chart"
@@ -127,7 +127,7 @@
           </div>
         </div>
 
-        <div class="rounded-lg border border-slate-200 p-3">
+        <div class="rounded-lg border border-violet-100 bg-white/90 p-3">
           <div class="h-56">
             <canvas
               data-controller="chart"
