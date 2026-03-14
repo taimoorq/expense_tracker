@@ -1,12 +1,26 @@
 <%= turbo_frame_tag "monthly_bills_section" do %>
-  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: return_to } %>
-    <h3 class="mb-3 text-lg font-semibold">3) Monthly Bills (fixed + variable)</h3>
-    <%= form_with model: monthly_bill, url: monthly_bills_path, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-6" do |form| %>
+  <% anchored_return_to = return_to.presence || planning_templates_path(anchor: "monthly-bills") %>
+  <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: anchored_return_to } %>
+  <section id="monthly-bills" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold"><%= budget_month ? "3) Monthly Bills (fixed + variable)" : "Monthly Bills (fixed + variable)" %></h3>
+      <button type="button" class="ta-icon-btn" aria-label="Monthly Bills Help" title="Monthly Bills Help" data-action="click->help-modal#open" data-help-title="Monthly Bills Help" data-help-body="Fixed Payment: stable bills like mortgage or car payment.
+Variable Bill: amounts that vary monthly like utilities.
+
+    Default amount is your estimate and can be adjusted later in the month entries."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">These are turned into planned month entries when you run generation.</p>
+    <% if !budget_month && monthly_bill.persisted? %>
+      <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
+        <span>Editing <span class="font-semibold"><%= monthly_bill.name %></span></span>
+        <%= link_to "Cancel", planning_templates_path(anchor: "monthly-bills"), class: "font-semibold text-indigo-700 hover:text-indigo-900" %>
+      </div>
+    <% end %>
+    <%= form_with model: monthly_bill, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-6" do |form| %>
       <% if budget_month %>
         <%= hidden_field_tag :budget_month_id, budget_month.id %>
       <% elsif return_to.present? %>
-        <%= hidden_field_tag :return_to, return_to %>
+        <%= hidden_field_tag :return_to, anchored_return_to %>
       <% end %>
       <div>
         <%= form.label :name, class: "fb-label" %>
@@ -20,7 +34,7 @@
       <div>
         <%= form.label :default_amount, "Default Amount", class: "fb-label" %>
         <%= form.number_field :default_amount, step: 0.01, placeholder: "0.00", class: "fb-input" %>
-        <p class="mt-1 text-xs text-slate-500">This is the starting estimate when the month is generated.</p>
+        <p class="mt-1 text-xs text-slate-500">Starting estimate used when a month is generated.</p>
       </div>
       <div>
         <%= form.label :due_day, "Due Day", class: "fb-label" %>
@@ -33,7 +47,14 @@
       </div>
       <div class="flex items-end gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
-        <%= form.submit "Save", class: "fb-btn-primary" %>
+        <% if budget_month %>
+          <%= form.submit "Save", class: "fb-btn-primary" %>
+        <% else %>
+          <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+            <%= tabler_icon(monthly_bill.persisted? ? "pencil" : "save", classes: "ta-action-icon") %>
+            <span><%= monthly_bill.persisted? ? "Update Monthly Bill" : "Save" %></span>
+          <% end %>
+        <% end %>
       </div>
     <% end %>
 
@@ -62,7 +83,18 @@
               <td class="px-3 py-2 text-right"><%= number_to_currency(item.default_amount || 0) %></td>
               <td class="px-3 py-2 text-right"><%= item.due_day %></td>
               <td class="px-3 py-2">
-                <%= button_to "Delete", monthly_bill_path(item, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this monthly bill?" } } %>
+                <% if budget_month %>
+                  <%= button_to "Delete", monthly_bill_path(item, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this monthly bill?" } } %>
+                <% else %>
+                  <div class="flex items-center gap-2">
+                    <%= link_to planning_templates_path(edit_monthly_bill_id: item.id, anchor: "monthly-bills"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit monthly bill", aria: { label: "Edit monthly bill" } do %>
+                      <%= tabler_icon("pencil", classes: "ta-action-icon-sm text-slate-600") %>
+                    <% end %>
+                    <%= button_to monthly_bill_path(item, action_params), method: :delete, class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Delete monthly bill", aria: { label: "Delete monthly bill" }, form: { data: { turbo_confirm: "Delete this bill?" } } do %>
+                      <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
+                    <% end %>
+                  </div>
+                <% end %>
               </td>
             </tr>
           <% end %>

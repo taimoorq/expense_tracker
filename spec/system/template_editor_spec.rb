@@ -66,4 +66,26 @@ RSpec.describe "Template editor", type: :system do
     expect(schedule.reload.name).to eq("Updated Payroll")
     expect(schedule.amount.to_d).to eq(3200.to_d)
   end
+
+  it "shows a newly created planning template in the list immediately" do
+    user = create(:user)
+
+    sign_in_as(user)
+    visit planning_templates_path
+
+    fill_in "Employer / Source", with: "Acme Payroll"
+    fill_in "pay_schedule_amount", with: "2500"
+    fill_in "First Pay On", with: "2026-01-15"
+    fill_in "Day #1", with: "15"
+
+    expect do
+      click_button "Save Schedule"
+      expect(page).to have_content("Pay schedule saved.")
+    end.to change { user.pay_schedules.count }.by(1)
+
+    within("turbo-frame#pay_schedules_section") do
+      expect(page).to have_content("Acme Payroll")
+      expect(page).to have_content("$2,500.00")
+    end
+  end
 end

@@ -1,12 +1,27 @@
 <%= turbo_frame_tag "credit_cards_section" do %>
-  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: return_to } %>
-    <h3 class="mb-3 text-lg font-semibold">5) Credit Cards (estimate from leftover)</h3>
-    <%= form_with model: credit_card, url: credit_cards_path, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+  <% anchored_return_to = return_to.presence || planning_templates_path(anchor: "credit-cards") %>
+  <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: anchored_return_to } %>
+  <section id="credit-cards" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold"><%= budget_month ? "5) Credit Cards (estimate from leftover)" : "Credit Cards" %></h3>
+      <button type="button" class="ta-icon-btn" aria-label="Credit Cards Help" title="Credit Cards Help" data-action="click->help-modal#open" data-help-title="Credit Cards Help" data-help-body="Used by 'Estimate Cards' in month view.
+
+Minimum: minimum amount to prioritize first.
+Priority: lower number gets allocated first.
+    After minimums, leftover can be spread across cards."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">These settings drive automatic estimated card payments from leftover cash.</p>
+    <% if !budget_month && credit_card.persisted? %>
+      <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
+        <span>Editing <span class="font-semibold"><%= credit_card.name %></span></span>
+        <%= link_to "Cancel", planning_templates_path(anchor: "credit-cards"), class: "font-semibold text-indigo-700 hover:text-indigo-900" %>
+      </div>
+    <% end %>
+    <%= form_with model: credit_card, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
       <% if budget_month %>
         <%= hidden_field_tag :budget_month_id, budget_month.id %>
       <% elsif return_to.present? %>
-        <%= hidden_field_tag :return_to, return_to %>
+        <%= hidden_field_tag :return_to, anchored_return_to %>
       <% end %>
       <div>
         <%= form.label :name, "Card Name", class: "fb-label" %>
@@ -28,7 +43,14 @@
       </div>
       <div class="flex items-end gap-2">
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
-        <%= form.submit "Save", class: "fb-btn-primary" %>
+        <% if budget_month %>
+          <%= form.submit "Save", class: "fb-btn-primary" %>
+        <% else %>
+          <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+            <%= tabler_icon(credit_card.persisted? ? "pencil" : "save", classes: "ta-action-icon") %>
+            <span><%= credit_card.persisted? ? "Update Credit Card" : "Save" %></span>
+          <% end %>
+        <% end %>
       </div>
     <% end %>
 
@@ -55,7 +77,18 @@
               <td class="px-3 py-2 text-right"><%= number_to_currency(item.minimum_payment) %></td>
               <td class="px-3 py-2 text-right"><%= item.priority %></td>
               <td class="px-3 py-2">
-                <%= button_to "Delete", credit_card_path(item, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this card?" } } %>
+                <% if budget_month %>
+                  <%= button_to "Delete", credit_card_path(item, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this card?" } } %>
+                <% else %>
+                  <div class="flex items-center gap-2">
+                    <%= link_to planning_templates_path(edit_credit_card_id: item.id, anchor: "credit-cards"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit card", aria: { label: "Edit card" } do %>
+                      <%= tabler_icon("pencil", classes: "ta-action-icon-sm text-slate-600") %>
+                    <% end %>
+                    <%= button_to credit_card_path(item, action_params), method: :delete, class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Delete card", aria: { label: "Delete card" }, form: { data: { turbo_confirm: "Delete this card?" } } do %>
+                      <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
+                    <% end %>
+                  </div>
+                <% end %>
               </td>
             </tr>
           <% end %>

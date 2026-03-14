@@ -1,12 +1,28 @@
 <%= turbo_frame_tag "pay_schedules_section" do %>
-  <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: return_to } %>
-    <h3 class="mb-3 text-lg font-semibold">1) Paycheck Schedules</h3>
-    <%= form_with model: pay_schedule, url: pay_schedules_path, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+  <% anchored_return_to = return_to.presence || planning_templates_path(anchor: "pay-schedules") %>
+  <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: anchored_return_to } %>
+  <section id="pay-schedules" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="mb-3 flex items-center gap-2">
+      <h3 class="text-lg font-semibold"><%= budget_month ? "1) Paycheck Schedules" : "Paycheck Schedules" %></h3>
+      <button type="button" class="ta-icon-btn" aria-label="Paycheck Schedules Help" title="Paycheck Schedules Help" data-action="click->help-modal#open" data-help-title="Paycheck Schedules Help" data-help-body="Use this to define recurring income.
+
+Cadence: weekly, biweekly, semimonthly, or monthly.
+First Pay On: anchor date for recurrence.
+    Day #1 and Day #2: used for semimonthly schedules.
+    Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
+    </div>
+    <p class="mb-3 text-sm text-slate-500">Template only. Generated into each month using the month action buttons.</p>
+    <% if !budget_month && pay_schedule.persisted? %>
+      <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
+        <span>Editing <span class="font-semibold"><%= pay_schedule.name %></span></span>
+        <%= link_to "Cancel", planning_templates_path(anchor: "pay-schedules"), class: "font-semibold text-indigo-700 hover:text-indigo-900" %>
+      </div>
+    <% end %>
+    <%= form_with model: pay_schedule, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
       <% if budget_month %>
         <%= hidden_field_tag :budget_month_id, budget_month.id %>
       <% elsif return_to.present? %>
-        <%= hidden_field_tag :return_to, return_to %>
+        <%= hidden_field_tag :return_to, anchored_return_to %>
       <% end %>
       <div>
         <%= form.label :name, "Employer / Source", class: "fb-label" %>
@@ -20,7 +36,7 @@
       <div>
         <%= form.label :amount, class: "fb-label" %>
         <%= form.number_field :amount, step: 0.01, placeholder: "0.00", required: true, class: "fb-input" %>
-        <p class="mt-1 text-xs text-slate-500">Enter the expected amount for each paycheck.</p>
+        <p class="mt-1 text-xs text-slate-500">Expected amount for each deposit.</p>
       </div>
       <div>
         <%= form.label :first_pay_on, "First Pay On", class: "fb-label" %>
@@ -40,7 +56,7 @@
       <div>
         <%= form.label :weekend_adjustment, class: "fb-label" %>
         <%= form.select :weekend_adjustment, PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
-        <p class="mt-1 text-xs text-slate-500">Adjusts the deposit date when it falls on a weekend.</p>
+        <p class="mt-1 text-xs text-slate-500">Adjusts paydays that fall on weekends.</p>
       </div>
       <div>
         <%= form.label :account, class: "fb-label" %>
@@ -50,7 +66,14 @@
         <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
       </div>
       <div class="flex items-end">
-        <%= form.submit "Save Schedule", class: "fb-btn-primary" %>
+        <% if budget_month %>
+          <%= form.submit "Save Schedule", class: "fb-btn-primary" %>
+        <% else %>
+          <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+            <%= tabler_icon(pay_schedule.persisted? ? "pencil" : "save", classes: "ta-action-icon") %>
+            <span><%= pay_schedule.persisted? ? "Update Schedule" : "Save Schedule" %></span>
+          <% end %>
+        <% end %>
       </div>
     <% end %>
 
@@ -79,7 +102,18 @@
               <td class="px-3 py-2 text-right"><%= number_to_currency(schedule.amount) %></td>
               <td class="px-3 py-2"><%= schedule.weekend_adjustment.humanize %></td>
               <td class="px-3 py-2">
-                <%= button_to "Delete", pay_schedule_path(schedule, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this schedule?" } } %>
+                <% if budget_month %>
+                  <%= button_to "Delete", pay_schedule_path(schedule, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this schedule?" } } %>
+                <% else %>
+                  <div class="flex items-center gap-2">
+                    <%= link_to planning_templates_path(edit_pay_schedule_id: schedule.id, anchor: "pay-schedules"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit schedule", aria: { label: "Edit schedule" } do %>
+                      <%= tabler_icon("pencil", classes: "ta-action-icon-sm text-slate-600") %>
+                    <% end %>
+                    <%= button_to pay_schedule_path(schedule, action_params), method: :delete, class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Delete schedule", aria: { label: "Delete schedule" }, form: { data: { turbo_confirm: "Delete this schedule?" } } do %>
+                      <%= tabler_icon("trash", classes: "ta-action-icon-sm text-rose-600") %>
+                    <% end %>
+                  </div>
+                <% end %>
               </td>
             </tr>
           <% end %>
