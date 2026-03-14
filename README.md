@@ -336,8 +336,10 @@ When a month is cloned into a new month:
 
 Once a month exists, entries can be added in the way that best matches the situation:
 
-- `Entries` tab
+- `Plan and Edit` tab
+	- add recurring items from templates
 	- add entries manually with the standard form
+	- review and update the month list in one place
 - `Add Entry with Wizard`
 	- use the guided multi-step entry flow
 - CSV import
@@ -371,17 +373,20 @@ This reduces repetitive data entry and keeps recurring planning consistent from 
 
 ### Review a Month
 
-Each budget month can be reviewed in three main views:
+Each budget month can be reviewed in four main views:
 
 - `Timeline`
 	- grouped view of entries with totals by group
 	- row-level filters for date, payee, reason, and status
 	- pill filters based on the actual reason values in that month
+- `Breakdown`
+	- chart-focused view for the visual budget breakdown
+	- keeps graphs separate from the main timeline workflow
 - `Calendar`
 	- date-based view of entries
 	- pill filters using the same month-specific reason values
-- `Entries`
-	- form and tabular management view for direct editing
+- `Plan and Edit`
+	- template generation actions, manual entry, and month-list editing in one workflow
 
 Additional month actions help keep planning current:
 
@@ -389,7 +394,7 @@ Additional month actions help keep planning current:
 	- create a new month from the current one
 - `Add from planning templates`
 	- adds planned entries from saved paychecks, subscriptions, monthly bills, and payment plans
-	- available inside the `Entries` tab on active or incomplete months
+	- available inside the `Plan and Edit` tab on active or incomplete months
 	- hidden when an older month appears complete
 - `Estimate Card Payments`
 	- recomputes estimated credit-card payment entries from available leftover cash

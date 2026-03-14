@@ -83,7 +83,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).not_to have_button("Estimate Card Payments")
   end
 
-  it "defaults empty active months to the entries tab" do
+  it "defaults empty active months to the plan and edit tab" do
     user = create(:user, email: "active@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
 
@@ -91,8 +91,23 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     expect(page).to have_css('section[data-controller="tabs"][data-tabs-default-tab-value="entries"]')
+    expect(page).to have_button("Plan and Edit")
+    expect(page).to have_content("Plan and Edit This Month")
     expect(page).to have_content("Add from planning templates")
     expect(page).to have_button("Estimate Card Payments")
+  end
+
+  it "shows a separate breakdown tab for the visual charts" do
+    user = create(:user, email: "breakdown@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, category: "Groceries", payee: "Market", section: :variable, status: :planned, planned_amount: 120)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    expect(page).to have_button("Breakdown")
+    expect(page).to have_css('[data-panel-name="breakdown"]')
+    expect(page).to have_content("Visual Budget Breakdown")
   end
 
   it "shows reason pills from the month data" do

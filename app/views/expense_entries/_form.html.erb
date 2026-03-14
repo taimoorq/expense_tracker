@@ -2,7 +2,7 @@
   <section class="mb-6 ta-card">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("plus", classes: "h-4 w-4 text-indigo-600") %> Add Entry</h3>
+        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("plus", classes: "h-4 w-4 text-indigo-600") %> Add Item Manually</h3>
         <button type="button" class="ta-icon-btn" aria-label="Add Entry Help" title="Add Entry Help" data-action="click->help-modal#open" data-help-title="Add Entry Help" data-help-body="Use this form to add money coming in and money going out.
 
 Date: when it happened or is due.
@@ -17,7 +17,7 @@ Need/Want: optional spending priority tag."><%= tabler_icon("help") %></button>
 
       <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
         <%= tabler_icon("adjustments", classes: "h-4 w-4 text-violet-600") %>
-        <span>Add with Wizard</span>
+        <span>Use Guided Wizard</span>
       <% end %>
     </div>
 
