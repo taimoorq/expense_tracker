@@ -54,16 +54,21 @@ For most people, the easiest way to try the app is the Docker setup below becaus
 
 If the goal is to get the app running as quickly as possible, use Docker:
 
-1. Install Docker Desktop
-2. Optional: create a local env file for port, admin, or seed overrides
+1. Clone the repository and move into it
+	- `git clone <repo-url>`
+	- `cd expense_tracker`
+2. Install Docker Desktop
+3. Optional: create a local env file for port, admin, or seed overrides
 	- `cp .env.example .env`
-3. Start the app
+4. Start the app
 	- `docker compose up --build`
-4. Open the app
+5. Open the app
 	- http://localhost:4287
-5. Optional: load seed data in another terminal
+6. Optional: load seed data in another terminal
 	- users only: `docker compose exec web bin/rails db:seed`
 	- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
+
+This Docker setup is meant to run from a local git checkout of the repository. That is what makes later updates work with `git pull` followed by `docker compose up -d --build`.
 
 If you set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` in `.env` before starting Docker, the app will create or update the admin account automatically during startup.
 
@@ -159,15 +164,22 @@ This is the recommended setup for most users.
 
 The repository includes a Docker-based environment that starts the Rails app and PostgreSQL together.
 
+This setup assumes you are running Docker Compose from a local clone of this repository, not from a standalone prebuilt image. Keep that local checkout, because future updates are done by pulling new commits into it and rebuilding the containers.
+
 #### Prerequisites
 
 - Docker Desktop, or Docker Engine + Docker Compose
 
 #### Start the app
 
-1. Build and start the containers
+1. Clone the repository and move into it
+	- `git clone <repo-url>`
+	- `cd expense_tracker`
+2. Optional: copy the example environment file and adjust any values you want to override
+	- `cp .env.example .env`
+3. Build and start the containers
 	 - `docker compose up --build`
-2. Open the app
+4. Open the app
 	 - http://localhost:4287
 
 The Docker setup publishes the app on host port `4287` by default to avoid the more commonly used `3000`.
@@ -175,6 +187,11 @@ The Docker setup publishes the app on host port `4287` by default to avoid the m
 To override it, set `APP_PORT` in your shell or a local `.env` file before starting Docker.
 
 For convenience, copy `.env.example` to `.env` and edit the values you want to override.
+
+Because the app is running from your local checkout, later updates are done from this same directory with:
+
+- `git pull`
+- `docker compose up -d --build`
 
 Examples:
 
