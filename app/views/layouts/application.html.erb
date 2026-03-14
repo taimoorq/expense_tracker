@@ -32,6 +32,7 @@
   <body class="ta-shell ta-shell-collapsed ta-theme-earth" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc" data-sidebar-target="shell">
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
+    <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" %>
     <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
     <% help_active = controller_name == "help" %>
     <% show_back_nav = !(controller_name == "budget_months" && action_name == "index") %>
@@ -54,6 +55,11 @@
           <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Manage Templates" do %>
             <%= tabler_icon("template", classes: "ta-sidebar-link-icon") %>
             <span class="ta-sidebar-label">Manage Templates</span>
+          <% end %>
+
+          <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth" do %>
+            <%= tabler_icon("cash", classes: "ta-sidebar-link-icon") %>
+            <span class="ta-sidebar-label">Accounts & Net Worth</span>
           <% end %>
 
           <%= link_to new_budget_month_path, class: ["ta-sidebar-link", (new_month_active ? "ta-sidebar-link-active" : nil)], title: "Create New Month" do %>

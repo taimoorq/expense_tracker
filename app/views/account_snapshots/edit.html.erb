@@ -1,0 +1,13 @@
+<% content_for :title, "Edit Balance Snapshot" %>
+
+<% content_for :page_header do %>
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.name %></p>
+    <h2 class="text-2xl font-semibold">Edit Balance Snapshot</h2>
+    <p class="mt-1 text-sm text-slate-600">Update the recorded date, balance, and notes for this manual account snapshot.</p>
+  </div>
+<% end %>
+
+<section class="ta-card max-w-3xl">
+  <%= render "accounts/snapshot_form", account: @account, account_snapshot: @account_snapshot %>
+</section>

@@ -1,0 +1,108 @@
+<%= form_with model: account, class: "space-y-6" do |form| %>
+  <% if account.errors.any? %>
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      <p class="font-semibold">Fix the highlighted account details.</p>
+      <ul class="mt-2 space-y-1">
+        <% account.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div>
+      <%= form.label :name, class: "fb-label" %>
+      <%= form.text_field :name, class: "fb-input", placeholder: "Emergency Savings" %>
+    </div>
+
+    <div>
+      <%= form.label :institution_name, "Institution", class: "fb-label" %>
+      <%= form.text_field :institution_name, class: "fb-input", placeholder: "Ally, Vanguard, Chase..." %>
+    </div>
+
+    <div>
+      <%= form.label :kind, "Account type", class: "fb-label" %>
+      <%= form.select :kind, Account.kinds.keys.map { |kind| [kind.humanize, kind] }, {}, class: "fb-select" %>
+    </div>
+
+    <div class="flex items-center gap-6 pt-7">
+      <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+        <%= form.check_box :active, class: "rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" %>
+        <span>Active account</span>
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+        <%= form.check_box :include_in_net_worth, class: "rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" %>
+        <span>Include in net worth</span>
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+        <%= form.check_box :include_in_cash, class: "rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" %>
+        <span>Include in cash totals</span>
+      </label>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :notes, class: "fb-label" %>
+    <%= form.text_area :notes, rows: 3, class: "fb-input", placeholder: "Optional notes about this account" %>
+  </div>
+
+  <% if local_assigns[:initial_snapshot] %>
+    <section class="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+      <div class="mb-4">
+        <h3 class="text-base font-semibold text-slate-900">Optional first balance snapshot</h3>
+        <p class="mt-1 text-sm text-slate-500">Leave the balance blank if you only want to create the account for now.</p>
+      </div>
+
+      <% if initial_snapshot.errors.any? %>
+        <div class="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <p class="font-semibold">Fix the initial balance details.</p>
+          <ul class="mt-2 space-y-1">
+            <% initial_snapshot.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <%= form.fields_for :initial_snapshot, initial_snapshot do |snapshot_fields| %>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <%= snapshot_fields.label :recorded_on, class: "fb-label" %>
+            <%= snapshot_fields.date_field :recorded_on, class: "fb-input" %>
+          </div>
+
+          <div>
+            <%= snapshot_fields.label :balance, class: "fb-label" %>
+            <%= snapshot_fields.number_field :balance, step: "0.01", class: "fb-input", placeholder: account.liability? ? "-4500.00" : "15000.00" %>
+          </div>
+
+          <div>
+            <%= snapshot_fields.label :available_balance, class: "fb-label" %>
+            <%= snapshot_fields.number_field :available_balance, step: "0.01", class: "fb-input", placeholder: "Optional" %>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <%= snapshot_fields.label :notes, "Opening balance notes", class: "fb-label" %>
+          <%= snapshot_fields.text_area :notes, rows: 2, class: "fb-input", placeholder: "Optional note about the opening balance" %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <%= form.submit class: "fb-btn-primary" %>
+    <% if account.persisted? %>
+      <%= link_to account_path(account), class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
+        <span>Back to Account</span>
+      <% end %>
+    <% else %>
+      <%= link_to accounts_path, class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
+        <span>Back to Accounts</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

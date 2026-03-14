@@ -1,0 +1,12 @@
+<% content_for :title, "New Account" %>
+
+<% content_for :page_header do %>
+  <div>
+    <h2 class="text-2xl font-semibold">New Account</h2>
+    <p class="mt-1 text-sm text-slate-600">Add a manual account you want to include in cash or net worth tracking.</p>
+  </div>
+<% end %>
+
+<section class="ta-card max-w-4xl">
+  <%= render "form", account: @account, initial_snapshot: @initial_snapshot %>
+</section>

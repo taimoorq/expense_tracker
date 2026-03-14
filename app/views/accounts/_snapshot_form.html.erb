@@ -1,0 +1,45 @@
+<%= form_with model: [account, account_snapshot], class: "space-y-4" do |form| %>
+  <% if account_snapshot.errors.any? %>
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      <p class="font-semibold">Fix the snapshot details.</p>
+      <ul class="mt-2 space-y-1">
+        <% account_snapshot.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div>
+      <%= form.label :recorded_on, class: "fb-label" %>
+      <%= form.date_field :recorded_on, class: "fb-input" %>
+    </div>
+
+    <div>
+      <%= form.label :balance, class: "fb-label" %>
+      <%= form.number_field :balance, step: "0.01", class: "fb-input", placeholder: account.liability? ? "-4500.00" : "15000.00" %>
+      <p class="mt-1 text-xs text-slate-500"><%= account.liability? ? "Use a negative balance for liabilities." : "Enter the total account value for this date." %></p>
+    </div>
+
+    <div>
+      <%= form.label :available_balance, class: "fb-label" %>
+      <%= form.number_field :available_balance, step: "0.01", class: "fb-input", placeholder: "Optional" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :notes, class: "fb-label" %>
+    <%= form.text_area :notes, rows: 2, class: "fb-input", placeholder: "Optional note about this balance" %>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <%= form.submit(account_snapshot.persisted? ? "Update Balance" : "Record Balance", class: "fb-btn-primary") %>
+    <% if account_snapshot.persisted? %>
+      <%= link_to account_path(account), class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
+        <span>Back to Account</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

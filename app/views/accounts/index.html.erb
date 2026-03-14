@@ -1,0 +1,176 @@
+<% content_for :title, "Accounts" %>
+
+<% content_for :page_header do %>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-2xl font-semibold">Accounts</h2>
+      <p class="mt-1 text-sm text-slate-600">Track savings, investment, cash, and debt balances manually alongside your monthly budget.</p>
+    </div>
+    <%= link_to new_account_path, class: "fb-btn-primary ta-action-btn" do %>
+      <%= tabler_icon("plus", classes: "ta-action-icon text-indigo-100") %>
+      <span>New Account</span>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
+  <section class="space-y-6">
+    <div class="grid gap-4 md:grid-cols-3">
+      <article class="ta-card">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assets</p>
+        <p class="mt-2 text-3xl font-semibold text-emerald-700"><%= number_to_currency(@assets_total) %></p>
+        <p class="mt-1 text-sm text-slate-500">Latest balances from accounts included in net worth.</p>
+      </article>
+      <article class="ta-card">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Liabilities</p>
+        <p class="mt-2 text-3xl font-semibold text-rose-700"><%= number_to_currency(@liabilities_total) %></p>
+        <p class="mt-1 text-sm text-slate-500">Shown as positive total debt for readability.</p>
+      </article>
+      <article class="ta-card">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Net Worth</p>
+        <p class="mt-2 text-3xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p>
+        <p class="mt-1 text-sm text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included.</p>
+      </article>
+    </div>
+
+    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_300px]">
+      <section class="ta-card min-w-0">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="ta-section-title">Net worth trend</h2>
+            <p class="ta-muted mt-1">Uses the latest available snapshot for each included account on every recorded date.</p>
+          </div>
+          <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            <%= pluralize(@trend_labels.count, "point") %>
+          </div>
+        </div>
+
+        <% if @trend_labels.any? %>
+          <div class="h-80 rounded-2xl border border-slate-200 bg-white p-3">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="line"
+              data-chart-title-value="Net Worth History"
+              data-chart-labels-value="<%= @trend_labels.to_json %>"
+              data-chart-data-value="<%= @trend_values.to_json %>"></canvas>
+          </div>
+        <% else %>
+          <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+            <p class="text-lg font-semibold text-slate-900">No trend yet</p>
+            <p class="mt-2 text-sm text-slate-500">Record balance snapshots to build a net worth history chart.</p>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="ta-card h-fit">
+        <div class="mb-4">
+          <h2 class="ta-section-title inline-flex items-center gap-2">
+            <%= tabler_icon("calendar-month", classes: "ta-action-icon-lg text-indigo-600") %>
+            Latest updated
+          </h2>
+          <p class="ta-muted mt-1">A quick read on how fresh your manual balance history is.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Most recent snapshot</p>
+            <p class="mt-2 text-xl font-semibold text-slate-900"><%= @latest_snapshot ? l(@latest_snapshot.recorded_on, format: :long) : "No snapshots yet" %></p>
+            <p class="mt-1 text-sm text-slate-500"><%= @latest_snapshot ? @latest_snapshot.account.name : "Add a balance to any account to start tracking updates." %></p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Coverage</p>
+            <p class="mt-2 text-xl font-semibold text-slate-900"><%= @accounts_with_snapshots_count %> of <%= @accounts.count %></p>
+            <p class="mt-1 text-sm text-slate-500"><%= pluralize(@accounts_missing_snapshots_count, "account") %> still missing a balance snapshot.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="ta-card min-w-0">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="ta-section-title">Tracked accounts</h2>
+          <p class="ta-muted mt-1">Create accounts once, then record new balances whenever you want an updated view of your cash and net worth.</p>
+        </div>
+        <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+          <%= pluralize(@accounts.count, "account") %>
+        </div>
+      </div>
+
+      <% if @accounts.any? %>
+        <div class="overflow-x-auto">
+          <table class="ta-table">
+            <thead class="ta-table-head">
+              <tr>
+                <th class="ta-th">Account</th>
+                <th class="ta-th">Institution</th>
+                <th class="ta-th">Type</th>
+                <th class="ta-th text-right">Latest Balance</th>
+                <th class="ta-th text-right">Last Updated</th>
+                <th class="ta-th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @accounts.each do |account| %>
+                <% snapshot = account.latest_snapshot %>
+                <tr id="<%= dom_id(account) %>">
+                  <td class="ta-td">
+                    <div>
+                      <%= link_to account.name, account_path(account), class: "font-medium text-indigo-600 hover:text-indigo-500" %>
+                      <p class="mt-1 text-xs text-slate-500">
+                        <%= account.active? ? "Active" : "Inactive" %>
+                        <% unless account.include_in_net_worth? %>
+                          <span class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Excluded from net worth</span>
+                        <% end %>
+                      </p>
+                    </div>
+                  </td>
+                  <td class="ta-td"><%= account.institution_name.presence || "-" %></td>
+                  <td class="ta-td"><%= account.kind.humanize %></td>
+                  <td class="ta-td text-right"><%= snapshot ? number_to_currency(snapshot.balance) : "-" %></td>
+                  <td class="ta-td text-right"><%= snapshot ? l(snapshot.recorded_on, format: :long) : "Never" %></td>
+                  <td class="ta-td">
+                    <div class="flex justify-end gap-2">
+                      <%= link_to account_path(account), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                        <%= tabler_icon("cash", classes: "ta-action-icon text-indigo-600") %>
+                        <span>View</span>
+                      <% end %>
+                      <%= link_to edit_account_path(account), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                        <%= tabler_icon("edit", classes: "ta-action-icon text-slate-600") %>
+                        <span>Edit</span>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+          <p class="text-lg font-semibold text-slate-900">No accounts yet</p>
+          <p class="mt-2 text-sm text-slate-500">Start by adding a savings, checking, investment, or debt account and then record your first balance snapshot.</p>
+        </div>
+      <% end %>
+    </section>
+  </section>
+
+  <aside class="space-y-6">
+    <section class="ta-card h-fit xl:sticky xl:top-6">
+      <div class="mb-4">
+        <h2 class="ta-section-title inline-flex items-center gap-2">
+          <%= tabler_icon("cash", classes: "ta-action-icon-lg text-indigo-600") %>
+          Manual tracking
+        </h2>
+        <p class="ta-muted mt-1">No bank connection required. Add the accounts you care about, then update balances whenever you review them.</p>
+      </div>
+
+      <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <p>Create one account per real-world account or balance bucket.</p>
+        <p>Record a new snapshot whenever you want the latest value reflected in your totals.</p>
+        <p>Use negative balances for debts like loans and credit cards.</p>
+      </div>
+    </section>
+  </aside>
+</div>

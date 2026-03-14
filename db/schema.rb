@@ -10,10 +10,40 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_203000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_14_130100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
+
+  create_table "account_snapshots", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id", null: false
+    t.decimal "available_balance", precision: 14, scale: 2
+    t.decimal "balance", precision: 14, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.date "recorded_on", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "recorded_on"], name: "index_account_snapshots_on_account_id_and_recorded_on", unique: true
+    t.index ["account_id"], name: "index_account_snapshots_on_account_id"
+    t.index ["recorded_on"], name: "index_account_snapshots_on_recorded_on"
+  end
+
+  create_table "accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.boolean "include_in_cash", default: false, null: false
+    t.boolean "include_in_net_worth", default: true, null: false
+    t.string "institution_name"
+    t.integer "kind", default: 0, null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.datetime "updated_at", null: false
+    t.uuid "user_id", null: false
+    t.index ["active"], name: "index_accounts_on_active"
+    t.index ["kind"], name: "index_accounts_on_kind"
+    t.index ["user_id", "name"], name: "index_accounts_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_accounts_on_user_id"
+  end
 
   create_table "budget_months", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.decimal "actual_income", precision: 12, scale: 2
@@ -143,6 +173,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_203000) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "account_snapshots", "accounts"
+  add_foreign_key "accounts", "users"
   add_foreign_key "budget_months", "users"
   add_foreign_key "credit_cards", "users"
   add_foreign_key "expense_entries", "budget_months"

@@ -3,6 +3,9 @@ Rails.application.routes.draw do
   root "budget_months#index"
   get "help", to: "help#show", as: :help
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
+  resources :accounts, except: [ :destroy ] do
+    resources :account_snapshots, only: [ :create, :edit, :update, :destroy ]
+  end
 
   resources :budget_months, only: [ :index, :show, :new, :create ] do
     post :generate_paychecks, on: :member

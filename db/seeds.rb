@@ -29,6 +29,13 @@ seeded_template_names = {
   credit_cards: [ "Visa Everyday", "Chase Freedom", "Everyday Visa", "Rewards Mastercard" ]
 }
 
+seeded_account_names = [
+  "Everyday Checking",
+  "Emergency Savings",
+  "Long-Term Brokerage",
+  "Rewards Visa Balance"
+]
+
 seed_user = User.find_or_initialize_by(email: seed_email)
 user_status = seed_user.new_record? ? "created" : "updated"
 
@@ -45,6 +52,9 @@ seed_user.subscriptions.where(name: seeded_template_names[:subscriptions]).delet
 seed_user.monthly_bills.where(name: seeded_template_names[:monthly_bills]).delete_all
 seed_user.payment_plans.where(name: seeded_template_names[:payment_plans]).delete_all
 seed_user.credit_cards.where(name: seeded_template_names[:credit_cards]).delete_all
+seeded_account_ids = seed_user.accounts.where(name: seeded_account_names).pluck(:id)
+seed_user.account_snapshots.where(account_id: seeded_account_ids).delete_all if seeded_account_ids.any?
+seed_user.accounts.where(id: seeded_account_ids).delete_all if seeded_account_ids.any?
 
 cleared_seed_entries = seed_user.expense_entries.where(source_file: [ seed_source, seed_buffer_source ]).delete_all
 
@@ -119,6 +129,80 @@ if seed_transactions
       { name: card_attrs[:name] },
       card_attrs.merge(active: true, notes: "Seeded starter card")
     )
+  end
+
+  seeded_accounts = [
+    {
+      attrs: {
+        name: "Everyday Checking",
+        institution_name: "Chase",
+        kind: :checking,
+        include_in_net_worth: true,
+        include_in_cash: true,
+        active: true,
+        notes: "Primary spending account"
+      },
+      snapshots: [
+        { recorded_on: Date.new(2026, 1, 31), balance: 4250.32, available_balance: 4210.32, notes: "Month-end cash" },
+        { recorded_on: Date.new(2026, 2, 28), balance: 4630.11, available_balance: 4590.11, notes: "Month-end cash" },
+        { recorded_on: Date.new(2026, 3, 31), balance: 5084.46, available_balance: 5044.46, notes: "Month-end cash" }
+      ]
+    },
+    {
+      attrs: {
+        name: "Emergency Savings",
+        institution_name: "Ally",
+        kind: :savings,
+        include_in_net_worth: true,
+        include_in_cash: true,
+        active: true,
+        notes: "Cash reserve"
+      },
+      snapshots: [
+        { recorded_on: Date.new(2026, 1, 31), balance: 15000.0, notes: "Emergency fund" },
+        { recorded_on: Date.new(2026, 2, 28), balance: 15600.0, notes: "Emergency fund" },
+        { recorded_on: Date.new(2026, 3, 31), balance: 16200.0, notes: "Emergency fund" }
+      ]
+    },
+    {
+      attrs: {
+        name: "Long-Term Brokerage",
+        institution_name: "Vanguard",
+        kind: :brokerage,
+        include_in_net_worth: true,
+        include_in_cash: false,
+        active: true,
+        notes: "Index fund investments"
+      },
+      snapshots: [
+        { recorded_on: Date.new(2026, 1, 31), balance: 24850.75, notes: "Month-end market value" },
+        { recorded_on: Date.new(2026, 2, 28), balance: 25540.19, notes: "Month-end market value" },
+        { recorded_on: Date.new(2026, 3, 31), balance: 26210.44, notes: "Month-end market value" }
+      ]
+    },
+    {
+      attrs: {
+        name: "Rewards Visa Balance",
+        institution_name: "Chase",
+        kind: :credit_card,
+        include_in_net_worth: true,
+        include_in_cash: false,
+        active: true,
+        notes: "Liability account for card balance"
+      },
+      snapshots: [
+        { recorded_on: Date.new(2026, 1, 31), balance: -980.24, notes: "Statement balance" },
+        { recorded_on: Date.new(2026, 2, 28), balance: -740.91, notes: "Statement balance" },
+        { recorded_on: Date.new(2026, 3, 31), balance: -412.38, notes: "Statement balance" }
+      ]
+    }
+  ]
+
+  seeded_accounts.each do |account_seed|
+    account = seed_user.accounts.create!(account_seed[:attrs])
+    account_seed[:snapshots].each do |snapshot_attrs|
+      account.account_snapshots.create!(snapshot_attrs)
+    end
   end
 
   raise "Seed file not found: #{seed_file}" unless File.exist?(seed_file)
@@ -245,8 +329,9 @@ if seed_transactions
 
   puts "- Added #{buffer_entries_created} cashflow buffer entr#{buffer_entries_created == 1 ? 'y' : 'ies'} to keep demo data cashflow positive"
   puts "- Starter templates ready: #{seed_user.pay_schedules.count} pay schedules, #{seed_user.subscriptions.count} subscriptions, #{seed_user.monthly_bills.count} monthly bills, #{seed_user.payment_plans.count} payment plans, #{seed_user.credit_cards.count} credit cards"
+  puts "- Seeded #{seed_user.accounts.count} manual accounts with #{seed_user.account_snapshots.count} balance snapshots"
 else
-  puts "- Users-only mode selected; skipping recurring templates and transaction import"
+  puts "- Users-only mode selected; skipping recurring templates, transaction import, and manual account demo data"
 end
 
 puts "Seed complete."

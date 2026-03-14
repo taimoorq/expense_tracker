@@ -1,0 +1,12 @@
+<% content_for :title, "Edit Account" %>
+
+<% content_for :page_header do %>
+  <div>
+    <h2 class="text-2xl font-semibold">Edit Account</h2>
+    <p class="mt-1 text-sm text-slate-600">Update how this account is named, grouped, and included in reporting.</p>
+  </div>
+<% end %>
+
+<section class="ta-card max-w-4xl">
+  <%= render "form", account: @account %>
+</section>

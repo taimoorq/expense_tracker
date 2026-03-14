@@ -19,6 +19,7 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 	- [Sample CSV Files](#sample-csv-files)
 - [Workflow](#workflow)
 	- [Dashboard](#dashboard)
+	- [Accounts and Net Worth](#accounts-and-net-worth)
 	- [Create a Month](#create-a-month)
 	- [Clone Month Behavior](#clone-month-behavior)
 	- [Add or Import Entries](#add-or-import-entries)
@@ -33,6 +34,8 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 
 Expense Tracker is built for people who budget by month and want one place to plan income, fixed bills, variable spending, debt payments, and carry-over decisions.
 
+It also includes a manual accounts area for tracking balances in checking, savings, brokerage, retirement, and debt accounts without relying on live bank syncing.
+
 With it, a user can:
 
 - build a fresh month or start from a previous month instead of recreating the same structure every time
@@ -40,6 +43,7 @@ With it, a user can:
 - import transactions from CSV files to get a month filled in faster
 - reuse recurring items so routine planning takes less manual work
 - estimate credit-card payments based on the cash left in the month rather than guessing in isolation
+- record manual account balance snapshots and review a simple net worth trend over time
 
 The sections below are split between user-focused guidance for using the app and developer-focused guidance for running, testing, and publishing the project.
 
@@ -62,7 +66,7 @@ If the goal is to get the app running as quickly as possible, use Docker:
 
 If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
 
-After seeding, sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month and recurring demo templates.
+After seeding, sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month, recurring demo templates, and manual account balance history.
 
 ## Screenshots
 
@@ -122,6 +126,7 @@ Current screenshots reflect the latest dashboard theme, month tabs, and planning
 - Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
 - Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
 - Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
+- Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
 - Avoid accidental duplicate generation on older completed months with safeguards that hide actions you likely no longer need
 - Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
@@ -187,7 +192,7 @@ In another terminal:
 - users only: `docker compose exec web bin/rails db:seed`
 - users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
 
-The default command creates the demo account only. Use `SEED_MODE=users_with_transactions` to also create the sample month and recurring demo templates.
+The default command creates the demo account only. Use `SEED_MODE=users_with_transactions` to also create the sample month, recurring demo templates, and manual accounts with balance snapshots.
 
 #### Automatic recurring completion
 
@@ -247,6 +252,8 @@ Make sure PostgreSQL is running before starting the app.
 
 Open http://localhost:3000 and sign in to start creating budget months.
 
+The `Accounts & Net Worth` area is available from the signed-in sidebar if you want to track manual balances alongside the monthly budgeting workflow.
+
 `dotenv-rails` is enabled in development, so values in `.env` are loaded automatically when you run Rails commands locally.
 
 Common local `.env` uses:
@@ -266,7 +273,7 @@ You can:
 - sign in with your own account
 - use the seeded demo account after running `bin/rails db:seed`
 
-The default seed creates the account only. Use `SEED_MODE=users_with_transactions` if you want seeded month data as well.
+The default seed creates the account only. Use `SEED_MODE=users_with_transactions` if you want seeded month data, recurring templates, and manual account balance history as well.
 
 ## Demo and Sample Data
 
@@ -276,7 +283,7 @@ This project includes demo data for evaluation and sample files for testing impo
 
 Running `bin/rails db:seed` creates or updates a demo user you can sign in with.
 
-By default this is a users-only seed. To also load the sample month and recurring demo templates, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
+By default this is a users-only seed. To also load the sample month, recurring demo templates, and manual account balance history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
 
 Seeded credentials:
 
@@ -299,6 +306,7 @@ The demo data also:
 
 - attaches all seeded records to the sample user
 - creates starter recurring templates for pay, subscriptions, bills, plans, and cards
+- creates manual checking, savings, brokerage, and credit-card accounts with balance snapshots
 - keeps demo cashflow positive for the seeded month
 - prints a summary of what was created or refreshed
 
@@ -340,6 +348,20 @@ It shows:
 - shortcuts to open or clone a month
 
 Use the quick import card to drag and drop a CSV file or click to browse when you want to bring in transactions quickly.
+
+### Accounts and Net Worth
+
+Use `Accounts & Net Worth` from the sidebar when you want to track balances outside the monthly budget workflow.
+
+This area lets you:
+
+- create manual accounts for checking, savings, brokerage, retirement, and debt balances
+- record point-in-time balance snapshots without connecting live bank feeds
+- review the latest balance for each account from the accounts index
+- see a simple net worth trend built from snapshot history
+- edit or delete snapshots when you need to clean up manual balance history
+
+This section is intentionally separate from `ExpenseEntry` and month planning so budgeting still works even if you have not updated your account balances recently.
 
 ### Create a Month
 

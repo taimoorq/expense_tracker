@@ -1,5 +1,7 @@
 class User < ApplicationRecord
+  has_many :accounts, dependent: :destroy
   has_many :budget_months, dependent: :destroy
+  has_many :account_snapshots, through: :accounts
   has_many :expense_entries, dependent: :destroy
   has_many :pay_schedules, dependent: :destroy
   has_many :subscriptions, dependent: :destroy
