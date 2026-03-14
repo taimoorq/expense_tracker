@@ -1,14 +1,14 @@
 <%= turbo_frame_tag "month_summary" do %>
   <section class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-    <div class="ta-card-tinted ta-summary-income">
+    <div class="ta-card-tinted ta-summary-income" style="view-transition-name: summary-income-card; view-transition-class: ta-vt-card;">
       <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("cash", classes: "h-4 w-4 text-emerald-600") %> Income</p>
       <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.income_total) %></p>
     </div>
-    <div class="ta-card-tinted ta-summary-outflow">
+    <div class="ta-card-tinted ta-summary-outflow" style="view-transition-name: summary-outflow-card; view-transition-class: ta-vt-card;">
       <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("cash", classes: "h-4 w-4 text-rose-600") %> Outflow</p>
       <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.outflow_total) %></p>
     </div>
-    <div class="ta-card-tinted ta-summary-leftover">
+    <div class="ta-card-tinted ta-summary-leftover" style="view-transition-name: summary-leftover-card; view-transition-class: ta-vt-card;">
       <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("chart-bar", classes: "h-4 w-4 text-indigo-600") %> Leftover</p>
       <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.calculated_leftover) %></p>
     </div>

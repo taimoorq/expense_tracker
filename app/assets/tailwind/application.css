@@ -102,6 +102,25 @@
 	--ta-danger-soft: #f4e8e7;
 }
 
+@supports (view-transition-name: none) {
+	::view-transition-group(.ta-vt-card) {
+		animation-duration: 0.32s;
+		animation-timing-function: ease;
+	}
+
+	::view-transition-group(.ta-vt-row) {
+		animation-duration: 0.24s;
+		animation-timing-function: ease;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		::view-transition-group(.ta-vt-card),
+		::view-transition-group(.ta-vt-row) {
+			animation-duration: 0s;
+		}
+	}
+}
+
 @layer components {
 	/*
 	 * Palette tuning lives above.

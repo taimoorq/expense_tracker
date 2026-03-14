@@ -93,7 +93,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_css('section[data-controller="tabs"][data-tabs-default-tab-value="entries"]')
     expect(page).to have_button("Plan and Edit")
     expect(page).to have_content("Plan and Edit This Month")
-    expect(page).to have_content("Add from planning templates")
+    expect(page).to have_content("Build the month from templates")
     expect(page).to have_button("Estimate Card Payments")
   end
 

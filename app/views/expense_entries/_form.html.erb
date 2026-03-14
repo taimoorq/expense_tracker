@@ -1,8 +1,23 @@
 <%= turbo_frame_tag "entry_form" do %>
-  <section class="mb-6 ta-card">
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("plus", classes: "h-4 w-4 text-indigo-600") %> Add Item Manually</h3>
+  <% quick_add_open = expense_entry.errors.any? %>
+
+  <section class="mb-6 rounded-[24px] border border-slate-200 bg-white/85 p-5 shadow-sm">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="max-w-2xl">
+        <div class="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-violet-800">
+          <%= tabler_icon("adjustments", classes: "h-3.5 w-3.5") %>
+          <span>Recommended for most users</span>
+        </div>
+        <h3 class="mt-3 ta-section-title">Add a one-off item with guidance</h3>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Use the guided wizard when something does not come from a template. It breaks the task into small steps and lets users review the entry before saving.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
+          <%= tabler_icon("adjustments", classes: "h-4 w-4") %>
+          <span>Open Guided Wizard</span>
+        <% end %>
+
         <button type="button" class="ta-icon-btn" aria-label="Add Entry Help" title="Add Entry Help" data-action="click->help-modal#open" data-help-title="Add Entry Help" data-help-body="Use this form to add money coming in and money going out.
 
 Date: when it happened or is due.
@@ -14,58 +29,86 @@ Actual Amount: what actually happened (leave blank until paid).
 Status: planned, paid, or skipped.
 Need/Want: optional spending priority tag."><%= tabler_icon("help") %></button>
       </div>
-
-      <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
-        <%= tabler_icon("adjustments", classes: "h-4 w-4 text-violet-600") %>
-        <span>Use Guided Wizard</span>
-      <% end %>
     </div>
 
-    <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-preview" }, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
-      <div>
-        <%= form.label :occurred_on, "Date", class: "fb-label" %>
-        <%= form.date_field :occurred_on, class: "fb-input" %>
+    <div class="mt-4 grid gap-3 lg:grid-cols-3">
+      <div class="rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
+        <p class="text-sm font-semibold text-slate-900">Best when users are new</p>
+        <p class="mt-1 text-xs leading-5 text-slate-600">The wizard explains the fields in sequence and reduces blank-screen confusion.</p>
       </div>
-      <div>
-        <%= form.label :section, class: "fb-label" %>
-        <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+      <div class="rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
+        <p class="text-sm font-semibold text-slate-900">Good for exceptions</p>
+        <p class="mt-1 text-xs leading-5 text-slate-600">Use it for irregular income, one-off purchases, adjustments, or anything templates miss.</p>
       </div>
-      <div>
-        <%= form.label :category, class: "fb-label" %>
-        <%= form.text_field :category, placeholder: "Utilities, Paycheck, Card Payment...", class: "fb-input" %>
+      <div class="rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
+        <p class="text-sm font-semibold text-slate-900">Quick add stays available</p>
+        <p class="mt-1 text-xs leading-5 text-slate-600">Experienced users can still type directly using the quick form below.</p>
       </div>
-      <div>
-        <%= form.label :payee, class: "fb-label" %>
-        <%= form.text_field :payee, placeholder: "Vendor or Source", class: "fb-input" %>
+    </div>
+
+    <details class="mt-5 rounded-[22px] border border-slate-200 bg-slate-50/80 p-4 group" <%= "open" if quick_add_open %>>
+      <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Prefer to type quickly?</p>
+          <p class="mt-1 text-sm text-slate-600">Open the quick add form for faster direct entry once the workflow is familiar.</p>
+        </div>
+        <span class="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition group-open:bg-slate-900 group-open:text-white">Quick Add</span>
+      </summary>
+
+      <div class="mt-4 border-t border-slate-200 pt-4">
+        <% if expense_entry.errors.any? %>
+          <div class="mb-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <%= expense_entry.errors.full_messages.join(", ") %>
+          </div>
+        <% end %>
+
+        <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-preview" }, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
+          <div>
+            <%= form.label :occurred_on, "Date", class: "fb-label" %>
+            <%= form.date_field :occurred_on, class: "fb-input" %>
+          </div>
+          <div>
+            <%= form.label :section, class: "fb-label" %>
+            <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+          </div>
+          <div>
+            <%= form.label :category, class: "fb-label" %>
+            <%= form.text_field :category, placeholder: "Utilities, Paycheck, Card Payment...", class: "fb-input" %>
+          </div>
+          <div>
+            <%= form.label :payee, class: "fb-label" %>
+            <%= form.text_field :payee, placeholder: "Vendor or Source", class: "fb-input" %>
+          </div>
+          <div>
+            <%= form.label :planned_amount, class: "fb-label" %>
+            <%= form.number_field :planned_amount, step: 0.01, placeholder: "0.00", class: "fb-input", data: { action: "input->entry-preview#update", entry_preview_target: "planned" } %>
+          </div>
+          <div>
+            <%= form.label :actual_amount, class: "fb-label" %>
+            <%= form.number_field :actual_amount, step: 0.01, placeholder: "0.00", class: "fb-input", data: { action: "input->entry-preview#update", entry_preview_target: "actual" } %>
+          </div>
+          <div>
+            <%= form.label :account, class: "fb-label" %>
+            <%= form.text_field :account, placeholder: "Checking, Chase, etc.", class: "fb-input" %>
+          </div>
+          <div>
+            <%= form.label :status, class: "fb-label" %>
+            <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+          </div>
+          <div>
+            <%= form.label :need_or_want, "Need / Want", class: "fb-label" %>
+            <%= form.text_field :need_or_want, placeholder: "Need or Want", class: "fb-input" %>
+          </div>
+          <div>
+            <%= form.label :notes, class: "fb-label" %>
+            <%= form.text_field :notes, placeholder: "Optional details", class: "fb-input" %>
+          </div>
+          <div class="flex items-center rounded-md bg-slate-100 px-3 text-sm text-slate-700">
+            Effective: <span class="ml-1 font-semibold" data-entry-preview-target="effective">$0.00</span>
+          </div>
+          <%= form.submit "Add", class: "fb-btn-primary" %>
+        <% end %>
       </div>
-      <div>
-        <%= form.label :planned_amount, class: "fb-label" %>
-        <%= form.number_field :planned_amount, step: 0.01, placeholder: "0.00", class: "fb-input", data: { action: "input->entry-preview#update", entry_preview_target: "planned" } %>
-      </div>
-      <div>
-        <%= form.label :actual_amount, class: "fb-label" %>
-        <%= form.number_field :actual_amount, step: 0.01, placeholder: "0.00", class: "fb-input", data: { action: "input->entry-preview#update", entry_preview_target: "actual" } %>
-      </div>
-      <div>
-        <%= form.label :account, class: "fb-label" %>
-        <%= form.text_field :account, placeholder: "Checking, Chase, etc.", class: "fb-input" %>
-      </div>
-      <div>
-        <%= form.label :status, class: "fb-label" %>
-        <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
-      </div>
-      <div>
-        <%= form.label :need_or_want, "Need / Want", class: "fb-label" %>
-        <%= form.text_field :need_or_want, placeholder: "Need or Want", class: "fb-input" %>
-      </div>
-      <div>
-        <%= form.label :notes, class: "fb-label" %>
-        <%= form.text_field :notes, placeholder: "Optional details", class: "fb-input" %>
-      </div>
-      <div class="flex items-center rounded-md bg-slate-100 px-3 text-sm text-slate-700">
-        Effective: <span class="ml-1 font-semibold" data-entry-preview-target="effective">$0.00</span>
-      </div>
-      <%= form.submit "Add", class: "fb-btn-primary" %>
-    <% end %>
+    </details>
   </section>
 <% end %>

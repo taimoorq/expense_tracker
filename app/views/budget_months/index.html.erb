@@ -1,3 +1,5 @@
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
+
 <% content_for :page_header do %>
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 class="text-2xl font-semibold">Budget Months</h2>
@@ -34,7 +36,7 @@
         </thead>
         <tbody class="divide-y divide-slate-100">
         <% @budget_months.each do |month| %>
-          <tr>
+          <tr id="<%= dom_id(month) %>" style="view-transition-name: dashboard-month-<%= dom_id(month) %>; view-transition-class: ta-vt-row;">
             <td class="ta-td"><%= link_to month.label, budget_month_path(month), class: "font-medium text-indigo-600 hover:text-indigo-500" %></td>
             <td class="ta-td text-right"><%= number_to_currency(month.income_total) %></td>
             <td class="ta-td text-right"><%= number_to_currency(month.outflow_total) %></td>

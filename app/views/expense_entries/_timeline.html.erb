@@ -56,7 +56,7 @@
       <div class="space-y-4">
         <% grouped_entries.each_with_index do |(group_name, entries), index| %>
           <% group_total = entries.sum(&:cashflow_amount) %>
-          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" data-group-id="<%= group_name.parameterize %>" <%= "open" if index.zero? %>>
+          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" data-group-id="<%= group_name.parameterize %>" style="view-transition-name: timeline-group-<%= group_name.parameterize %>; view-transition-class: ta-vt-card;" <%= "open" if index.zero? %>>
             <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
               <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <%= tabler_icon("list") %>
@@ -123,7 +123,8 @@
                       data-payee="<%= entry.payee.to_s %>"
                       data-reason="<%= reason_for_entry.call(entry).to_s %>"
                       data-value="<%= reason_for_entry.call(entry).to_s.downcase %>"
-                      data-status="<%= entry.status %>">
+                      data-status="<%= entry.status %>"
+                      style="view-transition-name: timeline-entry-<%= dom_id(entry) %>; view-transition-class: ta-vt-row;">
                       <td class="px-3 py-2"><%= entry.occurred_on || "—" %></td>
                       <td class="px-3 py-2">
                         <div>
