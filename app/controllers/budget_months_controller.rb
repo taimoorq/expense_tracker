@@ -149,7 +149,7 @@ class BudgetMonthsController < ApplicationController
   def clone_source_entries(source_month, target_month)
     return 0 unless source_month
 
-    source_month.expense_entries.find_each.sum do |entry|
+    source_month.expense_entries.where.not(source_file: "credit_card_estimate").find_each.sum do |entry|
       target_month.expense_entries.create!(
         occurred_on: shifted_date(entry.occurred_on, target_month.month_on),
         section: entry.section,

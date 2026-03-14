@@ -15,6 +15,16 @@ RSpec.describe "Budget month cloning", type: :request do
       actual_amount: 78,
       status: :paid,
       source_file: "manual")
+    create(:expense_entry,
+      budget_month: source_month,
+      user: user,
+      occurred_on: Date.new(2026, 3, 28),
+      section: :debt,
+      category: "Credit Card",
+      payee: "Visa",
+      planned_amount: 250,
+      status: :planned,
+      source_file: "credit_card_estimate")
   end
 
   it "clones entries into the next available month with shifted dates and reset actuals/status" do
@@ -38,5 +48,6 @@ RSpec.describe "Budget month cloning", type: :request do
     expect(cloned_entry.planned_amount.to_d).to eq(78.to_d)
     expect(cloned_entry.actual_amount).to be_nil
     expect(cloned_entry.status).to eq("planned")
+    expect(cloned_month.expense_entries.find_by(source_file: "credit_card_estimate")).to be_nil
   end
 end
