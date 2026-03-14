@@ -28,7 +28,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="ta-shell ta-shell-collapsed" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc" data-sidebar-target="shell">
+  <body class="ta-shell ta-shell-collapsed ta-theme-earth" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc" data-sidebar-target="shell">
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
     <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
@@ -94,23 +94,23 @@
 
           <% if user_signed_in? %>
             <div class="flex items-center gap-2">
-              <%= link_to edit_user_registration_path, class: "inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900" do %>
+              <%= link_to edit_user_registration_path, class: "ta-user-chip" do %>
                 <%= tabler_icon("user-circle", classes: "ta-action-icon") %>
                 <span><%= current_user.email %></span>
               <% end %>
               <%= button_to destroy_user_session_path, method: :delete, class: "fb-btn-secondary ta-action-btn" do %>
-                <%= tabler_icon("logout", classes: "ta-action-icon text-slate-600") %>
+                <%= tabler_icon("logout", classes: "ta-action-icon") %>
                 <span>Sign out</span>
               <% end %>
             </div>
           <% else %>
             <div class="flex items-center gap-2">
               <%= link_to new_user_session_path, class: "fb-btn-secondary ta-action-btn" do %>
-                <%= tabler_icon("login", classes: "ta-action-icon text-slate-600") %>
+                <%= tabler_icon("login", classes: "ta-action-icon") %>
                 <span>Sign in</span>
               <% end %>
               <%= link_to new_user_registration_path, class: "fb-btn-primary ta-action-btn" do %>
-                <%= tabler_icon("user-plus", classes: "ta-action-icon text-indigo-100") %>
+                <%= tabler_icon("user-plus", classes: "ta-action-icon") %>
                 <span>Create account</span>
               <% end %>
             </div>
