@@ -44,7 +44,7 @@ RSpec.describe "Budget month management", type: :system do
     user = create(:user, email: "dashboard@example.com")
 
     sign_in_as(user)
-    visit root_path
+    visit budget_months_path
 
     expect(page).to have_content("Existing months")
     expect(page).to have_content("Quick import")
@@ -95,6 +95,39 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Plan and Edit This Month")
     expect(page).to have_content("Build the month from templates")
     expect(page).to have_button("Estimate Card Payments")
+  end
+
+  it "keeps add monthly bills available until all saved bill templates are represented", js: true do
+    user = create(:user, email: "monthlybillcoverage@example.com")
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(:monthly_bill, user: user, name: "Mortgage", due_day: 12, default_amount: 1800, kind: :fixed_payment)
+    create(:monthly_bill, user: user, name: "Electric", due_day: 18, default_amount: 140, kind: :variable_bill)
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      source_file: "March 2026 Transactions.csv",
+      occurred_on: Date.new(2026, 3, 12),
+      section: :fixed,
+      category: "Housing",
+      payee: "Mortgage",
+      planned_amount: 1800,
+      actual_amount: 1800,
+      account: "Checking",
+      status: :paid)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    click_button "Plan and Edit"
+
+    expect(page).to have_button("Add Monthly Bills")
+    expect(page).to have_text(/1 of 2 templates represented/i)
+
+    click_button "Add Monthly Bills"
+
+    expect(page).to have_content("Generated 1 monthly bill entry.")
+    expect(page).to have_content("Electric")
+    expect(page).not_to have_button("Add Monthly Bills")
   end
 
   it "shows a separate breakdown tab for the visual charts" do

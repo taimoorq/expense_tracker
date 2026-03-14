@@ -14,7 +14,8 @@ RSpec.describe "User data privacy", type: :system do
     fill_in "Password", with: "password123!"
     click_button "Log in"
 
-    expect(page).to have_content("Signed in successfully")
+    visit budget_months_path
+
     expect(page).to have_content("March 2026")
     expect(page).not_to have_content("April 2026")
   end

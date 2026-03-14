@@ -4,7 +4,7 @@
       <h2 class="text-2xl font-semibold">New Budget Month</h2>
       <p class="ta-muted mt-1">Choose a quick clone workflow or start a month from scratch with guided details.</p>
     </div>
-    <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
+    <%= link_to budget_months_path, class: "fb-btn-secondary ta-action-btn" do %>
       <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
       <span>Back to Months</span>
     <% end %>
@@ -156,7 +156,7 @@
   <div class="ta-wizard-footer">
     <div class="flex items-center gap-2">
       <button type="button" class="fb-btn-secondary hidden" data-month-wizard-target="backButton" data-action="click->month-wizard#back">Back</button>
-      <%= link_to "Cancel", root_path, class: "fb-btn-secondary" %>
+      <%= link_to "Cancel", budget_months_path, class: "fb-btn-secondary" %>
     </div>
     <div class="flex items-center gap-2">
       <button type="button" class="fb-btn-secondary hidden" data-month-wizard-target="nextButton" data-action="click->month-wizard#next">Next</button>

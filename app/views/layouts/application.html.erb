@@ -30,12 +30,14 @@
   </head>
 
   <body class="ta-shell ta-shell-collapsed ta-theme-earth" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc" data-sidebar-target="shell">
+    <% overview_active = controller_name == "overview" %>
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
     <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" %>
     <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
     <% help_active = controller_name == "help" %>
-    <% show_back_nav = !(controller_name == "budget_months" && action_name == "index") %>
+    <% months_section_active = months_active || templates_active || new_month_active %>
+    <% show_back_nav = !((controller_name == "budget_months" && action_name == "index") || controller_name == "overview") %>
 
     <aside class="ta-sidebar">
       <div class="ta-sidebar-brand">
@@ -47,24 +49,33 @@
       </div>
       <% if user_signed_in? %>
         <nav class="ta-sidebar-nav">
-          <%= link_to root_path, class: ["ta-sidebar-link", (months_active ? "ta-sidebar-link-active" : nil)], title: "Budget Months" do %>
+          <%= link_to root_path, class: ["ta-sidebar-link", (overview_active ? "ta-sidebar-link-active" : nil)], title: "Overview" do %>
             <%= tabler_icon("home", classes: "ta-sidebar-link-icon") %>
-            <span class="ta-sidebar-label">Budget Months</span>
+            <span class="ta-sidebar-label">Home</span>
           <% end %>
 
-          <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Manage Templates" do %>
-            <%= tabler_icon("template", classes: "ta-sidebar-link-icon") %>
-            <span class="ta-sidebar-label">Manage Templates</span>
-          <% end %>
+          <div class="ta-sidebar-group">
+            <%= link_to budget_months_path, class: ["ta-sidebar-link", (months_section_active ? "ta-sidebar-link-active" : nil)], title: "Months" do %>
+              <%= tabler_icon("calendar-month", classes: "ta-sidebar-link-icon") %>
+              <span class="ta-sidebar-label">Months</span>
+            <% end %>
+
+            <div class="ta-sidebar-sublinks">
+              <%= link_to planning_templates_path, class: ["ta-sidebar-sublink", (templates_active ? "ta-sidebar-sublink-active" : nil)], title: "Planning Templates" do %>
+                <%= tabler_icon("template", classes: "ta-sidebar-sublink-icon") %>
+                <span class="ta-sidebar-label">Planning Templates</span>
+              <% end %>
+
+              <%= link_to new_budget_month_path, class: ["ta-sidebar-sublink", (new_month_active ? "ta-sidebar-sublink-active" : nil)], title: "Add Month" do %>
+                <%= tabler_icon("calendar-plus", classes: "ta-sidebar-sublink-icon") %>
+                <span class="ta-sidebar-label">Add Month</span>
+              <% end %>
+            </div>
+          </div>
 
           <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth" do %>
             <%= tabler_icon("cash", classes: "ta-sidebar-link-icon") %>
             <span class="ta-sidebar-label">Accounts & Net Worth</span>
-          <% end %>
-
-          <%= link_to new_budget_month_path, class: ["ta-sidebar-link", (new_month_active ? "ta-sidebar-link-active" : nil)], title: "Create New Month" do %>
-            <%= tabler_icon("calendar-plus", classes: "ta-sidebar-link-icon") %>
-            <span class="ta-sidebar-label">Create New Month</span>
           <% end %>
 
           <%= link_to help_path, class: ["ta-sidebar-link", (help_active ? "ta-sidebar-link-active" : nil)], title: "Help & Documentation" do %>
@@ -92,7 +103,7 @@
                 <% if show_back_nav %>
                   <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
                     <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
-                    <span>Back to Months</span>
+                    <span>Back to Home</span>
                   <% end %>
                 <% end %>
               </div>

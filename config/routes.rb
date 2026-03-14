@@ -14,7 +14,7 @@ Rails.application.routes.draw do
     end
   end
 
-  root "budget_months#index"
+  root "overview#show"
   get "help", to: "help#show", as: :help
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
   resources :accounts, except: [ :destroy ] do

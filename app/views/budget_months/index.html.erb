@@ -2,11 +2,17 @@
 
 <% content_for :page_header do %>
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <h2 class="text-2xl font-semibold">Budget Months</h2>
-    <%= link_to new_budget_month_path, class: "fb-btn-primary ta-action-btn" do %>
-      <%= tabler_icon("plus", classes: "ta-action-icon text-indigo-100") %>
-      <span>New Month</span>
-    <% end %>
+    <h2 class="text-2xl font-semibold">Months</h2>
+    <div class="flex flex-wrap items-center gap-2">
+      <%= link_to planning_templates_path, class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("template", classes: "ta-action-icon text-slate-600") %>
+        <span>Planning Templates</span>
+      <% end %>
+      <%= link_to new_budget_month_path, class: "fb-btn-primary ta-action-btn" do %>
+        <%= tabler_icon("plus", classes: "ta-action-icon text-indigo-100") %>
+        <span>New Month</span>
+      <% end %>
+    </div>
   </div>
 <% end %>
 

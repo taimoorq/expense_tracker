@@ -20,7 +20,7 @@ RSpec.describe "CSV imports", type: :request do
     end.to change(user.budget_months, :count).by(1)
        .and change(ExpenseEntry.where(user: user), :count).by(1)
 
-    expect(response).to redirect_to(root_path)
+    expect(response).to redirect_to(budget_months_path)
     expect(flash[:notice]).to include("Import complete")
     expect(BudgetMonth.last.user).to eq(user)
   ensure

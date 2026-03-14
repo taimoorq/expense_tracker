@@ -181,6 +181,23 @@ module ApplicationHelper
     end
   end
 
+  def template_coverage_for_type(budget_month, template_type, entries = budget_month.expense_entries.to_a)
+    templates = templates_for_type(budget_month, template_type)
+    month_entries = Array(entries)
+    matched = templates.count do |template|
+      month_entries.any? do |entry|
+        template_matches_entry?(template, entry, budget_month.month_on)
+      end
+    end
+
+    {
+      total: templates.size,
+      matched: matched,
+      remaining: [templates.size - matched, 0].max,
+      complete: templates.any? && matched == templates.size
+    }
+  end
+
   private
 
   def admin_auth_scope?

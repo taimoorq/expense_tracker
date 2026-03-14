@@ -24,6 +24,7 @@ module MonthPageRefresh
       turbo_stream.replace("flash", partial: "shared/flash"),
       turbo_stream.replace("month_summary", partial: "budget_months/summary_cards", locals: month_summary_locals),
       turbo_stream.replace("visual_dashboard", partial: "budget_months/visual_dashboard", locals: visual_dashboard_locals),
+      turbo_stream.replace("plan_and_edit_panel", partial: "budget_months/plan_and_edit_panel", locals: plan_and_edit_panel_locals),
       turbo_stream.replace("timeline_section", partial: "expense_entries/timeline", locals: month_entries_locals),
       turbo_stream.replace("calendar_section", partial: "expense_entries/calendar", locals: month_entries_locals),
       turbo_stream.replace("entries_table", partial: "expense_entries/table", locals: month_entries_locals)
@@ -48,6 +49,10 @@ module MonthPageRefresh
 
   def visual_dashboard_locals
     { budget_month: @budget_month, expense_entries: @expense_entries }
+  end
+
+  def plan_and_edit_panel_locals
+    { budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry }
   end
 
   def auto_complete_due_recurring_entries(entries)

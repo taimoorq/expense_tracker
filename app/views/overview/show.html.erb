@@ -1,0 +1,22 @@
+<% content_for :page_header do %>
+  <div>
+    <h2 class="text-2xl font-semibold">Overview</h2>
+    <p class="ta-muted mt-1">Home is reserved for summary and dashboard widgets. This page is intentionally blank for now.</p>
+  </div>
+<% end %>
+
+<section class="ta-card">
+  <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Overview</p>
+    <h3 class="mt-3 text-xl font-semibold text-slate-900">No overview widgets yet</h3>
+    <p class="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+      Use the Months section to create, import, review, and manage budget months. Planning Templates and Add Month now live under Months in the sidebar.
+    </p>
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <%= link_to budget_months_path, class: "fb-btn-primary ta-action-btn" do %>
+        <%= tabler_icon("calendar-month", classes: "ta-action-icon text-indigo-100") %>
+        <span>Open Months</span>
+      <% end %>
+    </div>
+  </div>
+</section>
