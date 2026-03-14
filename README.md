@@ -182,6 +182,8 @@ This setup assumes you are running Docker Compose from a local clone of this rep
 4. Open the app
 	 - http://localhost:4287
 
+Start the full Compose stack from this directory. Do not start the `web` container by itself with `docker run` or from a GUI action that skips the `db` service, because the Rails container expects to reach PostgreSQL at the Compose hostname `db`.
+
 The Docker setup publishes the app on host port `4287` by default to avoid the more commonly used `3000`.
 
 To override it, set `APP_PORT` in your shell or a local `.env` file before starting Docker.
@@ -201,7 +203,9 @@ Examples:
 Services included:
 
 - `web` — Rails app running via `bin/dev`
-- `db` — PostgreSQL 16
+- `db` — PostgreSQL 16 on the internal Compose network
+
+The PostgreSQL container is not published to a host port by default. The Rails app connects to it over the Compose network as `db`, which avoids conflicts on machines that already use port `5432` for another local PostgreSQL instance.
 
 The container entrypoint automatically runs `bin/rails db:prepare` when the app starts.
 
@@ -653,6 +657,23 @@ Stop the process using it, or start Docker with a different `APP_PORT` value.
 
 - Local: make sure PostgreSQL is running
 - Docker: make sure the `db` container is healthy
+
+If the `web` container logs `could not translate host name "db" to address`, the app was almost certainly started outside the normal Compose network.
+
+Use these checks:
+
+- `docker compose ps`
+- `docker compose logs db`
+
+The expected fix is to start both services together from the repository directory:
+
+- `docker compose up --build`
+
+Do not start the Rails container by itself with `docker run` unless you also provide a reachable PostgreSQL host and override `DATABASE_URL` accordingly.
+
+If Docker fails with `Bind for 0.0.0.0:5432 failed: port is already allocated`, another process on your machine is already using host port `5432`.
+
+The default Compose file no longer publishes PostgreSQL to the host, so pulling the latest code and restarting with `docker compose up --build` should avoid that conflict.
 
 ### Rebuild Docker after gem changes
 
