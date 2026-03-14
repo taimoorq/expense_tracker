@@ -75,6 +75,7 @@ module PlanningTemplateCrud
   def section_locals
     {
       budget_month: @budget_month,
+      return_to: params[:return_to].presence,
       collection_name.to_sym => instance_variable_get("@#{collection_name}"),
       resource_name.to_sym => instance_variable_get("@#{resource_name}")
     }

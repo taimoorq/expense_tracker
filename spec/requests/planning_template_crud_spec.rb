@@ -27,6 +27,19 @@ RSpec.describe "Planning template CRUD", type: :request do
       expect(response).to redirect_to(planning_templates_path)
       expect(flash[:notice]).to eq(destroy_notice)
     end
+
+    it "supports turbo stream creation from the planning templates page" do
+      params = valid_params.respond_to?(:call) ? instance_exec(&valid_params) : valid_params
+
+      expect do
+        post public_send(create_path_helper),
+          params: { param_key => params, return_to: planning_templates_path },
+          headers: { "ACCEPT" => Mime[:turbo_stream].to_s }
+      end.to change { user.public_send(collection_name).count }.by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    end
   end
 
   include_examples "planning template resource",
