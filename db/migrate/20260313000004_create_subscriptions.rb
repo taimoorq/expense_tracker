@@ -1,6 +1,6 @@
 class CreateSubscriptions < ActiveRecord::Migration[8.1]
   def change
-    create_table :subscriptions do |t|
+    create_table :subscriptions, id: :uuid do |t|
       t.string :name, null: false
       t.decimal :amount, precision: 12, scale: 2, null: false
       t.integer :due_day, null: false, default: 1

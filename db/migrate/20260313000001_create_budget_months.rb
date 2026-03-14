@@ -1,6 +1,8 @@
 class CreateBudgetMonths < ActiveRecord::Migration[8.1]
   def change
-    create_table :budget_months do |t|
+    enable_extension "pgcrypto" unless extension_enabled?("pgcrypto")
+
+    create_table :budget_months, id: :uuid do |t|
       t.string :label, null: false
       t.date :month_on, null: false
       t.decimal :planned_income, precision: 12, scale: 2

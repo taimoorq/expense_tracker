@@ -56,12 +56,13 @@ If the goal is to get the app running as quickly as possible, use Docker:
 	- `docker compose up --build`
 4. Open the app
 	- http://localhost:4287
-5. Optional: load the demo data in another terminal
-	- `docker compose exec web bin/rails db:seed`
+5. Optional: load seed data in another terminal
+	- users only: `docker compose exec web bin/rails db:seed`
+	- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
 
 If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
 
-After seeding, sign in with the demo account described in the [Sample User](#sample-user) section.
+After seeding, sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month and recurring demo templates.
 
 ## Screenshots
 
@@ -179,13 +180,14 @@ Services included:
 
 The container entrypoint automatically runs `bin/rails db:prepare` when the app starts.
 
-#### Optional: load demo data
+#### Optional: load seed data
 
 In another terminal:
 
-- `docker compose exec web bin/rails db:seed`
+- users only: `docker compose exec web bin/rails db:seed`
+- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
 
-This creates a demo account and sample month so you can explore the app right away.
+The default command creates the demo account only. Use `SEED_MODE=users_with_transactions` to also create the sample month and recurring demo templates.
 
 #### Automatic recurring completion
 
@@ -237,8 +239,9 @@ Make sure PostgreSQL is running before starting the app.
 	 - `bundle install`
 3. Prepare the database
 	 - `bin/rails db:prepare`
-4. Optional: load demo data
-	 - `bin/rails db:seed`
+4. Optional: load seed data
+	 - users only: `bin/rails db:seed`
+	 - users with transactions: `SEED_MODE=users_with_transactions bin/rails db:seed`
 5. Start the development server
 	 - `bin/dev`
 
@@ -250,7 +253,7 @@ Common local `.env` uses:
 
 - override `PORT` for `bin/dev`
 - override `APP_PORT` for Docker
-- set `SEED_USER_EMAIL` and `SEED_USER_PASSWORD` before running `bin/rails db:seed`
+- set `SEED_MODE`, `SEED_USER_EMAIL`, and `SEED_USER_PASSWORD` before running `bin/rails db:seed`
 - set `DATABASE_URL` if you want to connect to PostgreSQL over TCP instead of the default local socket setup
 
 ## Authentication
@@ -263,25 +266,32 @@ You can:
 - sign in with your own account
 - use the seeded demo account after running `bin/rails db:seed`
 
+The default seed creates the account only. Use `SEED_MODE=users_with_transactions` if you want seeded month data as well.
+
 ## Demo and Sample Data
 
 This project includes demo data for evaluation and sample files for testing imports.
 
 ### Sample User
 
-Running `bin/rails db:seed` creates or updates a demo user you can sign in with:
+Running `bin/rails db:seed` creates or updates a demo user you can sign in with.
+
+By default this is a users-only seed. To also load the sample month and recurring demo templates, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
+
+Seeded credentials:
 
 - Email: `demo@example.com`
 - Password: `password123!`
 
 You can override these when seeding with:
 
+- `SEED_MODE=users` or `SEED_MODE=users_with_transactions`
 - `SEED_USER_EMAIL=your-email@example.com`
 - `SEED_USER_PASSWORD=your-password`
 
 ### Seeded Demo Month
 
-The seed process also imports:
+When `SEED_MODE=users_with_transactions`, the seed process also imports:
 
 - `db/seeds/march_2026_transactions.csv`
 
@@ -470,7 +480,8 @@ These commands are mainly for local development, debugging, and contribution wor
 
 - Start app: `bin/dev`
 - Prepare DB: `bin/rails db:prepare`
-- Seed data: `bin/rails db:seed`
+- Seed users only: `bin/rails db:seed`
+- Seed users with transactions: `SEED_MODE=users_with_transactions bin/rails db:seed`
 - Run tests: `bundle exec rspec`
 - Rails console: `bin/rails console`
 - Autoload check: `bin/rails zeitwerk:check`
@@ -478,7 +489,8 @@ These commands are mainly for local development, debugging, and contribution wor
 ### Docker
 
 - Start app: `docker compose up --build`
-- Seed data: `docker compose exec web bin/rails db:seed`
+- Seed users only: `docker compose exec web bin/rails db:seed`
+- Seed users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
 - Run tests: `docker compose exec web bundle exec rspec`
 - Rails console: `docker compose exec web bin/rails console`
 - Stop app: `docker compose down`

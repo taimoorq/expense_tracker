@@ -1,6 +1,6 @@
 class CreatePaymentPlans < ActiveRecord::Migration[8.1]
   def change
-    create_table :payment_plans do |t|
+    create_table :payment_plans, id: :uuid do |t|
       t.string :name, null: false
       t.decimal :total_due, precision: 12, scale: 2, null: false
       t.decimal :amount_paid, precision: 12, scale: 2, null: false, default: 0

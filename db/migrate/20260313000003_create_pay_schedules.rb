@@ -1,6 +1,6 @@
 class CreatePaySchedules < ActiveRecord::Migration[8.1]
   def change
-    create_table :pay_schedules do |t|
+    create_table :pay_schedules, id: :uuid do |t|
       t.string :name, null: false
       t.integer :cadence, null: false, default: 2
       t.decimal :amount, precision: 12, scale: 2, null: false

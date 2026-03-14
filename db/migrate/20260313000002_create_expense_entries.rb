@@ -1,7 +1,7 @@
 class CreateExpenseEntries < ActiveRecord::Migration[8.1]
   def change
-    create_table :expense_entries do |t|
-      t.references :budget_month, null: false, foreign_key: true
+    create_table :expense_entries, id: :uuid do |t|
+      t.references :budget_month, null: false, foreign_key: true, type: :uuid
       t.date :occurred_on
       t.integer :section, null: false, default: 6
       t.string :category

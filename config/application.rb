@@ -12,6 +12,7 @@ module ExpenseTracker
     config.load_defaults 8.1
 
     config.generators do |generator|
+      generator.orm :active_record, primary_key_type: :uuid
       generator.test_framework :rspec,
         fixtures: false,
         view_specs: false,
