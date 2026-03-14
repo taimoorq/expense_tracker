@@ -65,6 +65,8 @@ After seeding, sign in with the demo account described in the [Sample User](#sam
 
 ## Screenshots
 
+Current screenshots reflect the latest dashboard theme, month tabs, and planning workflow.
+
 <table>
 	<tr>
 		<td align="center">
@@ -72,14 +74,14 @@ After seeding, sign in with the demo account described in the [Sample User](#sam
 			<br>
 			<strong>Dashboard</strong>
 			<br>
-			Existing months and quick CSV import.
+			Month list, quick actions, and CSV import from one home screen.
 		</td>
 		<td align="center">
 			<img src="app/assets/images/screenshots/clone-month-view.png" alt="Month creation wizard" width="100%">
 			<br>
 			<strong>Month Creation Wizard</strong>
 			<br>
-			Clone preview and fresh month flow.
+			Clone a previous month or start fresh with a guided setup flow.
 		</td>
 	</tr>
 	<tr>
@@ -88,14 +90,23 @@ After seeding, sign in with the demo account described in the [Sample User](#sam
 			<br>
 			<strong>Monthly Overview</strong>
 			<br>
-			Timeline totals, grouped entries, and charts.
+			Summary cards, grouped timeline sections, and fast month review actions.
 		</td>
 		<td align="center">
 			<img src="app/assets/images/screenshots/monthly-calendar-view.png" alt="Calendar view" width="100%">
 			<br>
 			<strong>Calendar View</strong>
 			<br>
-			Day-by-day entry layout with reason pills.
+			Day-by-day layout for reviewing planned and paid activity across the month.
+		</td>
+	</tr>
+	<tr>
+		<td align="center" colspan="2">
+			<img src="app/assets/images/screenshots/monthly-plan-edit.png" alt="Plan and edit tab" width="100%">
+			<br>
+			<strong>Plan and Edit</strong>
+			<br>
+			Guided workspace for generating a month, adjusting entries, and editing the plan in one place.
 		</td>
 	</tr>
 </table>
