@@ -23,11 +23,9 @@ export default class extends Controller {
       tab.setAttribute("aria-selected", String(isActive))
 
       if (isActive) {
-        tab.classList.remove("fb-btn-secondary")
-        tab.classList.add("fb-btn-primary")
+        tab.classList.add("ta-tab-active")
       } else {
-        tab.classList.remove("fb-btn-primary")
-        tab.classList.add("fb-btn-secondary")
+        tab.classList.remove("ta-tab-active")
       }
     })
 

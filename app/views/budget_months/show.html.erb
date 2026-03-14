@@ -24,18 +24,18 @@
   <% end %>
 
   <section class="ta-card ta-surface-shell" data-controller="tabs" data-tabs-default-tab-value="<%= default_tab %>">
-    <div class="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Month view tabs">
-      <button type="button" class="fb-btn-primary" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="timeline" data-action="click->tabs#switch" data-tabs-name-param="timeline">
-        <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "ta-action-icon-lg text-indigo-100") %> Timeline</span>
+    <div class="mb-4 ta-tab-list" role="tablist" aria-label="Month view tabs">
+      <button type="button" class="ta-tab ta-tab-active" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="timeline" data-action="click->tabs#switch" data-tabs-name-param="timeline">
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "ta-tab-icon") %> Timeline</span>
       </button>
-      <button type="button" class="fb-btn-secondary" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="breakdown" data-action="click->tabs#switch" data-tabs-name-param="breakdown">
-        <span class="inline-flex items-center gap-2"><%= tabler_icon("chart-bar", classes: "ta-action-icon-lg text-indigo-600") %> Breakdown</span>
+      <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="breakdown" data-action="click->tabs#switch" data-tabs-name-param="breakdown">
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("chart-bar", classes: "ta-tab-icon") %> Breakdown</span>
       </button>
-      <button type="button" class="fb-btn-secondary" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="calendar" data-action="click->tabs#switch" data-tabs-name-param="calendar">
-        <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "ta-action-icon-lg text-sky-600") %> Calendar</span>
+      <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="calendar" data-action="click->tabs#switch" data-tabs-name-param="calendar">
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "ta-tab-icon") %> Calendar</span>
       </button>
-      <button type="button" class="fb-btn-secondary" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="entries" data-action="click->tabs#switch" data-tabs-name-param="entries">
-        <span class="inline-flex items-center gap-2"><%= tabler_icon("list", classes: "ta-action-icon-lg text-slate-600") %> Plan and Edit</span>
+      <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="entries" data-action="click->tabs#switch" data-tabs-name-param="entries">
+        <span class="inline-flex items-center gap-2"><%= tabler_icon("list", classes: "ta-tab-icon") %> Plan and Edit</span>
       </button>
     </div>
 

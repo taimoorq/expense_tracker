@@ -50,11 +50,13 @@ For most people, the easiest way to try the app is the Docker setup below becaus
 If the goal is to get the app running as quickly as possible, use Docker:
 
 1. Install Docker Desktop
-2. Start the app
+2. Optional: create a local env file for port or seed overrides
+	- `cp .env.example .env`
+3. Start the app
 	- `docker compose up --build`
-3. Open the app
+4. Open the app
 	- http://localhost:4287
-4. Optional: load the demo data in another terminal
+5. Optional: load the demo data in another terminal
 	- `docker compose exec web bin/rails db:seed`
 
 If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
@@ -152,6 +154,8 @@ The Docker setup publishes the app on host port `4287` by default to avoid the m
 
 To override it, set `APP_PORT` in your shell or a local `.env` file before starting Docker.
 
+For convenience, copy `.env.example` to `.env` and edit the values you want to override.
+
 Examples:
 
 - `APP_PORT=4317 docker compose up --build`
@@ -216,16 +220,27 @@ Make sure PostgreSQL is running before starting the app.
 
 #### Setup
 
-1. Install gems
+1. Create a local env file
+	 - `cp .env.example .env`
+2. Install gems
 	 - `bundle install`
-2. Prepare the database
+3. Prepare the database
 	 - `bin/rails db:prepare`
-3. Optional: load demo data
+4. Optional: load demo data
 	 - `bin/rails db:seed`
-4. Start the development server
+5. Start the development server
 	 - `bin/dev`
 
 Open http://localhost:3000 and sign in to start creating budget months.
+
+`dotenv-rails` is enabled in development, so values in `.env` are loaded automatically when you run Rails commands locally.
+
+Common local `.env` uses:
+
+- override `PORT` for `bin/dev`
+- override `APP_PORT` for Docker
+- set `SEED_USER_EMAIL` and `SEED_USER_PASSWORD` before running `bin/rails db:seed`
+- set `DATABASE_URL` if you want to connect to PostgreSQL over TCP instead of the default local socket setup
 
 ## Authentication
 
