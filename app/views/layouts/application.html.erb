@@ -40,6 +40,7 @@
         <%= link_to(user_signed_in? ? root_path : new_user_session_path, class: "inline-flex items-center gap-2.5 text-slate-900", title: "Expense Tracker") do %>
           <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-7 w-7 rounded" %>
           <span class="ta-sidebar-brand-text">Expense Tracker</span>
+          <span class="ta-sidebar-brand-mini">ET</span>
         <% end %>
       </div>
       <% if user_signed_in? %>

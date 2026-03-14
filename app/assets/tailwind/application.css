@@ -178,6 +178,14 @@
 		@apply lg:hidden;
 	}
 
+	.ta-sidebar-brand-mini {
+		@apply hidden text-sm font-semibold tracking-[0.2em];
+	}
+
+	.ta-shell-collapsed .ta-sidebar-brand-mini {
+		@apply lg:inline;
+	}
+
 	.ta-main {
 		@apply min-w-0;
 	}
