@@ -23,6 +23,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/expense_tracker_development
       RAILS_ENV: development
+      ALLOW_ALL_HOSTS: "true"
       PORT: 3000
       RUBY_DEBUG_OPEN: "true"
       RUBY_DEBUG_LAZY: "true"

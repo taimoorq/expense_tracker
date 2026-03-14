@@ -184,6 +184,10 @@ This setup assumes you are running Docker Compose from a local clone of this rep
 
 Start the full Compose stack from this directory. Do not start the `web` container by itself with `docker run` or from a GUI action that skips the `db` service, because the Rails container expects to reach PostgreSQL at the Compose hostname `db`.
 
+For access from the same machine, use `http://localhost:4287`.
+
+For access from another device on your network, use `http://YOUR_COMPUTER_IP:4287`. The Docker setup enables non-localhost hosts for development, but your OS firewall and router still need to allow inbound connections to that port.
+
 The Docker setup publishes the app on host port `4287` by default to avoid the more commonly used `3000`.
 
 To override it, set `APP_PORT` in your shell or a local `.env` file before starting Docker.
@@ -674,6 +678,15 @@ Do not start the Rails container by itself with `docker run` unless you also pro
 If Docker fails with `Bind for 0.0.0.0:5432 failed: port is already allocated`, another process on your machine is already using host port `5432`.
 
 The default Compose file no longer publishes PostgreSQL to the host, so pulling the latest code and restarting with `docker compose up --build` should avoid that conflict.
+
+If the app starts but is not reachable from another device, check these in order:
+
+- confirm it opens on the host machine at `http://localhost:4287`
+- find the host machine's LAN IP and try `http://YOUR_COMPUTER_IP:4287`
+- allow inbound connections for Docker or your terminal app in the OS firewall
+- make sure you are on the same local network and not crossing a guest or isolated VLAN
+
+If it works on `localhost` but not on the LAN IP, the problem is outside Rails and is usually firewall or network policy.
 
 ### Rebuild Docker after gem changes
 
