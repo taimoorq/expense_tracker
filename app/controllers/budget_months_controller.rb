@@ -1,4 +1,6 @@
 class BudgetMonthsController < ApplicationController
+  include MonthPageRefresh
+
   def index
     auto_complete_due_recurring_entries(current_user.expense_entries)
     @budget_months = current_user.budget_months.includes(:expense_entries).recent_first
@@ -179,27 +181,11 @@ class BudgetMonthsController < ApplicationController
   def handle_month_generation(budget_month, message)
     respond_to do |format|
       format.turbo_stream do
-        @budget_month = budget_month
-        auto_complete_due_recurring_entries(@budget_month.expense_entries)
-        @expense_entries = @budget_month.expense_entries.chronological
-        @expense_entry = @budget_month.expense_entries.new
-        flash.now[:notice] = message
-        render turbo_stream: [
-          turbo_stream.replace("flash", partial: "shared/flash"),
-          turbo_stream.replace("month_summary", partial: "budget_months/summary_cards", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-          turbo_stream.replace("visual_dashboard", partial: "budget_months/visual_dashboard", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-          turbo_stream.replace("timeline_section", partial: "expense_entries/timeline", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-          turbo_stream.replace("calendar_section", partial: "expense_entries/calendar", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-          turbo_stream.replace("entry_form", partial: "expense_entries/form", locals: { budget_month: @budget_month, expense_entry: @expense_entry }),
-          turbo_stream.replace("entries_table", partial: "expense_entries/table", locals: { budget_month: @budget_month, expense_entries: @expense_entries })
-        ]
+        prepare_month_refresh_state(budget_month, expense_entry: budget_month.expense_entries.new, auto_complete_recurring: true)
+        render_month_page_refresh(message: message, include_entry_form: true)
       end
       format.html { redirect_to budget_month, notice: message }
     end
-  end
-
-  def auto_complete_due_recurring_entries(entries)
-    AutoCompleteRecurringEntries.new(entries: entries, as_of: Date.current).call
   end
 
   def budget_month_params

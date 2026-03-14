@@ -1,10 +1,17 @@
 <%= turbo_frame_tag "flash" do %>
-  <div class="space-y-2">
-    <% if notice.present? %>
-      <div class="ta-alert-success"><%= notice %></div>
-    <% end %>
-    <% if alert.present? %>
-      <div class="ta-alert-danger"><%= alert %></div>
+  <% flash_messages = [] %>
+  <% flash_messages << ["notice", notice] if notice.present? %>
+  <% flash_messages << ["alert", alert] if alert.present? %>
+
+  <div class="ta-toast-stack" aria-live="polite" aria-atomic="true">
+    <% flash_messages.each do |kind, message| %>
+      <% toast_class = kind == "notice" ? "ta-toast-success" : "ta-toast-danger" %>
+      <div class="ta-toast <%= toast_class %>" data-controller="toast" data-toast-timeout-value="4500" role="status">
+        <div class="min-w-0 flex-1 pr-2 text-sm font-medium leading-6"><%= message %></div>
+        <button type="button" class="ta-toast-close" aria-label="Dismiss notification" data-action="click->toast#close">
+          <%= tabler_icon("x", classes: "ta-action-icon text-current") %>
+        </button>
+      </div>
     <% end %>
   </div>
 <% end %>

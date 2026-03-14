@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe "Month generation actions", type: :request do
   let(:user) { create(:user) }
   let(:budget_month) { create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026") }
+  let(:turbo_headers) { { "ACCEPT" => Mime[:turbo_stream].to_s } }
 
   before { sign_in user }
 
@@ -17,6 +18,19 @@ RSpec.describe "Month generation actions", type: :request do
 
     expect(response).to redirect_to(budget_month_path(budget_month))
     expect(budget_month.expense_entries.last.payee).to eq("Acme Payroll")
+  end
+
+  it "returns turbo stream month refreshes for paycheck generation" do
+    create(:pay_schedule, user: user, name: "Acme Payroll", cadence: :monthly, day_of_month_one: 15, first_pay_on: Date.new(2026, 1, 15), amount: 3000)
+
+    post generate_paychecks_budget_month_path(budget_month), headers: turbo_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect(response.body).to include('target="month_summary"')
+    expect(response.body).to include('target="timeline_section"')
+    expect(response.body).to include('target="entries_table"')
+    expect(response.body).to include("Generated 1 paycheck entry.")
   end
 
   it "generates subscriptions from the current user's templates" do

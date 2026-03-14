@@ -1,5 +1,6 @@
 class ExpenseEntriesController < ApplicationController
   include ActionView::RecordIdentifier
+  include MonthPageRefresh
 
   before_action :set_budget_month
   before_action :set_expense_entry, only: [ :edit, :update, :destroy, :edit_template, :update_template ]
@@ -48,21 +49,11 @@ class ExpenseEntriesController < ApplicationController
 
   def update
     if @expense_entry.update(normalized_expense_entry_params)
-      @expense_entries = @budget_month.expense_entries.chronological
+      prepare_month_refresh_state(@budget_month)
 
       respond_to do |format|
         format.turbo_stream do
-          flash.now[:notice] = "Entry updated."
-          render turbo_stream: [
-            turbo_stream.replace("flash", partial: "shared/flash"),
-            turbo_stream.replace(dom_id(@expense_entry), partial: "expense_entries/row", locals: { budget_month: @budget_month, entry: @expense_entry }),
-            turbo_stream.replace("month_summary", partial: "budget_months/summary_cards", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-            turbo_stream.replace("visual_dashboard", partial: "budget_months/visual_dashboard", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-            turbo_stream.replace("timeline_section", partial: "expense_entries/timeline", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-            turbo_stream.replace("calendar_section", partial: "expense_entries/calendar", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-            turbo_stream.replace("entries_table", partial: "expense_entries/table", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-            turbo_stream.replace("entry_editor_modal", partial: "expense_entries/entry_editor_empty")
-          ]
+          render_month_page_refresh(message: "Entry updated.", reset_entry_editor_modal: true)
         end
         format.html { redirect_to @budget_month, notice: "Entry updated." }
       end
@@ -88,22 +79,11 @@ class ExpenseEntriesController < ApplicationController
     @expense_entry = @budget_month.expense_entries.new(expense_entry_params)
 
     if @expense_entry.save
-      @expense_entries = @budget_month.expense_entries.chronological
-      @expense_entry = @budget_month.expense_entries.new
+      prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new)
 
       respond_to do |format|
         format.turbo_stream do
-          flash.now[:notice] = "Entry added."
-          render turbo_stream: [
-            turbo_stream.replace("flash", partial: "shared/flash"),
-            turbo_stream.replace("month_summary", partial: "budget_months/summary_cards", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-            turbo_stream.replace("visual_dashboard", partial: "budget_months/visual_dashboard", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-            turbo_stream.replace("timeline_section", partial: "expense_entries/timeline", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-            turbo_stream.replace("calendar_section", partial: "expense_entries/calendar", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-            turbo_stream.replace("entry_form", partial: "expense_entries/form", locals: { budget_month: @budget_month, expense_entry: @expense_entry }),
-            turbo_stream.replace("entries_table", partial: "expense_entries/table", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-            turbo_stream.replace("entry_wizard_modal", partial: "expense_entries/entry_wizard_empty")
-          ]
+          render_month_page_refresh(message: "Entry added.", include_entry_form: true, reset_entry_wizard_modal: true)
         end
         format.html { redirect_to @budget_month, notice: "Entry added." }
       end
@@ -129,21 +109,11 @@ class ExpenseEntriesController < ApplicationController
 
   def destroy
     @expense_entry.destroy
-    @expense_entries = @budget_month.expense_entries.chronological
-    @expense_entry = @budget_month.expense_entries.new
+    prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new)
 
     respond_to do |format|
       format.turbo_stream do
-        flash.now[:notice] = "Entry deleted."
-        render turbo_stream: [
-          turbo_stream.replace("flash", partial: "shared/flash"),
-          turbo_stream.replace("month_summary", partial: "budget_months/summary_cards", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-          turbo_stream.replace("visual_dashboard", partial: "budget_months/visual_dashboard", locals: { budget_month: @budget_month, expense_entries: @expense_entries }),
-          turbo_stream.replace("timeline_section", partial: "expense_entries/timeline", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-          turbo_stream.replace("calendar_section", partial: "expense_entries/calendar", locals: { expense_entries: @expense_entries, budget_month: @budget_month }),
-          turbo_stream.replace("entry_form", partial: "expense_entries/form", locals: { budget_month: @budget_month, expense_entry: @expense_entry }),
-          turbo_stream.replace("entries_table", partial: "expense_entries/table", locals: { budget_month: @budget_month, expense_entries: @expense_entries })
-        ]
+        render_month_page_refresh(message: "Entry deleted.", include_entry_form: true)
       end
       format.html { redirect_to @budget_month, notice: "Entry deleted." }
     end

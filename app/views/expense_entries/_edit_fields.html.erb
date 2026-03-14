@@ -1,0 +1,53 @@
+<div>
+  <%= form.label :occurred_on, "Date", class: "fb-label" %>
+  <%= form.date_field :occurred_on, class: "fb-input" %>
+</div>
+
+<div>
+  <%= form.label :section, class: "fb-label" %>
+  <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+</div>
+
+<div>
+  <%= form.label :category, class: "fb-label" %>
+  <%= form.text_field :category, class: "fb-input" %>
+</div>
+
+<div>
+  <%= form.label :payee, class: "fb-label" %>
+  <%= form.text_field :payee, class: "fb-input" %>
+</div>
+
+<div>
+  <%= form.label :planned_amount, class: "fb-label" %>
+  <%= form.number_field :planned_amount, step: 0.01, class: "fb-input" %>
+</div>
+
+<div>
+  <%= form.label :actual_amount, class: "fb-label" %>
+  <%= form.number_field :actual_amount, step: 0.01, class: "fb-input" %>
+</div>
+
+<div>
+  <%= form.label :account, class: "fb-label" %>
+  <%= form.text_field :account, class: "fb-input" %>
+</div>
+
+<div>
+  <%= form.label :status, class: "fb-label" %>
+  <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+</div>
+
+<div>
+  <%= form.label :need_or_want, "Need / Want", class: "fb-label" %>
+  <%= form.text_field :need_or_want, class: "fb-input" %>
+</div>
+
+<div class="<%= notes_wrapper_class %>">
+  <%= form.label :notes, class: "fb-label" %>
+  <% if notes_input == :text_area %>
+    <%= form.text_area :notes, rows: notes_rows, class: "fb-textarea" %>
+  <% else %>
+    <%= form.text_field :notes, class: "fb-input" %>
+  <% end %>
+</div>

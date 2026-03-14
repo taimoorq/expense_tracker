@@ -161,6 +161,7 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_content("Month Timeline")
     expect(page).to have_button("Mark as paid", visible: :all)
+    expect(page).to have_css("[data-collapsible-groups-storage-key-value='timeline-groups-#{month.id}']")
   end
 
   it "allows a signed in user to sign out" do

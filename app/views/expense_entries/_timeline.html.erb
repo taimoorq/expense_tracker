@@ -5,7 +5,7 @@
                     .tally
                     .sort_by { |reason, count| [-count, reason.downcase] }
                     .first(8) %>
-  <section class="ta-card" data-controller="collapsible-groups timeline-category-filter">
+  <section class="ta-card" data-controller="collapsible-groups timeline-category-filter" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>">
     <div class="mb-3 flex items-center justify-between">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Month Timeline</h3>
       <div class="flex items-center gap-2">
@@ -56,7 +56,7 @@
       <div class="space-y-4">
         <% grouped_entries.each_with_index do |(group_name, entries), index| %>
           <% group_total = entries.sum(&:cashflow_amount) %>
-          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" <%= "open" if index.zero? %>>
+          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" data-group-id="<%= group_name.parameterize %>" <%= "open" if index.zero? %>>
             <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
               <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <%= tabler_icon("list") %>

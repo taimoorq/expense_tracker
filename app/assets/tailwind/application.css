@@ -98,6 +98,26 @@
 		@apply rounded-lg border border-rose-300 bg-rose-50 px-4 py-2 text-rose-800;
 	}
 
+	.ta-toast-stack {
+		@apply pointer-events-none fixed bottom-4 right-4 z-[70] flex w-full max-w-sm flex-col gap-3;
+	}
+
+	.ta-toast {
+		@apply pointer-events-auto flex items-start justify-between rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm;
+	}
+
+	.ta-toast-success {
+		@apply border-emerald-300 bg-emerald-50/95 text-emerald-900;
+	}
+
+	.ta-toast-danger {
+		@apply border-rose-300 bg-rose-50/95 text-rose-900;
+	}
+
+	.ta-toast-close {
+		@apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-current/70 transition hover:bg-black/5 hover:text-current focus:outline-none focus:ring-4 focus:ring-slate-200;
+	}
+
 	.fb-label {
 		@apply block mb-2 text-sm font-medium text-slate-700;
 	}

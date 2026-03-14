@@ -1,0 +1,11 @@
+<div class="<%= wrapper_class %>">
+  <% unless expense_entry.paid? %>
+    <%= button_tag "Mark as Paid", type: :submit, name: "mark_as_paid", value: "1", class: mark_paid_class %>
+  <% end %>
+  <%= form.submit submit_label, class: submit_class %>
+  <% if cancel_button %>
+    <button type="button" class="<%= cancel_class %>" data-action="<%= cancel_action %>"><%= cancel_label %></button>
+  <% else %>
+    <%= link_to cancel_label, cancel_path, cancel_options.merge(class: cancel_class) %>
+  <% end %>
+</div>

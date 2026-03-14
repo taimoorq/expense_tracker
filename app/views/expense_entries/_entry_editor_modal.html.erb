@@ -9,63 +9,20 @@
       </div>
 
       <%= form_with model: [budget_month, expense_entry], class: "grid gap-3 sm:grid-cols-2" do |form| %>
-        <div>
-          <%= form.label :occurred_on, class: "fb-label" %>
-          <%= form.date_field :occurred_on, class: "fb-input" %>
-        </div>
-
-        <div>
-          <%= form.label :section, class: "fb-label" %>
-          <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
-        </div>
-
-        <div>
-          <%= form.label :category, class: "fb-label" %>
-          <%= form.text_field :category, class: "fb-input" %>
-        </div>
-
-        <div>
-          <%= form.label :payee, class: "fb-label" %>
-          <%= form.text_field :payee, class: "fb-input" %>
-        </div>
-
-        <div>
-          <%= form.label :planned_amount, class: "fb-label" %>
-          <%= form.number_field :planned_amount, step: 0.01, class: "fb-input" %>
-        </div>
-
-        <div>
-          <%= form.label :actual_amount, class: "fb-label" %>
-          <%= form.number_field :actual_amount, step: 0.01, class: "fb-input" %>
-        </div>
-
-        <div>
-          <%= form.label :account, class: "fb-label" %>
-          <%= form.text_field :account, class: "fb-input" %>
-        </div>
-
-        <div>
-          <%= form.label :status, class: "fb-label" %>
-          <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
-        </div>
-
-        <div>
-          <%= form.label :need_or_want, class: "fb-label" %>
-          <%= form.text_field :need_or_want, class: "fb-input" %>
-        </div>
-
-        <div class="sm:col-span-2">
-          <%= form.label :notes, class: "fb-label" %>
-          <%= form.text_area :notes, rows: 4, class: "fb-textarea" %>
-        </div>
-
-        <div class="sm:col-span-2 flex items-center justify-end gap-2">
-          <% unless expense_entry.paid? %>
-            <%= button_tag "Mark as Paid", type: :submit, name: "mark_as_paid", value: "1", class: "fb-btn-secondary ta-action-btn" %>
-          <% end %>
-          <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
-          <%= form.submit "Update Entry", class: "fb-btn-primary" %>
-        </div>
+        <%= render "expense_entries/edit_fields", form: form, notes_input: :text_area, notes_rows: 4, notes_wrapper_class: "sm:col-span-2" %>
+        <%= render "expense_entries/edit_actions",
+                   form: form,
+                   expense_entry: expense_entry,
+                   wrapper_class: "sm:col-span-2 flex items-center justify-end gap-2",
+                   mark_paid_class: "fb-btn-secondary ta-action-btn",
+                   submit_label: "Update Entry",
+                   submit_class: "fb-btn-primary",
+                   cancel_button: true,
+                   cancel_label: "Cancel",
+                   cancel_class: "fb-btn-secondary",
+                   cancel_action: "click->template-modal#close",
+                   cancel_path: nil,
+                   cancel_options: {} %>
       <% end %>
     </div>
   </div>
