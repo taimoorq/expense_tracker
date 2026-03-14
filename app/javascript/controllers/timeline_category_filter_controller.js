@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["filter", "group", "row", "empty"]
+  static targets = ["filter", "group", "row", "empty", "date", "payee", "reason", "status"]
 
   connect() {
     this.activeGroups = new Set()
@@ -23,8 +23,27 @@ export default class extends Controller {
     this.refresh()
   }
 
+  filter() {
+    this.refresh()
+  }
+
+  clearFilters() {
+    this.activeGroups.clear()
+
+    if (this.hasDateTarget) this.dateTarget.value = ""
+    if (this.hasPayeeTarget) this.payeeTarget.value = ""
+    if (this.hasReasonTarget) this.reasonTarget.value = ""
+    if (this.hasStatusTarget) this.statusTarget.value = ""
+
+    this.refresh()
+  }
+
   refresh() {
     const noFilters = this.activeGroups.size === 0
+    const dateValue = this.hasDateTarget ? this.dateTarget.value.trim() : ""
+    const payeeValue = this.hasPayeeTarget ? this.payeeTarget.value.trim().toLowerCase() : ""
+    const reasonValue = this.hasReasonTarget ? this.reasonTarget.value.trim().toLowerCase() : ""
+    const statusValue = this.hasStatusTarget ? this.statusTarget.value.trim().toLowerCase() : ""
 
     this.filterTargets.forEach((button) => {
       const value = button.dataset.value
@@ -38,15 +57,37 @@ export default class extends Controller {
     })
 
     this.rowTargets.forEach((row) => {
-      const matches = noFilters || this.activeGroups.has((row.dataset.value || "").toLowerCase())
-      row.dataset.pillHidden = matches ? "false" : "true"
+      const matchesPill = noFilters || this.activeGroups.has((row.dataset.value || "").toLowerCase())
+      const rowDate = (row.dataset.date || "").trim()
+      const rowPayee = (row.dataset.payee || "").toLowerCase()
+      const rowReason = (row.dataset.reason || "").toLowerCase()
+      const rowStatus = (row.dataset.status || "").toLowerCase()
+
+      const matchesDate = dateValue === "" || rowDate === dateValue
+      const matchesPayee = payeeValue === "" || rowPayee.includes(payeeValue)
+      const matchesReason = reasonValue === "" || rowReason.includes(reasonValue)
+      const matchesStatus = statusValue === "" || rowStatus === statusValue
+
+      row.dataset.pillHidden = matchesPill ? "false" : "true"
+      row.dataset.searchHidden = matchesDate && matchesPayee && matchesReason && matchesStatus ? "false" : "true"
       this.applyVisibility(row)
     })
 
     this.groupTargets.forEach((group) => {
       const rows = Array.from(group.querySelectorAll('[data-timeline-category-filter-target="row"]'))
+      const totalRows = rows.length
       const visibleRows = rows.filter((row) => !this.isHidden(row)).length
+
       group.classList.toggle("hidden", visibleRows === 0)
+
+      const count = group.querySelector('[data-timeline-category-filter-target="groupCount"]')
+      if (count) {
+        count.textContent = this.formatCount(visibleRows, totalRows)
+        count.classList.toggle("bg-slate-200", visibleRows === totalRows)
+        count.classList.toggle("text-slate-600", visibleRows === totalRows)
+        count.classList.toggle("bg-amber-100", visibleRows !== totalRows)
+        count.classList.toggle("text-amber-800", visibleRows !== totalRows)
+      }
     })
 
     if (this.hasEmptyTarget) {
@@ -61,5 +102,17 @@ export default class extends Controller {
 
   isHidden(row) {
     return row.dataset.searchHidden === "true" || row.dataset.pillHidden === "true"
+  }
+
+  formatCount(visibleRows, totalRows) {
+    if (visibleRows === totalRows) {
+      return this.pluralize(totalRows, "item")
+    }
+
+    return `${visibleRows} shown · ${totalRows} total`
+  }
+
+  pluralize(count, noun) {
+    return `${count} ${noun}${count === 1 ? "" : "s"}`
   }
 }

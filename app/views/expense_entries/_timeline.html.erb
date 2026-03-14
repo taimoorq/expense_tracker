@@ -31,6 +31,43 @@
       <% end %>
     </div>
 
+    <div class="mb-4 rounded-[22px] border border-slate-200 bg-white/85 p-4">
+      <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Timeline filters</p>
+          <p class="mt-1 text-sm text-slate-600">Filter all timeline sections from one place. Sections hide automatically when no matching items remain.</p>
+        </div>
+        <button type="button" class="fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" data-action="click->timeline-category-filter#clearFilters">
+          <%= tabler_icon("arrow-left", classes: "h-4 w-4") %>
+          <span>Clear filters</span>
+        </button>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <label class="fb-label">Date</label>
+          <input type="date" class="fb-input" data-timeline-category-filter-target="date" data-action="input->timeline-category-filter#filter change->timeline-category-filter#filter" />
+        </div>
+        <div>
+          <label class="fb-label">Payee</label>
+          <input type="text" placeholder="Filter payee" class="fb-input" data-timeline-category-filter-target="payee" data-action="input->timeline-category-filter#filter" />
+        </div>
+        <div>
+          <label class="fb-label">Reason</label>
+          <input type="text" placeholder="Filter reason" class="fb-input" data-timeline-category-filter-target="reason" data-action="input->timeline-category-filter#filter" />
+        </div>
+        <div>
+          <label class="fb-label">Status</label>
+          <select class="fb-select" data-timeline-category-filter-target="status" data-action="change->timeline-category-filter#filter">
+            <option value="">All statuses</option>
+            <% ExpenseEntry.statuses.keys.each do |status_key| %>
+              <option value="<%= status_key %>"><%= status_key.humanize %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <% ordered_entries = expense_entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
     <% remaining_entries = ordered_entries.dup %>
     <% template_sources = %w[pay_schedule subscription monthly_bill payment_plan credit_card_estimate] %>
@@ -63,7 +100,7 @@
                 <%= group_name %>
               </span>
               <div class="flex items-center gap-3 text-xs sm:text-sm">
-                <span class="text-slate-500"><%= pluralize(entries.count, "entry") %></span>
+                <span class="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-600" data-timeline-category-filter-target="groupCount"><%= pluralize(entries.count, "item") %></span>
                 <span class="font-semibold <%= group_total >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
                   Net: <%= group_total >= 0 ? "+" : "" %><%= number_to_currency(group_total) %>
                 </span>
@@ -73,7 +110,7 @@
               </div>
             </summary>
 
-            <div class="overflow-x-auto border-t border-slate-200" data-controller="timeline-filter">
+            <div class="overflow-x-auto border-t border-slate-200">
               <table class="ta-table">
                 <thead class="bg-white">
                   <tr>
@@ -83,32 +120,6 @@
                     <th class="ta-th">Status</th>
                     <th class="ta-th text-right">Impact</th>
                     <th class="ta-th text-right">Actions</th>
-                  </tr>
-                  <tr class="border-t border-slate-200 bg-slate-50">
-                    <th class="px-3 py-2">
-                      <input type="date" class="fb-input !py-1.5 !text-xs" data-timeline-filter-target="date" data-action="input->timeline-filter#filter change->timeline-filter#filter" />
-                    </th>
-                    <th class="px-3 py-2">
-                      <input type="text" placeholder="Filter payee" class="fb-input !py-1.5 !text-xs" data-timeline-filter-target="payee" data-action="input->timeline-filter#filter" />
-                    </th>
-                    <th class="px-3 py-2">
-                      <input type="text" placeholder="Filter reason" class="fb-input !py-1.5 !text-xs" data-timeline-filter-target="reason" data-action="input->timeline-filter#filter" />
-                    </th>
-                    <th class="px-3 py-2">
-                      <select class="fb-select !py-1.5 !text-xs" data-timeline-filter-target="status" data-action="change->timeline-filter#filter">
-                        <option value="">All statuses</option>
-                        <% ExpenseEntry.statuses.keys.each do |status_key| %>
-                          <option value="<%= status_key %>"><%= status_key.humanize %></option>
-                        <% end %>
-                      </select>
-                    </th>
-                    <th class="px-3 py-2"></th>
-                    <th class="px-3 py-2 text-right">
-                      <button type="button" class="fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" data-action="click->timeline-filter#clearFilters">
-                        <%= tabler_icon("arrow-left") %>
-                        <span>Clear filters</span>
-                      </button>
-                    </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
