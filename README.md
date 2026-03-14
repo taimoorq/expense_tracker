@@ -389,7 +389,7 @@ Additional month actions help keep planning current:
 	- create a new month from the current one
 - `Add from planning templates`
 	- adds planned entries from saved paychecks, subscriptions, monthly bills, and payment plans
-	- shown in a lower-priority template actions area on active or incomplete months
+	- available inside the `Entries` tab on active or incomplete months
 	- hidden when an older month appears complete
 - `Estimate Card Payments`
 	- recomputes estimated credit-card payment entries from available leftover cash

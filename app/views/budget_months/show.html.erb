@@ -4,6 +4,7 @@
   <% has_generated_monthly_bills = @expense_entries.any? { |entry| entry.source_file == "monthly_bill" } %>
   <% has_generated_payment_plans = @expense_entries.any? { |entry| entry.source_file == "payment_plan" } %>
   <% generation_actions_hidden = @budget_month.complete_for_generation? %>
+  <% default_tab = @expense_entries.empty? ? "entries" : "timeline" %>
 
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -22,53 +23,7 @@
     </div>
   <% end %>
 
-  <% unless generation_actions_hidden %>
-    <section class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div class="max-w-2xl">
-          <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Add from planning templates</h3>
-          <p class="mt-1 text-sm leading-6 text-slate-600">
-            These actions add planned entries to this month from your saved templates and card settings.
-            If nothing has been set up yet, start in
-            <%= link_to "Planning Templates", planning_templates_path, class: "font-medium text-indigo-600 hover:text-indigo-500" %>.
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2 lg:justify-end">
-          <% unless has_generated_paychecks %>
-            <%= button_to generate_paychecks_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
-              <%= tabler_icon("cash", classes: "ta-action-icon text-emerald-600") %>
-              <span>Add Paychecks</span>
-            <% end %>
-          <% end %>
-          <% unless has_generated_subscriptions %>
-            <%= button_to generate_subscriptions_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
-              <%= tabler_icon("repeat", classes: "ta-action-icon text-indigo-600") %>
-              <span>Add Subscriptions</span>
-            <% end %>
-          <% end %>
-          <% unless has_generated_monthly_bills %>
-            <%= button_to generate_monthly_bills_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
-              <%= tabler_icon("calendar-plus", classes: "ta-action-icon text-sky-600") %>
-              <span>Add Monthly Bills</span>
-            <% end %>
-          <% end %>
-          <% unless has_generated_payment_plans %>
-            <%= button_to generate_payment_plans_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
-              <%= tabler_icon("template", classes: "ta-action-icon text-violet-600") %>
-              <span>Add Payment Plans</span>
-            <% end %>
-          <% end %>
-          <%= button_to estimate_credit_cards_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
-            <%= tabler_icon("chart-bar", classes: "ta-action-icon text-indigo-600") %>
-            <span>Estimate Card Payments</span>
-          <% end %>
-        </div>
-      </div>
-    </section>
-  <% end %>
-
-  <section class="ta-card" data-controller="tabs" data-tabs-default-tab-value="timeline">
+  <section class="ta-card" data-controller="tabs" data-tabs-default-tab-value="<%= default_tab %>">
     <div class="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Month view tabs">
       <button type="button" class="fb-btn-primary" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="timeline" data-action="click->tabs#switch" data-tabs-name-param="timeline">
         <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "ta-action-icon-lg text-indigo-100") %> Timeline</span>
@@ -99,6 +54,52 @@
     </div>
 
     <div data-tabs-target="panel" data-panel-name="entries" role="tabpanel" class="hidden space-y-4">
+      <% unless generation_actions_hidden %>
+        <section class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="max-w-2xl">
+              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Add from planning templates</h3>
+              <p class="mt-1 text-sm leading-6 text-slate-600">
+                These actions add planned entries to this month from your saved templates and card settings.
+                If nothing has been set up yet, start in
+                <%= link_to "Planning Templates", planning_templates_path, class: "font-medium text-indigo-600 hover:text-indigo-500" %>.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+              <% unless has_generated_paychecks %>
+                <%= button_to generate_paychecks_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
+                  <%= tabler_icon("cash", classes: "ta-action-icon text-emerald-600") %>
+                  <span>Add Paychecks</span>
+                <% end %>
+              <% end %>
+              <% unless has_generated_subscriptions %>
+                <%= button_to generate_subscriptions_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
+                  <%= tabler_icon("repeat", classes: "ta-action-icon text-indigo-600") %>
+                  <span>Add Subscriptions</span>
+                <% end %>
+              <% end %>
+              <% unless has_generated_monthly_bills %>
+                <%= button_to generate_monthly_bills_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
+                  <%= tabler_icon("calendar-plus", classes: "ta-action-icon text-sky-600") %>
+                  <span>Add Monthly Bills</span>
+                <% end %>
+              <% end %>
+              <% unless has_generated_payment_plans %>
+                <%= button_to generate_payment_plans_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
+                  <%= tabler_icon("template", classes: "ta-action-icon text-violet-600") %>
+                  <span>Add Payment Plans</span>
+                <% end %>
+              <% end %>
+              <%= button_to estimate_credit_cards_budget_month_path(@budget_month), method: :post, class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-xs" do %>
+                <%= tabler_icon("chart-bar", classes: "ta-action-icon text-indigo-600") %>
+                <span>Estimate Card Payments</span>
+              <% end %>
+            </div>
+          </div>
+        </section>
+      <% end %>
+
       <%= render "expense_entries/form", budget_month: @budget_month, expense_entry: @expense_entry %>
       <%= render "expense_entries/table", budget_month: @budget_month, expense_entries: @expense_entries %>
     </div>

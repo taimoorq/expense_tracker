@@ -62,6 +62,9 @@
       </div>
 
       <div class="sm:col-span-2 flex items-center gap-2">
+        <% unless @expense_entry.paid? %>
+          <%= button_tag "Mark as Paid", type: :submit, name: "mark_as_paid", value: "1", class: "fb-btn-secondary ta-action-btn" %>
+        <% end %>
         <%= form.submit "Update Entry", class: "fb-btn-primary" %>
         <%= link_to "Cancel", budget_month_path(@budget_month), class: "fb-btn-secondary" %>
       </div>

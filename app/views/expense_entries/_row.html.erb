@@ -8,6 +8,21 @@
   <td class="px-3 py-2"><%= entry.status.humanize %></td>
   <td class="px-3 py-2">
     <div class="flex items-center gap-2">
+      <% unless entry.paid? %>
+        <%= button_to budget_month_expense_entry_path(budget_month, entry),
+                      method: :patch,
+                      params: {
+                        mark_as_paid: "1",
+                        expense_entry: {
+                          actual_amount: entry.actual_amount.presence || entry.planned_amount
+                        }
+                      },
+                      class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                      title: "Mark as paid",
+                      aria: { label: "Mark as paid" } do %>
+          <%= tabler_icon("check-circle", classes: "h-4 w-4 text-emerald-600") %>
+        <% end %>
+      <% end %>
       <%= link_to edit_budget_month_expense_entry_path(budget_month, entry),
                   data: { turbo_frame: "entry_editor_modal" },
                   class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",

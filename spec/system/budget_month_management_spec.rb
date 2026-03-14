@@ -83,13 +83,14 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).not_to have_button("Estimate Card Payments")
   end
 
-  it "renames the card estimate action for active months" do
+  it "defaults empty active months to the entries tab" do
     user = create(:user, email: "active@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
 
     sign_in_as(user)
     visit budget_month_path(month)
 
+    expect(page).to have_css('section[data-controller="tabs"][data-tabs-default-tab-value="entries"]')
     expect(page).to have_content("Add from planning templates")
     expect(page).to have_button("Estimate Card Payments")
   end
@@ -105,6 +106,46 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_button("Groceries 1")
     expect(page).to have_button("Fuel 1")
+  end
+
+  it "lets a user mark an entry as paid from the edit page" do
+    user = create(:user, email: "paid@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    entry = create(:expense_entry, budget_month: month, user: user, payee: "Water", planned_amount: 88.45, actual_amount: nil, status: :planned)
+
+    sign_in_as(user)
+    visit edit_budget_month_expense_entry_path(month, entry)
+
+    expect(page).to have_button("Mark as Paid")
+
+    click_button "Mark as Paid"
+
+    expect(page).to have_content("Entry updated.")
+    expect(entry.reload.status).to eq("paid")
+    expect(entry.actual_amount.to_d).to eq(88.45.to_d)
+  end
+
+  it "renders a mark as paid action in entry rows" do
+    user = create(:user, email: "rowpaid@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Internet", planned_amount: 65.25, actual_amount: nil, status: :planned)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    expect(page).to have_button("Mark as paid", visible: :all)
+  end
+
+  it "renders a mark as paid action in timeline rows" do
+    user = create(:user, email: "timelinepaid@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Phone", planned_amount: 45.10, actual_amount: nil, status: :planned)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    expect(page).to have_content("Month Timeline")
+    expect(page).to have_button("Mark as paid", visible: :all)
   end
 
   it "allows a signed in user to sign out" do

@@ -47,7 +47,7 @@ class ExpenseEntriesController < ApplicationController
   end
 
   def update
-    if @expense_entry.update(expense_entry_params)
+    if @expense_entry.update(normalized_expense_entry_params)
       @expense_entries = @budget_month.expense_entries.chronological
 
       respond_to do |format|
@@ -230,6 +230,15 @@ class ExpenseEntriesController < ApplicationController
       :need_or_want,
       :notes
     )
+  end
+
+  def normalized_expense_entry_params
+    permitted = expense_entry_params.to_h.symbolize_keys
+    return permitted unless params[:mark_as_paid] == "1"
+
+    permitted[:status] = "paid"
+    permitted[:actual_amount] = permitted[:planned_amount].presence || @expense_entry.planned_amount if permitted[:actual_amount].blank?
+    permitted
   end
 
   def template_record_for_entry(entry)

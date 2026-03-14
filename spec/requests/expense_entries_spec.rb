@@ -39,6 +39,19 @@ RSpec.describe "Expense entries", type: :request do
     expect(entry.status).to eq("paid")
   end
 
+  it "marks an entry as paid from the row action payload" do
+    entry = create(:expense_entry, budget_month: budget_month, user: user, payee: "Internet", planned_amount: 65.25, actual_amount: nil, status: :planned)
+
+    patch budget_month_expense_entry_path(budget_month, entry), params: {
+      mark_as_paid: "1",
+      expense_entry: { actual_amount: "" }
+    }
+
+    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(entry.reload.status).to eq("paid")
+    expect(entry.actual_amount.to_d).to eq(65.25.to_d)
+  end
+
   it "deletes an entry in the signed in user's month" do
     entry = create(:expense_entry, budget_month: budget_month, user: user)
 

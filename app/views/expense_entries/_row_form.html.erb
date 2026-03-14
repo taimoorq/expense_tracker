@@ -42,6 +42,9 @@
         <%= form.text_field :notes, class: "fb-input" %>
       </div>
       <div class="flex items-center gap-2">
+        <% unless expense_entry.paid? %>
+          <%= button_tag "Mark as Paid", type: :submit, name: "mark_as_paid", value: "1", class: "fb-btn-secondary" %>
+        <% end %>
         <%= form.submit "Save", class: "fb-btn-primary" %>
         <%= link_to "Cancel", budget_month_expense_entry_path(budget_month, expense_entry), data: { turbo_stream: true }, class: "fb-btn-secondary" %>
       </div>
