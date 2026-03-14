@@ -28,6 +28,11 @@ services:
       PORT: 3000
       RUBY_DEBUG_OPEN: "true"
       RUBY_DEBUG_LAZY: "true"
+      SEED_MODE: ${SEED_MODE:-users}
+      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-demo@example.com}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-password123!}
+      ADMIN_USER_EMAIL: ${ADMIN_USER_EMAIL:-}
+      ADMIN_USER_PASSWORD: ${ADMIN_USER_PASSWORD:-}
     ports:
       - "${APP_PORT:-4287}:3000"
     volumes:

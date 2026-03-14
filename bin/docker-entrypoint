@@ -5,6 +5,7 @@ rm -f /rails/tmp/pids/server.pid
 # If running the development process or rails server then create or migrate existing database
 if [ "$1" = "bin/dev" ] || [ "$1" = "./bin/dev" ] || { [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; } || { [ "${@: -2:1}" == "bin/rails" ] && [ "${@: -1:1}" == "server" ]; }; then
   ./bin/rails db:prepare
+  ./bin/rails admin:bootstrap
 fi
 
 exec "${@}"

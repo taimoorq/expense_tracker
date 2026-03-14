@@ -10,7 +10,6 @@ valid_seed_modes = %w[users users_with_transactions]
 seed_email = ENV.fetch("SEED_USER_EMAIL", "demo@example.com")
 seed_password = ENV.fetch("SEED_USER_PASSWORD", "password123!")
 admin_seed_email = ENV["ADMIN_USER_EMAIL"].to_s.strip
-admin_seed_password = ENV["ADMIN_USER_PASSWORD"].to_s
 
 unless valid_seed_modes.include?(seed_mode)
   raise ArgumentError, "Invalid SEED_MODE=#{seed_mode.inspect}. Expected one of: #{valid_seed_modes.join(', ')}"
@@ -24,22 +23,8 @@ puts "- Demo user email: #{seed_email}"
 puts "- Admin user email: #{admin_seed_email}" if admin_seed_email.present?
 puts "- Seed transaction file: #{seed_file.relative_path_from(Rails.root)}" if seed_transactions
 
-if admin_seed_email.present? ^ admin_seed_password.present?
-  raise ArgumentError, "ADMIN_USER_EMAIL and ADMIN_USER_PASSWORD must both be provided to seed an admin user"
-end
-
-if admin_seed_email.present?
-  admin_user = AdminUser.find_or_initialize_by(email: admin_seed_email)
-  admin_status = admin_user.new_record? ? "created" : "updated"
-
-  if admin_user.new_record? || !admin_user.valid_password?(admin_seed_password)
-    admin_user.password = admin_seed_password
-    admin_user.password_confirmation = admin_seed_password
-    admin_user.save!
-  end
-
-  puts "- Admin user #{admin_status}: #{admin_user.email}"
-end
+admin_bootstrap_result = AdminBootstrapper.new.call
+puts "- Admin user #{admin_bootstrap_result.status}: #{admin_bootstrap_result.admin_user.email}" if admin_bootstrap_result.admin_user
 
 seeded_template_names = {
   pay_schedules: [ "Primary Paycheck", "Main Paycheck" ],

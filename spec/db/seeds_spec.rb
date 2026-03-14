@@ -119,7 +119,7 @@ RSpec.describe "db/seeds" do
     it "raises an error" do
       expect { load_seed }.to raise_error(
         ArgumentError,
-        "ADMIN_USER_EMAIL and ADMIN_USER_PASSWORD must both be provided to seed an admin user"
+        "ADMIN_USER_EMAIL and ADMIN_USER_PASSWORD must both be provided to bootstrap an admin user"
       )
     end
   end
