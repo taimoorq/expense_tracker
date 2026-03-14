@@ -39,11 +39,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :pay_schedules, only: [ :create, :destroy ]
-  resources :subscriptions, only: [ :create, :destroy ]
-  resources :monthly_bills, only: [ :create, :destroy ]
-  resources :payment_plans, only: [ :create, :destroy ]
-  resources :credit_cards, only: [ :create, :destroy ]
+  resources :pay_schedules, only: [ :create, :update, :destroy ]
+  resources :subscriptions, only: [ :create, :update, :destroy ]
+  resources :monthly_bills, only: [ :create, :update, :destroy ]
+  resources :payment_plans, only: [ :create, :update, :destroy ]
+  resources :credit_cards, only: [ :create, :update, :destroy ]
 
   post "imports/csv", to: "imports#create", as: :import_csv
 

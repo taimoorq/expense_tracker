@@ -5,7 +5,7 @@ RSpec.describe "Planning template CRUD", type: :request do
 
   before { sign_in user }
 
-  shared_examples "planning template resource" do |collection_name:, factory:, create_path_helper:, destroy_path_helper:, param_key:, valid_params:, create_notice:, destroy_notice:|
+  shared_examples "planning template resource" do |collection_name:, factory:, create_path_helper:, destroy_path_helper:, param_key:, valid_params:, update_params:, create_notice:, update_notice:, destroy_notice:|
     it "creates #{collection_name.tr('_', ' ')} records" do
       params = valid_params.respond_to?(:call) ? instance_exec(&valid_params) : valid_params
 
@@ -40,6 +40,26 @@ RSpec.describe "Planning template CRUD", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
     end
+
+    it "updates #{collection_name.tr('_', ' ')} records" do
+      record = create(factory, user: user)
+      params = update_params.respond_to?(:call) ? instance_exec(record, &update_params) : update_params
+
+      patch public_send(destroy_path_helper, record), params: { param_key => params, return_to: planning_templates_path }
+
+      expect(response).to redirect_to(planning_templates_path)
+      expect(flash[:notice]).to eq(update_notice)
+
+      params.each do |attribute, value|
+        actual_value = record.reload.public_send(attribute)
+
+        if actual_value.is_a?(BigDecimal)
+          expect(actual_value).to eq(value.to_d)
+        else
+          expect(actual_value.to_s).to eq(value.to_s)
+        end
+      end
+    end
   end
 
   include_examples "planning template resource",
@@ -59,7 +79,15 @@ RSpec.describe "Planning template CRUD", type: :request do
         active: true
       }
     },
+    update_params: ->(_record) {
+      {
+        name: "Updated Payroll",
+        account: "Savings",
+        day_of_month_two: 25
+      }
+    },
     create_notice: "Pay schedule saved.",
+    update_notice: "Pay schedule updated.",
     destroy_notice: "Pay schedule removed."
 
   include_examples "planning template resource",
@@ -76,7 +104,14 @@ RSpec.describe "Planning template CRUD", type: :request do
       active: true,
       notes: "Streaming"
     },
+    update_params: {
+      name: "Google Fi",
+      amount: "97.74",
+      due_day: 1,
+      account: "Barclay Card US"
+    },
     create_notice: "Subscription saved.",
+    update_notice: "Subscription updated.",
     destroy_notice: "Subscription removed."
 
   include_examples "planning template resource",
@@ -94,7 +129,14 @@ RSpec.describe "Planning template CRUD", type: :request do
       active: true,
       notes: "Utility"
     },
+    update_params: {
+      name: "Water Bill",
+      default_amount: "125.50",
+      due_day: 14,
+      account: "Checking"
+    },
     create_notice: "Monthly bill template saved.",
+    update_notice: "Monthly bill template updated.",
     destroy_notice: "Monthly bill template removed."
 
   include_examples "planning template resource",
@@ -113,7 +155,14 @@ RSpec.describe "Planning template CRUD", type: :request do
       active: true,
       notes: "Installment"
     },
+    update_params: {
+      name: "IRS Plan",
+      monthly_target: "150.00",
+      due_day: 20,
+      account: "Savings"
+    },
     create_notice: "Payment plan saved.",
+    update_notice: "Payment plan updated.",
     destroy_notice: "Payment plan removed."
 
   include_examples "planning template resource",
@@ -130,6 +179,13 @@ RSpec.describe "Planning template CRUD", type: :request do
       active: true,
       notes: "Main card"
     },
+    update_params: {
+      name: "Barclays Visa",
+      minimum_payment: "55.00",
+      priority: 2,
+      account: "Checking"
+    },
     create_notice: "Credit card saved.",
+    update_notice: "Credit card updated.",
     destroy_notice: "Credit card removed."
 end

@@ -33,4 +33,37 @@ RSpec.describe "Template editor", type: :system do
     expect(page).to have_content("Template updated.")
     expect(schedule.reload.amount.to_d).to eq(3200.to_d)
   end
+
+  it "updates a planning template inline from the planning templates page" do
+    user = create(:user)
+    schedule = create(:pay_schedule,
+      user: user,
+      name: "Acme Payroll",
+      amount: 2500,
+      cadence: :monthly,
+      first_pay_on: Date.new(2026, 1, 15),
+      day_of_month_one: 15)
+
+    sign_in_as(user)
+    visit planning_templates_path
+
+    find("a[aria-label='Edit schedule']").click
+
+    expect(page).to have_current_path(
+      planning_templates_path(edit_pay_schedule_id: schedule.id),
+      ignore_query: false
+    )
+    expect(page).to have_content("Editing Acme Payroll")
+    expect(page).to have_button("Update Schedule")
+
+    fill_in "Employer / Source", with: "Updated Payroll"
+    fill_in "pay_schedule_amount", with: "3200"
+    click_button "Update Schedule"
+
+    expect(page).to have_current_path(planning_templates_path, ignore_query: false)
+    expect(page).to have_content("Pay schedule updated.")
+    expect(page).to have_content("Updated Payroll")
+    expect(schedule.reload.name).to eq("Updated Payroll")
+    expect(schedule.amount.to_d).to eq(3200.to_d)
+  end
 end

@@ -22,4 +22,8 @@ class CreditCardsController < ApplicationController
   def destroy_success_message
     "Credit card removed."
   end
+
+  def update_success_message
+    "Credit card updated."
+  end
 end

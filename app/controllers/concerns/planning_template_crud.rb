@@ -19,6 +19,18 @@ module PlanningTemplateCrud
     end
   end
 
+  def update
+    resource = resource_scope.find(params[:id])
+
+    if resource.update(resource_params)
+      redirect_to redirect_target, notice: update_success_message
+    else
+      assign_resource(resource)
+      assign_collection(ordered_resources)
+      respond_error(resource.errors.full_messages.join(", "))
+    end
+  end
+
   def destroy
     resource_scope.find(params[:id]).destroy
     assign_resource(resource_scope.new)
@@ -118,6 +130,10 @@ module PlanningTemplateCrud
   end
 
   def destroy_success_message
+    raise NotImplementedError
+  end
+
+  def update_success_message
     raise NotImplementedError
   end
 end

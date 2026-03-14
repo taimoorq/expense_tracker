@@ -22,4 +22,8 @@ class MonthlyBillsController < ApplicationController
   def destroy_success_message
     "Monthly bill template removed."
   end
+
+  def update_success_message
+    "Monthly bill template updated."
+  end
 end

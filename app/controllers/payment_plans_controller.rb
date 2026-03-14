@@ -22,4 +22,8 @@ class PaymentPlansController < ApplicationController
   def destroy_success_message
     "Payment plan removed."
   end
+
+  def update_success_message
+    "Payment plan updated."
+  end
 end

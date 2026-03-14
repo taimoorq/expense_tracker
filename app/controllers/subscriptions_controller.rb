@@ -22,4 +22,8 @@ class SubscriptionsController < ApplicationController
   def destroy_success_message
     "Subscription removed."
   end
+
+  def update_success_message
+    "Subscription updated."
+  end
 end

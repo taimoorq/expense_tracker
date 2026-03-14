@@ -13,6 +13,7 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 	- [Run with Docker](#run-with-docker)
 	- [Run Locally](#run-locally)
 - [Authentication](#authentication)
+- [Updating a Self-Hosted Install](#updating-a-self-hosted-install)
 - [Demo and Sample Data](#demo-and-sample-data)
 	- [Sample User](#sample-user)
 	- [Seeded Demo Month](#seeded-demo-month)
@@ -321,6 +322,58 @@ You can still create an admin manually from the Rails console if that fits your 
 - `AdminUser.create!(email: "admin@example.com", password: "password123!", password_confirmation: "password123!")`
 
 For stronger hardening in production, run the admin surface with a restricted PostgreSQL role that can only read `users`, `admin_users`, and `admin_audit_logs`, plus update `users.access_state`.
+
+## Updating a Self-Hosted Install
+
+Most self-hosted users should update by pulling the latest code and then restarting the app in a way that reruns `db:prepare`.
+
+Before updating:
+
+- back up your PostgreSQL database
+- review `.env.example` and compare it to your existing `.env` for any new required settings
+- keep your current database volume or database server intact so user data is preserved
+
+### Docker update flow
+
+If you are running the included Docker setup:
+
+1. Pull the latest code.
+2. Review `.env.example` for any new environment variables and update your `.env` if needed.
+3. Rebuild and restart the app:
+	- `docker compose up -d --build`
+4. Check logs if needed:
+	- `docker compose logs -f web`
+
+What happens during startup:
+
+- the container entrypoint runs `bin/rails db:prepare`, so new migrations are applied automatically
+- it also runs `bin/rails admin:bootstrap`, so admin credentials stay in sync with `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` if you changed them
+
+What not to do during a normal update:
+
+- do not run `docker compose down -v` unless you intentionally want to delete the database volume
+- do not run `db:seed` unless you explicitly want demo/sample data
+
+### Local update flow
+
+If you are running the app directly on a server without Docker:
+
+1. Pull the latest code.
+2. Review `.env.example` and update your `.env` if needed.
+3. Install any new gems:
+	- `bundle install`
+4. Run setup again:
+	- `bin/setup --skip-server`
+5. Restart the app process:
+	- `bin/dev`
+
+`bin/setup --skip-server` reruns `db:prepare` and `admin:bootstrap`, so schema updates and install-time admin configuration are applied as part of the update.
+
+### Demo data note
+
+Regular user accounts, budget months, templates, snapshots, and admin audit logs are stored in the database and survive normal updates.
+
+`bin/rails db:seed` is only for creating or refreshing the demo user and sample data. It is not required for routine self-hosted upgrades.
 
 ## Demo and Sample Data
 

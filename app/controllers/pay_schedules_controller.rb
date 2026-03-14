@@ -32,4 +32,8 @@ class PaySchedulesController < ApplicationController
   def destroy_success_message
     "Pay schedule removed."
   end
+
+  def update_success_message
+    "Pay schedule updated."
+  end
 end
