@@ -13,6 +13,7 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 	- [Run with Docker](#run-with-docker)
 	- [Run Locally](#run-locally)
 - [Authentication](#authentication)
+- [Self-Hosted HTTPS](#self-hosted-https)
 - [Updating a Self-Hosted Install](#updating-a-self-hosted-install)
 - [Demo and Sample Data](#demo-and-sample-data)
 	- [Sample User](#sample-user)
@@ -376,6 +377,30 @@ You can still create an admin manually from the Rails console if that fits your 
 - `AdminUser.create!(email: "admin@example.com", password: "password123!", password_confirmation: "password123!")`
 
 For stronger hardening in production, run the admin surface with a restricted PostgreSQL role that can only read `users`, `admin_users`, and `admin_audit_logs`, plus update `users.access_state`.
+
+## Self-Hosted HTTPS
+
+For a public self-hosted deployment, run the Rails app behind a reverse proxy that terminates TLS instead of exposing the app container directly.
+
+This repository includes a Caddy-based production example:
+
+1. Copy the production environment template.
+	- `cp .env.production.example .env.production`
+2. Set a real domain name in `APP_HOST`.
+3. Set strong values for `POSTGRES_PASSWORD`, `SECRET_KEY_BASE`, and `RAILS_MASTER_KEY`.
+4. Point your DNS record at the server.
+5. Start the production stack.
+	- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --build`
+
+This setup publishes only Caddy on ports `80` and `443`. Rails stays private on the internal Docker network and receives forwarded HTTPS traffic from Caddy.
+
+Included files for this flow:
+
+- `docker-compose.production.yml`
+- `deploy/Caddyfile`
+- `.env.production.example`
+
+Rails production is configured to expect an SSL-terminating proxy by default. If you intentionally run production without HTTPS in front of it, set `ASSUME_SSL=false` and `FORCE_SSL=false`.
 
 ## Updating a Self-Hosted Install
 

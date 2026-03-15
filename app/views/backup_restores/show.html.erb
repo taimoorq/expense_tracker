@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <%= form_with url: export_backup_restore_path, method: :post, class: "mt-5 space-y-4" do %>
+      <%= form_with url: export_backup_restore_path, method: :post, class: "mt-5 space-y-4", data: { turbo: false } do %>
         <div class="space-y-3">
           <% @scope_cards.each do |scope_key, scope| %>
             <label class="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 hover:border-emerald-200 hover:bg-emerald-50">
@@ -66,6 +66,8 @@
           <%= tabler_icon("download", classes: "ta-action-icon") %>
           <span>Download Backup</span>
         <% end %>
+
+        <p class="text-sm text-slate-500">The download should begin immediately in your browser. If nothing happens, check whether downloads or popups are being blocked.</p>
       <% end %>
     </section>
 
@@ -111,7 +113,7 @@
 
         <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           Want to inspect the expected file first?
-          <%= link_to sample_backup_restore_path, class: "ml-1 inline-flex items-center gap-2 font-semibold text-slate-900 hover:text-indigo-700" do %>
+          <%= link_to sample_backup_restore_path, class: "ml-1 inline-flex items-center gap-2 font-semibold text-slate-900 hover:text-indigo-700", data: { turbo: false } do %>
             <%= tabler_icon("download", classes: "h-4 w-4") %>
             <span>Download sample backup</span>
           <% end %>
