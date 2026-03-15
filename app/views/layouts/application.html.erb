@@ -136,9 +136,6 @@
 
           <% if user_signed_in? %>
             <div class="ta-topbar-user-actions">
-              <%= link_to settings_path, class: "ta-icon-btn", title: "Settings", aria: { label: "Settings" } do %>
-                <%= tabler_icon("adjustments", classes: "ta-action-icon") %>
-              <% end %>
               <%= link_to edit_user_registration_path, class: "ta-user-chip ta-user-chip-compact" do %>
                 <%= tabler_icon("user-circle", classes: "ta-action-icon") %>
                 <span class="ta-user-chip-label"><%= current_user.email %></span>
