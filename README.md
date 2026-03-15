@@ -19,13 +19,15 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 	- [Seeded Demo Month](#seeded-demo-month)
 	- [Sample CSV Files](#sample-csv-files)
 - [Workflow](#workflow)
-	- [Dashboard](#dashboard)
+	- [Overview Dashboard](#overview-dashboard)
 	- [Accounts and Net Worth](#accounts-and-net-worth)
 	- [Create a Month](#create-a-month)
 	- [Clone Month Behavior](#clone-month-behavior)
 	- [Add or Import Entries](#add-or-import-entries)
-	- [Configure Recurring Templates](#configure-recurring-templates)
+	- [Planning Templates](#planning-templates)
 	- [Review a Month](#review-a-month)
+	- [Backup and Restore](#backup-and-restore)
+	- [Help and Documentation](#help-and-documentation)
 - [Open Source Readiness](#open-source-readiness)
 - [Development Commands](#development-commands)
 - [Troubleshooting](#troubleshooting)
@@ -37,14 +39,19 @@ Expense Tracker is built for people who budget by month and want one place to pl
 
 It also includes a manual accounts area for tracking balances in checking, savings, brokerage, retirement, and debt accounts without relying on live bank syncing.
 
+Hosted product overview and screenshots: https://financetracking.app/
+
 With it, a user can:
 
+- restart from an overview dashboard that highlights the current month, quick actions, planning-template status, and account context
 - build a fresh month or start from a previous month instead of recreating the same structure every time
 - review the same budget in a timeline, calendar, or editable list depending on how they like to think about money
 - import transactions from CSV files to get a month filled in faster
-- reuse recurring items so routine planning takes less manual work
+- reuse recurring items so routine planning takes less manual work through dedicated planning templates
+- preview and restore versioned JSON backups, including optional encrypted exports and reference sample backup files
 - estimate credit-card payments based on the cash left in the month rather than guessing in isolation
 - record manual account balance snapshots and review a simple net worth trend over time
+- keep in-app help available so the intended workflow is documented inside the product
 
 The sections below are split between user-focused guidance for using the app and developer-focused guidance for running, testing, and publishing the project.
 
@@ -78,63 +85,85 @@ After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL`
 
 ## Screenshots
 
-Current screenshots reflect the latest dashboard theme, month tabs, and planning workflow.
+Current screenshots reflect the latest overview, planning templates, month review, accounts, and backup workflow.
 
 <table>
 	<tr>
 		<td align="center">
-			<img src="app/assets/images/screenshots/dashboard.png" alt="Dashboard" width="100%">
+			<img src="app/assets/images/marketing/overview-desktop.webp" alt="Overview dashboard" width="100%">
 			<br>
-			<strong>Dashboard</strong>
+			<strong>Overview Dashboard</strong>
 			<br>
-			Month list, quick actions, and CSV import from one home screen.
+			Current month, attention items, planning-template status, account context, and quick actions from one landing screen.
 		</td>
 		<td align="center">
-			<img src="app/assets/images/screenshots/clone-month-view.png" alt="Month creation wizard" width="100%">
+			<img src="app/assets/images/marketing/months-overview-desktop.webp" alt="Months screen" width="100%">
 			<br>
-			<strong>Month Creation Wizard</strong>
+			<strong>Months</strong>
 			<br>
-			Clone a previous month or start fresh with a guided setup flow.
+			Open the month list, create a month, review template coverage, and import CSV activity.
 		</td>
 	</tr>
 	<tr>
 		<td align="center">
-			<img src="app/assets/images/screenshots/monthly-overview.png" alt="Monthly overview" width="100%">
+			<img src="app/assets/images/marketing/planning-templates.webp" alt="Planning templates" width="100%">
 			<br>
-			<strong>Monthly Overview</strong>
+			<strong>Planning Templates</strong>
 			<br>
-			Summary cards, grouped timeline sections, and fast month review actions.
+			Reusable paycheck, subscription, bill, payment-plan, and credit-card definitions for faster month setup.
 		</td>
 		<td align="center">
-			<img src="app/assets/images/screenshots/monthly-calendar-view.png" alt="Calendar view" width="100%">
+			<img src="app/assets/images/marketing/month-timeline-desktop.webp" alt="Month timeline" width="100%">
 			<br>
-			<strong>Calendar View</strong>
+			<strong>Timeline Review</strong>
 			<br>
-			Day-by-day layout for reviewing planned and paid activity across the month.
+			Grouped timeline sections, filters, and leftover context for month review.
+		</td>
+	</tr>
+	<tr>
+		<td align="center">
+			<img src="app/assets/images/marketing/add-entry-wizard.webp" alt="Guided entry wizard" width="100%">
+			<br>
+			<strong>Guided Entry Wizard</strong>
+			<br>
+			Multi-step entry flow for adding one-off items and optionally saving supported entries as templates.
+		</td>
+		<td align="center">
+			<img src="app/assets/images/marketing/accounts-overview-desktop.webp" alt="Accounts and net worth" width="100%">
+			<br>
+			<strong>Accounts &amp; Net Worth</strong>
+			<br>
+			Manual balance tracking, coverage metrics, and net worth trend snapshots.
 		</td>
 	</tr>
 	<tr>
 		<td align="center" colspan="2">
-			<img src="app/assets/images/screenshots/monthly-plan-edit.png" alt="Plan and edit tab" width="100%">
+			<img src="app/assets/images/marketing/backup-and-restore-desktop.webp" alt="Backup and restore" width="100%">
 			<br>
-			<strong>Plan and Edit</strong>
+			<strong>Backup &amp; Restore</strong>
 			<br>
-			Guided workspace for generating a month, adjusting entries, and editing the plan in one place.
+			Versioned JSON exports, optional encryption, import previews, and reference sample backups.
 		</td>
 	</tr>
 </table>
 
 ## Features
 
+- Start from an overview dashboard that surfaces the current month, attention items, planning-template progress, account summaries, and quick actions
 - Plan each month in one place so income, bills, subscriptions, debt payments, and discretionary spending stay visible together
 - Start a new month quickly by cloning an existing one, which saves time when your budget structure stays mostly the same
-- See your budget in multiple views so you can review the same data as a timeline, a calendar, or a detailed entry list
-- Add transactions the way that fits your workflow, whether that means entering them manually, using the guided wizard, or importing a CSV
+- See your budget in multiple views so you can review the same data as a timeline, a calendar, a breakdown, or a detailed entry list
+- Add transactions the way that fits your workflow, whether that means entering them manually, using the guided wizard, launching the wizard from month views, or importing a CSV
 - Upload past transactions to get a month populated faster instead of rebuilding everything by hand
 - Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
+- Save supported wizard-created entries directly as planning templates when you want a one-off action to become reusable later
 - Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
+- Toggle between grouped timeline sections and a full month list without leaving the same review surface
 - Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
+- Export and restore planning templates, months, and account data through versioned JSON backups with optional password encryption
+- Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
 - Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
+- Keep workflow guidance available inside the app through a dedicated Help area
 - Avoid accidental duplicate generation on older completed months with safeguards that hide actions you likely no longer need
 - Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
@@ -466,17 +495,19 @@ Expected transaction columns:
 
 This section explains the main user flow through the app.
 
-### Dashboard
+### Overview Dashboard
 
-The dashboard is the main starting point after sign-in.
+The overview dashboard is the main starting point after sign-in.
 
 It shows:
 
-- a list of your existing months on the left
-- a quick CSV import card on the right
-- shortcuts to open or clone a month
+- the current month and a fast path back into it
+- next-step and quick-action cards for common planning tasks
+- planning-template coverage status so missing recurring structure is easy to spot
+- account summary context and recent balance visibility
+- quick access to month creation, imports, templates, accounts, backup and restore, and help
 
-Use the quick import card to drag and drop a CSV file or click to browse when you want to bring in transactions quickly.
+Use the overview when you want to restart from context instead of deciding where to click first.
 
 ### Accounts and Net Worth
 
@@ -545,9 +576,9 @@ Common entry fields include:
 - account
 - notes
 
-### Configure Recurring Templates
+### Planning Templates
 
-Use the recurring templates area to save items that should show up again in future months.
+Use the planning templates area to save items that should show up again in future months.
 
 Template types include:
 
@@ -559,20 +590,25 @@ Template types include:
 
 This reduces repetitive data entry and keeps recurring planning consistent from month to month.
 
+The guided entry wizard can also create supported planning templates while you add an entry, which is useful when a one-off entry turns out to be something you want to reuse later.
+
 ### Review a Month
 
 Each budget month can be reviewed in four main views:
 
 - `Timeline`
 	- grouped view of entries with totals by group
+	- optional full-list mode for scanning the entire month without leaving the timeline area
 	- row-level filters for date, payee, reason, and status
 	- pill filters based on the actual reason values in that month
+	- direct links to launch the guided entry wizard
 - `Breakdown`
 	- chart-focused view for the visual budget breakdown
 	- keeps graphs separate from the main timeline workflow
 - `Calendar`
 	- date-based view of entries
 	- pill filters using the same month-specific reason values
+	- direct access to the guided entry wizard from the calendar surface
 - `Plan and Edit`
 	- template generation actions, manual entry, and month-list editing in one workflow
 
@@ -586,6 +622,25 @@ Additional month actions help keep planning current:
 	- hidden when an older month appears complete
 - `Estimate Card Payments`
 	- recomputes estimated credit-card payment entries from available leftover cash
+
+### Backup and Restore
+
+Use `Backup & Restore` from the main navigation when you want to move or safeguard your data.
+
+This area lets you:
+
+- export planning templates, months, and account data as versioned JSON backups
+- protect exports with optional password encryption
+- preview an import before restoring data into the current install
+- download a sample backup file to inspect the expected structure first
+
+The restore flow is designed to make it easier to verify what will be imported before anything is written.
+
+### Help and Documentation
+
+Use the Help area from the signed-in navigation when you want the app to explain its intended workflow.
+
+This documentation covers the purpose of the main screens, how the planning flow fits together, and what users should expect from the month-building process.
 
 ## Open Source Readiness
 
