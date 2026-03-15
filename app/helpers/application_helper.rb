@@ -193,7 +193,7 @@ module ApplicationHelper
     {
       total: templates.size,
       matched: matched,
-      remaining: [templates.size - matched, 0].max,
+      remaining: [ templates.size - matched, 0 ].max,
       complete: templates.any? && matched == templates.size
     }
   end
