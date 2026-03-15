@@ -150,6 +150,33 @@ module ApplicationHelper
     TurnstileVerifier.site_key
   end
 
+  def available_theme_options
+    available_themes.map { |theme| [theme.name, theme.key] }
+  end
+
+  def current_theme_colors
+    current_theme.colors
+  end
+
+  def landing_page_options
+    [
+      ["Overview", "overview"],
+      ["Months", "months"],
+      ["Planning Templates", "planning_templates"],
+      ["Accounts & Net Worth", "accounts"],
+      ["Settings", "settings"]
+    ]
+  end
+
+  def preferred_month_view_options
+    [
+      ["Timeline", "timeline"],
+      ["Breakdown", "breakdown"],
+      ["Calendar", "calendar"],
+      ["Plan and Edit", "entries"]
+    ]
+  end
+
   def legacy_tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)
     canonical_name = app_icon_aliases[name.to_s] || name.to_s
     path_data = app_icon_paths[canonical_name] || app_icon_paths["list-bullet"]

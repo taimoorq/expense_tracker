@@ -7,6 +7,8 @@ Rails.application.routes.draw do
     registrations: "users/registrations",
     passwords: "users/passwords"
   }
+  resource :theme, only: :update
+  resource :settings, only: [ :show, :update ]
 
   namespace :admin do
     root "dashboard#show"

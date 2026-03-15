@@ -12,7 +12,7 @@
     <%= yield :head %>
 
     <link rel="manifest" href="/site.webmanifest">
-    <meta name="theme-color" content="#0F172A">
+    <meta name="theme-color" content="<%= current_theme_meta_color %>">
     <meta name="turbo-view-transition" content="true">
 
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
@@ -30,7 +30,7 @@
   </head>
 
   <% theme = auth_page_theme %>
-  <body class="ta-auth-shell ta-theme-earth" data-rails-env="<%= Rails.env %>" data-controller="auth-scene" data-action="pointermove->auth-scene#move">
+  <body class="ta-auth-shell <%= current_theme_class %>" style="<%= current_theme_css_variables %>" data-rails-env="<%= Rails.env %>" data-controller="auth-scene" data-action="pointermove->auth-scene#move">
     <div class="ta-auth-backdrop"></div>
     <div class="ta-auth-orb ta-auth-float <%= theme[:glow] %> left-[-5rem] top-[-4rem] h-56 w-56" data-auth-scene-target="layer" data-depth="18"></div>
     <div class="ta-auth-orb ta-auth-float-delayed <%= theme[:glow] %> bottom-[-5rem] right-[-4rem] h-72 w-72 opacity-70" data-auth-scene-target="layer" data-depth="26"></div>

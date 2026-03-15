@@ -123,9 +123,9 @@
 
 @layer components {
 	/*
-	 * Palette tuning lives above.
-	 * To experiment, either edit the CSS variables in :root or swap the body class
-	 * from .ta-theme-indigo to another preset like .ta-theme-earth, .ta-theme-emerald, or .ta-theme-sunset.
+	 * The default presets live above as CSS fallbacks.
+	 * The active theme is now applied through CSS variables rendered by ThemePalette,
+	 * so adding a new five-color scheme only requires another preset entry in Ruby.
 	 */
 
 	.ta-shell {
@@ -143,11 +143,15 @@
 	}
 
 	.ta-sidebar {
-		@apply fixed inset-y-0 left-0 z-50 w-[18rem] -translate-x-full border-r transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-auto lg:translate-x-0;
+		@apply fixed inset-y-0 left-0 z-50 flex h-screen w-[18rem] -translate-x-full flex-col border-r transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:z-auto lg:w-auto lg:translate-x-0 lg:self-start;
 		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
 		background-color: var(--ta-surface);
 		color: var(--ta-text-muted);
 		box-shadow: 0 20px 50px rgb(var(--ta-shadow-rgb) / 0.18);
+	}
+
+	.ta-sidebar-body {
+		@apply flex min-h-0 flex-1 flex-col;
 	}
 
 	.ta-shell-mobile-nav-open {
@@ -170,7 +174,12 @@
 	}
 
 	.ta-sidebar-nav {
-		@apply space-y-1.5 p-4;
+		@apply flex-1 space-y-1.5 overflow-y-auto p-4;
+	}
+
+	.ta-sidebar-footer {
+		@apply mt-auto border-t p-4;
+		border-color: color-mix(in srgb, var(--ta-border) 75%, transparent);
 	}
 
 	.ta-sidebar-group {
@@ -282,6 +291,12 @@
 
 	.ta-topbar-heading-group {
 		@apply flex min-w-0 flex-1 items-center gap-3;
+	}
+
+	@media (max-width: 639px) {
+		.ta-page-header p {
+			display: none;
+		}
 	}
 
 	.ta-topbar-user-actions {
@@ -610,6 +625,49 @@
 
 	.ta-user-chip-label {
 		@apply hidden min-w-0 truncate sm:inline;
+	}
+
+	.ta-theme-picker {
+		@apply shrink-0;
+	}
+
+	.ta-theme-picker-shell {
+		@apply flex flex-col items-start gap-3 sm:flex-row sm:items-center;
+	}
+
+	.ta-theme-picker-field {
+		@apply relative w-full sm:w-auto;
+	}
+
+	.ta-theme-picker-icon {
+		@apply pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3;
+		color: var(--ta-text-soft);
+	}
+
+	.ta-theme-picker-select {
+		@apply min-h-10 w-full appearance-none py-2 pr-8 pl-9 text-sm sm:w-40;
+	}
+
+	@media (max-width: 639px) {
+		.ta-theme-picker-select {
+			@apply text-xs;
+		}
+	}
+
+	.ta-theme-swatches {
+		@apply flex items-center gap-1.5;
+	}
+
+	.ta-theme-swatch {
+		@apply inline-flex h-4 w-4 rounded-full border;
+		border-color: color-mix(in srgb, var(--ta-border-strong) 70%, white);
+		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.45);
+	}
+
+	.ta-settings-panel {
+		@apply w-full rounded-2xl border p-4 sm:w-auto;
+		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
+		background-color: color-mix(in srgb, var(--ta-surface-alt) 88%, white);
 	}
 
 	.ta-sign-out-btn {

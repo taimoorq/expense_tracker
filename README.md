@@ -341,6 +341,28 @@ Common local `.env` uses:
 
 ## Authentication
 
+## Color Schemes
+
+The app theme is driven by five-color presets defined in `ThemePalette`.
+
+The active scheme is stored in a signed cookie, so users can switch themes without a database migration.
+
+To add another scheme later, add one more entry to `ThemePalette::PRESETS` with:
+
+- a unique key
+- a display name
+- five hex colors in the same light-to-dark palette style
+
+The current default scheme is `earth` and uses:
+
+- `#C3A995`
+- `#AB947E`
+- `#6F5E53`
+- `#8A7968`
+- `#593D3B`
+
+Additional presets can be added the same way. The current built-in alternates are `indigo`, `emerald`, `sage`, and `sunset`.
+
 The app requires sign-in so each account only sees its own months, entries, imports, and recurring templates.
 
 There is also a separate admin authentication surface for user-access management. The admin console is intentionally limited to identity metadata, access-state changes, and admin audit logs. It does not provide routes for viewing budget months, entries, templates, or account balances.
