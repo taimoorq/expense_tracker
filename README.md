@@ -402,6 +402,45 @@ Included files for this flow:
 
 Rails production is configured to expect an SSL-terminating proxy by default. If you intentionally run production without HTTPS in front of it, set `ASSUME_SSL=false` and `FORCE_SSL=false`.
 
+### Self-signed / LAN HTTPS
+
+For a private LAN install where you do not want public certificates, use the dedicated Caddy config that issues certificates from Caddy's internal CA.
+
+1. Copy the production environment template.
+	- `cp .env.production.example .env.production`
+2. Set `APP_HOST` to the hostname you will actually use on your LAN, such as `budget.lan`.
+3. Start the same production stack with the LAN HTTPS override.
+	- `docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.lan-https.yml up -d --build`
+4. Install Caddy's internal root CA on each client device that will access the app.
+
+Files for this variant:
+
+- `docker-compose.lan-https.yml`
+- `deploy/Caddyfile.internal`
+
+This is appropriate for private networks and self-hosted setups without public DNS. Browsers will warn about the site until the internal CA is trusted on the client device.
+
+#### Trust the LAN certificate authority
+
+After the stack starts for the first time, Caddy creates its internal root CA inside the `caddy_data` volume. You need to export that root certificate and trust it on each client device that will open the app.
+
+One simple way to copy it out is:
+
+1. Start the LAN HTTPS stack.
+	- `docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.lan-https.yml up -d --build`
+2. Copy the root certificate from the running Caddy container.
+	- `docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.lan-https.yml cp caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-local-root.crt`
+3. Install `caddy-local-root.crt` into the trust store of each browser or device that should trust your LAN deployment.
+
+Typical trust flow:
+
+- macOS: open Keychain Access, import `caddy-local-root.crt` into the `System` or `login` keychain, then mark it as `Always Trust`
+- iPhone/iPad: AirDrop or host the certificate file locally, install the profile, then enable full trust for the root certificate in Settings
+- Windows: import the certificate into `Trusted Root Certification Authorities`
+- Linux: import it into the system CA store or the browser-specific store, depending on your distro and browser
+
+If you rebuild or replace the `caddy_data` volume, Caddy may generate a new internal CA and you would need to trust the new root certificate again.
+
 ## Updating a Self-Hosted Install
 
 Most self-hosted users should update by pulling the latest code and then restarting the app in a way that reruns `db:prepare`.
