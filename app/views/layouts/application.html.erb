@@ -29,7 +29,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="ta-shell ta-shell-collapsed ta-theme-earth" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc" data-sidebar-target="shell">
+  <body class="ta-shell ta-shell-collapsed ta-theme-earth" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc keydown.esc->sidebar#close click@window->sidebar#closeFromOutside resize@window->sidebar#syncMode" data-sidebar-target="shell">
     <% overview_active = controller_name == "overview" %>
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
@@ -40,7 +40,9 @@
     <% months_section_active = months_active || templates_active || new_month_active %>
     <% show_back_nav = !((controller_name == "budget_months" && action_name == "index") || controller_name == "overview") %>
 
-    <aside class="ta-sidebar">
+    <button type="button" class="ta-sidebar-overlay" aria-label="Close navigation" data-sidebar-target="overlay" data-action="click->sidebar#close"></button>
+
+    <aside class="ta-sidebar" data-sidebar-target="sidebar">
       <div class="ta-sidebar-brand">
         <%= link_to(user_signed_in? ? root_path : new_user_session_path, class: "inline-flex items-center gap-2.5 text-slate-900", title: "Expense Tracker") do %>
           <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-7 w-7 rounded" %>
@@ -50,41 +52,41 @@
       </div>
       <% if user_signed_in? %>
         <nav class="ta-sidebar-nav">
-          <%= link_to root_path, class: ["ta-sidebar-link", (overview_active ? "ta-sidebar-link-active" : nil)], title: "Overview" do %>
+          <%= link_to root_path, class: ["ta-sidebar-link", (overview_active ? "ta-sidebar-link-active" : nil)], title: "Overview", data: { action: "click->sidebar#closeOnMobile" } do %>
             <%= tabler_icon("home", classes: "ta-sidebar-link-icon") %>
             <span class="ta-sidebar-label">Home</span>
           <% end %>
 
           <div class="ta-sidebar-group">
-            <%= link_to budget_months_path, class: ["ta-sidebar-link", (months_section_active ? "ta-sidebar-link-active" : nil)], title: "Months" do %>
+            <%= link_to budget_months_path, class: ["ta-sidebar-link", (months_section_active ? "ta-sidebar-link-active" : nil)], title: "Months", data: { action: "click->sidebar#closeOnMobile" } do %>
               <%= tabler_icon("calendar-month", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Months</span>
             <% end %>
 
             <div class="ta-sidebar-sublinks">
-              <%= link_to planning_templates_path, class: ["ta-sidebar-sublink", (templates_active ? "ta-sidebar-sublink-active" : nil)], title: "Planning Templates" do %>
+              <%= link_to planning_templates_path, class: ["ta-sidebar-sublink", (templates_active ? "ta-sidebar-sublink-active" : nil)], title: "Planning Templates", data: { action: "click->sidebar#closeOnMobile" } do %>
                 <%= tabler_icon("template", classes: "ta-sidebar-sublink-icon") %>
                 <span class="ta-sidebar-label">Planning Templates</span>
               <% end %>
 
-              <%= link_to new_budget_month_path, class: ["ta-sidebar-sublink", (new_month_active ? "ta-sidebar-sublink-active" : nil)], title: "Add Month" do %>
+              <%= link_to new_budget_month_path, class: ["ta-sidebar-sublink", (new_month_active ? "ta-sidebar-sublink-active" : nil)], title: "Add Month", data: { action: "click->sidebar#closeOnMobile" } do %>
                 <%= tabler_icon("calendar-plus", classes: "ta-sidebar-sublink-icon") %>
                 <span class="ta-sidebar-label">Add Month</span>
               <% end %>
             </div>
           </div>
 
-          <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth" do %>
+          <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth", data: { action: "click->sidebar#closeOnMobile" } do %>
             <%= tabler_icon("cash", classes: "ta-sidebar-link-icon") %>
             <span class="ta-sidebar-label">Accounts & Net Worth</span>
           <% end %>
 
-          <%= link_to backup_restore_path, class: ["ta-sidebar-link", (backup_restore_active ? "ta-sidebar-link-active" : nil)], title: "Backup & Restore" do %>
+          <%= link_to backup_restore_path, class: ["ta-sidebar-link", (backup_restore_active ? "ta-sidebar-link-active" : nil)], title: "Backup & Restore", data: { action: "click->sidebar#closeOnMobile" } do %>
             <%= tabler_icon("shield-lock", classes: "ta-sidebar-link-icon") %>
             <span class="ta-sidebar-label">Backup & Restore</span>
           <% end %>
 
-          <%= link_to help_path, class: ["ta-sidebar-link", (help_active ? "ta-sidebar-link-active" : nil)], title: "Help & Documentation" do %>
+          <%= link_to help_path, class: ["ta-sidebar-link", (help_active ? "ta-sidebar-link-active" : nil)], title: "Help & Documentation", data: { action: "click->sidebar#closeOnMobile" } do %>
             <%= tabler_icon("help", classes: "ta-sidebar-link-icon") %>
             <span class="ta-sidebar-label">Help & Documentation</span>
           <% end %>
@@ -94,12 +96,16 @@
 
     <main class="ta-main">
       <header class="ta-topbar">
-        <div class="flex w-full flex-wrap items-center justify-between gap-3">
-          <div class="flex min-w-0 flex-1 items-center gap-3">
-          <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" data-action="click->sidebar#toggle">
-            <span data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "ta-action-icon-lg") %></span>
-            <span data-sidebar-target="collapseIcon" class="hidden"><%= tabler_icon("chevron-left", classes: "ta-action-icon-lg") %></span>
-          </button>
+        <div class="ta-topbar-row">
+          <div class="ta-topbar-heading-group">
+          <% if user_signed_in? %>
+            <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-sidebar-target="toggleButton" data-action="click->sidebar#toggle">
+              <span class="ta-mobile-toggle-icon" data-sidebar-target="mobileOpenIcon"><%= tabler_icon("menu-2", classes: "ta-action-icon-lg") %></span>
+              <span class="ta-mobile-toggle-icon hidden" data-sidebar-target="mobileCloseIcon"><%= tabler_icon("x", classes: "ta-action-icon-lg") %></span>
+              <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "ta-action-icon-lg") %></span>
+              <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="collapseIcon"><%= tabler_icon("chevron-left", classes: "ta-action-icon-lg") %></span>
+            </button>
+          <% end %>
           <div class="min-w-0 flex-1">
             <% if content_for?(:page_header) %>
               <%= yield :page_header %>
@@ -118,14 +124,14 @@
           </div>
 
           <% if user_signed_in? %>
-            <div class="flex items-center gap-2">
-              <%= link_to edit_user_registration_path, class: "ta-user-chip" do %>
+            <div class="ta-topbar-user-actions">
+              <%= link_to edit_user_registration_path, class: "ta-user-chip ta-user-chip-compact" do %>
                 <%= tabler_icon("user-circle", classes: "ta-action-icon") %>
-                <span><%= current_user.email %></span>
+                <span class="ta-user-chip-label"><%= current_user.email %></span>
               <% end %>
-              <%= button_to destroy_user_session_path, method: :delete, class: "fb-btn-secondary ta-action-btn" do %>
+              <%= button_to destroy_user_session_path, method: :delete, class: "fb-btn-secondary ta-action-btn ta-sign-out-btn" do %>
                 <%= tabler_icon("logout", classes: "ta-action-icon") %>
-                <span>Sign out</span>
+                <span class="ta-sign-out-label">Sign out</span>
               <% end %>
             </div>
           <% else %>

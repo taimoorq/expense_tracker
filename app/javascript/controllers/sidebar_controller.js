@@ -1,27 +1,93 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["shell", "expandIcon", "collapseIcon"]
+  static targets = ["shell", "sidebar", "overlay", "toggleButton", "expandIcon", "collapseIcon", "mobileOpenIcon", "mobileCloseIcon"]
 
   connect() {
     const stored = localStorage.getItem("expense-tracker.sidebar.collapsed")
-    const collapsed = stored == null ? true : stored === "true"
-    this.applyState(collapsed)
+    this.desktopCollapsed = stored == null ? true : stored === "true"
+    this.mobileOpen = false
+    this.syncMode()
   }
 
   toggle() {
-    this.applyState(!this.collapsed)
+    if (this.isDesktop()) {
+      this.applyDesktopState(!this.desktopCollapsed)
+      return
+    }
+
+    this.applyMobileState(!this.mobileOpen)
   }
 
-  applyState(collapsed) {
-    this.collapsed = collapsed
+  close() {
+    if (!this.isDesktop()) {
+      this.applyMobileState(false)
+    }
+  }
+
+  closeOnMobile() {
+    this.close()
+  }
+
+  closeFromOutside(event) {
+    if (this.isDesktop() || !this.mobileOpen) return
+    if (!this.hasSidebarTarget) return
+
+    const clickedToggle = this.hasToggleButtonTarget && this.toggleButtonTarget.contains(event.target)
+    const clickedInsideSidebar = this.sidebarTarget.contains(event.target)
+
+    if (!clickedToggle && !clickedInsideSidebar) {
+      this.applyMobileState(false)
+    }
+  }
+
+  syncMode() {
+    if (this.isDesktop()) {
+      this.applyMobileState(false)
+      this.applyDesktopState(this.desktopCollapsed)
+      return
+    }
+
+    this.shellTarget.classList.remove("ta-shell-collapsed", "ta-shell-expanded")
+    this.applyMobileState(this.mobileOpen)
+    this.updateIcons()
+  }
+
+  applyDesktopState(collapsed) {
+    this.desktopCollapsed = collapsed
 
     this.shellTarget.classList.toggle("ta-shell-collapsed", collapsed)
     this.shellTarget.classList.toggle("ta-shell-expanded", !collapsed)
 
-    if (this.hasExpandIconTarget) this.expandIconTarget.classList.toggle("hidden", !collapsed)
-    if (this.hasCollapseIconTarget) this.collapseIconTarget.classList.toggle("hidden", collapsed)
+    this.updateIcons()
 
     localStorage.setItem("expense-tracker.sidebar.collapsed", String(collapsed))
+  }
+
+  applyMobileState(open) {
+    this.mobileOpen = open
+
+    this.shellTarget.classList.toggle("ta-shell-mobile-nav-open", open)
+
+    if (this.hasOverlayTarget) {
+      this.overlayTarget.classList.toggle("hidden", !open)
+      this.overlayTarget.toggleAttribute("inert", !open)
+    }
+
+    this.updateIcons()
+  }
+
+  updateIcons() {
+    const desktop = this.isDesktop()
+
+    if (this.hasExpandIconTarget) this.expandIconTarget.classList.toggle("hidden", !desktop || !this.desktopCollapsed)
+    if (this.hasCollapseIconTarget) this.collapseIconTarget.classList.toggle("hidden", !desktop || this.desktopCollapsed)
+    if (this.hasMobileOpenIconTarget) this.mobileOpenIconTarget.classList.toggle("hidden", desktop || this.mobileOpen)
+    if (this.hasMobileCloseIconTarget) this.mobileCloseIconTarget.classList.toggle("hidden", desktop || !this.mobileOpen)
+    if (this.hasToggleButtonTarget) this.toggleButtonTarget.setAttribute("aria-expanded", String(desktop ? !this.desktopCollapsed : this.mobileOpen))
+  }
+
+  isDesktop() {
+    return window.matchMedia("(min-width: 1024px)").matches
   }
 }

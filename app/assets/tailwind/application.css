@@ -143,11 +143,25 @@
 	}
 
 	.ta-sidebar {
-		@apply border-r;
+		@apply fixed inset-y-0 left-0 z-50 w-[18rem] -translate-x-full border-r transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-auto lg:translate-x-0;
 		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
 		background-color: var(--ta-surface);
 		color: var(--ta-text-muted);
-		box-shadow: 0 1px 3px rgb(var(--ta-shadow-rgb) / 0.05);
+		box-shadow: 0 20px 50px rgb(var(--ta-shadow-rgb) / 0.18);
+	}
+
+	.ta-shell-mobile-nav-open {
+		@apply overflow-hidden;
+	}
+
+	.ta-shell-mobile-nav-open .ta-sidebar {
+		@apply translate-x-0;
+	}
+
+	.ta-sidebar-overlay {
+		@apply fixed inset-0 z-40 hidden border-0 p-0;
+		background-color: rgb(var(--ta-shadow-rgb) / 0.32);
+		backdrop-filter: blur(3px);
 	}
 
 	.ta-sidebar-brand {
@@ -246,10 +260,58 @@
 		@apply min-w-0;
 	}
 
+	@media (min-width: 1024px) {
+		.ta-sidebar {
+			box-shadow: 0 1px 3px rgb(var(--ta-shadow-rgb) / 0.05);
+		}
+
+		.ta-sidebar-overlay {
+			@apply hidden;
+		}
+	}
+
 	.ta-topbar {
 		@apply sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-4 shadow-sm backdrop-blur sm:px-6 lg:px-8;
 		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
 		background-color: color-mix(in srgb, var(--ta-surface) 92%, var(--ta-app-bg));
+	}
+
+	.ta-topbar-row {
+		@apply flex w-full items-center justify-between gap-3;
+	}
+
+	.ta-topbar-heading-group {
+		@apply flex min-w-0 flex-1 items-center gap-3;
+	}
+
+	.ta-topbar-user-actions {
+		@apply flex shrink-0 items-center justify-end gap-2;
+	}
+
+	.ta-mobile-toggle-icon {
+		@apply inline lg:hidden;
+	}
+
+	.ta-mobile-toggle-icon.hidden {
+		display: none;
+	}
+
+	.ta-desktop-toggle-icon {
+		display: none;
+	}
+
+	.ta-desktop-toggle-icon.hidden {
+		display: none;
+	}
+
+	@media (min-width: 1024px) {
+		.ta-desktop-toggle-icon {
+			display: inline;
+		}
+
+		.ta-desktop-toggle-icon.hidden {
+			display: none;
+		}
 	}
 
 	.ta-content {
@@ -534,6 +596,34 @@
 	.ta-user-chip:hover {
 		background-color: var(--ta-surface-alt);
 		color: var(--ta-text);
+	}
+
+	.ta-user-chip-compact {
+		@apply min-w-0;
+	}
+
+	@media (max-width: 639px) {
+		.ta-user-chip-compact {
+			@apply h-10 w-10 justify-center rounded-2xl px-0;
+		}
+	}
+
+	.ta-user-chip-label {
+		@apply hidden min-w-0 truncate sm:inline;
+	}
+
+	.ta-sign-out-btn {
+		@apply shrink-0;
+	}
+
+	@media (max-width: 639px) {
+		.ta-sign-out-btn {
+			@apply h-10 w-10 justify-center rounded-2xl px-0;
+		}
+	}
+
+	.ta-sign-out-label {
+		@apply hidden sm:inline;
 	}
 
 	.ta-tab-list {
