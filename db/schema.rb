@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_14_140200) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_15_114500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -64,9 +64,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_140200) do
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
+    t.integer "failed_attempts", default: 0, null: false
+    t.datetime "locked_at"
     t.datetime "remember_created_at"
+    t.string "unlock_token"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_admin_users_on_email", unique: true
+    t.index ["locked_at"], name: "index_admin_users_on_locked_at"
+    t.index ["unlock_token"], name: "index_admin_users_on_unlock_token", unique: true
   end
 
   create_table "budget_months", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -190,13 +195,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_140200) do
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
+    t.integer "failed_attempts", default: 0, null: false
+    t.datetime "locked_at"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
+    t.string "unlock_token"
     t.datetime "updated_at", null: false
     t.index ["access_state"], name: "index_users_on_access_state"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["locked_at"], name: "index_users_on_locked_at"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
   add_foreign_key "account_snapshots", "accounts"

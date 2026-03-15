@@ -25,11 +25,10 @@
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
-    <script src="/sw-register.js" defer></script>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="ta-shell ta-shell-collapsed ta-theme-earth" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc keydown.esc->sidebar#close click@window->sidebar#closeFromOutside resize@window->sidebar#syncMode" data-sidebar-target="shell">
+  <body class="ta-shell ta-shell-collapsed ta-theme-earth" data-rails-env="<%= Rails.env %>" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc keydown.esc->sidebar#close click@window->sidebar#closeFromOutside resize@window->sidebar#syncMode" data-sidebar-target="shell">
     <% overview_active = controller_name == "overview" %>
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
