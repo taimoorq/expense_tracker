@@ -126,7 +126,7 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2 lg:justify-end">
-        <%= link_to planning_templates_path, class: "fb-btn-secondary ta-action-btn" do %>
+        <%= link_to planning_templates_path, class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "_top" } do %>
           <%= tabler_icon("template", classes: "ta-action-icon") %>
           <span>Open Planning Templates</span>
         <% end %>

@@ -51,6 +51,24 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Drop a CSV here")
   end
 
+  it "shows a planning template overview on the months page" do
+    user = create(:user, email: "templateoverview@example.com")
+    create(:pay_schedule, user: user, name: "Main Job")
+    create(:subscription, user: user, name: "Netflix")
+    create(:monthly_bill, user: user, name: "Mortgage")
+    create(:payment_plan, user: user, name: "IRS")
+    create(:credit_card, user: user, name: "Visa")
+
+    sign_in_as(user)
+    visit budget_months_path
+
+    expect(page).to have_content("Planning templates")
+    expect(page).to have_content("5 total")
+    expect(page).to have_link("Pay schedules")
+    expect(page).to have_link("Monthly bills")
+    expect(page).to have_link("Manage Planning Templates")
+  end
+
   it "shows a help and documentation page from the sidebar" do
     user = create(:user, email: "help@example.com")
 
@@ -128,6 +146,20 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Generated 1 monthly bill entry.")
     expect(page).to have_content("Electric")
     expect(page).not_to have_button("Add Monthly Bills")
+  end
+
+  it "opens planning templates from the plan and edit panel", js: true do
+    user = create(:user, email: "planedittemplates@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    click_button "Plan and Edit"
+    click_link "Open Planning Templates"
+
+    expect(page).to have_current_path(planning_templates_path)
+    expect(page).to have_content("Planning Templates")
   end
 
   it "shows a separate breakdown tab for the visual charts" do

@@ -1,4 +1,15 @@
 <%= turbo_frame_tag "entry_wizard_modal" do %>
+  <% template_params = params[:planning_template].presence || {} %>
+  <% template_enabled = ActiveModel::Type::Boolean.new.cast(template_params[:enabled]) %>
+  <% selected_template_type = template_params[:template_type].to_s %>
+  <% selected_due_day = template_params[:due_day].presence || expense_entry.occurred_on&.day %>
+  <% selected_day_of_month_one = template_params[:day_of_month_one].presence || expense_entry.occurred_on&.day %>
+  <% selected_day_of_month_two = template_params[:day_of_month_two] %>
+  <% selected_total_due = template_params[:total_due] %>
+  <% selected_amount_paid = template_params[:amount_paid] %>
+  <% selected_kind = template_params[:kind].presence || "fixed_payment" %>
+  <% selected_cadence = template_params[:cadence].presence || "monthly" %>
+  <% selected_weekend_adjustment = template_params[:weekend_adjustment].presence || "no_adjustment" %>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close click->template-modal#backdropClose">
     <div class="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
       <div class="mb-4 flex items-center justify-between gap-3">
@@ -11,7 +22,7 @@
         </button>
       </div>
 
-      <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-wizard entry-preview" }, class: "space-y-4" do |form| %>
+      <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-wizard entry-preview", action: "submit->entry-wizard#validateSubmit" }, class: "space-y-4" do |form| %>
         <%= hidden_field_tag :wizard_flow, "1" %>
 
         <div class="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -53,7 +64,7 @@
           <div class="grid gap-3 sm:grid-cols-3">
             <div>
               <%= form.label :section, class: "fb-label" %>
-              <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "section", action: "change->entry-wizard#updateSummary" } %>
+              <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "section", action: "change->entry-wizard#syncTemplateOptions change->entry-wizard#updateSummary" } %>
             </div>
             <div>
               <%= form.label :status, class: "fb-label" %>
@@ -144,6 +155,97 @@
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
               <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</p>
               <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryNotes">No notes</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Reuse This Later</p>
+                  <p class="mt-1 text-sm text-slate-600">Optionally save this wizard entry as a planning template for future months.</p>
+                </div>
+                <label class="flex items-center gap-2 text-sm font-medium text-slate-900">
+                  <%= hidden_field_tag "planning_template[enabled]", "0" %>
+                  <%= check_box_tag "planning_template[enabled]", "1", template_enabled, class: "fb-checkbox", data: { entry_wizard_target: "templateEnabled", action: "change->entry-wizard#toggleTemplateFields change->entry-wizard#updateSummary" } %>
+                  Save as template
+                </label>
+              </div>
+
+              <div class="mt-4 space-y-4 <%= template_enabled ? '' : 'hidden' %>" data-entry-wizard-target="templateFields">
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label for="planning_template_template_type" class="fb-label">Template Type</label>
+                    <%= select_tag "planning_template[template_type]",
+                        options_for_select([
+                          ["Choose a template type", ""],
+                          ["Pay Schedule", "pay_schedule"],
+                          ["Subscription", "subscription"],
+                          ["Monthly Bill", "monthly_bill"],
+                          ["Payment Plan", "payment_plan"]
+                        ], selected_template_type),
+                        class: "fb-select",
+                        id: "planning_template_template_type",
+                        data: { entry_wizard_target: "templateType", action: "change->entry-wizard#updateTemplateOptions change->entry-wizard#updateTemplateFields change->entry-wizard#updateSummary" } %>
+                    <p class="mt-1 text-xs text-slate-500">Template name uses the payee/source. Account, notes, and date are reused from this entry.</p>
+                  </div>
+                  <div>
+                    <label for="planning_template_due_day" class="fb-label">Due Day</label>
+                    <%= number_field_tag "planning_template[due_day]", selected_due_day, min: 1, max: 31, class: "fb-input", id: "planning_template_due_day", data: { entry_wizard_target: "templateDueDay", action: "input->entry-wizard#updateSummary" } %>
+                    <p class="mt-1 text-xs text-slate-500">Used by subscription, monthly bill, and payment plan templates.</p>
+                  </div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2 <%= selected_template_type == 'pay_schedule' ? '' : 'hidden' %>" data-entry-wizard-target="payScheduleFields">
+                  <div>
+                    <label for="planning_template_cadence" class="fb-label">Cadence</label>
+                    <%= select_tag "planning_template[cadence]",
+                        options_for_select(PaySchedule.cadences.keys.map { |key| [key.humanize, key] }, selected_cadence),
+                        class: "fb-select",
+                        id: "planning_template_cadence",
+                        data: { entry_wizard_target: "templateCadence", action: "change->entry-wizard#updateTemplateFields change->entry-wizard#updateSummary" } %>
+                  </div>
+                  <div>
+                    <label for="planning_template_weekend_adjustment" class="fb-label">Weekend Rule</label>
+                    <%= select_tag "planning_template[weekend_adjustment]",
+                        options_for_select(PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, selected_weekend_adjustment),
+                        class: "fb-select",
+                        id: "planning_template_weekend_adjustment",
+                        data: { entry_wizard_target: "templateWeekendAdjustment", action: "change->entry-wizard#updateSummary" } %>
+                  </div>
+                  <div>
+                    <label for="planning_template_day_of_month_one" class="fb-label">Day #1</label>
+                    <%= number_field_tag "planning_template[day_of_month_one]", selected_day_of_month_one, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_one", data: { entry_wizard_target: "templateDayOne", action: "input->entry-wizard#updateSummary" } %>
+                  </div>
+                  <div class="<%= selected_cadence == 'semimonthly' ? '' : 'hidden' %>" data-entry-wizard-target="payScheduleSecondDayFields">
+                    <label for="planning_template_day_of_month_two" class="fb-label">Day #2</label>
+                    <%= number_field_tag "planning_template[day_of_month_two]", selected_day_of_month_two, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_two", data: { entry_wizard_target: "templateDayTwo", action: "input->entry-wizard#updateSummary" } %>
+                  </div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2 <%= selected_template_type == 'monthly_bill' ? '' : 'hidden' %>" data-entry-wizard-target="monthlyBillFields">
+                  <div>
+                    <label for="planning_template_kind" class="fb-label">Bill Type</label>
+                    <%= select_tag "planning_template[kind]",
+                        options_for_select(MonthlyBill.kinds.keys.map { |key| [key.humanize, key] }, selected_kind),
+                        class: "fb-select",
+                        id: "planning_template_kind",
+                        data: { entry_wizard_target: "templateKind", action: "change->entry-wizard#updateSummary" } %>
+                  </div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2 <%= selected_template_type == 'payment_plan' ? '' : 'hidden' %>" data-entry-wizard-target="paymentPlanFields">
+                  <div>
+                    <label for="planning_template_total_due" class="fb-label">Total Due</label>
+                    <%= number_field_tag "planning_template[total_due]", selected_total_due, step: 0.01, min: 0, class: "fb-input", id: "planning_template_total_due", data: { entry_wizard_target: "templateTotalDue", action: "input->entry-wizard#updateSummary" } %>
+                  </div>
+                  <div>
+                    <label for="planning_template_amount_paid" class="fb-label">Amount Paid So Far</label>
+                    <%= number_field_tag "planning_template[amount_paid]", selected_amount_paid, step: 0.01, min: 0, class: "fb-input", id: "planning_template_amount_paid", data: { entry_wizard_target: "templateAmountPaid", action: "input->entry-wizard#updateSummary" } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Template Summary</p>
+              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryTemplate">One-off entry only</p>
             </div>
           </div>
         </section>

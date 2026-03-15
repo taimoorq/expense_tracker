@@ -4,6 +4,13 @@ class BudgetMonthsController < ApplicationController
   def index
     auto_complete_due_recurring_entries(current_user.expense_entries)
     @budget_months = current_user.budget_months.includes(:expense_entries).recent_first
+    @planning_template_counts = {
+      pay_schedules: current_user.pay_schedules.count,
+      subscriptions: current_user.subscriptions.count,
+      monthly_bills: current_user.monthly_bills.count,
+      payment_plans: current_user.payment_plans.count,
+      credit_cards: current_user.credit_cards.count
+    }
   end
 
   def show

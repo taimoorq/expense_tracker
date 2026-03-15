@@ -22,13 +22,56 @@ export default class extends Controller {
     "summaryWhen",
     "summaryAmounts",
     "summaryNotes",
-    "error"
+    "summaryTemplate",
+    "error",
+    "templateEnabled",
+    "templateFields",
+    "templateType",
+    "templateDueDay",
+    "templateCadence",
+    "templateWeekendAdjustment",
+    "templateDayOne",
+    "templateDayTwo",
+    "templateKind",
+    "templateTotalDue",
+    "templateAmountPaid",
+    "payScheduleFields",
+    "payScheduleSecondDayFields",
+    "monthlyBillFields",
+    "paymentPlanFields"
   ]
+
+  static values = {
+    supportedTemplateTypes: Object
+  }
 
   connect() {
     this.index = 0
+    this.supportedTemplateTypesValue = {
+      income: ["pay_schedule"],
+      fixed: ["subscription", "monthly_bill"],
+      variable: ["subscription", "monthly_bill"],
+      debt: ["payment_plan"],
+      manual: ["subscription", "monthly_bill", "payment_plan"],
+      auto: ["subscription", "monthly_bill"],
+      other: ["subscription", "monthly_bill"]
+    }
+    this.updateTemplateOptions()
+    this.updateTemplateFields()
     this.showCurrentStep()
     this.updateSummary()
+  }
+
+  validateSubmit(event) {
+    if (this.index !== this.stepTargets.length - 1) {
+      event.preventDefault()
+      this.fail("Finish the wizard steps before saving.")
+      return
+    }
+
+    if (!this.validateCurrentStep()) {
+      event.preventDefault()
+    }
   }
 
   next() {
@@ -45,8 +88,14 @@ export default class extends Controller {
   chooseSection(event) {
     const value = event.currentTarget.dataset.sectionValue
     if (this.hasSectionTarget) this.sectionTarget.value = value
+    this.syncTemplateOptions()
     this.updateSummary()
     this.clearError()
+  }
+
+  syncTemplateOptions() {
+    this.updateTemplateOptions()
+    this.updateTemplateFields()
   }
 
   updateSummary() {
@@ -78,6 +127,10 @@ export default class extends Controller {
     if (this.hasSummaryNotesTarget) {
       const notes = this.hasNotesTarget ? this.notesTarget.value.trim() : ""
       this.summaryNotesTarget.textContent = notes || "No notes"
+    }
+
+    if (this.hasSummaryTemplateTarget) {
+      this.summaryTemplateTarget.textContent = this.templateSummary()
     }
   }
 
@@ -126,7 +179,84 @@ export default class extends Controller {
       if (!planned && !actual) return this.fail("Enter at least a planned or actual amount.")
     }
 
+    if (this.index === this.stepTargets.length - 1 && this.templateEnabled()) {
+      if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) {
+        return this.fail("Choose which planning template type to save.")
+      }
+
+      if ((this.usesDueDayTemplateType()) && (!this.hasTemplateDueDayTarget || !this.templateDueDayTarget.value)) {
+        return this.fail("Add a due day for the planning template.")
+      }
+
+      if (this.templateTypeTarget.value === "payment_plan" && (!this.hasTemplateTotalDueTarget || !this.templateTotalDueTarget.value.trim())) {
+        return this.fail("Add the total due for the payment plan template.")
+      }
+
+      if (this.templateTypeTarget.value === "pay_schedule" && this.hasTemplateCadenceTarget && this.templateCadenceTarget.value === "semimonthly") {
+        if (!this.hasTemplateDayOneTarget || !this.templateDayOneTarget.value) {
+          return this.fail("Add the first semimonthly pay day.")
+        }
+
+        if (!this.hasTemplateDayTwoTarget || !this.templateDayTwoTarget.value) {
+          return this.fail("Add the second semimonthly pay day.")
+        }
+      }
+    }
+
     return true
+  }
+
+  toggleTemplateFields() {
+    if (this.hasTemplateFieldsTarget) {
+      this.templateFieldsTarget.classList.toggle("hidden", !this.templateEnabled())
+    }
+
+    this.updateTemplateOptions()
+    this.updateTemplateFields()
+    this.clearError()
+  }
+
+  updateTemplateOptions() {
+    if (!this.hasTemplateTypeTarget) return
+
+    const supportedTypes = this.supportedTypesForCurrentSection()
+
+    Array.from(this.templateTypeTarget.options).forEach((option) => {
+      if (option.value === "") {
+        option.hidden = false
+        option.disabled = false
+        return
+      }
+
+      const supported = supportedTypes.includes(option.value)
+      option.hidden = !supported
+      option.disabled = !supported
+    })
+
+    if (!supportedTypes.includes(this.templateTypeTarget.value)) {
+      this.templateTypeTarget.value = ""
+    }
+  }
+
+  updateTemplateFields() {
+    const templateType = this.hasTemplateTypeTarget ? this.templateTypeTarget.value : ""
+
+    if (this.hasPayScheduleFieldsTarget) {
+      this.payScheduleFieldsTarget.classList.toggle("hidden", !this.templateEnabled() || templateType !== "pay_schedule")
+    }
+
+    if (this.hasMonthlyBillFieldsTarget) {
+      this.monthlyBillFieldsTarget.classList.toggle("hidden", !this.templateEnabled() || templateType !== "monthly_bill")
+    }
+
+    if (this.hasPaymentPlanFieldsTarget) {
+      this.paymentPlanFieldsTarget.classList.toggle("hidden", !this.templateEnabled() || templateType !== "payment_plan")
+    }
+
+    if (this.hasPayScheduleSecondDayFieldsTarget) {
+      const showSecondDay = this.templateEnabled() && templateType === "pay_schedule" && this.hasTemplateCadenceTarget && this.templateCadenceTarget.value === "semimonthly"
+      this.payScheduleSecondDayFieldsTarget.classList.toggle("hidden", !showSecondDay)
+    }
   }
 
   fail(message) {
@@ -156,5 +286,48 @@ export default class extends Controller {
       style: "currency",
       currency: "USD"
     }).format(amount)
+  }
+
+  templateEnabled() {
+    return this.hasTemplateEnabledTarget && this.templateEnabledTarget.checked
+  }
+
+  supportedTypesForCurrentSection() {
+    const section = this.hasSectionTarget ? this.sectionTarget.value : ""
+    return this.supportedTemplateTypesValue[section] || []
+  }
+
+  usesDueDayTemplateType() {
+    if (!this.hasTemplateTypeTarget) return false
+    return ["subscription", "monthly_bill", "payment_plan"].includes(this.templateTypeTarget.value)
+  }
+
+  templateSummary() {
+    if (!this.templateEnabled()) return "One-off entry only"
+    if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) return "Planning template enabled, type not chosen yet"
+
+    const templateType = this.humanize(this.templateTypeTarget.value)
+
+    if (this.templateTypeTarget.value === "pay_schedule") {
+      const cadence = this.hasTemplateCadenceTarget ? this.humanize(this.templateCadenceTarget.value) : "Monthly"
+      const dayOne = this.hasTemplateDayOneTarget && this.templateDayOneTarget.value ? `Day ${this.templateDayOneTarget.value}` : "first pay date"
+      const dayTwo = this.hasTemplateDayTwoTarget && this.templateDayTwoTarget.value ? ` and day ${this.templateDayTwoTarget.value}` : ""
+      return `${templateType} • ${cadence} • ${dayOne}${dayTwo}`
+    }
+
+    if (this.templateTypeTarget.value === "monthly_bill") {
+      const kind = this.hasTemplateKindTarget ? this.humanize(this.templateKindTarget.value) : "Fixed Payment"
+      const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
+      return `${templateType} • ${kind} • ${dueDay}`
+    }
+
+    if (this.templateTypeTarget.value === "payment_plan") {
+      const totalDue = this.hasTemplateTotalDueTarget ? this.formatCurrency(this.templateTotalDueTarget.value) : "$0.00"
+      const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
+      return `${templateType} • Total due ${totalDue} • ${dueDay}`
+    }
+
+    const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
+    return `${templateType} • ${dueDay}`
   }
 }

@@ -27,6 +27,65 @@ RSpec.describe "Expense entries", type: :request do
     expect(budget_month.expense_entries.last.user).to eq(user)
   end
 
+  it "creates an entry and a planning template from the wizard payload" do
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        expense_entry: {
+          occurred_on: "2026-03-08",
+          section: "fixed",
+          category: "Streaming",
+          payee: "Netflix",
+          planned_amount: "19.99",
+          account: "Checking",
+          status: "planned",
+          need_or_want: "Want",
+          notes: "Family plan"
+        },
+        planning_template: {
+          enabled: "1",
+          template_type: "subscription",
+          due_day: "8"
+        }
+      }
+    end.to change(budget_month.expense_entries, :count).by(1)
+      .and change(user.subscriptions, :count).by(1)
+
+    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(flash[:notice]).to eq("Entry and planning template added.")
+
+    subscription = user.subscriptions.order(:created_at).last
+    expect(subscription.name).to eq("Netflix")
+    expect(subscription.amount.to_d).to eq(19.99.to_d)
+    expect(subscription.due_day).to eq(8)
+  end
+
+  it "does not create the entry when the requested template is invalid" do
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        expense_entry: {
+          occurred_on: "2026-03-18",
+          section: "debt",
+          category: "Installment",
+          payee: "IRS",
+          planned_amount: "150.00",
+          account: "Checking",
+          status: "planned"
+        },
+        planning_template: {
+          enabled: "1",
+          template_type: "payment_plan",
+          due_day: "18",
+          total_due: ""
+        }
+      }
+    end.not_to change(budget_month.expense_entries, :count)
+
+    expect(user.payment_plans.count).to eq(0)
+    expect(response).to have_http_status(:unprocessable_entity)
+  end
+
   it "updates an entry in the signed in user's month" do
     entry = create(:expense_entry, budget_month: budget_month, user: user, payee: "Old Payee")
 

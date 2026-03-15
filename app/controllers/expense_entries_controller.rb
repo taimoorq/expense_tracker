@@ -77,17 +77,39 @@ class ExpenseEntriesController < ApplicationController
 
   def create
     @expense_entry = @budget_month.expense_entries.new(expense_entry_params)
+    template_creator = EntryWizardTemplateCreator.new(user: current_user, expense_entry: @expense_entry, params: planning_template_params)
+    saved_successfully = false
 
-    if @expense_entry.save
+    ActiveRecord::Base.transaction do
+      if @expense_entry.save
+        if template_creator.save
+          saved_successfully = true
+        else
+          template_creator.error_messages.each { |message| @expense_entry.errors.add(:base, message) }
+          raise ActiveRecord::Rollback
+        end
+      end
+    end
+
+    if saved_successfully
       prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new)
+      success_message = template_creator.requested? ? "Entry and planning template added." : "Entry added."
 
       respond_to do |format|
         format.turbo_stream do
-          render_month_page_refresh(message: "Entry added.", include_entry_form: true, reset_entry_wizard_modal: true)
+          render_month_page_refresh(message: success_message, include_entry_form: true, reset_entry_wizard_modal: true)
         end
-        format.html { redirect_to @budget_month, notice: "Entry added." }
+        format.html { redirect_to @budget_month, notice: success_message }
       end
     else
+      if @expense_entry.persisted?
+        failed_errors = @expense_entry.errors.dup
+        @expense_entry = @budget_month.expense_entries.new(expense_entry_params)
+        failed_errors.each do |error|
+          @expense_entry.errors.add(error.attribute, error.message)
+        end
+      end
+
       @expense_entries = @budget_month.expense_entries.chronological
 
       respond_to do |format|
@@ -102,7 +124,13 @@ class ExpenseEntriesController < ApplicationController
             ], status: :unprocessable_entity
           end
         end
-        format.html { render "budget_months/show", status: :unprocessable_entity }
+        format.html do
+          if params[:wizard_flow] == "1"
+            render partial: "expense_entries/entry_wizard_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
+          else
+            render "budget_months/show", status: :unprocessable_entity
+          end
+        end
       end
     end
   end
@@ -209,6 +237,23 @@ class ExpenseEntriesController < ApplicationController
     permitted[:status] = "paid"
     permitted[:actual_amount] = permitted[:planned_amount].presence || @expense_entry.planned_amount if permitted[:actual_amount].blank?
     permitted
+  end
+
+  def planning_template_params
+    return ActionController::Parameters.new.permit! unless params[:planning_template].present?
+
+    params.require(:planning_template).permit(
+      :enabled,
+      :template_type,
+      :due_day,
+      :cadence,
+      :day_of_month_one,
+      :day_of_month_two,
+      :weekend_adjustment,
+      :kind,
+      :total_due,
+      :amount_paid
+    )
   end
 
   def template_record_for_entry(entry)

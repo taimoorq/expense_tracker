@@ -529,6 +529,7 @@ Once a month exists, entries can be added in the way that best matches the situa
 	- review and update the month list in one place
 - `Add Entry with Wizard`
 	- use the guided multi-step entry flow
+	- optionally save supported entries as planning templates while you add them
 - CSV import
 	- import a file from the dashboard
 	- imported rows create or update the correct month automatically
