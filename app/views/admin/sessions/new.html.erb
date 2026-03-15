@@ -31,6 +31,8 @@
       </label>
     <% end %>
 
+    <%= render "shared/turnstile_widget" %>
+
     <%= form.button type: :submit, class: "ta-auth-submit from-slate-800 to-cyan-700 hover:from-slate-700 hover:to-cyan-600" do %>
       <%= tabler_icon("shield-lock", classes: "h-4 w-4") %>
       <span>Sign in to admin</span>

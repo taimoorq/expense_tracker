@@ -2,7 +2,11 @@ Rails.application.routes.draw do
   devise_for :admin_users, path: "admin", controllers: {
     sessions: "admin/sessions"
   }
-  devise_for :users
+  devise_for :users, controllers: {
+    sessions: "users/sessions",
+    registrations: "users/registrations",
+    passwords: "users/passwords"
+  }
 
   namespace :admin do
     root "dashboard#show"

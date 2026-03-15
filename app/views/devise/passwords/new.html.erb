@@ -16,6 +16,8 @@
       </div>
     </div>
 
+    <%= render "shared/turnstile_widget" %>
+
     <%= form.button type: :submit, class: "ta-auth-submit from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400" do %>
       <%= tabler_icon("lock", classes: "h-4 w-4") %>
       <span>Send me reset password instructions</span>

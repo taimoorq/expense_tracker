@@ -39,26 +39,13 @@
       </div>
     </div>
 
+    <%= render "shared/turnstile_widget" %>
+
     <%= form.button type: :submit, class: "ta-auth-submit from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500" do %>
       <%= tabler_icon("user-plus", classes: "h-4 w-4") %>
       <span>Sign up</span>
     <% end %>
   <% end %>
-
-  <div class="grid gap-3 sm:grid-cols-3">
-    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-      <p class="font-semibold text-slate-900">Months</p>
-      <p class="mt-1">Track planned vs. actual money each month.</p>
-    </div>
-    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-      <p class="font-semibold text-slate-900">Templates</p>
-      <p class="mt-1">Reuse schedules, subscriptions, bills, and plans.</p>
-    </div>
-    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-      <p class="font-semibold text-slate-900">Privacy</p>
-      <p class="mt-1">Keep every user’s budgeting data isolated.</p>
-    </div>
-  </div>
 
   <%= render "devise/shared/links" %>
 </div>

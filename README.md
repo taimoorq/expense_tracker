@@ -371,6 +371,17 @@ Examples:
 
 If only one of those admin env vars is set, admin bootstrap fails fast so you do not end up with a half-configured admin setup.
 
+Optional Cloudflare Turnstile protection is available for the public authentication entry points:
+
+- user sign in
+- user sign up
+- password reset request
+- admin sign in
+
+To enable it, set both `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` before booting the app. If either value is missing, the widget stays disabled and authentication behaves normally.
+
+The Turnstile widget is rendered explicitly on the shared authentication layout so it can recover cleanly across Turbo visits and cached page restores.
+
 You can still create an admin manually from the Rails console if that fits your deployment workflow better:
 
 - `bin/rails console`

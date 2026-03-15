@@ -23,6 +23,9 @@
 
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <% if turnstile_enabled? %>
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <% end %>
     <%= javascript_importmap_tags %>
   </head>
 

@@ -28,7 +28,7 @@ module ApplicationHelper
       {
         badge: "Welcome back",
         title: "Sign in to your workspace",
-        description: "Pick up where you left off, review the month, and keep your budgeting private.",
+        description: "",
         gradient: "from-indigo-700 via-violet-700 to-sky-600",
         panel_tint: "from-indigo-500/20 via-violet-500/10 to-sky-400/20",
         glow: "bg-indigo-400/30",
@@ -140,6 +140,14 @@ module ApplicationHelper
 
   def authentication_brand_subtitle
     admin_auth_scope? ? "Restricted admin access" : "Private monthly budgeting"
+  end
+
+  def turnstile_enabled?
+    TurnstileVerifier.enabled?
+  end
+
+  def turnstile_site_key
+    TurnstileVerifier.site_key
   end
 
   def legacy_tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)

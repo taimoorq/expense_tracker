@@ -1,0 +1,11 @@
+<% return unless turnstile_enabled? %>
+
+<div class="space-y-2">
+  <div
+    class="rounded-2xl border border-slate-200 bg-slate-50 p-3"
+    data-controller="turnstile"
+    data-turnstile-site-key-value="<%= turnstile_site_key %>">
+    <div data-turnstile-target="widget"></div>
+  </div>
+  <p class="text-xs leading-5 text-slate-500">Human verification is enabled for this form.</p>
+</div>
