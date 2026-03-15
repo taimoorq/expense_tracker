@@ -31,6 +31,7 @@ RSpec.describe "Settings", type: :request do
   it "uses the preferred month view when no tab is requested" do
     user.update!(preferred_month_view: "calendar")
     budget_month = create(:budget_month, user: user)
+    create(:expense_entry, budget_month: budget_month, user: user)
 
     get budget_month_path(budget_month)
 

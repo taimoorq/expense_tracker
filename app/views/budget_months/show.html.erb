@@ -4,7 +4,7 @@
   <% generation_actions_hidden = @budget_month.complete_for_generation? %>
   <% requested_tab = params[:tab].presence_in(%w[timeline breakdown calendar entries]) %>
   <% preferred_tab = current_user.preferred_month_view.presence_in(%w[timeline breakdown calendar entries]) %>
-  <% default_tab = requested_tab || preferred_tab || (@expense_entries.empty? ? "entries" : "timeline") %>
+  <% default_tab = requested_tab || (@expense_entries.empty? ? "entries" : (preferred_tab || "timeline")) %>
 
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center justify-between gap-3">

@@ -151,7 +151,7 @@ module ApplicationHelper
   end
 
   def available_theme_options
-    available_themes.map { |theme| [theme.name, theme.key] }
+    available_themes.map { |theme| [ theme.name, theme.key ] }
   end
 
   def current_theme_colors
@@ -160,20 +160,20 @@ module ApplicationHelper
 
   def landing_page_options
     [
-      ["Overview", "overview"],
-      ["Months", "months"],
-      ["Planning Templates", "planning_templates"],
-      ["Accounts & Net Worth", "accounts"],
-      ["Settings", "settings"]
+      [ "Overview", "overview" ],
+      [ "Months", "months" ],
+      [ "Planning Templates", "planning_templates" ],
+      [ "Accounts & Net Worth", "accounts" ],
+      [ "Settings", "settings" ]
     ]
   end
 
   def preferred_month_view_options
     [
-      ["Timeline", "timeline"],
-      ["Breakdown", "breakdown"],
-      ["Calendar", "calendar"],
-      ["Plan and Edit", "entries"]
+      [ "Timeline", "timeline" ],
+      [ "Breakdown", "breakdown" ],
+      [ "Calendar", "calendar" ],
+      [ "Plan and Edit", "entries" ]
     ]
   end
 
