@@ -1,0 +1,199 @@
+<div class="space-y-6">
+  <% content_for :page_header do %>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-2xl font-semibold">Backup & Restore</h2>
+        <p class="mt-1 text-sm text-slate-600">Export or restore planning templates, months, and accounts with a versioned JSON backup.</p>
+      </div>
+      <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
+        <span>Back to Home</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <section class="grid gap-4 lg:grid-cols-3">
+    <% @scope_cards.each do |scope_key, scope| %>
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-base font-semibold text-slate-900"><%= scope[:title] %></p>
+            <p class="mt-1 text-sm text-slate-600"><%= scope[:description] %></p>
+          </div>
+          <span class="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white"><%= scope[:count] %></span>
+        </div>
+        <p class="mt-3 text-sm text-slate-500"><%= scope[:detail] %></p>
+      </article>
+    <% end %>
+  </section>
+
+  <div class="grid gap-6 xl:grid-cols-2">
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex items-start gap-3">
+        <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+          <%= tabler_icon("download", classes: "h-5 w-5") %>
+        </span>
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Export Data</h3>
+          <p class="mt-1 text-sm text-slate-600">JSON is the best fit here because it preserves nested month entries and account snapshots without flattening them into lossy rows.</p>
+        </div>
+      </div>
+
+      <%= form_with url: export_backup_restore_path, method: :post, class: "mt-5 space-y-4" do %>
+        <div class="space-y-3">
+          <% @scope_cards.each do |scope_key, scope| %>
+            <label class="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 hover:border-emerald-200 hover:bg-emerald-50">
+              <%= check_box_tag "export_scopes[]", scope_key, Array(@selected_export_scopes).include?(scope_key), class: "mt-1 fb-checkbox" %>
+              <span>
+                <span class="block text-sm font-semibold text-slate-900"><%= scope[:title] %></span>
+                <span class="mt-1 block text-sm text-slate-500"><%= scope[:detail] %></span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+
+        <div>
+          <%= label_tag :export_password, "Optional export password", class: "fb-label" %>
+          <%= password_field_tag :export_password, nil, class: "fb-input", minlength: 8, placeholder: "Leave blank for plain JSON" %>
+          <p class="mt-2 text-sm text-slate-500">If you set a password, the file stays JSON but the backup payload inside it is encrypted. The password is not stored in the app.</p>
+        </div>
+
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          Exported files include a backup format name and version so future imports can validate what was uploaded before changing any data.
+        </div>
+
+        <%= button_tag type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("download", classes: "ta-action-icon") %>
+          <span>Download Backup</span>
+        <% end %>
+      <% end %>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex items-start gap-3">
+        <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+          <%= tabler_icon("upload", classes: "h-5 w-5") %>
+        </span>
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Import Backup</h3>
+          <p class="mt-1 text-sm text-slate-600">Import restores only the sections you select and replaces the existing data in those sections, which avoids duplicate months, templates, or accounts.</p>
+        </div>
+      </div>
+
+      <%= form_with url: preview_backup_restore_path, method: :post, multipart: true, class: "mt-5 space-y-4" do %>
+        <div>
+          <%= label_tag :file, "Backup File", class: "fb-label" %>
+          <%= file_field_tag :file, accept: ".json,application/json", required: true, class: "fb-input" %>
+          <p class="mt-2 text-sm text-slate-500">Choose a previously exported backup file.</p>
+        </div>
+
+        <div>
+          <%= label_tag :import_password, "Backup password", class: "fb-label" %>
+          <%= password_field_tag :import_password, nil, class: "fb-input", placeholder: "Required only for encrypted backups" %>
+          <p class="mt-2 text-sm text-slate-500">Leave this blank unless the backup was exported with a password.</p>
+        </div>
+
+        <div class="space-y-3">
+          <% @scope_cards.each do |scope_key, scope| %>
+            <label class="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 hover:border-amber-200 hover:bg-amber-50">
+              <%= check_box_tag "import_scopes[]", scope_key, Array(@selected_import_scopes).include?(scope_key), class: "mt-1 fb-checkbox" %>
+              <span>
+                <span class="block text-sm font-semibold text-slate-900">Restore <%= scope[:title] %></span>
+                <span class="mt-1 block text-sm text-slate-500">Existing <%= scope[:title].downcase %> data will be replaced.</span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Import is restore-oriented: preview first, then confirm. Selected sections are fully replaced from the backup file inside one transaction, so partial restores are rolled back if validation fails.
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          Want to inspect the expected file first?
+          <%= link_to sample_backup_restore_path, class: "ml-1 inline-flex items-center gap-2 font-semibold text-slate-900 hover:text-indigo-700" do %>
+            <%= tabler_icon("download", classes: "h-4 w-4") %>
+            <span>Download sample backup</span>
+          <% end %>
+          <p class="mt-2 text-xs text-slate-500">This sample is for structure reference. Import it only if you want example records added to the selected sections.</p>
+        </div>
+
+        <%= button_tag type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("scan", classes: "ta-action-icon") %>
+          <span>Preview Import</span>
+        <% end %>
+      <% end %>
+    </section>
+  </div>
+
+  <% if @import_preview.present? %>
+    <section class="rounded-2xl border border-indigo-200 bg-indigo-50 p-6 shadow-sm">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Import Preview</h3>
+          <p class="mt-1 text-sm text-slate-600">Review what will be restored before confirming the import.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">
+          <span class="rounded-full bg-white px-3 py-1 text-slate-700">
+            <%= @import_preview[:encrypted] ? "Encrypted backup" : "Plain backup" %>
+          </span>
+          <% if @import_preview[:exported_at].present? %>
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700">Exported <%= Time.zone.parse(@import_preview[:exported_at]).strftime("%b %-d, %Y %l:%M %p") %></span>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @import_preview[:sample_backup] %>
+        <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          <p class="font-semibold">Reference-only sample backup</p>
+          <p class="mt-1"><%= @import_preview[:sample_notice].presence || "This file contains example records. Import it only if you want demo data restored into the selected sections." %></p>
+        </div>
+      <% end %>
+
+      <div class="mt-5 grid gap-4 md:grid-cols-3">
+        <% if @import_preview[:planning_templates] %>
+          <article class="rounded-2xl border border-indigo-100 bg-white p-4">
+            <p class="text-sm font-semibold text-slate-900">Planning Templates</p>
+            <% template_total = @import_preview[:planning_templates][:total] %>
+            <p class="mt-1 text-sm text-slate-600"><%= template_total %> <%= template_total == 1 ? "template" : "templates" %> will replace the current template library.</p>
+            <p class="mt-3 text-xs text-slate-500"><%= @import_preview[:planning_templates][:counts].map { |key, value| "#{value} #{key.to_s.humanize.downcase}" }.join(" • ") %></p>
+          </article>
+        <% end %>
+
+        <% if @import_preview[:budget_months] %>
+          <article class="rounded-2xl border border-indigo-100 bg-white p-4">
+            <p class="text-sm font-semibold text-slate-900">Months</p>
+            <p class="mt-1 text-sm text-slate-600"><%= @import_preview[:budget_months][:months] %> months and <%= @import_preview[:budget_months][:entries] %> entries will be restored.</p>
+          </article>
+        <% end %>
+
+        <% if @import_preview[:accounts] %>
+          <article class="rounded-2xl border border-indigo-100 bg-white p-4">
+            <p class="text-sm font-semibold text-slate-900">Accounts</p>
+            <% account_total = @import_preview[:accounts][:accounts] %>
+            <% snapshot_total = @import_preview[:accounts][:snapshots] %>
+            <p class="mt-1 text-sm text-slate-600"><%= account_total %> <%= account_total == 1 ? "account" : "accounts" %> and <%= snapshot_total %> <%= snapshot_total == 1 ? "snapshot" : "snapshots" %> will be restored.</p>
+          </article>
+        <% end %>
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        <%= form_with url: import_backup_restore_path, method: :post do %>
+          <%= hidden_field_tag :preview_token, @import_preview[:token] %>
+          <% if @import_preview[:sample_backup] %>
+            <label class="mb-3 flex items-start gap-3 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-700">
+              <%= check_box_tag :confirm_sample_backup, "1", false, class: "mt-1 fb-checkbox" %>
+              <span>I understand this is a reference-only sample backup and that restoring it will add example data to the selected sections.</span>
+            </label>
+          <% end %>
+          <%= button_tag type: :submit, class: "fb-btn-primary ta-action-btn" do %>
+            <%= tabler_icon("upload", classes: "ta-action-icon") %>
+            <span>Restore Selected Data</span>
+          <% end %>
+        <% end %>
+
+        <p class="text-sm text-slate-600">This preview stays available for 15 minutes.</p>
+      </div>
+    </section>
+  <% end %>
+</div>

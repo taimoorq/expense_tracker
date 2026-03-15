@@ -16,6 +16,11 @@ Rails.application.routes.draw do
 
   root "overview#show"
   get "help", to: "help#show", as: :help
+  get "backup_restore", to: "backup_restores#show", as: :backup_restore
+  get "backup_restore/sample", to: "backup_restores#sample", as: :sample_backup_restore
+  post "backup_restore/export", to: "backup_restores#export", as: :export_backup_restore
+  post "backup_restore/preview", to: "backup_restores#preview", as: :preview_backup_restore
+  post "backup_restore/import", to: "backup_restores#import", as: :import_backup_restore
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
   resources :accounts, except: [ :destroy ] do
     resources :account_snapshots, only: [ :create, :edit, :update, :destroy ]

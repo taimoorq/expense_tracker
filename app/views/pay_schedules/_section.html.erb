@@ -1,6 +1,8 @@
 <%= turbo_frame_tag "pay_schedules_section" do %>
   <% anchored_return_to = return_to.presence || planning_templates_path(anchor: "pay-schedules") %>
   <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: anchored_return_to } %>
+  <% show_collapsible_form = !budget_month && !pay_schedule.persisted? %>
+  <% form_open = budget_month || pay_schedule.persisted? || pay_schedule.errors.any? %>
   <section id="pay-schedules" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <div class="mb-3 flex items-center gap-2">
       <h3 class="text-lg font-semibold"><%= budget_month ? "1) Paycheck Schedules" : "Paycheck Schedules" %></h3>
@@ -18,7 +20,25 @@ First Pay On: anchor date for recurrence.
         <%= link_to "Cancel", planning_templates_path(anchor: "pay-schedules"), class: "font-semibold text-indigo-700 hover:text-indigo-900" %>
       </div>
     <% end %>
-    <%= form_with model: pay_schedule, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
+    <% if show_collapsible_form %>
+      <details class="group mb-3 rounded-xl border border-dashed border-slate-300 bg-slate-50" <%= "open" if form_open %>>
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl px-4 py-3 hover:bg-slate-100">
+          <div>
+            <p class="text-sm font-semibold text-slate-800">
+              <span class="group-open:hidden">Add Schedule</span>
+              <span class="hidden group-open:inline">Hide Schedule Form</span>
+            </p>
+            <p class="text-xs text-slate-500">
+              <span class="group-open:hidden">Click to open the new paycheck schedule form.</span>
+              <span class="hidden group-open:inline">The new paycheck schedule form is open below.</span>
+            </p>
+          </div>
+          <span class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition group-open:rotate-180 group-open:border-slate-900 group-open:text-slate-900">
+            <%= tabler_icon("chevron-down", classes: "h-4 w-4") %>
+          </span>
+        </summary>
+    <% end %>
+    <%= form_with model: pay_schedule, class: "mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" do |form| %>
       <% if budget_month %>
         <%= hidden_field_tag :budget_month_id, budget_month.id %>
       <% elsif return_to.present? %>
@@ -75,6 +95,9 @@ First Pay On: anchor date for recurrence.
           <% end %>
         <% end %>
       </div>
+    <% end %>
+    <% if show_collapsible_form %>
+      </details>
     <% end %>
 
     <% if budget_month %>

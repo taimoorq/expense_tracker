@@ -628,6 +628,10 @@ Recommended pre-publish commands:
 
 These commands are mainly for local development, debugging, and contribution work.
 
+- Lint Ruby: `bin/rubocop`
+- Security scan: `bin/brakeman`
+- Install git hooks: `bin/rails git_hooks:install`
+
 ### Local
 
 - Start app: `bin/dev`
@@ -649,6 +653,16 @@ These commands are mainly for local development, debugging, and contribution wor
 - Run tests: `docker compose exec web bundle exec rspec`
 - Rails console: `docker compose exec web bin/rails console`
 - Stop app: `docker compose down`
+
+### Pre-commit lint hook
+
+This repository includes a tracked pre-commit hook in `.githooks/pre-commit`.
+
+To enable it locally, run:
+
+- `bin/rails git_hooks:install`
+
+After that, each commit runs `bin/rubocop` against staged Ruby files and blocks the commit if lint fails.
 
 ## Troubleshooting
 

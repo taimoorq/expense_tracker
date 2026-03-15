@@ -73,6 +73,9 @@ RSpec.describe "Template editor", type: :system do
     sign_in_as(user)
     visit planning_templates_path
 
+    expect(page).to have_no_field("Employer / Source")
+    find("summary", text: "Add Schedule").click
+
     fill_in "Employer / Source", with: "Acme Payroll"
     fill_in "pay_schedule_amount", with: "2500"
     fill_in "First Pay On", with: "2026-01-15"

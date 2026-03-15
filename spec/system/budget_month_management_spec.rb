@@ -51,6 +51,45 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Drop a CSV here")
   end
 
+  it "shows only the current year's months by default and filters older years" do
+    user = create(:user, email: "yearfilter@example.com")
+    create(:budget_month, user: user, month_on: Date.new(2026, 1, 1), label: "January 2026")
+    create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(:budget_month, user: user, month_on: Date.new(2026, 4, 1), label: "April 2026")
+    create(:budget_month, user: user, month_on: Date.new(2025, 12, 1), label: "December 2025")
+
+    sign_in_as(user)
+    visit budget_months_path
+
+    expect(page).to have_content("3 months in 2026")
+    expect(page).to have_content("March 2026")
+    expect(page).to have_content("January 2026")
+    expect(page.body.index("March 2026")).to be < page.body.index("April 2026")
+    expect(page).not_to have_content("December 2025")
+    expect(page).to have_link("2025")
+
+    click_link "2025"
+
+    expect(page).to have_content("1 month in 2025")
+    expect(page).to have_content("December 2025")
+    expect(page).not_to have_content("March 2026")
+
+    click_link "2026"
+
+    expect(page).to have_content("3 months in 2026")
+    expect(page).to have_content("March 2026")
+    expect(page).not_to have_content("December 2025")
+  end
+
+  it "keeps the months list in a scrollable box" do
+    user = create(:user, email: "scrollmonths@example.com")
+
+    sign_in_as(user)
+    visit budget_months_path
+
+    expect(page).to have_css('[data-month-list="scrollable"][style*="max-height: 26rem"]', visible: :all)
+  end
+
   it "shows a planning template overview on the months page" do
     user = create(:user, email: "templateoverview@example.com")
     create(:pay_schedule, user: user, name: "Main Job")
@@ -144,7 +183,7 @@ RSpec.describe "Budget month management", type: :system do
     click_button "Add Monthly Bills"
 
     expect(page).to have_content("Generated 1 monthly bill entry.")
-    expect(page).to have_content("Electric")
+    expect(page).to have_text(/2 of 2 templates represented/i)
     expect(page).not_to have_button("Add Monthly Bills")
   end
 
@@ -251,6 +290,63 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Month Timeline")
     expect(page).to have_button("Mark as paid", visible: :all)
     expect(page).to have_css("[data-collapsible-groups-storage-key-value='timeline-groups-#{month.id}']")
+  end
+
+  it "can switch the timeline between section view and full list view", js: true do
+    user = create(:user, email: "timelineviewtoggle@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Phone", category: "Utilities", planned_amount: 45.10, actual_amount: nil, status: :planned)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    expect(page).to have_button("Section View")
+    expect(page).to have_button("Full List")
+    expect(page).to have_content("Other Entries")
+    expect(page).to have_button("Expand all")
+    expect(page).to have_button("Collapse all")
+
+    click_button "Full List"
+
+    expect(page).to have_content("Phone")
+    expect(page).to have_content("Utilities")
+    expect(page).to have_text(/actual/i)
+    expect(page).not_to have_button("Expand all")
+    expect(page).not_to have_button("Collapse all")
+
+    click_button "Section View"
+
+    expect(page).to have_content("Month Timeline")
+    expect(page).to have_button("Expand all")
+  end
+
+  it "opens the guided wizard from the timeline", js: true do
+    user = create(:user, email: "timelinewizard@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Phone", planned_amount: 45.10, actual_amount: nil, status: :planned)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    click_link "Add Entry with Wizard"
+
+    expect(page).to have_content("Add Entry with Wizard")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+  end
+
+  it "opens the guided wizard from the calendar tab", js: true do
+    user = create(:user, email: "calendarwizard@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Phone", planned_amount: 45.10, actual_amount: nil, status: :planned, occurred_on: Date.current.beginning_of_month + 2.days)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    click_button "Calendar"
+    click_link "Add Entry with Wizard"
+
+    expect(page).to have_content("Add Entry with Wizard")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal")
   end
 
   it "shows payment sections above recurring subscriptions and highlights editable payment rows" do

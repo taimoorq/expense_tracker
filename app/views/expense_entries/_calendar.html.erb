@@ -7,7 +7,13 @@
   <section class="ta-card ta-surface-calendar" data-controller="calendar-filter">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("calendar-month") %> Timeline Calendar</h3>
-      <div class="flex flex-wrap items-center gap-2 text-xs">
+      <div class="flex flex-wrap items-center gap-2">
+        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
+          <%= tabler_icon("adjustments", classes: "h-4 w-4") %>
+          <span>Add Entry with Wizard</span>
+        <% end %>
+
+        <div class="flex flex-wrap items-center gap-2 text-xs">
         <button type="button" class="rounded-full bg-white px-2 py-1 font-medium text-slate-700 border border-slate-300" data-calendar-filter-target="filter" data-value="all" data-action="click->calendar-filter#toggle" aria-pressed="true">All</button>
         <% reason_pills.each do |reason, count| %>
           <button type="button" class="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700" data-calendar-filter-target="filter" data-value="<%= reason.downcase %>" data-action="click->calendar-filter#toggle" aria-pressed="false">
@@ -15,6 +21,7 @@
             <span class="ml-1 text-slate-500"><%= count %></span>
           </button>
         <% end %>
+        </div>
       </div>
     </div>
 

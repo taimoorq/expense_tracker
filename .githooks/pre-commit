@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+staged_files=()
+while IFS= read -r -d '' file; do
+  staged_files+=("$file")
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+if [[ ${#staged_files[@]} -eq 0 ]]; then
+  exit 0
+fi
+
+lintable_files=()
+for file in "${staged_files[@]}"; do
+  case "$file" in
+    *.rb|*.rake)
+      lintable_files+=("$file")
+      ;;
+  esac
+done
+
+if [[ ${#lintable_files[@]} -eq 0 ]]; then
+  exit 0
+fi
+
+echo "Running RuboCop on staged Ruby files..."
+bin/rubocop --force-exclusion "${lintable_files[@]}"

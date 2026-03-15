@@ -34,6 +34,7 @@
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
     <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" %>
+    <% backup_restore_active = controller_name == "backup_restores" %>
     <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
     <% help_active = controller_name == "help" %>
     <% months_section_active = months_active || templates_active || new_month_active %>
@@ -76,6 +77,11 @@
           <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth" do %>
             <%= tabler_icon("cash", classes: "ta-sidebar-link-icon") %>
             <span class="ta-sidebar-label">Accounts & Net Worth</span>
+          <% end %>
+
+          <%= link_to backup_restore_path, class: ["ta-sidebar-link", (backup_restore_active ? "ta-sidebar-link-active" : nil)], title: "Backup & Restore" do %>
+            <%= tabler_icon("shield-lock", classes: "ta-sidebar-link-icon") %>
+            <span class="ta-sidebar-label">Backup & Restore</span>
           <% end %>
 
           <%= link_to help_path, class: ["ta-sidebar-link", (help_active ? "ta-sidebar-link-active" : nil)], title: "Help & Documentation" do %>

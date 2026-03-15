@@ -3,7 +3,16 @@ class BudgetMonthsController < ApplicationController
 
   def index
     auto_complete_due_recurring_entries(current_user.expense_entries)
-    @budget_months = current_user.budget_months.includes(:expense_entries).recent_first
+    @budget_months = current_user.budget_months.includes(:expense_entries).recent_first.to_a
+    current_year = Date.current.year
+    available_years = @budget_months.map { |month| month.month_on.year }.uniq.sort.reverse
+
+    @selected_year = params[:year].to_i
+    @selected_year = current_year unless @selected_year.positive?
+    @selected_year = current_year unless @selected_year == current_year || available_years.include?(@selected_year)
+    @previous_years = available_years.select { |year| year < current_year }
+    @visible_budget_months = visible_budget_months_for_year(@budget_months, @selected_year)
+
     @planning_template_counts = {
       pay_schedules: current_user.pay_schedules.count,
       subscriptions: current_user.subscriptions.count,
@@ -197,5 +206,15 @@ class BudgetMonthsController < ApplicationController
 
   def budget_month_params
     params.require(:budget_month).permit(:label, :month_on, :planned_income, :actual_income, :leftover, :notes)
+  end
+
+  def visible_budget_months_for_year(budget_months, year)
+    months_for_year = budget_months.select { |month| month.month_on.year == year }
+    return months_for_year.sort_by(&:month_on).reverse unless year == Date.current.year
+
+    current_month = Date.current.beginning_of_month
+    current_and_past, future = months_for_year.partition { |month| month.month_on <= current_month }
+
+    current_and_past.sort_by(&:month_on).reverse + future.sort_by(&:month_on)
   end
 end

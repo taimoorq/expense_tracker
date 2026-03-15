@@ -1,31 +1,15 @@
 <%= turbo_frame_tag "entries_table" do %>
-  <section class="ta-card">
+  <% show_header = local_assigns.fetch(:show_header, true) %>
+  <% wrapper_classes = local_assigns.fetch(:wrapper_classes, "ta-card") %>
+  <section class="<%= wrapper_classes %>">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("list") %> Full Month List</h3>
-        <p class="mt-1 text-sm text-slate-500">Everything currently planned or recorded for this month, with quick actions for editing and status updates after reviewing the guidance above.</p>
-      </div>
+      <% if show_header %>
+        <div>
+          <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("list") %> Full Month List</h3>
+          <p class="mt-1 text-sm text-slate-500">Everything currently planned or recorded for this month, with quick actions for editing and status updates after reviewing the guidance above.</p>
+        </div>
+      <% end %>
     </div>
-    <div class="overflow-x-auto">
-      <table class="ta-table">
-        <thead class="ta-table-head">
-          <tr>
-            <th class="ta-th">Date</th>
-            <th class="ta-th">Section</th>
-            <th class="ta-th">Category</th>
-            <th class="ta-th">Payee</th>
-            <th class="ta-th text-right">Planned</th>
-            <th class="ta-th text-right">Actual</th>
-            <th class="ta-th">Status</th>
-            <th class="ta-th">Action</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          <% expense_entries.each do |entry| %>
-            <%= render "expense_entries/row", budget_month: budget_month, entry: entry %>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+    <%= render "expense_entries/table_content", budget_month: budget_month, expense_entries: expense_entries %>
   </section>
 <% end %>

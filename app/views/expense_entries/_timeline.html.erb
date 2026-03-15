@@ -5,18 +5,26 @@
                     .tally
                     .sort_by { |reason, count| [-count, reason.downcase] }
                     .first(8) %>
-  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups timeline-category-filter" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>">
-    <div class="mb-3 flex items-center justify-between">
-      <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Month Timeline</h3>
-      <div class="flex items-center gap-2">
-        <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#expandAll">
-          <%= tabler_icon("chevron-down", classes: "h-4 w-4 text-slate-600") %>
-          <span>Expand all</span>
-        </button>
-        <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#collapseAll">
-          <%= tabler_icon("chevron-up", classes: "h-4 w-4 text-slate-600") %>
-          <span>Collapse all</span>
-        </button>
+  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups timeline-category-filter tabs" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" data-tabs-default-tab-value="sections">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Month Timeline</h3>
+        <p class="mt-1 text-sm text-slate-500">Switch between grouped sections and a flat month list without leaving the timeline.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="ta-tab-list" role="tablist" aria-label="Timeline view mode">
+          <button type="button" class="ta-tab ta-tab-active" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="sections" data-action="click->tabs#switch" data-tabs-name-param="sections">
+            <span class="inline-flex items-center gap-2"><%= tabler_icon("layout-list", classes: "ta-tab-icon") %> Section View</span>
+          </button>
+          <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="full-list" data-action="click->tabs#switch" data-tabs-name-param="full-list">
+            <span class="inline-flex items-center gap-2"><%= tabler_icon("table", classes: "ta-tab-icon") %> Full List</span>
+          </button>
+        </div>
+
+        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
+          <%= tabler_icon("adjustments", classes: "h-4 w-4") %>
+          <span>Add Entry with Wizard</span>
+        <% end %>
       </div>
     </div>
     <p class="ta-muted mb-3">Grouped by budget buckets with per-group totals</p>
@@ -66,6 +74,17 @@
           </select>
         </div>
       </div>
+
+      <div data-tabs-target="panel" data-panel-name="sections" role="presentation" class="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
+        <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#expandAll">
+          <%= tabler_icon("chevron-down", classes: "h-4 w-4 text-slate-600") %>
+          <span>Expand all</span>
+        </button>
+        <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#collapseAll">
+          <%= tabler_icon("chevron-up", classes: "h-4 w-4 text-slate-600") %>
+          <span>Collapse all</span>
+        </button>
+      </div>
     </div>
 
     <% ordered_entries = expense_entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
@@ -89,6 +108,7 @@
 
     <% grouped_entries << ["Other Entries", remaining_entries] if remaining_entries.any? %>
 
+    <div data-tabs-target="panel" data-panel-name="sections" role="tabpanel" class="space-y-4">
     <% if grouped_entries.any? %>
       <div class="space-y-4">
         <% grouped_entries.each_with_index do |(group_name, entries), index| %>
@@ -222,8 +242,21 @@
       </div>
       <p class="hidden rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500" data-timeline-category-filter-target="empty">No matching timeline groups for the selected filters.</p>
     <% else %>
-      <p class="ta-muted">No timeline entries for this month yet.</p>
+      <div class="rounded-[22px] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center">
+        <p class="ta-muted">No timeline entries for this month yet.</p>
+        <div class="mt-4 flex justify-center">
+          <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
+            <%= tabler_icon("adjustments", classes: "h-4 w-4") %>
+            <span>Add First Entry with Wizard</span>
+          <% end %>
+        </div>
+      </div>
     <% end %>
+    </div>
+
+    <div data-tabs-target="panel" data-panel-name="full-list" role="tabpanel" class="hidden space-y-4">
+      <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4" %>
+    </div>
 
     <div class="mt-4 border-t border-slate-200 pt-3">
       <div class="flex items-center justify-end gap-3 text-sm">

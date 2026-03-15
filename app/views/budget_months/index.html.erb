@@ -17,20 +17,43 @@
 <% end %>
 
 <div class="grid gap-6 xl:grid-cols-[minmax(0,1.8fr)_360px]">
-  <section class="ta-card min-w-0">
+  <section id="existing-months" class="ta-card min-w-0">
     <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 class="ta-section-title">Existing months</h2>
         <p class="ta-muted mt-1">Open a budget month, review totals, or clone a previous setup into the next available month.</p>
       </div>
       <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-        <%= pluralize(@budget_months.count, "month") %>
+        <%= pluralize(@visible_budget_months.count, "month") %> in <%= @selected_year %>
       </div>
     </div>
 
-    <div class="overflow-x-auto">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <%= link_to budget_months_path, class: ["rounded-full border px-3 py-1 text-xs font-semibold transition", (@selected_year == Date.current.year ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700")] do %>
+        <span><%= Date.current.year %></span>
+      <% end %>
+      <% if @previous_years.any? %>
+        <% @previous_years.each do |year| %>
+          <%= link_to budget_months_path(year: year), class: ["rounded-full border px-3 py-1 text-xs font-semibold transition", (@selected_year == year ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700")] do %>
+            <span><%= year %></span>
+          <% end %>
+        <% end %>
+      <% else %>
+        <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">No previous years yet</span>
+      <% end %>
+    </div>
+
+    <div class="mb-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
+      <% if @selected_year == Date.current.year %>
+        Showing this year with <span class="font-semibold text-slate-900">the current month first</span> so the active month stays at the top.
+      <% else %>
+        Showing saved months from <span class="font-semibold text-slate-900"><%= @selected_year %></span>.
+      <% end %>
+    </div>
+
+    <div class="overflow-x-auto overflow-y-auto rounded-2xl border border-slate-200" data-month-list="scrollable" style="max-height: 26rem;">
       <table class="ta-table">
-        <thead class="ta-table-head">
+        <thead class="ta-table-head sticky top-0 z-10 bg-white">
         <tr>
           <th class="ta-th">Month</th>
           <th class="ta-th text-right">Income</th>
@@ -41,7 +64,8 @@
         </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-        <% @budget_months.each do |month| %>
+        <% if @visible_budget_months.any? %>
+        <% @visible_budget_months.each do |month| %>
           <tr id="<%= dom_id(month) %>" style="view-transition-name: dashboard-month-<%= dom_id(month) %>; view-transition-class: ta-vt-row;">
             <td class="ta-td"><%= link_to month.label, budget_month_path(month), class: "font-medium text-indigo-600 hover:text-indigo-500" %></td>
             <td class="ta-td text-right"><%= number_to_currency(month.income_total) %></td>
@@ -63,13 +87,24 @@
             </td>
           </tr>
         <% end %>
+        <% else %>
+          <tr>
+            <td class="ta-td text-sm text-slate-500" colspan="6">
+              <% if @selected_year == Date.current.year %>
+                No months saved for this year yet.
+              <% else %>
+                No months saved for <%= @selected_year %>.
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
         </tbody>
       </table>
     </div>
   </section>
 
   <aside class="space-y-6 xl:sticky xl:top-6">
-    <section class="ta-card h-fit">
+    <section id="planning-template-summary" class="ta-card h-fit">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 class="ta-section-title inline-flex items-center gap-2">
@@ -112,7 +147,7 @@
       <% end %>
     </section>
 
-    <section class="ta-card h-fit" data-controller="file-drop">
+    <section id="quick-import" class="ta-card h-fit" data-controller="file-drop">
       <div class="mb-4">
         <h2 class="ta-section-title inline-flex items-center gap-2">
           <%= tabler_icon("upload", classes: "ta-action-icon-lg text-indigo-600") %>

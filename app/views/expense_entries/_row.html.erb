@@ -1,4 +1,12 @@
-<tr id="<%= dom_id(entry) %>" style="view-transition-name: table-entry-<%= dom_id(entry) %>; view-transition-class: ta-vt-row;">
+<% reason_for_entry = entry.category.presence || entry.section.humanize %>
+<tr id="<%= dom_id(entry) %>"
+  data-timeline-category-filter-target="row"
+  data-date="<%= entry.occurred_on&.iso8601 %>"
+  data-payee="<%= entry.payee.to_s %>"
+  data-reason="<%= reason_for_entry.to_s %>"
+  data-value="<%= reason_for_entry.to_s.downcase %>"
+  data-status="<%= entry.status %>"
+  style="view-transition-name: table-entry-<%= dom_id(entry) %>; view-transition-class: ta-vt-row;">
   <td class="px-3 py-2"><%= entry.occurred_on %></td>
   <td class="px-3 py-2"><%= entry.section.humanize %></td>
   <td class="px-3 py-2"><%= entry.category %></td>
