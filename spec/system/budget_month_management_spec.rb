@@ -9,7 +9,6 @@ RSpec.describe "Budget month management", type: :system do
 
     fill_in "Month", with: "2026-05-01"
     fill_in "Label", with: "May 2026"
-    fill_in "Planned income", with: "7200"
     click_button "Create"
 
     expect(page).to have_content("Budget month created.")

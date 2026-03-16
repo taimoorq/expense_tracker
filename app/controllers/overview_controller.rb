@@ -35,7 +35,7 @@ class OverviewController < ApplicationController
       has_generated_monthly_bills = monthly_bill_coverage[:complete]
       has_generated_payment_plans = payment_plan_coverage[:complete]
       has_estimated_credit_cards = matching_credit_card_entries.any?
-      @template_actions_completed = [has_generated_paychecks, has_generated_subscriptions, has_generated_monthly_bills, has_generated_payment_plans, has_estimated_credit_cards].count(true)
+      @template_actions_completed = [ has_generated_paychecks, has_generated_subscriptions, has_generated_monthly_bills, has_generated_payment_plans, has_estimated_credit_cards ].count(true)
     end
 
     @accounts = current_user.accounts.includes(:account_snapshots).active_first.to_a
