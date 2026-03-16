@@ -112,8 +112,6 @@ class UserDataExport
       {
         label: month.label,
         month_on: month.month_on&.to_s,
-        planned_income: decimal_string(month.planned_income),
-        actual_income: decimal_string(month.actual_income),
         leftover: decimal_string(month.leftover),
         notes: month.notes,
         expense_entries: month.expense_entries.chronological.map do |entry|

@@ -27,6 +27,26 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.fetch("data")).not_to have_key("budget_months")
   end
 
+  it "exports budget_months and expense_entries without removed fields" do
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(:expense_entry, budget_month: month, user: user, payee: "Rent", category: "Housing", section: :fixed, status: :planned, planned_amount: 1200)
+
+    post export_backup_restore_path, params: { export_scopes: [ "budget_months" ] }
+
+    expect(response).to have_http_status(:ok)
+    payload = JSON.parse(response.body)
+    months = payload.dig("data", "budget_months")
+    expect(months.size).to eq(1)
+    month_data = months.first
+    expect(month_data).to have_key("label")
+    expect(month_data).to have_key("month_on")
+    expect(month_data).to have_key("leftover")
+    expect(month_data).to have_key("notes")
+    expect(month_data).not_to have_key("planned_income")
+    expect(month_data).not_to have_key("actual_income")
+    expect(month_data["expense_entries"].first).to include("payee" => "Rent")
+  end
+
   it "exports an encrypted backup when a password is provided" do
     create(:pay_schedule, user: user, name: "Acme Payroll")
 
@@ -61,6 +81,60 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "planning_templates", "pay_schedules")).not_to be_empty
     expect(payload.dig("data", "budget_months", 0, "expense_entries")).not_to be_empty
     expect(payload.dig("data", "accounts", 0, "account_snapshots")).not_to be_empty
+  end
+
+  it "imports budget_months from backups with legacy planned_income/actual_income (ignored)" do
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "budget_months" ],
+        data: {
+          budget_months: [
+            {
+              label: "Legacy March 2026",
+              month_on: "2026-03-01",
+              planned_income: "5000.0",
+              actual_income: "4980.0",
+              leftover: nil,
+              notes: "Old backup format",
+              expense_entries: [
+                {
+                  occurred_on: "2026-03-02",
+                  section: "fixed",
+                  category: "Utilities",
+                  payee: "Pepco",
+                  planned_amount: "91.22",
+                  actual_amount: nil,
+                  account: "Checking",
+                  status: "planned",
+                  need_or_want: "Need",
+                  notes: nil,
+                  source_file: "manual"
+                }
+              ]
+            }
+          ]
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "legacy-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "budget_months" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(user.budget_months.reload.pluck(:label)).to eq([ "Legacy March 2026" ])
+    expect(user.expense_entries.reload.pluck(:payee)).to eq([ "Pepco" ])
+  ensure
+    file.close
+    file.unlink
   end
 
   it "imports selected scopes from a backup file and replaces existing data" do
@@ -99,8 +173,6 @@ RSpec.describe "Backup & restore", type: :request do
             {
               label: "March 2026",
               month_on: "2026-03-01",
-              planned_income: "5000.0",
-              actual_income: nil,
               leftover: nil,
               notes: "Imported month",
               expense_entries: [

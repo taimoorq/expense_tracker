@@ -71,8 +71,6 @@ class UserDataSampleBackup
           {
             label: "March 2026",
             month_on: "2026-03-01",
-            planned_income: "5000.00",
-            actual_income: "4980.00",
             leftover: "340.00",
             notes: "Example month for backup structure reference",
             expense_entries: [
