@@ -32,7 +32,15 @@
     <% grid_end = month_end.end_of_week(:sunday) %>
     <% entries_by_day = expense_entries.select(&:occurred_on).group_by(&:occurred_on) %>
 
-    <% chip_style = ->(_entry) { "bg-slate-100 text-slate-700" } %>
+    <% chip_style = ->(entry) {
+      if entry.section.to_s == "income"
+        "bg-emerald-100 text-emerald-800"
+      elsif entry.cashflow_amount.to_f < 0
+        "bg-rose-100 text-rose-800"
+      else
+        "bg-slate-100 text-slate-700"
+      end
+    } %>
 
     <div class="overflow-x-auto">
       <div class="grid min-w-[960px] grid-cols-7 gap-2 text-sm">
@@ -43,10 +51,11 @@
         <% (grid_start..grid_end).each do |day| %>
           <% day_entries = entries_by_day.fetch(day, []).sort_by { |entry| [entry.cashflow_amount, entry.payee.to_s.downcase] } %>
           <% in_month = day.month == month_on.month %>
+          <% is_today = day == Date.current %>
 
-          <div class="min-h-36 rounded-lg border <%= in_month ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50' %> p-2" data-calendar-filter-target="day">
+          <div class="min-h-36 rounded-lg border <%= is_today ? 'border-indigo-500 bg-indigo-50' : (in_month ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50') %> p-2" data-calendar-filter-target="day">
             <div class="mb-2 flex items-center justify-between">
-              <span class="text-xs font-semibold <%= in_month ? 'text-slate-700' : 'text-slate-400' %>"><%= day.strftime("%-d") %></span>
+              <span class="text-xs font-semibold <%= is_today ? 'text-indigo-600' : (in_month ? 'text-slate-700' : 'text-slate-400') %>"><%= day.strftime("%-d") %></span>
               <% if day_entries.any? %>
                 <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600" data-calendar-filter-target="count"><%= pluralize(day_entries.count, "entry") %></span>
               <% end %>
