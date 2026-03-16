@@ -1,13 +1,32 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["step", "progress", "backButton", "nextButton", "submitButton", "error", "workflow", "clonePanel", "sourceSelect", "cloneSummary", "stepIndicator", "choiceCard", "clonePreview", "previewTargetLabel", "previewSourceLabel", "previewEntryCount"]
+  static targets = ["step", "progress", "backButton", "nextButton", "submitButton", "error", "workflow", "clonePanel", "sourceSelect", "cloneSummary", "stepIndicator", "choiceCard", "clonePreview", "previewTargetLabel", "previewSourceLabel", "previewEntryCount", "monthOn", "label"]
   static values = { startStep: Number }
 
   connect() {
     this.index = this.hasStartStepValue ? this.startStepValue : 0
     this.showCurrentStep()
     this.refreshWorkflowState()
+
+    // Autofill label when month changes
+    if (this.hasMonthOnTarget && this.hasLabelTarget) {
+      this.monthOnTarget.addEventListener("change", () => {
+        const monthValue = this.monthOnTarget.value
+        if (!monthValue) return
+        // Only autofill if label is empty
+        if (!this.labelTarget.value) {
+          // monthValue is in YYYY-MM-DD format
+          const [year, month] = monthValue.split("-")
+          if (year && month) {
+            // JS months are 0-indexed, so subtract 1
+            const date = new Date(year, parseInt(month, 10) - 1)
+            const monthName = date.toLocaleString("default", { month: "long" })
+            this.labelTarget.value = `${monthName} ${year}`
+          }
+        }
+      })
+    }
   }
 
   next() {

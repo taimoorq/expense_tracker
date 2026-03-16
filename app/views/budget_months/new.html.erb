@@ -131,12 +131,13 @@
     <div class="grid gap-3 sm:grid-cols-2">
       <div>
         <%= form.label :month_on, "Month", class: "fb-label" %>
-        <%= form.date_field :month_on, class: "fb-input" %>
+        <%= form.date_field :month_on, class: "fb-input", data: { month_wizard_target: "monthOn" } %>
+        <p class="ta-muted mt-1 text-xs">Select the first day of the month you want to budget for. For example, choose "2026-03-01" for March 2026.</p>
       </div>
 
       <div>
         <%= form.label :label, class: "fb-label" %>
-        <%= form.text_field :label, placeholder: "March 2026", class: "fb-input" %>
+        <%= form.text_field :label, placeholder: "March 2026", class: "fb-input", data: { month_wizard_target: "label" } %>
       </div>
 
       <div>

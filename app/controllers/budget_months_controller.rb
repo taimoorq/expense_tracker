@@ -90,8 +90,15 @@ class BudgetMonthsController < ApplicationController
     end
     @source_budget_month = current_user.budget_months.find_by(id: params[:source_month_id])
     @clone_preview = @cloneable_month_options.find { |option| option[:id] == @source_budget_month&.id }
-    @month_workflow = params[:month_workflow].presence_in(%w[fresh clone]) || (@source_budget_month.present? ? "clone" : "fresh")
-    @wizard_step = params[:wizard_step].to_i
+
+    # Default to 'fresh' if no cloneable months exist
+    if @cloneable_budget_months.empty?
+      @month_workflow = "fresh"
+      @wizard_step = 1 # Skip to step 2
+    else
+      @month_workflow = params[:month_workflow].presence_in(%w[fresh clone]) || (@source_budget_month.present? ? "clone" : "fresh")
+      @wizard_step = params[:wizard_step].to_i
+    end
   end
 
   def create_fresh_month
