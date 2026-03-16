@@ -213,20 +213,6 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Visual Budget Breakdown")
   end
 
-  it "shows category options in the timeline filter dropdown" do
-    user = create(:user, email: "reasons@example.com")
-    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
-    create(:expense_entry, budget_month: month, user: user, category: "Groceries", payee: "Market", section: :variable, status: :planned, planned_amount: 120)
-    create(:expense_entry, budget_month: month, user: user, category: "Fuel", payee: "Gas", section: :auto, status: :planned, planned_amount: 60)
-
-    sign_in_as(user)
-    visit budget_month_path(month)
-
-    # The dropdown logic limits to top 8 categories by count, so check for presence
-    expect(page).to have_select("timeline_category_filter")
-    expect(page).to have_selector("option", text: "Groceries (1)")
-    expect(page).to have_selector("option", text: "Fuel (1)")
-  end
 
   it "filters timeline by category dropdown", js: true do
     user = create(:user, email: "categoryfilter@example.com")
@@ -237,11 +223,12 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
+    expect(page).to have_select("timeline_category_filter", with_options: ["Groceries (1)", "Fuel (1)"])
     select "Groceries (1)", from: "timeline_category_filter"
     expect(page).to have_text("Groceries")
     expect(page).to have_text("Market")
-    expect(page).not_to have_text("Fuel")
-    expect(page).not_to have_text("Gas")
+    expect(page).not_to have_selector(".timeline-entry", text: "Fuel")
+    expect(page).not_to have_selector(".timeline-entry", text: "Gas")
   end
 
   it "expands matching timeline groups while filters are active", js: true do
