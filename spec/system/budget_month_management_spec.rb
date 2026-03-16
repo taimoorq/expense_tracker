@@ -223,7 +223,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_select("timeline_category_filter", with_options: ["Groceries (1)", "Fuel (1)"])
+    expect(page).to have_select("timeline_category_filter", with_options: [ "Groceries (1)", "Fuel (1)" ])
     select "Groceries (1)", from: "timeline_category_filter"
     expect(page).to have_text("Groceries")
     expect(page).to have_text("Market")
