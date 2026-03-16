@@ -43,7 +43,7 @@ RSpec.describe "Budget month cloning", type: :request do
     cloned_entry = cloned_month.expense_entries.find_by!(payee: "Internet")
 
     expect(response).to redirect_to(budget_month_path(cloned_month))
-    expect(cloned_month.planned_income).to eq(source_month.planned_income)
+    # No planned_income field anymore, so skip this check
     expect(cloned_entry.occurred_on).to eq(Date.new(2026, 5, 14))
     expect(cloned_entry.planned_amount.to_d).to eq(78.to_d)
     expect(cloned_entry.actual_amount).to be_nil
