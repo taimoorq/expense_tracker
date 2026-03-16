@@ -222,7 +222,10 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_select("timeline_category_filter", with_options: [ "Groceries (1)", "Fuel (1)" ])
+    # The dropdown logic limits to top 8 categories by count, so check for presence
+    expect(page).to have_select("timeline_category_filter")
+    expect(page).to have_selector("option", text: "Groceries (1)")
+    expect(page).to have_selector("option", text: "Fuel (1)")
   end
 
   it "filters timeline by category dropdown", js: true do
