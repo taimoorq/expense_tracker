@@ -83,7 +83,7 @@
         <% if @current_month %>
           <%= link_to budget_month_path(@current_month, tab: "timeline"), class: "fb-btn-primary ta-action-btn" do %>
             <%= tabler_icon("timeline", classes: "ta-action-icon text-indigo-100") %>
-            <span>Open Timeline</span>
+            <span>Open Budget</span>
           <% end %>
           <%= link_to budget_month_path(@current_month, tab: "entries"), class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("list", classes: "ta-action-icon text-slate-600") %>

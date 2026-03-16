@@ -97,7 +97,7 @@ class OverviewController < ApplicationController
         description: "Some entries are due, missing details, or marked paid without an actual amount.",
         primary_label: "Open Plan and Edit",
         primary_path: budget_month_path(@current_month, tab: "entries"),
-        secondary_label: "Open Timeline",
+        secondary_label: "Open Budget",
         secondary_path: budget_month_path(@current_month, tab: "timeline")
       }
     end
@@ -110,7 +110,7 @@ class OverviewController < ApplicationController
         primary_label: "Add Entry with Wizard",
         primary_path: new_wizard_budget_month_expense_entries_path(@current_month),
         primary_turbo_frame: "entry_wizard_modal",
-        secondary_label: "Open Timeline",
+        secondary_label: "Open Budget",
         secondary_path: budget_month_path(@current_month, tab: "timeline")
       }
     end
@@ -118,8 +118,8 @@ class OverviewController < ApplicationController
     {
       badge: "On track",
       title: "Keep the month current",
-      description: "Review the timeline, check calendar timing, and keep balances and statuses up to date.",
-      primary_label: "Open Timeline",
+      description: "Review the budget, check calendar timing, and keep balances and statuses up to date.",
+      primary_label: "Open Budget",
       primary_path: budget_month_path(@current_month, tab: "timeline"),
       secondary_label: "Open Calendar",
       secondary_path: budget_month_path(@current_month, tab: "calendar")

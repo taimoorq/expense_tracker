@@ -1,23 +1,27 @@
 <%= turbo_frame_tag "timeline_section" do %>
   <% timeline_leftover = local_assigns[:budget_month]&.calculated_leftover || expense_entries.sum(&:cashflow_amount) %>
+  <% default_timeline_view = local_assigns[:default_timeline_view] || "sections" %>
   <% reason_for_entry = ->(entry) { entry.category.presence || entry.section.humanize } %>
   <% reason_pills = expense_entries.filter_map { |entry| reason_for_entry.call(entry).to_s.strip.presence }
                     .tally
                     .sort_by { |reason, count| [-count, reason.downcase] }
                     .first(8) %>
-  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups timeline-category-filter tabs" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" data-tabs-default-tab-value="sections">
+  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups expense-entries-filter tabs" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" data-tabs-default-tab-value="<%= default_timeline_view %>" data-action="tabs:switched@document->expense-entries-filter#restoreAndRefresh">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Month Timeline</h3>
-        <p class="mt-1 text-sm text-slate-500">Switch between grouped sections and a flat month list without leaving the timeline.</p>
+        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Budget</h3>
+        <p class="mt-1 text-sm text-slate-500">Switch between grouped entries, a flat month list, or calendar view.</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <div class="ta-tab-list" role="tablist" aria-label="Timeline view mode">
-          <button type="button" class="ta-tab ta-tab-active" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="sections" data-action="click->tabs#switch" data-tabs-name-param="sections" aria-label="Section View">
-            <span class="inline-flex items-center gap-2"><%= tabler_icon("rectangle-group", classes: "ta-tab-icon") %><span class="hidden sm:inline">Section View</span></span>
+        <div class="ta-tab-list" role="tablist" aria-label="Budget view mode">
+          <button type="button" class="ta-tab ta-tab-active" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="sections" data-action="click->tabs#switch" data-tabs-name-param="sections" aria-label="Grouped">
+            <span class="inline-flex items-center gap-2"><%= tabler_icon("rectangle-group", classes: "ta-tab-icon") %><span class="hidden sm:inline">Grouped</span></span>
           </button>
           <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="full-list" data-action="click->tabs#switch" data-tabs-name-param="full-list" aria-label="Full List">
             <span class="inline-flex items-center gap-2"><%= tabler_icon("list-bullet", classes: "ta-tab-icon") %><span class="hidden sm:inline">Full List</span></span>
+          </button>
+          <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="calendar" data-action="click->tabs#switch" data-tabs-name-param="calendar" aria-label="Calendar">
+            <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "ta-tab-icon") %><span class="hidden sm:inline">Calendar</span></span>
           </button>
         </div>
 
@@ -28,72 +32,7 @@
       </div>
     </div>
 
-    <div data-tabs-target="panel" data-panel-name="sections" role="presentation" class="mb-4 flex flex-wrap items-center gap-2">
-      <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#expandAll">
-        <%= tabler_icon("chevron-down", classes: "h-4 w-4 text-slate-600") %>
-        <span>Expand all</span>
-      </button>
-      <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#collapseAll">
-        <%= tabler_icon("chevron-up", classes: "h-4 w-4 text-slate-600") %>
-        <span>Collapse all</span>
-      </button>
-    </div>
-
-    <details class="group mb-4 rounded-[22px] border border-slate-200 bg-white/85" data-controller="details-responsive" data-details-responsive-expand-above-value="768">
-      <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden group">
-        <div class="flex min-w-0 flex-1 items-center justify-between gap-2">
-          <div class="min-w-0">
-            <p class="text-sm font-semibold text-slate-900">Timeline filters</p>
-            <p class="mt-1 hidden text-sm text-slate-600 md:block">Filter all timeline sections from one place. Sections hide automatically when no matching items remain.</p>
-          </div>
-          <span class="shrink-0 text-slate-400 transition group-open:rotate-180"><%= tabler_icon("chevron-down", classes: "h-5 w-5") %></span>
-        </div>
-        <button type="button" class="fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs shrink-0 hidden md:inline-flex" data-action="click->timeline-category-filter#clearFilters" onclick="event.preventDefault(); event.stopPropagation();">
-          <%= tabler_icon("arrow-left", classes: "h-4 w-4") %>
-          <span>Clear filters</span>
-        </button>
-      </summary>
-      <div class="border-t border-slate-200 px-4 pb-4 pt-3">
-        <div class="mb-3 flex justify-end md:hidden">
-          <button type="button" class="fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" data-action="click->timeline-category-filter#clearFilters">
-            <%= tabler_icon("arrow-left", classes: "h-4 w-4") %>
-            <span>Clear filters</span>
-          </button>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <div>
-          <label class="fb-label" for="timeline_category_filter">Category</label>
-          <select id="timeline_category_filter" class="fb-select" data-timeline-category-filter-target="category" data-action="change->timeline-category-filter#filter">
-            <option value="">All categories</option>
-            <% reason_pills.each do |reason, count| %>
-              <option value="<%= reason.downcase %>"><%= reason %> (<%= count %>)</option>
-            <% end %>
-          </select>
-        </div>
-        <div>
-          <label class="fb-label">Date</label>
-          <input type="date" class="fb-input" data-timeline-category-filter-target="date" data-action="input->timeline-category-filter#filter change->timeline-category-filter#filter" />
-        </div>
-        <div>
-          <label class="fb-label">Payee</label>
-          <input type="text" placeholder="Filter payee" class="fb-input" data-timeline-category-filter-target="payee" data-action="input->timeline-category-filter#filter" />
-        </div>
-        <div>
-          <label class="fb-label">Reason</label>
-          <input type="text" placeholder="Filter reason" class="fb-input" data-timeline-category-filter-target="reason" data-action="input->timeline-category-filter#filter" />
-        </div>
-        <div>
-          <label class="fb-label">Status</label>
-          <select class="fb-select" data-timeline-category-filter-target="status" data-action="change->timeline-category-filter#filter">
-            <option value="">All statuses</option>
-            <% ExpenseEntry.statuses.keys.each do |status_key| %>
-              <option value="<%= status_key %>"><%= status_key.humanize %></option>
-            <% end %>
-          </select>
-        </div>
-      </div>
-      </div>
-    </details>
+    <%= render "expense_entries/filters", reason_pills: reason_pills, id_prefix: "timeline" %>
 
     <% ordered_entries = expense_entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
     <% remaining_entries = ordered_entries.dup %>
@@ -117,18 +56,28 @@
     <% grouped_entries << ["Other Entries", remaining_entries] if remaining_entries.any? %>
 
     <div data-tabs-target="panel" data-panel-name="sections" role="tabpanel" class="space-y-4">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#expandAll">
+        <%= tabler_icon("chevron-down", classes: "h-4 w-4 text-slate-600") %>
+        <span>Expand all</span>
+      </button>
+      <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#collapseAll">
+        <%= tabler_icon("chevron-up", classes: "h-4 w-4 text-slate-600") %>
+        <span>Collapse all</span>
+      </button>
+    </div>
     <% if grouped_entries.any? %>
       <div class="space-y-4">
         <% grouped_entries.each_with_index do |(group_name, entries), index| %>
           <% group_total = entries.sum(&:cashflow_amount) %>
-          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-timeline-category-filter-target="group" data-group-id="<%= group_name.parameterize %>" style="view-transition-name: timeline-group-<%= group_name.parameterize %>; view-transition-class: ta-vt-card;" <%= "open" if index.zero? %>>
+          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-expense-entries-filter-target="group" data-group-id="<%= group_name.parameterize %>" style="view-transition-name: timeline-group-<%= group_name.parameterize %>; view-transition-class: ta-vt-card;" <%= "open" if index.zero? %>>
             <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
               <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <%= tabler_icon("list") %>
                 <%= group_name %>
               </span>
               <div class="flex items-center gap-3 text-xs sm:text-sm">
-                <span class="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-600" data-timeline-category-filter-target="groupCount"><%= pluralize(entries.count, "item") %></span>
+                <span class="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-600" data-expense-entries-filter-target="groupCount"><%= pluralize(entries.count, "item") %></span>
                 <span class="font-semibold <%= group_total >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
                   Net: <%= group_total >= 0 ? "+" : "" %><%= number_to_currency(group_total) %>
                 </span>
@@ -156,8 +105,7 @@
                     <% generated_from_template = template_sources.include?(entry.source_file.to_s) %>
                     <% variable_payment_entry = entry.source_file.in?(["payment_plan", "credit_card_estimate"]) %>
                     <tr
-                      data-timeline-filter-target="row"
-                      data-timeline-category-filter-target="row"
+                      data-expense-entries-filter-target="row"
                       data-date="<%= entry.occurred_on&.iso8601 %>"
                       data-payee="<%= entry.payee.to_s %>"
                       data-reason="<%= reason_for_entry.call(entry).to_s %>"
@@ -248,10 +196,10 @@
           </details>
         <% end %>
       </div>
-      <p class="hidden rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500" data-timeline-category-filter-target="empty">No matching timeline groups for the selected filters.</p>
+      <p class="hidden rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500" data-expense-entries-filter-target="empty">No matching groups for the selected filters.</p>
     <% else %>
       <div class="rounded-[22px] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center">
-        <p class="ta-muted">No timeline entries for this month yet.</p>
+        <p class="ta-muted">No entries for this month yet.</p>
         <div class="mt-4 flex justify-center">
           <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add First Entry with Wizard", aria: { label: "Add First Entry with Wizard" } do %>
             <%= tabler_icon("plus", classes: "h-4 w-4") %>
@@ -264,6 +212,12 @@
 
     <div data-tabs-target="panel" data-panel-name="full-list" role="tabpanel" class="hidden space-y-4">
       <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4" %>
+    </div>
+
+    <div data-tabs-target="panel" data-panel-name="calendar" role="tabpanel" class="hidden space-y-4">
+      <div class="ta-surface-calendar">
+        <%= render "expense_entries/calendar_grid", budget_month: budget_month, expense_entries: expense_entries %>
+      </div>
     </div>
 
     <div class="mt-4 border-t border-slate-200 pt-3">

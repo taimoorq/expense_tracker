@@ -1,0 +1,56 @@
+<% id_prefix = local_assigns[:id_prefix] || "expense_entries" %>
+<details class="group mb-4 rounded-[22px] border border-slate-200 bg-white/85" data-controller="details-responsive" data-details-responsive-expand-above-value="768">
+  <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden group">
+    <div class="flex min-w-0 flex-1 items-center justify-between gap-2">
+      <div class="min-w-0">
+        <p class="text-sm font-semibold text-slate-900">Filters</p>
+        <p class="mt-1 hidden text-sm text-slate-600 md:block">Filter entries by category, date, payee, reason, or status. Applied to grouped, list, and calendar views.</p>
+      </div>
+      <span class="shrink-0 text-slate-400 transition group-open:rotate-180"><%= tabler_icon("chevron-down", classes: "h-5 w-5") %></span>
+    </div>
+    <button type="button" class="fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs shrink-0 hidden md:inline-flex" data-action="click->expense-entries-filter#clearFilters" onclick="event.preventDefault(); event.stopPropagation();">
+      <%= tabler_icon("arrow-left", classes: "h-4 w-4") %>
+      <span>Clear filters</span>
+    </button>
+  </summary>
+  <div class="border-t border-slate-200 px-4 pb-4 pt-3">
+    <div class="mb-3 flex justify-end md:hidden">
+      <button type="button" class="fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" data-action="click->expense-entries-filter#clearFilters">
+        <%= tabler_icon("arrow-left", classes: "h-4 w-4") %>
+        <span>Clear filters</span>
+      </button>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div>
+        <label class="fb-label" for="<%= id_prefix %>_category_filter">Category</label>
+        <select id="<%= id_prefix %>_category_filter" class="fb-select" data-expense-entries-filter-target="category" data-action="change->expense-entries-filter#filter">
+          <option value="">All categories</option>
+          <% reason_pills.each do |reason, count| %>
+            <option value="<%= reason.downcase %>"><%= reason %> (<%= count %>)</option>
+          <% end %>
+        </select>
+      </div>
+      <div>
+        <label class="fb-label">Date</label>
+        <input type="date" class="fb-input" data-expense-entries-filter-target="date" data-action="input->expense-entries-filter#filter change->expense-entries-filter#filter" />
+      </div>
+      <div>
+        <label class="fb-label">Payee</label>
+        <input type="text" placeholder="Filter payee" class="fb-input" data-expense-entries-filter-target="payee" data-action="input->expense-entries-filter#filter" />
+      </div>
+      <div>
+        <label class="fb-label">Reason</label>
+        <input type="text" placeholder="Filter reason" class="fb-input" data-expense-entries-filter-target="reason" data-action="input->expense-entries-filter#filter" />
+      </div>
+      <div>
+        <label class="fb-label">Status</label>
+        <select class="fb-select" data-expense-entries-filter-target="status" data-action="change->expense-entries-filter#filter">
+          <option value="">All statuses</option>
+          <% ExpenseEntry.statuses.keys.each do |status_key| %>
+            <option value="<%= status_key %>"><%= status_key.humanize %></option>
+          <% end %>
+        </select>
+      </div>
+    </div>
+  </div>
+</details>

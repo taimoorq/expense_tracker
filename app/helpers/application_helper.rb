@@ -170,7 +170,7 @@ module ApplicationHelper
 
   def preferred_month_view_options
     [
-      [ "Timeline", "timeline" ],
+      [ "Budget", "timeline" ],
       [ "Breakdown", "breakdown" ],
       [ "Calendar", "calendar" ],
       [ "Plan and Edit", "entries" ]

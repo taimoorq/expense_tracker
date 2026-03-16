@@ -26,7 +26,6 @@ module MonthPageRefresh
       turbo_stream.replace("visual_dashboard", partial: "budget_months/visual_dashboard", locals: visual_dashboard_locals),
       turbo_stream.replace("plan_and_edit_panel", partial: "budget_months/plan_and_edit_panel", locals: plan_and_edit_panel_locals),
       turbo_stream.replace("timeline_section", partial: "expense_entries/timeline", locals: month_entries_locals),
-      turbo_stream.replace("calendar_section", partial: "expense_entries/calendar", locals: month_entries_locals),
       turbo_stream.replace("entries_table", partial: "expense_entries/table", locals: month_entries_locals)
     ]
 

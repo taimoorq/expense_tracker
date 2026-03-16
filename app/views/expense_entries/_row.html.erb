@@ -1,6 +1,6 @@
 <% reason_for_entry = entry.category.presence || entry.section.humanize %>
 <tr id="<%= dom_id(entry) %>"
-  data-timeline-category-filter-target="row"
+  data-expense-entries-filter-target="row"
   data-date="<%= entry.occurred_on&.iso8601 %>"
   data-payee="<%= entry.payee.to_s %>"
   data-reason="<%= reason_for_entry.to_s %>"

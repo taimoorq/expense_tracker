@@ -225,10 +225,43 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_select("timeline_category_filter", with_options: [ "Groceries (1)", "Fuel (1)" ])
     select "Groceries (1)", from: "timeline_category_filter"
-    expect(page).to have_text("Groceries")
     expect(page).to have_text("Market")
-    expect(page).not_to have_selector(".timeline-entry", text: "Fuel")
-    expect(page).not_to have_selector(".timeline-entry", text: "Gas")
+    expect(page).not_to have_text("Gas")
+  end
+
+  it "filters calendar by category dropdown", js: true do
+    user = create(:user, email: "calendarcategoryfilter@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Market", category: "Groceries", section: :variable, status: :planned, planned_amount: 100, occurred_on: Date.current.beginning_of_month + 5.days)
+    create(:expense_entry, budget_month: month, user: user, payee: "Gas", category: "Fuel", section: :auto, status: :planned, planned_amount: 50, occurred_on: Date.current.beginning_of_month + 10.days)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+    click_button "Calendar", match: :first
+
+    expect(page).to have_select("timeline_category_filter", with_options: [ "Groceries (1)", "Fuel (1)" ])
+    select "Groceries (1)", from: "timeline_category_filter"
+    expect(page).to have_text("Market")
+    expect(page).not_to have_text("Gas")
+  end
+
+  it "persists filter state when switching between timeline and calendar toggles", js: true do
+    user = create(:user, email: "filterpersist@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Market", category: "Groceries", section: :variable, status: :planned, planned_amount: 100, occurred_on: Date.current.beginning_of_month + 5.days)
+    create(:expense_entry, budget_month: month, user: user, payee: "Gas", category: "Fuel", section: :auto, status: :planned, planned_amount: 50, occurred_on: Date.current.beginning_of_month + 10.days)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    select "Groceries (1)", from: "timeline_category_filter"
+    expect(page).to have_text("Market")
+    expect(page).not_to have_text("Gas")
+
+    click_button "Calendar", match: :first
+    expect(page).to have_select("timeline_category_filter", selected: "Groceries (1)")
+    expect(page).to have_text("Market")
+    expect(page).not_to have_text("Gas")
   end
 
   it "expands matching timeline groups while filters are active", js: true do
@@ -291,7 +324,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_content("Month Timeline")
+    expect(page).to have_content("Budget")
     expect(page).to have_button("Mark as paid", visible: :all)
     expect(page).to have_css("[data-collapsible-groups-storage-key-value='timeline-groups-#{month.id}']")
   end
@@ -304,7 +337,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_button("Section View")
+    expect(page).to have_button("Grouped")
     expect(page).to have_button("Full List")
     expect(page).to have_content("Other Entries")
     expect(page).to have_button("Expand all")
@@ -318,9 +351,9 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).not_to have_button("Expand all")
     expect(page).not_to have_button("Collapse all")
 
-    click_button "Section View"
+    click_button "Grouped"
 
-    expect(page).to have_content("Month Timeline")
+    expect(page).to have_content("Budget")
     expect(page).to have_button("Expand all")
   end
 
@@ -338,7 +371,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_css("turbo-frame#entry_wizard_modal")
   end
 
-  it "opens the guided wizard from the calendar tab", js: true do
+  it "opens the guided wizard from the calendar view", js: true do
     user = create(:user, email: "calendarwizard@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     create(:expense_entry, budget_month: month, user: user, payee: "Phone", planned_amount: 45.10, actual_amount: nil, status: :planned, occurred_on: Date.current.beginning_of_month + 2.days)
@@ -346,7 +379,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    click_button "Calendar"
+    click_button "Calendar", match: :first
     click_link "Add Entry with Wizard"
 
     expect(page).to have_content("Add Entry with Wizard")

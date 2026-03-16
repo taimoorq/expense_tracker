@@ -33,5 +33,7 @@ export default class extends Controller {
       const isActive = panel.dataset.panelName === name
       panel.classList.toggle("hidden", !isActive)
     })
+
+    document.dispatchEvent(new CustomEvent("tabs:switched", { bubbles: true }))
   }
 }

@@ -1,0 +1,66 @@
+<% reason_for_entry = ->(entry) { entry.category.presence || entry.section.humanize } %>
+<% month_on = budget_month.month_on.to_date %>
+<% month_start = month_on.beginning_of_month %>
+<% month_end = month_on.end_of_month %>
+<% grid_start = month_start.beginning_of_week(:sunday) %>
+<% grid_end = month_end.end_of_week(:sunday) %>
+<% entries_by_day = expense_entries.select(&:occurred_on).group_by(&:occurred_on) %>
+
+<% chip_style = ->(entry) {
+  if entry.section.to_s == "income"
+    "bg-emerald-100 text-emerald-800"
+  elsif entry.cashflow_amount.to_f < 0
+    "bg-rose-100 text-rose-800"
+  else
+    "bg-slate-100 text-slate-700"
+  end
+} %>
+
+<div class="overflow-x-auto">
+  <div class="grid min-w-[960px] grid-cols-7 gap-2 text-sm">
+    <% %w[Sun Mon Tue Wed Thu Fri Sat].each do |day_name| %>
+      <div class="rounded-lg bg-slate-100 px-2 py-1 text-center font-semibold text-slate-600"><%= day_name %></div>
+    <% end %>
+
+    <% (grid_start..grid_end).each do |day| %>
+      <% day_entries = entries_by_day.fetch(day, []).sort_by { |entry| [entry.cashflow_amount, entry.payee.to_s.downcase] } %>
+      <% in_month = day.month == month_on.month %>
+      <% is_today = day == Date.current %>
+
+      <div class="min-h-36 rounded-lg border <%= is_today ? 'border-indigo-500 bg-indigo-50' : (in_month ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50') %> p-2" data-expense-entries-filter-target="day">
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-xs font-semibold <%= is_today ? 'text-indigo-600' : (in_month ? 'text-slate-700' : 'text-slate-400') %>"><%= day.strftime("%-d") %></span>
+          <% if day_entries.any? %>
+            <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600" data-expense-entries-filter-target="count"><%= pluralize(day_entries.count, "entry") %></span>
+          <% end %>
+        </div>
+
+        <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+          <% day_entries.each do |entry| %>
+            <% amount = entry.cashflow_amount %>
+            <%= link_to edit_budget_month_expense_entry_path(budget_month, entry),
+                        class: "block rounded px-2 py-1 text-xs font-medium #{chip_style.call(entry)}",
+                        data: {
+                          expense_entries_filter_target: "chip",
+                          value: reason_for_entry.call(entry).to_s.downcase,
+                          date: entry.occurred_on&.iso8601,
+                          payee: entry.payee.to_s,
+                          reason: reason_for_entry.call(entry).to_s,
+                          status: entry.status,
+                          turbo_frame: "entry_editor_modal"
+                        } do %>
+              <div class="flex items-center justify-between gap-2">
+                <span class="truncate"><%= entry.payee.presence || entry.category.presence || entry.section.humanize %></span>
+                <span><%= amount >= 0 ? "+" : "" %><%= number_to_currency(amount, precision: 0) %></span>
+              </div>
+            <% end %>
+          <% end %>
+
+          <% if day_entries.any? %>
+            <div class="hidden px-1 text-[11px] font-medium text-slate-400" data-expense-entries-filter-target="empty">No matching entries</div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
