@@ -2,7 +2,10 @@
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-2xl font-semibold text-slate-900">Help & Documentation</h2>
+        <h2 class="inline-flex items-center gap-2 text-2xl font-semibold text-slate-900">
+          <%= tabler_icon("lifebuoy", classes: "h-6 w-6 text-indigo-600") %>
+          <span>Help & Documentation</span>
+        </h2>
         <p class="mt-1 text-sm text-slate-500">A guided overview of what each part of the app does and when to use it.</p>
       </div>
       <%= link_to budget_months_path, class: "fb-btn-secondary ta-action-btn" do %>
@@ -34,7 +37,10 @@
   <div class="grid gap-6 xl:grid-cols-[1.5fr,1fr]">
     <div class="space-y-6">
       <section id="dashboard" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Home and Months</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("calendar-month", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Home and Months</span>
+        </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">Home is a lightweight Overview page. The Months screen is where existing months, imports, and month-related actions now live.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Use Home as a landing page:</strong> it is reserved for future overview widgets and summaries.</li>
@@ -44,7 +50,10 @@
       </section>
 
       <section id="months" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Creating and cloning months</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("copy", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Creating and cloning months</span>
+        </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">Each month is its own working budget. The month wizard helps decide whether to start fresh or clone a previous month.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -59,7 +68,10 @@
       </section>
 
       <section id="entries" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Adding and managing entries</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("list", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Adding and managing entries</span>
+        </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Manual entry form:</strong> useful for quick edits and one-off transactions.</li>
@@ -71,7 +83,10 @@
       </section>
 
       <section id="templates" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Planning templates</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("template", classes: "h-5 w-5 text-emerald-600") %>
+          <span>Planning templates</span>
+        </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">Templates save recurring budget items so common parts of a month can be generated instead of rebuilt by hand.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 p-4">
@@ -98,7 +113,10 @@
       </section>
 
       <section id="review" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Reviewing a month</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("chart-pie", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Reviewing a month</span>
+        </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">Once entries are in place, the app gives several ways to review and manage the month.</p>
         <div class="mt-4 space-y-4">
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -123,7 +141,10 @@
 
     <div class="space-y-6">
       <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Helpful app behaviors</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("sparkles", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Helpful app behaviors</span>
+        </h3>
         <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Reason-based pills:</strong> filters are based on the values that actually exist in the current month, making focused review easier.</li>
           <li><strong class="text-slate-900">Template actions:</strong> the Plan and Edit tab includes actions for adding paychecks, subscriptions, bills, and plans from saved templates.</li>
@@ -134,7 +155,10 @@
       </section>
 
       <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Recommended first steps</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("check-circle", classes: "h-5 w-5 text-emerald-600") %>
+          <span>Recommended first steps</span>
+        </h3>
         <ol class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
           <li>1. Create a month or clone the most recent one.</li>
           <li>2. Add recurring templates if the month has regular income or bills.</li>
@@ -145,7 +169,10 @@
       </section>
 
       <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-semibold text-slate-900">Where to go next</h3>
+        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("arrow-right", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Where to go next</span>
+        </h3>
         <div class="mt-4 space-y-2 text-sm">
           <%= link_to budget_months_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
             <span>Go to Months</span>

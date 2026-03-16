@@ -5,7 +5,10 @@
   <% form_open = budget_month || credit_card.persisted? || credit_card.errors.any? %>
   <section id="credit-cards" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <div class="mb-3 flex items-center gap-2">
-      <h3 class="text-lg font-semibold"><%= budget_month ? "5) Credit Cards (estimate from leftover)" : "Credit Cards" %></h3>
+      <h3 class="inline-flex items-center gap-2 text-lg font-semibold">
+        <%= tabler_icon("shield-lock", classes: "h-5 w-5 text-violet-600") %>
+        <span><%= budget_month ? "5) Credit Cards (estimate from leftover)" : "Credit Cards" %></span>
+      </h3>
       <button type="button" class="ta-icon-btn" aria-label="Credit Cards Help" title="Credit Cards Help" data-action="click->help-modal#open" data-help-title="Credit Cards Help" data-help-body="Used by 'Estimate Cards' in month view.
 
 Minimum: minimum amount to prioritize first.
@@ -24,8 +27,14 @@ Priority: lower number gets allocated first.
         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl px-4 py-3 hover:bg-slate-100">
           <div>
             <p class="text-sm font-semibold text-slate-800">
-              <span class="group-open:hidden">Add Credit Card</span>
-              <span class="hidden group-open:inline">Hide Credit Card Form</span>
+              <span class="group-open:hidden inline-flex items-center gap-2">
+                <%= tabler_icon("plus", classes: "h-4 w-4 text-emerald-600") %>
+                <span>Add Credit Card</span>
+              </span>
+              <span class="hidden group-open:inline-flex items-center gap-2">
+                <%= tabler_icon("eye-off", classes: "h-4 w-4 text-slate-600") %>
+                <span>Hide Credit Card Form</span>
+              </span>
             </p>
             <p class="text-xs text-slate-500">
               <span class="group-open:hidden">Click to open the new credit card form.</span>

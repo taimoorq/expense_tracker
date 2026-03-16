@@ -6,7 +6,8 @@ export default class extends Controller {
     title: String,
     labels: Array,
     data: Array,
-    datasets: Array
+    datasets: Array,
+    options: Object
   }
 
   connect() {
@@ -43,20 +44,36 @@ export default class extends Controller {
       }
     ]
 
+    const defaultOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom" },
+        title: {
+          display: !!this.titleValue,
+          text: this.titleValue
+        }
+      }
+    }
+
+    const customOptions = this.hasOptionsValue ? this.optionsValue : {}
+    const chartOptions = {
+      ...defaultOptions,
+      ...customOptions,
+      plugins: {
+        ...defaultOptions.plugins,
+        ...(customOptions.plugins || {})
+      },
+      scales: {
+        ...(defaultOptions.scales || {}),
+        ...(customOptions.scales || {})
+      }
+    }
+
     this.chart = new window.Chart(this.element.getContext("2d"), {
       type: chartType,
       data: { labels, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: "bottom" },
-          title: {
-            display: !!this.titleValue,
-            text: this.titleValue
-          }
-        }
-      }
+      options: chartOptions
     })
   }
 

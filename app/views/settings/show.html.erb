@@ -5,7 +5,10 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div class="max-w-2xl">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Preferences</p>
-        <h2 class="mt-2 text-2xl font-semibold text-slate-900">Appearance and app settings</h2>
+        <h2 class="mt-2 inline-flex items-center gap-2 text-2xl font-semibold text-slate-900">
+          <%= tabler_icon("settings", classes: "h-6 w-6 text-indigo-600") %>
+          <span>Appearance and app settings</span>
+        </h2>
         <p class="mt-3 text-sm leading-6 text-slate-600">Use this page for user-adjustable preferences. Color schemes live here now, and future options can be added without crowding the main navigation.</p>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-600">
@@ -18,7 +21,10 @@
   <section class="ta-card">
     <div class="max-w-xl">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Workflow</p>
-      <h3 class="mt-2 text-lg font-semibold text-slate-900">Default navigation preferences</h3>
+      <h3 class="mt-2 inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <%= tabler_icon("home", classes: "h-5 w-5 text-indigo-600") %>
+        <span>Default navigation preferences</span>
+      </h3>
       <p class="mt-2 text-sm leading-6 text-slate-600">Choose where to land after signing in and which month view should open first when you browse a budget month.</p>
     </div>
 
@@ -48,7 +54,10 @@
     <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
       <div class="max-w-xl">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Color Scheme</p>
-        <h3 class="mt-2 text-lg font-semibold text-slate-900">Choose your palette</h3>
+        <h3 class="mt-2 inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("sparkles", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Choose your palette</span>
+        </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">The active theme updates the app shell and the authentication pages. Your selection is saved for this browser.</p>
       </div>
 
@@ -56,11 +65,5 @@
         <%= render "shared/theme_picker" %>
       </div>
     </div>
-  </section>
-
-  <section class="ta-card ta-surface-plan-soft">
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Coming Later</p>
-    <h3 class="mt-2 text-lg font-semibold text-slate-900">More settings can live here</h3>
-    <p class="mt-2 text-sm leading-6 text-slate-600">This section is reserved for future user preferences such as date display, notification controls, export defaults, or other per-user options you decide to expose.</p>
   </section>
 </div>

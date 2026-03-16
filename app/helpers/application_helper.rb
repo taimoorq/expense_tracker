@@ -285,6 +285,7 @@ module ApplicationHelper
       "adjustments" => "adjustments-horizontal",
       "cash" => "banknotes",
       "chart-bar" => "chart-bar",
+      "check" => "check-circle",
       "home" => "home",
       "template" => "rectangle-stack",
       "calendar-plus" => "calendar-plus",
@@ -304,14 +305,20 @@ module ApplicationHelper
       "x" => "x-mark",
       "plus" => "plus",
       "copy" => "document-duplicate",
+      "eye-off" => "eye-off",
       "help" => "question-mark-circle",
+      "layout-list" => "queue-list",
       "login" => "arrow-right-on-rectangle",
       "logout" => "arrow-left-on-rectangle",
       "user-plus" => "user-plus",
       "mail" => "envelope",
+      "menu-2" => "menu-2",
       "lock" => "lock-closed",
+      "scan" => "scan",
+      "settings" => "adjustments-horizontal",
       "shield-lock" => "shield-check",
       "sparkles" => "sparkles",
+      "table" => "table",
       "user-circle" => "user-circle",
       "upload" => "arrow-up-tray",
       "download" => "arrow-down-tray",
@@ -444,6 +451,12 @@ module ApplicationHelper
         { d: "M9.75 9a2.25 2.25 0 1 1 2.818 2.186c-.415.14 -.693.53 -.693.968V12.75" },
         { d: "M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0Z" }
       ],
+      "eye-off" => [
+        { d: "M3 3l18 18" },
+        { d: "M10.58 10.58a2 2 0 0 0 2.83 2.83" },
+        { d: "M9.88 5.09A9.77 9.77 0 0 1 12 4.875c4.756 0 8.774 3.162 10.066 7.5a10.523 10.523 0 0 1 -3.06 4.67" },
+        { d: "M6.228 6.228A10.494 10.494 0 0 0 1.934 12.375c1.292 4.338 5.31 7.5 10.066 7.5 1.783 0 3.46 -.444 4.928 -1.228" }
+      ],
       "arrow-right-on-rectangle" => [
         { d: "M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0 -2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25 -2.25V15" },
         { d: "M18 12H9.75" },
@@ -465,9 +478,20 @@ module ApplicationHelper
         { d: "M21.75 6.75v10.5A2.25 2.25 0 0 1 19.5 19.5H4.5A2.25 2.25 0 0 1 2.25 17.25V6.75A2.25 2.25 0 0 1 4.5 4.5h15A2.25 2.25 0 0 1 21.75 6.75Z" },
         { d: "m3 7.5 7.928 5.285a1.875 1.875 0 0 0 2.144 0L21 7.5" }
       ],
+      "menu-2" => [
+        { d: "M4.5 7.5h15" },
+        { d: "M4.5 16.5h15" }
+      ],
       "lock-closed" => [
         { d: "M16.5 10.5V7.875a4.5 4.5 0 1 0 -9 0V10.5" },
         { d: "M5.25 10.5h13.5A2.25 2.25 0 0 1 21 12.75v6A2.25 2.25 0 0 1 18.75 21H5.25A2.25 2.25 0 0 1 3 18.75v-6A2.25 2.25 0 0 1 5.25 10.5Z" }
+      ],
+      "scan" => [
+        { d: "M7.5 3.75H6A2.25 2.25 0 0 0 3.75 6v1.5" },
+        { d: "M16.5 3.75H18A2.25 2.25 0 0 1 20.25 6v1.5" },
+        { d: "M20.25 16.5V18A2.25 2.25 0 0 1 18 20.25h-1.5" },
+        { d: "M3.75 16.5V18A2.25 2.25 0 0 0 6 20.25h1.5" },
+        { d: "M7.5 12h9" }
       ],
       "shield-check" => [
         { d: "M9 12.75 11.25 15 15 9.75" },
@@ -477,6 +501,13 @@ module ApplicationHelper
         { d: "M9.813 15.904 9 18l-.813 -2.096a4.5 4.5 0 0 0 -2.284 -2.284L3.75 12l2.153 -.813a4.5 4.5 0 0 0 2.284 -2.284L9 6.75l.813 2.153a4.5 4.5 0 0 0 2.284 2.284L14.25 12l-2.153 .813a4.5 4.5 0 0 0 -2.284 2.284Z" },
         { d: "M18.259 8.715 18 9.75l-.259 -1.035a3.375 3.375 0 0 0 -1.956 -1.956L14.75 6.5l1.035 -.259a3.375 3.375 0 0 0 1.956 -1.956L18 3.25l.259 1.035a3.375 3.375 0 0 0 1.956 1.956L21.25 6.5l-1.035 .259a3.375 3.375 0 0 0 -1.956 1.956Z" },
         { d: "M16.5 20.25h.008v.008H16.5z" }
+      ],
+      "table" => [
+        { d: "M3 6.75A2.25 2.25 0 0 1 5.25 4.5h13.5A2.25 2.25 0 0 1 21 6.75v10.5A2.25 2.25 0 0 1 18.75 19.5H5.25A2.25 2.25 0 0 1 3 17.25V6.75Z" },
+        { d: "M3 10.5h18" },
+        { d: "M3 14.25h18" },
+        { d: "M9 4.5v15" },
+        { d: "M15 4.5v15" }
       ],
       "user-circle" => [
         { d: "M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0 -5.982 2.975" },

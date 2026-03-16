@@ -5,7 +5,10 @@
   <% form_open = budget_month || pay_schedule.persisted? || pay_schedule.errors.any? %>
   <section id="pay-schedules" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <div class="mb-3 flex items-center gap-2">
-      <h3 class="text-lg font-semibold"><%= budget_month ? "1) Paycheck Schedules" : "Paycheck Schedules" %></h3>
+      <h3 class="inline-flex items-center gap-2 text-lg font-semibold">
+        <%= tabler_icon("cash", classes: "h-5 w-5 text-emerald-600") %>
+        <span><%= budget_month ? "1) Paycheck Schedules" : "Paycheck Schedules" %></span>
+      </h3>
       <button type="button" class="ta-icon-btn" aria-label="Paycheck Schedules Help" title="Paycheck Schedules Help" data-action="click->help-modal#open" data-help-title="Paycheck Schedules Help" data-help-body="Use this to define recurring income.
 
 Cadence: weekly, biweekly, semimonthly, or monthly.
@@ -25,8 +28,14 @@ First Pay On: anchor date for recurrence.
         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl px-4 py-3 hover:bg-slate-100">
           <div>
             <p class="text-sm font-semibold text-slate-800">
-              <span class="group-open:hidden">Add Schedule</span>
-              <span class="hidden group-open:inline">Hide Schedule Form</span>
+              <span class="group-open:hidden inline-flex items-center gap-2">
+                <%= tabler_icon("plus", classes: "h-4 w-4 text-emerald-600") %>
+                <span>Add Schedule</span>
+              </span>
+              <span class="hidden group-open:inline-flex items-center gap-2">
+                <%= tabler_icon("eye-off", classes: "h-4 w-4 text-slate-600") %>
+                <span>Hide Schedule Form</span>
+              </span>
             </p>
             <p class="text-xs text-slate-500">
               <span class="group-open:hidden">Click to open the new paycheck schedule form.</span>

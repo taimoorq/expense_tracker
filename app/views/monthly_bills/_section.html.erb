@@ -5,7 +5,10 @@
   <% form_open = budget_month || monthly_bill.persisted? || monthly_bill.errors.any? %>
   <section id="monthly-bills" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <div class="mb-3 flex items-center gap-2">
-      <h3 class="text-lg font-semibold"><%= budget_month ? "3) Monthly Bills (fixed + variable)" : "Monthly Bills (fixed + variable)" %></h3>
+      <h3 class="inline-flex items-center gap-2 text-lg font-semibold">
+        <%= tabler_icon("calendar-month", classes: "h-5 w-5 text-sky-600") %>
+        <span><%= budget_month ? "3) Monthly Bills (fixed + variable)" : "Monthly Bills (fixed + variable)" %></span>
+      </h3>
       <button type="button" class="ta-icon-btn" aria-label="Monthly Bills Help" title="Monthly Bills Help" data-action="click->help-modal#open" data-help-title="Monthly Bills Help" data-help-body="Fixed Payment: stable bills like mortgage or car payment.
 Variable Bill: amounts that vary monthly like utilities.
 
@@ -23,8 +26,14 @@ Variable Bill: amounts that vary monthly like utilities.
         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl px-4 py-3 hover:bg-slate-100">
           <div>
             <p class="text-sm font-semibold text-slate-800">
-              <span class="group-open:hidden">Add Monthly Bill</span>
-              <span class="hidden group-open:inline">Hide Monthly Bill Form</span>
+              <span class="group-open:hidden inline-flex items-center gap-2">
+                <%= tabler_icon("plus", classes: "h-4 w-4 text-emerald-600") %>
+                <span>Add Monthly Bill</span>
+              </span>
+              <span class="hidden group-open:inline-flex items-center gap-2">
+                <%= tabler_icon("eye-off", classes: "h-4 w-4 text-slate-600") %>
+                <span>Hide Monthly Bill Form</span>
+              </span>
             </p>
             <p class="text-xs text-slate-500">
               <span class="group-open:hidden">Click to open the new monthly bill form.</span>

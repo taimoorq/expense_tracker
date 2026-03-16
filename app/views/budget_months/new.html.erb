@@ -1,7 +1,10 @@
 <% content_for :page_header do %>
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h2 class="text-2xl font-semibold">New Budget Month</h2>
+      <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
+        <%= tabler_icon("calendar-plus", classes: "h-6 w-6 text-indigo-600") %>
+        <span>New Budget Month</span>
+      </h2>
       <p class="ta-muted mt-1">Choose a quick clone workflow or start a month from scratch with guided details.</p>
     </div>
     <%= link_to budget_months_path, class: "fb-btn-secondary ta-action-btn" do %>

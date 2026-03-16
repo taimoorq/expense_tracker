@@ -9,7 +9,10 @@
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-2xl font-semibold"><%= @budget_month.label %></h2>
+        <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
+          <%= tabler_icon("calendar-month", classes: "h-6 w-6 text-indigo-600") %>
+          <span><%= @budget_month.label %></span>
+        </h2>
         <% if generation_actions_hidden %>
           <p class="ta-muted mt-1">This month looks complete, so template generation actions are hidden to avoid unnecessary changes.</p>
         <% end %>
