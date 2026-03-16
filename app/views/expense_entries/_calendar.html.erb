@@ -8,9 +8,9 @@
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("calendar-month") %> Timeline Calendar</h3>
       <div class="flex flex-wrap items-center gap-2">
-        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
-          <%= tabler_icon("adjustments", classes: "h-4 w-4") %>
-          <span>Add Entry with Wizard</span>
+        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add Entry with Wizard", aria: { label: "Add Entry with Wizard" } do %>
+          <%= tabler_icon("plus", classes: "h-4 w-4") %>
+          <span class="hidden sm:inline">Add Entry with Wizard</span>
         <% end %>
 
         <div class="flex flex-wrap items-center gap-2 text-xs">

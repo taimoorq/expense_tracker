@@ -1,25 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["filter", "group", "row", "empty", "date", "payee", "reason", "status"]
+  static targets = ["group", "row", "empty", "date", "payee", "reason", "status", "category"]
 
   connect() {
-    this.activeGroups = new Set()
-    this.refresh()
-  }
-
-  toggle(event) {
-    const value = event.currentTarget.dataset.value
-    if (!value) return
-
-    if (value === "all") {
-      this.activeGroups.clear()
-    } else if (this.activeGroups.has(value)) {
-      this.activeGroups.delete(value)
-    } else {
-      this.activeGroups.add(value)
-    }
-
     this.refresh()
   }
 
@@ -28,37 +12,27 @@ export default class extends Controller {
   }
 
   clearFilters() {
-    this.activeGroups.clear()
-
     if (this.hasDateTarget) this.dateTarget.value = ""
     if (this.hasPayeeTarget) this.payeeTarget.value = ""
     if (this.hasReasonTarget) this.reasonTarget.value = ""
     if (this.hasStatusTarget) this.statusTarget.value = ""
+    if (this.hasCategoryTarget) this.categoryTarget.value = ""
 
     this.refresh()
   }
 
   refresh() {
-    const noFilters = this.activeGroups.size === 0
+    const categoryValue = this.hasCategoryTarget ? this.categoryTarget.value.trim().toLowerCase() : ""
+    const noCategoryFilter = categoryValue === ""
     const dateValue = this.hasDateTarget ? this.dateTarget.value.trim() : ""
     const payeeValue = this.hasPayeeTarget ? this.payeeTarget.value.trim().toLowerCase() : ""
     const reasonValue = this.hasReasonTarget ? this.reasonTarget.value.trim().toLowerCase() : ""
     const statusValue = this.hasStatusTarget ? this.statusTarget.value.trim().toLowerCase() : ""
-    const filtersActive = !noFilters || dateValue !== "" || payeeValue !== "" || reasonValue !== "" || statusValue !== ""
-
-    this.filterTargets.forEach((button) => {
-      const value = button.dataset.value
-      const isActive = value === "all" ? noFilters : this.activeGroups.has(value)
-
-      button.setAttribute("aria-pressed", String(isActive))
-      button.classList.toggle("ring-2", isActive)
-      button.classList.toggle("ring-offset-1", isActive)
-      button.classList.toggle("ring-slate-300", isActive)
-      button.classList.toggle("opacity-60", !isActive && !noFilters && value !== "all")
-    })
+    const filtersActive = !noCategoryFilter || dateValue !== "" || payeeValue !== "" || reasonValue !== "" || statusValue !== ""
 
     this.rowTargets.forEach((row) => {
-      const matchesPill = noFilters || this.activeGroups.has((row.dataset.value || "").toLowerCase())
+      const rowValue = (row.dataset.value || "").toLowerCase()
+      const matchesCategory = noCategoryFilter || rowValue === categoryValue
       const rowDate = (row.dataset.date || "").trim()
       const rowPayee = (row.dataset.payee || "").toLowerCase()
       const rowReason = (row.dataset.reason || "").toLowerCase()
@@ -69,7 +43,7 @@ export default class extends Controller {
       const matchesReason = reasonValue === "" || rowReason.includes(reasonValue)
       const matchesStatus = statusValue === "" || rowStatus === statusValue
 
-      row.dataset.pillHidden = matchesPill ? "false" : "true"
+      row.dataset.pillHidden = matchesCategory ? "false" : "true"
       row.dataset.searchHidden = matchesDate && matchesPayee && matchesReason && matchesStatus ? "false" : "true"
       this.applyVisibility(row)
     })
