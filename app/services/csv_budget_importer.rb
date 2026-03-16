@@ -65,7 +65,6 @@ class CsvBudgetImporter
       month_on = Date.parse("1 #{month_label}")
       budget_month = find_or_build_month(month_on)
 
-      budget_month.actual_income = parse_amount(row["Income"]) if row.headers.include?("Income")
       budget_month.leftover = parse_amount(row["Leftover"]) if row.headers.include?("Leftover")
       budget_month.save!
       months_touched[budget_month.id] = true

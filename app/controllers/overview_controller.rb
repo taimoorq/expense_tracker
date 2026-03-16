@@ -1,4 +1,6 @@
 class OverviewController < ApplicationController
+  include ApplicationHelper
+
   def show
     @budget_months = current_user.budget_months.includes(:expense_entries).recent_first.to_a
     @current_month = current_user.budget_months.find_by(month_on: Date.current.beginning_of_month) || @budget_months.first
@@ -19,6 +21,22 @@ class OverviewController < ApplicationController
       credit_cards: current_user.credit_cards.count
     }
     @template_total = @template_counts.values.sum
+
+    @template_actions_completed = 0
+    if @current_month
+      # Use same logic as plan_and_edit_panel
+      paycheck_coverage = template_coverage_for_type(@current_month, :pay_schedules, @current_month_entries)
+      subscription_coverage = template_coverage_for_type(@current_month, :subscriptions, @current_month_entries)
+      monthly_bill_coverage = template_coverage_for_type(@current_month, :monthly_bills, @current_month_entries)
+      payment_plan_coverage = template_coverage_for_type(@current_month, :payment_plans, @current_month_entries)
+      matching_credit_card_entries = matching_template_entries(@current_month, :credit_cards, @current_month_entries)
+      has_generated_paychecks = paycheck_coverage[:complete]
+      has_generated_subscriptions = subscription_coverage[:complete]
+      has_generated_monthly_bills = monthly_bill_coverage[:complete]
+      has_generated_payment_plans = payment_plan_coverage[:complete]
+      has_estimated_credit_cards = matching_credit_card_entries.any?
+      @template_actions_completed = [has_generated_paychecks, has_generated_subscriptions, has_generated_monthly_bills, has_generated_payment_plans, has_estimated_credit_cards].count(true)
+    end
 
     @accounts = current_user.accounts.includes(:account_snapshots).active_first.to_a
     @net_worth_accounts = @accounts.select(&:include_in_net_worth)

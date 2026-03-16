@@ -68,7 +68,7 @@ class UserDataImport
     entry_count = 0
 
     Array(data).each do |attributes|
-      month = user.budget_months.create!(attributes.slice(:label, :month_on, :planned_income, :actual_income, :leftover, :notes))
+      month = user.budget_months.create!(attributes.slice(:label, :month_on, :leftover, :notes))
       month_count += 1
 
       Array(attributes[:expense_entries]).each do |entry_attributes|

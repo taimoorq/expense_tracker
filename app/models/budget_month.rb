@@ -11,7 +11,7 @@ class BudgetMonth < ApplicationRecord
     itemized_income = expense_entries.income.sum(&:effective_amount)
     return itemized_income if itemized_income.positive?
 
-    actual_income.presence || planned_income.presence || 0
+    0
   end
 
   def outflow_total

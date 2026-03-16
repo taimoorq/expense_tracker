@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_15_143000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_16_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -75,13 +75,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_15_143000) do
   end
 
   create_table "budget_months", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.decimal "actual_income", precision: 12, scale: 2
     t.datetime "created_at", null: false
     t.string "label", null: false
     t.decimal "leftover", precision: 12, scale: 2
     t.date "month_on", null: false
     t.text "notes"
-    t.decimal "planned_income", precision: 12, scale: 2
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["user_id", "month_on"], name: "index_budget_months_on_user_id_and_month_on", unique: true

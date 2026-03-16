@@ -146,7 +146,6 @@ class BudgetMonthsController < ApplicationController
     {
       month_on: target_month,
       label: target_month.strftime("%B %Y"),
-      planned_income: source_month.planned_income,
       notes: source_month.notes
     }
   end
@@ -212,7 +211,7 @@ class BudgetMonthsController < ApplicationController
   end
 
   def budget_month_params
-    params.require(:budget_month).permit(:label, :month_on, :planned_income, :actual_income, :leftover, :notes)
+    params.require(:budget_month).permit(:label, :month_on, :leftover, :notes)
   end
 
   def visible_budget_months_for_year(budget_months, year)
