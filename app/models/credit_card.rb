@@ -4,6 +4,7 @@ class CreditCard < ApplicationRecord
   validates :name, presence: true
   validates :minimum_payment, presence: true
   validates :priority, presence: true
+  validates :due_day, presence: true, inclusion: { in: 1..31 }
 
   scope :active_only, -> { where(active: true).order(:priority, :name) }
 

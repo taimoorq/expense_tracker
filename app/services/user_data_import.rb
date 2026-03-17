@@ -56,7 +56,7 @@ class UserDataImport
         user.payment_plans.create!(attributes.slice(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :active))
       end,
       credit_cards: Array(data[:credit_cards]).count do |attributes|
-        user.credit_cards.create!(attributes.slice(:name, :minimum_payment, :priority, :account, :active))
+        user.credit_cards.create!(attributes.slice(:name, :minimum_payment, :due_day, :priority, :account, :active))
       end
     }
   end

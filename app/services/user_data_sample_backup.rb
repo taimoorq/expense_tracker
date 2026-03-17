@@ -61,6 +61,7 @@ class UserDataSampleBackup
             {
               name: "Example Visa",
               minimum_payment: "75.00",
+              due_day: 24,
               priority: 1,
               account: "Credit Card",
               active: true

@@ -174,6 +174,7 @@ RSpec.describe "Planning template CRUD", type: :request do
     valid_params: {
       name: "Visa",
       minimum_payment: "45.00",
+      due_day: 18,
       priority: 1,
       account: "Checking",
       active: true,
@@ -182,6 +183,7 @@ RSpec.describe "Planning template CRUD", type: :request do
     update_params: {
       name: "Barclays Visa",
       minimum_payment: "55.00",
+      due_day: 21,
       priority: 2,
       account: "Checking"
     },

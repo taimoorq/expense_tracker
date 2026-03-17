@@ -284,7 +284,7 @@ class ExpenseEntriesController < ApplicationController
     when PaymentPlan
       params.require(:payment_plan).permit(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :active, :notes)
     when CreditCard
-      params.require(:credit_card).permit(:name, :minimum_payment, :priority, :account, :active, :notes)
+      params.require(:credit_card).permit(:name, :minimum_payment, :due_day, :priority, :account, :active, :notes)
     else
       {}
     end

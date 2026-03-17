@@ -18,7 +18,7 @@ class EstimateMonthCreditCards
       next if amount <= 0
 
       @budget_month.expense_entries.create!(
-        occurred_on: @budget_month.month_on.end_of_month,
+        occurred_on: estimated_due_date_for(card),
         section: :debt,
         category: "Credit Card",
         payee: card.name,
@@ -67,5 +67,10 @@ class EstimateMonthCreditCards
 
   def remove_existing_estimates
     @budget_month.expense_entries.where(source_file: "credit_card_estimate").delete_all
+  end
+
+  def estimated_due_date_for(card)
+    month_start = @budget_month.month_on.to_date.beginning_of_month
+    month_start.change(day: [card.due_day.to_i, month_start.end_of_month.day].min)
   end
 end

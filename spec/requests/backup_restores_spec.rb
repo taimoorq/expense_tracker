@@ -7,6 +7,7 @@ RSpec.describe "Backup & restore", type: :request do
 
   it "exports the selected scopes as versioned JSON" do
     create(:pay_schedule, user: user, name: "Acme Payroll")
+    create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1)
     account = create(:account, user: user, name: "Checking")
     create(:account_snapshot, account: account, recorded_on: Date.new(2026, 3, 15), balance: 2400)
     create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
@@ -25,6 +26,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.fetch("data")).to have_key("planning_templates")
     expect(payload.fetch("data")).to have_key("accounts")
     expect(payload.fetch("data")).not_to have_key("budget_months")
+    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "due_day")).to eq(18)
   end
 
   it "exports budget_months and expense_entries without removed fields" do
@@ -132,6 +134,50 @@ RSpec.describe "Backup & restore", type: :request do
     expect(response).to have_http_status(:ok)
     expect(user.budget_months.reload.pluck(:label)).to eq([ "Legacy March 2026" ])
     expect(user.expense_entries.reload.pluck(:payee)).to eq([ "Pepco" ])
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "imports legacy credit cards when due_day is missing" do
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "planning_templates" ],
+        data: {
+          planning_templates: {
+            pay_schedules: [],
+            subscriptions: [],
+            monthly_bills: [],
+            payment_plans: [],
+            credit_cards: [
+              {
+                name: "Legacy Visa",
+                minimum_payment: "40.0",
+                priority: 1,
+                account: "Checking",
+                active: true
+              }
+            ]
+          }
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "legacy-credit-card-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "planning_templates" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(user.credit_cards.reload.pluck(:name)).to eq([ "Legacy Visa" ])
+    expect(user.credit_cards.first.due_day).to eq(1)
   ensure
     file.close
     file.unlink

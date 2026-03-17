@@ -99,6 +99,7 @@ class UserDataExport
         {
           name: record.name,
           minimum_payment: decimal_string(record.minimum_payment),
+          due_day: record.due_day,
           priority: record.priority,
           account: record.account,
           active: record.active

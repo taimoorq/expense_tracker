@@ -71,6 +71,7 @@
         <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2" do |form| %>
           <%= form.text_field :name, required: true, class: "fb-input", placeholder: "Card name" %>
           <%= form.number_field :minimum_payment, step: 0.01, class: "fb-input", placeholder: "Minimum payment" %>
+          <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
           <%= form.number_field :priority, min: 1, required: true, class: "fb-input", placeholder: "Priority" %>
           <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
           <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
