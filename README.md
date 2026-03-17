@@ -433,7 +433,7 @@ Included files for this flow:
 - `deploy/Caddyfile`
 - `.env.production.example`
 
-Rails production is configured to expect an SSL-terminating proxy by default. If you intentionally run production without HTTPS in front of it, set `ASSUME_SSL=false` and `FORCE_SSL=false`.
+Rails production is configured to expect an SSL-terminating proxy by default. If you run production over plain HTTP (e.g. LAN without HTTPS), set `ASSUME_SSL=false` and `FORCE_SSL=false` in your `.env.production` file so cookies and redirects work correctly.
 
 ### Self-signed / LAN HTTPS
 
@@ -854,6 +854,10 @@ If the app starts but is not reachable from another device, check these in order
 - make sure you are on the same local network and not crossing a guest or isolated VLAN
 
 If it works on `localhost` but not on the LAN IP, the problem is outside Rails and is usually firewall or network policy.
+
+### Other Docker containers lose network connectivity when this app runs
+
+Docker Compose creates a default bridge network for each project. Docker may auto-allocate a subnet that conflicts with your host LAN (e.g. 192.168.x.x), which can break routing and prevent other containers from communicating over the host IP. The compose files use explicit subnets (172.28.1.0/24 for dev, 172.28.2.0/24 for production) to avoid this. If you still see conflicts, you can change the subnet in the `networks` section of `docker-compose.yml` to a range that does not overlap your LAN.
 
 ### Rebuild Docker after gem changes
 

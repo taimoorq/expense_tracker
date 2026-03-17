@@ -5,6 +5,7 @@ class ThemesController < ApplicationController
     cookies.signed.permanent[ThemePalette::COOKIE_KEY] = {
       value: theme.key,
       httponly: true,
+      secure: Rails.application.config.force_ssl,
       same_site: :lax
     }
 
