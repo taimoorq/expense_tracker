@@ -53,7 +53,7 @@
       <% grouped_entries << [group_name, matches] if matches.any? %>
     <% end %>
 
-    <% grouped_entries << ["Other Entries", remaining_entries] if remaining_entries.any? %>
+    <% grouped_entries << ["Other", remaining_entries] if remaining_entries.any? %>
 
     <div data-tabs-target="panel" data-panel-name="sections" role="tabpanel" class="space-y-4">
     <div class="mb-4 flex flex-wrap items-center gap-2">
@@ -70,6 +70,7 @@
       <div class="space-y-4">
         <% grouped_entries.each_with_index do |(group_name, entries), index| %>
           <% group_total = entries.sum(&:cashflow_amount) %>
+          <% show_reason_column = (group_name == "Other") %>
           <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-expense-entries-filter-target="group" data-group-id="<%= group_name.parameterize %>" style="view-transition-name: timeline-group-<%= group_name.parameterize %>; view-transition-class: ta-vt-card;" <%= "open" if index.zero? %>>
             <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
               <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -94,7 +95,9 @@
                     <th class="ta-th">Date</th>
                     <th class="ta-th">Payee</th>
                     <th class="ta-th hidden lg:table-cell">Account</th>
-                    <th class="ta-th">Reason</th>
+                    <% if show_reason_column %>
+                      <th class="ta-th">Reason</th>
+                    <% end %>
                     <th class="ta-th">Status</th>
                     <th class="ta-th text-right">Impact</th>
                     <th class="ta-th text-right">Actions</th>
@@ -123,7 +126,9 @@
                         </div>
                       </td>
                       <td class="px-3 py-2 hidden lg:table-cell"><%= entry.account_name.presence || "—" %></td>
-                      <td class="px-3 py-2"><%= reason_for_entry.call(entry) %></td>
+                      <% if show_reason_column %>
+                        <td class="px-3 py-2"><%= reason_for_entry.call(entry) %></td>
+                      <% end %>
                       <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
                       <td class="px-3 py-2 text-right <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
                         <div>

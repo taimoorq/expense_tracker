@@ -42,6 +42,119 @@
       </article>
     </div>
 
+    <section class="ta-card min-w-0" data-controller="tabs" data-tabs-default-tab-value="activity">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="ta-section-title inline-flex items-center gap-2">
+            <%= tabler_icon("list-bullet", classes: "h-5 w-5 text-indigo-600") %>
+            <span>Account activity and connections</span>
+          </h2>
+          <p class="ta-muted mt-1">Review posted entry activity separately from recurring templates connected to this account.</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-600">
+          <span class="rounded-full bg-slate-100 px-3 py-1"><%= pluralize(@linked_entries.size, "linked entry") %></span>
+          <span class="rounded-full bg-slate-100 px-3 py-1"><%= pluralize(@connected_templates_count, "template") %></span>
+        </div>
+      </div>
+
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div class="ta-tab-list" role="tablist" aria-label="Account connections view">
+          <button type="button" class="ta-tab ta-tab-active" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="activity" data-action="click->tabs#switch" data-tabs-name-param="activity">
+            <span class="inline-flex items-center gap-2"><%= tabler_icon("table", classes: "ta-tab-icon") %><span>Activity</span></span>
+          </button>
+          <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="templates" data-action="click->tabs#switch" data-tabs-name-param="templates">
+            <span class="inline-flex items-center gap-2"><%= tabler_icon("template", classes: "ta-tab-icon") %><span>Connected Templates</span></span>
+          </button>
+        </div>
+      </div>
+
+      <div data-tabs-target="panel" data-panel-name="activity" role="tabpanel" class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+          <span>Showing latest linked entries (max 150 rows)</span>
+          <span class="<%= @linked_entries_net >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">Net impact: <%= @linked_entries_net >= 0 ? "+" : "" %><%= number_to_currency(@linked_entries_net) %></span>
+        </div>
+
+        <% if @linked_entries.any? %>
+          <div class="overflow-x-auto">
+            <table class="ta-table">
+              <thead class="ta-table-head">
+                <tr>
+                  <th class="ta-th">Date</th>
+                  <th class="ta-th">Payee</th>
+                  <th class="ta-th">Category</th>
+                  <th class="ta-th">Status</th>
+                  <th class="ta-th">Source</th>
+                  <th class="ta-th text-right">Impact</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <% @linked_entries.each do |entry| %>
+                  <% impact = entry.cashflow_amount %>
+                  <% source_label = entry.source_template&.class&.name || entry.source_file.presence || "Manual" %>
+                  <tr>
+                    <td class="ta-td"><%= entry.occurred_on ? l(entry.occurred_on, format: :long) : "—" %></td>
+                    <td class="ta-td"><%= entry.payee.presence || "—" %></td>
+                    <td class="ta-td"><%= entry.category.presence || entry.section.humanize %></td>
+                    <td class="ta-td"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
+                    <td class="ta-td"><%= source_label.to_s.underscore.humanize %></td>
+                    <td class="ta-td text-right <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+            <p class="text-lg font-semibold text-slate-900">No linked entry activity yet</p>
+            <p class="mt-2 text-sm text-slate-500">Paid and planned entries will appear here when this account is selected as a linked account.</p>
+          </div>
+        <% end %>
+      </div>
+
+      <div data-tabs-target="panel" data-panel-name="templates" role="tabpanel" class="hidden space-y-3">
+        <% if @connected_templates_count.positive? %>
+          <div class="grid gap-3 md:grid-cols-2">
+            <% @connected_templates.each do |group_name, templates| %>
+              <article class="rounded-2xl border border-slate-200 bg-white p-4">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                  <h3 class="text-sm font-semibold text-slate-900"><%= group_name %></h3>
+                  <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600"><%= pluralize(templates.size, "item") %></span>
+                </div>
+                <% if templates.any? %>
+                  <ul class="space-y-2">
+                    <% templates.each do |template| %>
+                      <li class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
+                        <div>
+                          <p class="text-sm font-medium text-slate-900"><%= template.name %></p>
+                          <p class="text-xs text-slate-500">
+                            <% if template.respond_to?(:due_day) && template.due_day.present? %>
+                              Due day <%= template.due_day %>
+                            <% elsif template.respond_to?(:cadence) && template.cadence.present? %>
+                              <%= template.cadence.humanize %>
+                            <% else %>
+                              Scheduled template
+                            <% end %>
+                          </p>
+                        </div>
+                        <span class="rounded-full px-2 py-0.5 text-xs font-semibold <%= template.active? ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600' %>"><%= template.active? ? "Active" : "Inactive" %></span>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <p class="text-sm text-slate-500">No connected templates.</p>
+                <% end %>
+              </article>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+            <p class="text-lg font-semibold text-slate-900">No connected templates yet</p>
+            <p class="mt-2 text-sm text-slate-500">Connect planning templates to this account to track recurring payment links here.</p>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
     <section class="ta-card min-w-0">
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>

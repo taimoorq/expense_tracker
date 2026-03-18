@@ -96,4 +96,35 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("No snapshots yet")
     expect { snapshot.reload }.to raise_error(ActiveRecord::RecordNotFound)
   end
+
+  it "shows linked entry activity and connected templates on the account page" do
+    user = create(:user)
+    account = create(:account, user: user, name: "Checking")
+    schedule = create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: account, account: "Checking")
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(
+      :expense_entry,
+      budget_month: month,
+      user: user,
+      section: :income,
+      payee: "Acme Payroll",
+      category: "Paycheck",
+      planned_amount: 3200,
+      actual_amount: 3200,
+      status: :paid,
+      source_file: "pay_schedule",
+      source_template: schedule,
+      source_account: account,
+      account: "Checking"
+    )
+
+    sign_in_as(user)
+    visit account_path(account)
+
+    expect(page).to have_content("Account activity and connections")
+    expect(page).to have_button("Activity")
+    expect(page).to have_button("Connected Templates")
+    expect(page).to have_content("Acme Payroll")
+    expect(page).to have_content("Net impact")
+  end
 end

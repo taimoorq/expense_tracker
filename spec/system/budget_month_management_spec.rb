@@ -339,7 +339,7 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_button("Grouped")
     expect(page).to have_button("Full List")
-    expect(page).to have_content("Other Entries")
+    expect(page).to have_content("Other")
     expect(page).to have_button("Expand all")
     expect(page).to have_button("Collapse all")
 
