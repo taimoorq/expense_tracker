@@ -22,6 +22,7 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 - [Workflow](#workflow)
 	- [Overview Dashboard](#overview-dashboard)
 	- [Accounts and Net Worth](#accounts-and-net-worth)
+	- [Account Linkage Model](#account-linkage-model)
 	- [Create a Month](#create-a-month)
 	- [Clone Month Behavior](#clone-month-behavior)
 	- [Add or Import Entries](#add-or-import-entries)
@@ -39,6 +40,8 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 Expense Tracker is built for people who budget by month and want one place to plan income, fixed bills, variable spending, debt payments, and carry-over decisions.
 
 It also includes a manual accounts area for tracking balances in checking, savings, brokerage, retirement, and debt accounts without relying on live bank syncing.
+
+Planning templates and month entries can optionally link to accounts, so account context carries through month workflows instead of living only in the balances area.
 
 Hosted product overview and screenshots: https://financetracking.app/
 
@@ -161,6 +164,8 @@ Current screenshots reflect the latest overview, planning templates, month revie
 - Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
 - Toggle between grouped timeline sections and a full month list without leaving the same review surface
 - Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
+- Link templates and entries to accounts while still allowing a manual account label when needed
+- Show linked account context directly in month review views and account activity
 - Export and restore planning templates, months, and account data through versioned JSON backups with optional password encryption
 - Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
 - Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
@@ -615,10 +620,25 @@ This area lets you:
 - create manual accounts for checking, savings, brokerage, retirement, and debt balances
 - record point-in-time balance snapshots without connecting live bank feeds
 - review the latest balance for each account from the accounts index
+- review linked month-entry activity and connected templates per account
 - see a simple net worth trend built from snapshot history
 - edit or delete snapshots when you need to clean up manual balance history
 
-This section is intentionally separate from `ExpenseEntry` and month planning so budgeting still works even if you have not updated your account balances recently.
+This section stays usable even if you have not updated balances recently, while still supporting optional linkage from templates and entries back to accounts.
+
+Current balance behavior:
+
+- `Current Balance` is computed from the latest manual snapshot plus paid linked entry activity after that snapshot date
+- this avoids mutating historical snapshots while still reflecting newer posted activity
+
+### Account Linkage Model
+
+Account linkage is intentionally hybrid so users can start simple and tighten data quality over time:
+
+- planning templates can store both a linked account reference and a manual account label
+- month entries can store both a linked source account and a manual account label
+- display prefers the linked account name when present, then falls back to the manual label
+- imports and restores relink by account name when possible, so older backups remain usable
 
 ### Create a Month
 
@@ -673,6 +693,11 @@ Common entry fields include:
 - account
 - notes
 
+For account fields specifically:
+
+- `Linked account` is best when you want account-level rollups and account activity views to stay accurate
+- `Account` text label still works as a fallback when no account record exists yet
+
 ### Planning Templates
 
 Use the planning templates area to save items that should show up again in future months.
@@ -689,6 +714,8 @@ This reduces repetitive data entry and keeps recurring planning consistent from 
 
 The guided entry wizard can also create supported planning templates while you add an entry, which is useful when a one-off entry turns out to be something you want to reuse later.
 
+Each template type also supports optional account linkage, so generated month entries can carry account context automatically.
+
 ### Review a Month
 
 Each budget month can be reviewed in four main views:
@@ -696,6 +723,7 @@ Each budget month can be reviewed in four main views:
 - `Timeline`
 	- grouped view of entries with totals by group
 	- optional full-list mode for scanning the entire month without leaving the timeline area
+	- account column in desktop table views for faster account-aware review
 	- row-level filters for date, payee, reason, and status
 	- pill filters based on the actual reason values in that month
 	- direct links to launch the guided entry wizard
@@ -730,6 +758,12 @@ This area lets you:
 - protect exports with optional password encryption
 - preview an import before restoring data into the current install
 - download a sample backup file to inspect the expected structure first
+
+Backup/import account-linkage notes:
+
+- planning template exports include resolved account names so linkage can be restored across systems
+- budget month entry exports include account context and source-template linkage metadata when present
+- restore ignores legacy fields that are no longer used and relinks accounts/templates where possible
 
 The restore flow is designed to make it easier to verify what will be imported before anything is written.
 

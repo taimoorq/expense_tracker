@@ -22,7 +22,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <h3 class="text-lg font-semibold text-slate-900">Start here</h3>
-        <p class="mt-1 text-sm leading-6 text-slate-600">Expense Tracker is organized around monthly planning. Most people begin on Home, then move into Months to create or clone a month, add or import entries, and review the month using the Budget, Breakdown, and Plan and Edit views.</p>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Expense Tracker is organized around monthly planning. Most people begin on Home, then add accounts, create or clone a month, add or import entries, and review everything using the Budget, Breakdown, and Plan and Edit views.</p>
       </div>
     </div>
     <div class="mt-4 flex flex-wrap gap-2">
@@ -44,6 +44,7 @@
         <p class="mt-2 text-sm leading-6 text-slate-600">Home is a lightweight Overview page. The Months screen is where existing months, imports, and month-related actions now live.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Use Home as a landing page:</strong> it is reserved for future overview widgets and summaries.</li>
+          <li><strong class="text-slate-900">Add accounts early:</strong> linked accounts show up in monthly views, make account filters more useful, and keep account balance rollups accurate.</li>
           <li><strong class="text-slate-900">Use Months to open a month fast:</strong> jump back into an active month or revisit an older one.</li>
           <li><strong class="text-slate-900">Use Months for quick import:</strong> drag and drop a CSV there when you want to populate a month faster.</li>
         </ul>
@@ -160,11 +161,12 @@
           <span>Recommended first steps</span>
         </h3>
         <ol class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-          <li>1. Create a month or clone the most recent one.</li>
-          <li>2. Add recurring templates if the month has regular income or bills.</li>
-          <li>3. Open the Plan and Edit tab to add template-based entries or enter them manually.</li>
-          <li>4. Import a CSV if you already have transaction history to bring in.</li>
-          <li>5. Review the month in Budget, Breakdown, and Plan and Edit views, then estimate card payments if leftover cash changes.</li>
+          <li>1. Add your main accounts first (checking, cards, savings, debt).</li>
+          <li>2. Create a month or clone the most recent one.</li>
+          <li>3. Add recurring templates if the month has regular income or bills.</li>
+          <li>4. Open the Plan and Edit tab to add template-based entries or enter them manually.</li>
+          <li>5. Import a CSV if you already have transaction history to bring in.</li>
+          <li>6. Review the month in Budget, Breakdown, and Plan and Edit views, where linked account names help with scanning and cleanup.</li>
         </ol>
       </section>
 
@@ -176,6 +178,10 @@
         <div class="mt-4 space-y-2 text-sm">
           <%= link_to budget_months_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
             <span>Go to Months</span>
+            <%= tabler_icon("arrow-right", classes: "ta-action-icon") %>
+          <% end %>
+          <%= link_to accounts_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
+            <span>Set up Accounts</span>
             <%= tabler_icon("arrow-right", classes: "ta-action-icon") %>
           <% end %>
           <%= link_to planning_templates_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
