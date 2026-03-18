@@ -294,6 +294,7 @@ module ApplicationHelper
       "list" => "list-bullet",
       "adjustments" => "adjustments-horizontal",
       "cash" => "banknotes",
+      "credit-card" => "credit-card",
       "chart-bar" => "chart-bar",
       "check" => "check-circle",
       "home" => "home",
@@ -378,6 +379,12 @@ module ApplicationHelper
         { d: "M12 9.75a2.25 2.25 0 1 0 0 4.5a2.25 2.25 0 0 0 0 -4.5Z" },
         { d: "M4.5 12a3.75 3.75 0 0 0 3.75 -3.75" },
         { d: "M15.75 15.75A3.75 3.75 0 0 0 19.5 12" }
+      ],
+      "credit-card" => [
+        { d: "M3 10h18" },
+        { d: "M3 9c0-1.657 1.343-3 3-3h12c1.657 0 3 1.343 3 3v6c0 1.657-1.343 3-3 3H6c-1.657 0-3-1.343-3-3V9Z" },
+        { d: "M7 14h.008v.008H7z" },
+        { d: "M11 14h3" }
       ],
       "chart-bar" => [
         { d: "M3.75 19.5h16.5" },

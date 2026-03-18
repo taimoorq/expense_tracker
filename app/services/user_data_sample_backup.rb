@@ -43,6 +43,7 @@ class UserDataSampleBackup
               default_amount: "120.00",
               due_day: 18,
               account: "Checking",
+              notes: "Sample utility bill",
               active: true
             }
           ],
@@ -54,6 +55,7 @@ class UserDataSampleBackup
               monthly_target: "200.00",
               due_day: 20,
               account: "Checking",
+              notes: "Sample installment plan",
               active: true
             }
           ],
@@ -64,6 +66,7 @@ class UserDataSampleBackup
               due_day: 24,
               priority: 1,
               account: "Credit Card",
+              notes: "Sample credit card minimum payment",
               active: true
             }
           ]
@@ -83,10 +86,13 @@ class UserDataSampleBackup
                 planned_amount: "2450.00",
                 actual_amount: "2450.00",
                 account: "Checking",
+                source_account: "Checking",
                 status: "paid",
                 need_or_want: nil,
                 notes: "Generated from sample pay schedule",
-                source_file: "pay_schedule"
+                source_file: "pay_schedule",
+                source_template_type: "PaySchedule",
+                source_template_name: "Example Payroll"
               },
               {
                 occurred_on: "2026-03-18",
@@ -96,10 +102,13 @@ class UserDataSampleBackup
                 planned_amount: "120.00",
                 actual_amount: nil,
                 account: "Checking",
+                source_account: "Checking",
                 status: "planned",
                 need_or_want: "Need",
                 notes: "Sample month entry",
-                source_file: "monthly_bill"
+                source_file: "monthly_bill",
+                source_template_type: "MonthlyBill",
+                source_template_name: "Example Electric"
               }
             ]
           }

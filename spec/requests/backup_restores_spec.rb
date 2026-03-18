@@ -9,9 +9,9 @@ RSpec.describe "Backup & restore", type: :request do
     checking = create(:account, user: user, name: "Checking")
     create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
     create(:subscription, user: user, name: "Netflix", linked_account: checking, account: "Legacy Card")
-    create(:monthly_bill, user: user, name: "Power", linked_account: checking, account: "Legacy Card")
-    create(:payment_plan, user: user, name: "Tax Plan", linked_account: checking, account: "Legacy Card")
-    create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1, payment_account: checking, account: "Legacy Checking")
+    create(:monthly_bill, user: user, name: "Power", linked_account: checking, account: "Legacy Card", notes: "Electric utility")
+    create(:payment_plan, user: user, name: "Tax Plan", linked_account: checking, account: "Legacy Card", notes: "IRS installment")
+    create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1, payment_account: checking, account: "Legacy Checking", notes: "Main rewards card")
     create(:account_snapshot, account: checking, recorded_on: Date.new(2026, 3, 15), balance: 2400)
     create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
 
@@ -33,8 +33,11 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "planning_templates", "subscriptions", 0, "account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "payment_plans", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "notes")).to eq("Electric utility")
+    expect(payload.dig("data", "planning_templates", "payment_plans", 0, "notes")).to eq("IRS installment")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "due_day")).to eq(18)
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "notes")).to eq("Main rewards card")
   end
 
   it "exports budget_months and expense_entries without removed fields" do
@@ -55,6 +58,34 @@ RSpec.describe "Backup & restore", type: :request do
     expect(month_data).not_to have_key("planned_income")
     expect(month_data).not_to have_key("actual_income")
     expect(month_data["expense_entries"].first).to include("payee" => "Rent")
+  end
+
+  it "exports expense entry source linkage metadata when present" do
+    checking = create(:account, user: user, name: "Checking")
+    payroll = create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(
+      :expense_entry,
+      budget_month: month,
+      user: user,
+      payee: "Acme Payroll",
+      category: "Paycheck",
+      section: :income,
+      status: :paid,
+      planned_amount: 3200,
+      source_file: "pay_schedule",
+      source_template: payroll,
+      source_account: checking,
+      account: "Checking"
+    )
+
+    post export_backup_restore_path, params: { export_scopes: [ "budget_months" ] }
+
+    payload = JSON.parse(response.body)
+    entry = payload.dig("data", "budget_months", 0, "expense_entries", 0)
+    expect(entry["source_account"]).to eq("Checking")
+    expect(entry["source_template_type"]).to eq("PaySchedule")
+    expect(entry["source_template_name"]).to eq("Acme Payroll")
   end
 
   it "exports an encrypted backup when a password is provided" do
@@ -334,11 +365,14 @@ RSpec.describe "Backup & restore", type: :request do
                   payee: "Pepco",
                   planned_amount: "91.22",
                   actual_amount: nil,
-                  account: "Checking",
+                  account: "Imported Checking",
+                  source_account: "Imported Checking",
                   status: "planned",
                   need_or_want: "Need",
                   notes: "Imported entry",
-                  source_file: "manual"
+                  source_file: "pay_schedule",
+                  source_template_type: "PaySchedule",
+                  source_template_name: "Imported Payroll"
                 }
               ]
             }
@@ -384,7 +418,9 @@ RSpec.describe "Backup & restore", type: :request do
     expect(response.body).to include("Import complete")
     expect(user.pay_schedules.reload.pluck(:name)).to eq([ "Imported Payroll" ])
     expect(user.budget_months.reload.pluck(:label)).to eq([ "March 2026" ])
-    expect(user.expense_entries.reload.pluck(:payee)).to eq([ "Pepco" ])
+    imported_entry = user.expense_entries.find_by!(payee: "Pepco")
+    expect(imported_entry.source_template).to eq(user.pay_schedules.find_by!(name: "Imported Payroll"))
+    expect(imported_entry.source_account).to eq(user.accounts.find_by!(name: "Imported Checking"))
     expect(user.accounts.reload.pluck(:name)).to eq([ "Imported Checking" ])
     expect(user.account_snapshots.reload.pluck(:notes)).to eq([ "Imported snapshot" ])
   ensure

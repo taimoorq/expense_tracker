@@ -47,6 +47,10 @@ class ExpenseEntry < ApplicationRecord
     planned? && source_file.in?(RECURRING_TEMPLATE_SOURCES) && occurred_on.present? && occurred_on <= Date.current
   end
 
+  def account_name
+    source_account&.name.presence || account
+  end
+
   private
 
   def assign_user_from_budget_month

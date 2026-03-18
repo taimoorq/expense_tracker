@@ -34,4 +34,18 @@ RSpec.describe ExpenseEntry, type: :model do
 
     expect(entry.source_account).to eq(linked_account)
   end
+
+  it "prefers linked source_account name for display" do
+    user = create(:user)
+    linked_account = create(:account, user: user, name: "Primary Checking")
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+    entry = create(:expense_entry,
+                   budget_month: month,
+                   user: user,
+                   source_account: linked_account,
+                   account: "Legacy Label")
+
+    expect(entry.account_name).to eq("Primary Checking")
+  end
 end

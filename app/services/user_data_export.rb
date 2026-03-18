@@ -81,6 +81,7 @@ class UserDataExport
           default_amount: decimal_string(record.default_amount),
           due_day: record.due_day,
           account: PlanningTemplateAccountLinking.resolved_account_name(record),
+          notes: record.notes,
           active: record.active
         }
       end,
@@ -92,6 +93,7 @@ class UserDataExport
           monthly_target: decimal_string(record.monthly_target),
           due_day: record.due_day,
           account: PlanningTemplateAccountLinking.resolved_account_name(record),
+          notes: record.notes,
           active: record.active
         }
       end,
@@ -102,6 +104,7 @@ class UserDataExport
           due_day: record.due_day,
           priority: record.priority,
           account: PlanningTemplateAccountLinking.resolved_account_name(record),
+          notes: record.notes,
           active: record.active
         }
       end
@@ -124,10 +127,13 @@ class UserDataExport
             planned_amount: decimal_string(entry.planned_amount),
             actual_amount: decimal_string(entry.actual_amount),
             account: entry.account,
+            source_account: entry.source_account&.name,
             status: entry.status,
             need_or_want: entry.need_or_want,
             notes: entry.notes,
-            source_file: entry.source_file
+            source_file: entry.source_file,
+            source_template_type: entry.source_template_type,
+            source_template_name: entry.source_template&.name
           }
         end
       }

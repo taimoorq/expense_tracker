@@ -11,7 +11,7 @@
   <td class="px-3 py-2"><%= entry.section.humanize %></td>
   <td class="px-3 py-2"><%= entry.category %></td>
   <td class="px-3 py-2"><%= entry.payee %></td>
-  <td class="px-3 py-2 hidden lg:table-cell"><%= entry.account.presence || "—" %></td>
+  <td class="px-3 py-2 hidden lg:table-cell"><%= entry.account_name.presence || "—" %></td>
   <td class="px-3 py-2 text-right"><%= number_to_currency(entry.planned_amount || 0) %></td>
   <td class="px-3 py-2 text-right"><%= number_to_currency(entry.actual_amount || 0) %></td>
   <td class="px-3 py-2"><%= entry.status.humanize %></td>

@@ -52,13 +52,13 @@ class UserDataImport
         user.subscriptions.create!(attributes.slice(:name, :amount, :due_day, :account, :notes, :active))
       end,
       monthly_bills: Array(data[:monthly_bills]).count do |attributes|
-        user.monthly_bills.create!(attributes.slice(:name, :kind, :default_amount, :due_day, :account, :active))
+        user.monthly_bills.create!(attributes.slice(:name, :kind, :default_amount, :due_day, :account, :notes, :active))
       end,
       payment_plans: Array(data[:payment_plans]).count do |attributes|
-        user.payment_plans.create!(attributes.slice(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :active))
+        user.payment_plans.create!(attributes.slice(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :notes, :active))
       end,
       credit_cards: Array(data[:credit_cards]).count do |attributes|
-        user.credit_cards.create!(attributes.slice(:name, :minimum_payment, :due_day, :priority, :account, :active))
+        user.credit_cards.create!(attributes.slice(:name, :minimum_payment, :due_day, :priority, :account, :notes, :active))
       end
     }
   end
@@ -74,7 +74,22 @@ class UserDataImport
       month_count += 1
 
       Array(attributes[:expense_entries]).each do |entry_attributes|
-        month.expense_entries.create!(entry_attributes.slice(:occurred_on, :section, :category, :payee, :planned_amount, :actual_amount, :account, :status, :need_or_want, :notes, :source_file))
+        entry = month.expense_entries.create!(
+          entry_attributes.slice(
+            :occurred_on,
+            :section,
+            :category,
+            :payee,
+            :planned_amount,
+            :actual_amount,
+            :account,
+            :status,
+            :need_or_want,
+            :notes,
+            :source_file
+          )
+        )
+        relink_entry_source_template(entry, entry_attributes)
         entry_count += 1
       end
     end
@@ -103,5 +118,38 @@ class UserDataImport
 
   def failure(message)
     { success: false, error: message }
+  end
+
+  def relink_entry_source_template(entry, entry_attributes)
+    source_template_type = entry_attributes[:source_template_type].presence
+    source_template_name = entry_attributes[:source_template_name].presence || entry.payee
+
+    template_record = if source_template_type.present?
+      find_template_by_type_and_name(source_template_type, source_template_name)
+    else
+      find_template_by_source_file_and_name(entry.source_file, source_template_name)
+    end
+
+    return if template_record.blank?
+
+    entry.update!(source_template: template_record)
+  end
+
+  def find_template_by_type_and_name(type_name, name)
+    allowed_model_names = TemplateTypeRegistry::TEMPLATE_DEFINITIONS.values.map { |definition| definition[:model_name] }
+    return nil unless allowed_model_names.include?(type_name)
+
+    type_name.constantize.where(user_id: user.id).find_by(name: name)
+  rescue NameError
+    nil
+  end
+
+  def find_template_by_source_file_and_name(source_file, name)
+    definition = TemplateTypeRegistry.definition_for_source_file(source_file)
+    return nil if definition.blank?
+
+    definition.fetch(:model_name).constantize.where(user_id: user.id).find_by(name: name)
+  rescue NameError
+    nil
   end
 end
