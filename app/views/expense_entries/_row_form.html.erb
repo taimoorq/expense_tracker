@@ -1,5 +1,5 @@
 <tr id="<%= dom_id(expense_entry) %>" class="bg-indigo-50/40">
-  <td colspan="8" class="px-3 py-2">
+  <td colspan="9" class="px-3 py-2">
     <%= form_with model: [budget_month, expense_entry], class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
       <%= render "expense_entries/edit_fields", form: form, notes_input: :text_field, notes_rows: nil, notes_wrapper_class: "" %>
       <%= render "expense_entries/edit_actions",
