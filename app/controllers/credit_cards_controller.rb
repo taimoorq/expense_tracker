@@ -12,7 +12,7 @@ class CreditCardsController < ApplicationController
   end
 
   def permitted_attributes
-    [ :name, :minimum_payment, :due_day, :priority, :account, :active, :notes ]
+    [ :name, :minimum_payment, :due_day, :priority, :linked_account_id, :payment_account_id, :account, :active, :notes ]
   end
 
   def create_success_message

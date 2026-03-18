@@ -18,7 +18,8 @@
           <%= form.number_field :day_of_month_one, class: "fb-input", placeholder: "Day #1" %>
           <%= form.number_field :day_of_month_two, class: "fb-input", placeholder: "Day #2" %>
           <%= form.select :weekend_adjustment, PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
-          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select linked account (optional)" }, class: "fb-select" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Manual account label (optional)" %>
           <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
           <div class="flex justify-end gap-2">
             <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
@@ -30,7 +31,8 @@
           <%= form.text_field :name, required: true, class: "fb-input", placeholder: "Subscription name" %>
           <%= form.number_field :amount, step: 0.01, required: true, class: "fb-input", placeholder: "Amount" %>
           <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
-          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select linked account (optional)" }, class: "fb-select" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Manual account label (optional)" %>
           <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
           <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
           <div class="flex justify-end gap-2">
@@ -44,7 +46,8 @@
           <%= form.select :kind, MonthlyBill.kinds.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
           <%= form.number_field :default_amount, step: 0.01, class: "fb-input", placeholder: "Default amount" %>
           <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
-          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select linked account (optional)" }, class: "fb-select" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Manual account label (optional)" %>
           <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
           <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
           <div class="flex justify-end gap-2">
@@ -59,7 +62,8 @@
           <%= form.number_field :amount_paid, step: 0.01, class: "fb-input", placeholder: "Amount paid" %>
           <%= form.number_field :monthly_target, step: 0.01, class: "fb-input", placeholder: "Monthly target" %>
           <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
-          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select linked account (optional)" }, class: "fb-select" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Manual account label (optional)" %>
           <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
           <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
           <div class="flex justify-end gap-2">
@@ -73,7 +77,8 @@
           <%= form.number_field :minimum_payment, step: 0.01, class: "fb-input", placeholder: "Minimum payment" %>
           <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
           <%= form.number_field :priority, min: 1, required: true, class: "fb-input", placeholder: "Priority" %>
-          <%= form.text_field :account, class: "fb-input", placeholder: "Account" %>
+          <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select linked account (optional)" }, class: "fb-select" %>
+          <%= form.text_field :account, class: "fb-input", placeholder: "Manual account label (optional)" %>
           <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>
           <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, class: "fb-checkbox" %> Active</label>
           <div class="flex justify-end gap-2">

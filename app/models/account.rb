@@ -29,6 +29,11 @@ class Account < ApplicationRecord
     latest_snapshot&.balance
   end
 
+  def current_balance(as_of: Date.current)
+    base_balance = latest_balance.to_d
+    base_balance + posted_entries_delta(as_of: as_of)
+  end
+
   def asset?
     checking? || savings? || brokerage? || retirement? || cash? || other_asset?
   end
@@ -38,6 +43,19 @@ class Account < ApplicationRecord
   end
 
   def display_balance
-    latest_balance || 0
+    current_balance
+  end
+
+  def posted_entries_delta(as_of: Date.current)
+    scope = user.expense_entries
+                .where(source_account_id: id, status: ExpenseEntry.statuses[:paid])
+                .where.not(occurred_on: nil)
+                .where(occurred_on: ..as_of)
+
+    if latest_snapshot.present?
+      scope = scope.where("occurred_on > ?", latest_snapshot.recorded_on)
+    end
+
+    scope.to_a.sum { |entry| entry.income? ? entry.effective_amount.to_d : -entry.effective_amount.to_d }
   end
 end

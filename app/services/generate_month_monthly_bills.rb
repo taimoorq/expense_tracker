@@ -18,11 +18,12 @@ class GenerateMonthMonthlyBills
         payee: bill.name,
         planned_amount: bill.default_amount,
         actual_amount: nil,
-        account: bill.account,
+        account: bill.account_name,
         status: :planned,
         need_or_want: "Need",
         notes: bill.notes,
-        source_file: "monthly_bill"
+        source_file: TemplateTypeRegistry.source_file_for(:monthly_bill),
+        source_template: bill
       )
       created += 1
     end

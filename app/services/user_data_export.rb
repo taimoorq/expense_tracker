@@ -60,7 +60,7 @@ class UserDataExport
           day_of_month_one: record.day_of_month_one,
           day_of_month_two: record.day_of_month_two,
           weekend_adjustment: record.weekend_adjustment,
-          account: record.account,
+          account: PlanningTemplateAccountLinking.resolved_account_name(record),
           active: record.active
         }
       end,
@@ -69,7 +69,7 @@ class UserDataExport
           name: record.name,
           amount: decimal_string(record.amount),
           due_day: record.due_day,
-          account: record.account,
+          account: PlanningTemplateAccountLinking.resolved_account_name(record),
           notes: record.notes,
           active: record.active
         }
@@ -80,7 +80,7 @@ class UserDataExport
           kind: record.kind,
           default_amount: decimal_string(record.default_amount),
           due_day: record.due_day,
-          account: record.account,
+          account: PlanningTemplateAccountLinking.resolved_account_name(record),
           active: record.active
         }
       end,
@@ -91,7 +91,7 @@ class UserDataExport
           amount_paid: decimal_string(record.amount_paid),
           monthly_target: decimal_string(record.monthly_target),
           due_day: record.due_day,
-          account: record.account,
+          account: PlanningTemplateAccountLinking.resolved_account_name(record),
           active: record.active
         }
       end,
@@ -101,7 +101,7 @@ class UserDataExport
           minimum_payment: decimal_string(record.minimum_payment),
           due_day: record.due_day,
           priority: record.priority,
-          account: record.account,
+          account: PlanningTemplateAccountLinking.resolved_account_name(record),
           active: record.active
         }
       end

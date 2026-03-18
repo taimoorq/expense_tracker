@@ -177,6 +177,16 @@ module ApplicationHelper
     ]
   end
 
+  def active_account_names(user = current_user)
+    return [] if user.blank?
+
+    user.accounts.active_first.pluck(:name)
+  end
+
+  def wizard_template_type_options
+    TemplateTypeRegistry.wizard_template_types.map { |type| [ type.humanize, type ] }
+  end
+
   def legacy_tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)
     canonical_name = app_icon_aliases[name.to_s] || name.to_s
     path_data = app_icon_paths[canonical_name] || app_icon_paths["list-bullet"]

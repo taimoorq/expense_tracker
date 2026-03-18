@@ -62,6 +62,7 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("$10,000.00")
     expect(page).to have_content("$2,500.00")
     expect(page).to have_content("$7,500.00")
+    expect(page).to have_content("Paid linked entries are included after snapshots.")
     expect(page).to have_content("Latest updated")
     expect(page).to have_content("March 01, 2026")
     expect(page).to have_css("canvas[data-controller='chart']", visible: :all)

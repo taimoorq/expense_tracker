@@ -18,11 +18,12 @@ class GenerateMonthPaychecks
           payee: schedule.name,
           planned_amount: schedule.amount,
           actual_amount: nil,
-          account: schedule.account,
+          account: schedule.account_name,
           status: :planned,
           need_or_want: "Need",
           notes: "Generated from pay schedule",
-          source_file: "pay_schedule"
+          source_file: TemplateTypeRegistry.source_file_for(:pay_schedule),
+          source_template: schedule
         )
         created += 1
       end

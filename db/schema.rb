@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_18_220400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -94,11 +94,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
     t.decimal "minimum_payment", precision: 12, scale: 2, default: "0.0", null: false
     t.string "name", null: false
     t.text "notes"
+    t.uuid "payment_account_id"
     t.integer "priority", default: 1, null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_credit_cards_on_active"
     t.index ["due_day"], name: "index_credit_cards_on_due_day"
+    t.index ["payment_account_id"], name: "index_credit_cards_on_payment_account_id"
     t.index ["priority"], name: "index_credit_cards_on_priority"
     t.index ["user_id"], name: "index_credit_cards_on_user_id"
   end
@@ -115,13 +117,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
     t.string "payee"
     t.decimal "planned_amount", precision: 12, scale: 2
     t.integer "section", default: 6, null: false
+    t.uuid "source_account_id"
     t.string "source_file"
+    t.uuid "source_template_id"
+    t.string "source_template_type"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["budget_month_id"], name: "index_expense_entries_on_budget_month_id"
     t.index ["occurred_on"], name: "index_expense_entries_on_occurred_on"
     t.index ["section"], name: "index_expense_entries_on_section"
+    t.index ["source_account_id"], name: "index_expense_entries_on_source_account_id"
+    t.index ["source_template_type", "source_template_id"], name: "index_expense_entries_on_source_template"
     t.index ["status"], name: "index_expense_entries_on_status"
     t.index ["user_id"], name: "index_expense_entries_on_user_id"
   end
@@ -133,12 +140,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
     t.decimal "default_amount", precision: 12, scale: 2
     t.integer "due_day", default: 1, null: false
     t.integer "kind", default: 0, null: false
+    t.uuid "linked_account_id"
     t.string "name", null: false
     t.text "notes"
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_monthly_bills_on_active"
     t.index ["kind"], name: "index_monthly_bills_on_kind"
+    t.index ["linked_account_id"], name: "index_monthly_bills_on_linked_account_id"
     t.index ["user_id"], name: "index_monthly_bills_on_user_id"
   end
 
@@ -151,12 +160,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
     t.integer "day_of_month_one"
     t.integer "day_of_month_two"
     t.date "first_pay_on", null: false
+    t.uuid "linked_account_id"
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.integer "weekend_adjustment", default: 1, null: false
     t.index ["active"], name: "index_pay_schedules_on_active"
     t.index ["cadence"], name: "index_pay_schedules_on_cadence"
+    t.index ["linked_account_id"], name: "index_pay_schedules_on_linked_account_id"
     t.index ["user_id"], name: "index_pay_schedules_on_user_id"
   end
 
@@ -166,6 +177,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
     t.decimal "amount_paid", precision: 12, scale: 2, default: "0.0", null: false
     t.datetime "created_at", null: false
     t.integer "due_day", default: 15, null: false
+    t.uuid "linked_account_id"
     t.decimal "monthly_target", precision: 12, scale: 2
     t.string "name", null: false
     t.text "notes"
@@ -173,6 +185,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_payment_plans_on_active"
+    t.index ["linked_account_id"], name: "index_payment_plans_on_linked_account_id"
     t.index ["user_id"], name: "index_payment_plans_on_user_id"
   end
 
@@ -182,11 +195,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
     t.decimal "amount", precision: 12, scale: 2, null: false
     t.datetime "created_at", null: false
     t.integer "due_day", default: 1, null: false
+    t.uuid "linked_account_id"
     t.string "name", null: false
     t.text "notes"
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_subscriptions_on_active"
+    t.index ["linked_account_id"], name: "index_subscriptions_on_linked_account_id"
     t.index ["user_id"], name: "index_subscriptions_on_user_id"
   end
 
@@ -216,11 +231,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_120000) do
   add_foreign_key "admin_audit_logs", "admin_users"
   add_foreign_key "admin_audit_logs", "users", column: "target_user_id"
   add_foreign_key "budget_months", "users"
+  add_foreign_key "credit_cards", "accounts", column: "payment_account_id"
   add_foreign_key "credit_cards", "users"
+  add_foreign_key "expense_entries", "accounts", column: "source_account_id"
   add_foreign_key "expense_entries", "budget_months"
   add_foreign_key "expense_entries", "users"
+  add_foreign_key "monthly_bills", "accounts", column: "linked_account_id"
   add_foreign_key "monthly_bills", "users"
+  add_foreign_key "pay_schedules", "accounts", column: "linked_account_id"
   add_foreign_key "pay_schedules", "users"
+  add_foreign_key "payment_plans", "accounts", column: "linked_account_id"
   add_foreign_key "payment_plans", "users"
+  add_foreign_key "subscriptions", "accounts", column: "linked_account_id"
   add_foreign_key "subscriptions", "users"
 end

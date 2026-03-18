@@ -20,6 +20,7 @@ class PaySchedulesController < ApplicationController
       :day_of_month_one,
       :day_of_month_two,
       :weekend_adjustment,
+      :linked_account_id,
       :account,
       :active
     ]

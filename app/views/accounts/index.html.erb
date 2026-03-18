@@ -22,7 +22,7 @@
       <article class="ta-card">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assets</p>
         <p class="mt-2 text-3xl font-semibold text-emerald-700"><%= number_to_currency(@assets_total) %></p>
-        <p class="mt-1 text-sm text-slate-500">Latest balances from accounts included in net worth.</p>
+        <p class="mt-1 text-sm text-slate-500">Current balances from accounts included in net worth.</p>
       </article>
       <article class="ta-card">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Liabilities</p>
@@ -32,7 +32,7 @@
       <article class="ta-card">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Net Worth</p>
         <p class="mt-2 text-3xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p>
-        <p class="mt-1 text-sm text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included.</p>
+        <p class="mt-1 text-sm text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included. Paid linked entries are included after snapshots.</p>
       </article>
     </div>
 

@@ -223,6 +223,7 @@ class ExpenseEntriesController < ApplicationController
       :payee,
       :planned_amount,
       :actual_amount,
+      :source_account_id,
       :account,
       :status,
       :need_or_want,
@@ -257,36 +258,21 @@ class ExpenseEntriesController < ApplicationController
   end
 
   def template_record_for_entry(entry)
-    case entry.source_file
-    when "pay_schedule"
-      current_user.pay_schedules.find_by(name: entry.payee)
-    when "subscription"
-      current_user.subscriptions.find_by(name: entry.payee)
-    when "monthly_bill"
-      current_user.monthly_bills.find_by(name: entry.payee)
-    when "payment_plan"
-      current_user.payment_plans.find_by(name: entry.payee)
-    when "credit_card_estimate"
-      current_user.credit_cards.find_by(name: entry.payee)
-    else
-      nil
+    linked_template = entry.source_template
+    if linked_template.present? && linked_template.respond_to?(:user_id) && linked_template.user_id == current_user.id
+      return linked_template
     end
+
+    definition = TemplateTypeRegistry.definition_for_source_file(entry.source_file)
+    return nil if definition.blank?
+
+    current_user.public_send(definition.fetch(:model_name).underscore.pluralize).find_by(name: entry.payee)
   end
 
   def template_params_for(record)
-    case record
-    when PaySchedule
-      params.require(:pay_schedule).permit(:name, :cadence, :amount, :first_pay_on, :day_of_month_one, :day_of_month_two, :weekend_adjustment, :account, :active)
-    when Subscription
-      params.require(:subscription).permit(:name, :amount, :due_day, :account, :active, :notes)
-    when MonthlyBill
-      params.require(:monthly_bill).permit(:name, :kind, :default_amount, :due_day, :account, :active, :notes)
-    when PaymentPlan
-      params.require(:payment_plan).permit(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :active, :notes)
-    when CreditCard
-      params.require(:credit_card).permit(:name, :minimum_payment, :due_day, :priority, :account, :active, :notes)
-    else
-      {}
-    end
+    definition = TemplateTypeRegistry.definition_for(record)
+    return {} if definition.blank?
+
+    params.require(definition.fetch(:param_key)).permit(*definition.fetch(:permitted_attributes))
   end
 end

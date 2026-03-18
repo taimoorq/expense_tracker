@@ -75,6 +75,7 @@ RSpec.describe "Planning template CRUD", type: :request do
         amount: "2500.00",
         first_pay_on: "2026-01-15",
         day_of_month_one: 15,
+        linked_account_id: create(:account, user: user, name: "Checking").id,
         account: "Checking",
         active: true
       }
@@ -82,6 +83,7 @@ RSpec.describe "Planning template CRUD", type: :request do
     update_params: ->(_record) {
       {
         name: "Updated Payroll",
+        linked_account_id: create(:account, user: user, name: "Savings").id,
         account: "Savings",
         day_of_month_two: 25
       }
@@ -96,19 +98,25 @@ RSpec.describe "Planning template CRUD", type: :request do
     create_path_helper: :subscriptions_path,
     destroy_path_helper: :subscription_path,
     param_key: :subscription,
-    valid_params: {
-      name: "Netflix",
-      amount: "19.99",
-      due_day: 8,
-      account: "Checking",
-      active: true,
-      notes: "Streaming"
+    valid_params: -> {
+      {
+        name: "Netflix",
+        amount: "19.99",
+        due_day: 8,
+        linked_account_id: create(:account, user: user, name: "Checking").id,
+        account: "Checking",
+        active: true,
+        notes: "Streaming"
+      }
     },
-    update_params: {
-      name: "Google Fi",
-      amount: "97.74",
-      due_day: 1,
-      account: "Barclay Card US"
+    update_params: ->(_record) {
+      {
+        name: "Google Fi",
+        amount: "97.74",
+        due_day: 1,
+        linked_account_id: create(:account, user: user, name: "Barclay Card US").id,
+        account: "Barclay Card US"
+      }
     },
     create_notice: "Subscription saved.",
     update_notice: "Subscription updated.",
@@ -120,20 +128,26 @@ RSpec.describe "Planning template CRUD", type: :request do
     create_path_helper: :monthly_bills_path,
     destroy_path_helper: :monthly_bill_path,
     param_key: :monthly_bill,
-    valid_params: {
-      name: "Electric",
-      kind: "fixed_payment",
-      default_amount: "110.00",
-      due_day: 12,
-      account: "Checking",
-      active: true,
-      notes: "Utility"
+    valid_params: -> {
+      {
+        name: "Electric",
+        kind: "fixed_payment",
+        default_amount: "110.00",
+        due_day: 12,
+        linked_account_id: create(:account, user: user, name: "Checking").id,
+        account: "Checking",
+        active: true,
+        notes: "Utility"
+      }
     },
-    update_params: {
-      name: "Water Bill",
-      default_amount: "125.50",
-      due_day: 14,
-      account: "Checking"
+    update_params: ->(_record) {
+      {
+        name: "Water Bill",
+        default_amount: "125.50",
+        due_day: 14,
+        linked_account_id: create(:account, user: user, name: "Savings").id,
+        account: "Checking"
+      }
     },
     create_notice: "Monthly bill template saved.",
     update_notice: "Monthly bill template updated.",
@@ -145,21 +159,27 @@ RSpec.describe "Planning template CRUD", type: :request do
     create_path_helper: :payment_plans_path,
     destroy_path_helper: :payment_plan_path,
     param_key: :payment_plan,
-    valid_params: {
-      name: "Tax Plan",
-      total_due: "1200.00",
-      amount_paid: "200.00",
-      monthly_target: "100.00",
-      due_day: 18,
-      account: "Checking",
-      active: true,
-      notes: "Installment"
+    valid_params: -> {
+      {
+        name: "Tax Plan",
+        total_due: "1200.00",
+        amount_paid: "200.00",
+        monthly_target: "100.00",
+        due_day: 18,
+        linked_account_id: create(:account, user: user, name: "Checking").id,
+        account: "Checking",
+        active: true,
+        notes: "Installment"
+      }
     },
-    update_params: {
-      name: "IRS Plan",
-      monthly_target: "150.00",
-      due_day: 20,
-      account: "Savings"
+    update_params: ->(_record) {
+      {
+        name: "IRS Plan",
+        monthly_target: "150.00",
+        due_day: 20,
+        linked_account_id: create(:account, user: user, name: "Savings").id,
+        account: "Savings"
+      }
     },
     create_notice: "Payment plan saved.",
     update_notice: "Payment plan updated.",
@@ -171,21 +191,27 @@ RSpec.describe "Planning template CRUD", type: :request do
     create_path_helper: :credit_cards_path,
     destroy_path_helper: :credit_card_path,
     param_key: :credit_card,
-    valid_params: {
-      name: "Visa",
-      minimum_payment: "45.00",
-      due_day: 18,
-      priority: 1,
-      account: "Checking",
-      active: true,
-      notes: "Main card"
+    valid_params: -> {
+      {
+        name: "Visa",
+        minimum_payment: "45.00",
+        due_day: 18,
+        priority: 1,
+        payment_account_id: create(:account, user: user, name: "Checking").id,
+        account: "Checking",
+        active: true,
+        notes: "Main card"
+      }
     },
-    update_params: {
-      name: "Barclays Visa",
-      minimum_payment: "55.00",
-      due_day: 21,
-      priority: 2,
-      account: "Checking"
+    update_params: ->(_record) {
+      {
+        name: "Barclays Visa",
+        minimum_payment: "55.00",
+        due_day: 21,
+        priority: 2,
+        payment_account_id: create(:account, user: user, name: "Savings").id,
+        account: "Savings"
+      }
     },
     create_notice: "Credit card saved.",
     update_notice: "Credit card updated.",

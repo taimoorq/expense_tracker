@@ -2,6 +2,14 @@
 
 rm -f /rails/tmp/pids/server.pid
 
+# In development containers, stale gem volumes can cause boot failures after lockfile changes.
+# Auto-heal by installing missing gems before starting the app process.
+if [ "${RAILS_ENV}" = "development" ] && [ "$1" = "bin/dev" -o "$1" = "./bin/dev" ]; then
+  if ! bundle check >/dev/null 2>&1; then
+    bundle install
+  fi
+fi
+
 # If running the development process or rails server then create or migrate existing database
 if [ "$1" = "bin/dev" ] || [ "$1" = "./bin/dev" ] || { [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; } || { [ "${@: -2:1}" == "bin/rails" ] && [ "${@: -1:1}" == "server" ]; }; then
   ./bin/rails db:prepare

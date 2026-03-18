@@ -18,11 +18,12 @@ class GenerateMonthSubscriptions
         payee: subscription.name,
         planned_amount: subscription.amount,
         actual_amount: nil,
-        account: subscription.account,
+        account: subscription.account_name,
         status: :planned,
         need_or_want: "Need",
         notes: subscription.notes,
-        source_file: "subscription"
+        source_file: TemplateTypeRegistry.source_file_for(:subscription),
+        source_template: subscription
       )
       created += 1
     end

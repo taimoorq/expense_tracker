@@ -88,8 +88,17 @@ Need/Want: optional spending priority tag."><%= tabler_icon("help") %></button>
             <%= form.number_field :actual_amount, step: 0.01, placeholder: "0.00", class: "fb-input", data: { action: "input->entry-preview#update", entry_preview_target: "actual" } %>
           </div>
           <div>
+            <% quick_add_account_options_list_id = "quick-add-account-options-#{budget_month.id}" %>
             <%= form.label :account, class: "fb-label" %>
-            <%= form.text_field :account, placeholder: "Checking, Chase, etc.", class: "fb-input" %>
+            <%= form.text_field :account,
+                                placeholder: "Pick existing or type custom label",
+                                class: "fb-input",
+                                list: quick_add_account_options_list_id %>
+            <datalist id="<%= quick_add_account_options_list_id %>">
+              <% active_account_names.each do |account_name| %>
+                <option value="<%= account_name %>"></option>
+              <% end %>
+            </datalist>
           </div>
           <div>
             <%= form.label :status, class: "fb-label" %>

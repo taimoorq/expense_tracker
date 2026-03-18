@@ -6,10 +6,13 @@ RSpec.describe "Backup & restore", type: :request do
   before { sign_in user }
 
   it "exports the selected scopes as versioned JSON" do
-    create(:pay_schedule, user: user, name: "Acme Payroll")
-    create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1)
-    account = create(:account, user: user, name: "Checking")
-    create(:account_snapshot, account: account, recorded_on: Date.new(2026, 3, 15), balance: 2400)
+    checking = create(:account, user: user, name: "Checking")
+    create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
+    create(:subscription, user: user, name: "Netflix", linked_account: checking, account: "Legacy Card")
+    create(:monthly_bill, user: user, name: "Power", linked_account: checking, account: "Legacy Card")
+    create(:payment_plan, user: user, name: "Tax Plan", linked_account: checking, account: "Legacy Card")
+    create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1, payment_account: checking, account: "Legacy Checking")
+    create(:account_snapshot, account: checking, recorded_on: Date.new(2026, 3, 15), balance: 2400)
     create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
 
     post export_backup_restore_path, params: { export_scopes: [ "planning_templates", "accounts" ] }
@@ -26,7 +29,12 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.fetch("data")).to have_key("planning_templates")
     expect(payload.fetch("data")).to have_key("accounts")
     expect(payload.fetch("data")).not_to have_key("budget_months")
+    expect(payload.dig("data", "planning_templates", "pay_schedules", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "subscriptions", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "payment_plans", 0, "account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "due_day")).to eq(18)
+    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "account")).to eq("Checking")
   end
 
   it "exports budget_months and expense_entries without removed fields" do
@@ -178,6 +186,103 @@ RSpec.describe "Backup & restore", type: :request do
     expect(response).to have_http_status(:ok)
     expect(user.credit_cards.reload.pluck(:name)).to eq([ "Legacy Visa" ])
     expect(user.credit_cards.first.due_day).to eq(1)
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "relinks imported credit cards to existing accounts by account name" do
+    create(:account, user: user, name: "Checking")
+
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "planning_templates" ],
+        data: {
+          planning_templates: {
+            pay_schedules: [],
+            subscriptions: [],
+            monthly_bills: [],
+            payment_plans: [],
+            credit_cards: [
+              {
+                name: "Mapped Visa",
+                minimum_payment: "40.0",
+                due_day: 17,
+                priority: 1,
+                account: "Checking",
+                active: true
+              }
+            ]
+          }
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "credit-card-map-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "planning_templates" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    card = user.credit_cards.find_by!(name: "Mapped Visa")
+    expect(card.account).to eq("Checking")
+    expect(card.payment_account).to be_present
+    expect(card.payment_account.name).to eq("Checking")
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "relinks imported pay schedules, subscriptions, monthly bills, and payment plans to existing accounts by account name" do
+    create(:account, user: user, name: "Checking")
+
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "planning_templates" ],
+        data: {
+          planning_templates: {
+            pay_schedules: [
+              { name: "Mapped Payroll", cadence: "monthly", amount: "3200.0", first_pay_on: "2026-01-15", day_of_month_one: 15, day_of_month_two: nil, weekend_adjustment: "no_adjustment", account: "Checking", active: true }
+            ],
+            subscriptions: [
+              { name: "Mapped Subscription", amount: "19.99", due_day: 8, account: "Checking", active: true }
+            ],
+            monthly_bills: [
+              { name: "Mapped Bill", kind: "fixed_payment", default_amount: "88.00", due_day: 12, account: "Checking", active: true }
+            ],
+            payment_plans: [
+              { name: "Mapped Plan", total_due: "1200.0", amount_paid: "200.0", monthly_target: "100.0", due_day: 18, account: "Checking", active: true }
+            ],
+            credit_cards: []
+          }
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "template-map-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "planning_templates" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(user.pay_schedules.find_by!(name: "Mapped Payroll").linked_account).to be_present
+    expect(user.subscriptions.find_by!(name: "Mapped Subscription").linked_account).to be_present
+    expect(user.monthly_bills.find_by!(name: "Mapped Bill").linked_account).to be_present
+    expect(user.payment_plans.find_by!(name: "Mapped Plan").linked_account).to be_present
   ensure
     file.close
     file.unlink

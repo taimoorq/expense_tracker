@@ -28,8 +28,9 @@
   <section class="space-y-6">
     <div class="grid gap-4 md:grid-cols-3">
       <article class="ta-card">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Latest Balance</p>
-        <p class="mt-2 text-3xl font-semibold <%= (@account.latest_balance || 0) >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= @account.latest_snapshot ? number_to_currency(@account.latest_snapshot.balance) : "No balance yet" %></p>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current Balance</p>
+        <p class="mt-2 text-3xl font-semibold <%= (@account.current_balance || 0) >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@account.current_balance) %></p>
+        <p class="mt-1 text-xs text-slate-500">Includes paid linked entries since the latest snapshot.</p>
       </article>
       <article class="ta-card">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Latest Snapshot</p>

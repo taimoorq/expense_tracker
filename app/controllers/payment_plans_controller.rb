@@ -12,7 +12,7 @@ class PaymentPlansController < ApplicationController
   end
 
   def permitted_attributes
-    [ :name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :active, :notes ]
+    [ :name, :total_due, :amount_paid, :monthly_target, :due_day, :linked_account_id, :account, :active, :notes ]
   end
 
   def create_success_message

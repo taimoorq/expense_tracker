@@ -29,8 +29,27 @@
 </div>
 
 <div>
-  <%= form.label :account, class: "fb-label" %>
-  <%= form.text_field :account, class: "fb-input" %>
+  <%= form.label :source_account_id, "Linked Account", class: "fb-label" %>
+  <%= form.collection_select :source_account_id,
+                             current_user.accounts.active_first,
+                             :id,
+                             :name,
+                             { include_blank: "Select account (optional)" },
+                             class: "fb-select" %>
+</div>
+
+<div>
+  <% account_options_list_id = "expense-entry-account-options-#{form.object.id || form.object.object_id}" %>
+  <%= form.label :account, "Manual Account Label", class: "fb-label" %>
+  <%= form.text_field :account,
+                      class: "fb-input",
+                      list: account_options_list_id,
+                      placeholder: "Pick existing or type custom label" %>
+  <datalist id="<%= account_options_list_id %>">
+    <% active_account_names.each do |account_name| %>
+      <option value="<%= account_name %>"></option>
+    <% end %>
+  </datalist>
 </div>
 
 <div>

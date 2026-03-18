@@ -1,5 +1,9 @@
 class Subscription < ApplicationRecord
+  include TemplateAccountLinkable
+
   belongs_to :user
+  belongs_to :linked_account, class_name: "Account", optional: true
+  template_account_association :linked_account
 
   validates :name, presence: true
   validates :amount, presence: true

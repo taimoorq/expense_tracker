@@ -12,7 +12,7 @@ class MonthlyBillsController < ApplicationController
   end
 
   def permitted_attributes
-    [ :name, :kind, :default_amount, :due_day, :account, :active, :notes ]
+    [ :name, :kind, :default_amount, :due_day, :linked_account_id, :account, :active, :notes ]
   end
 
   def create_success_message

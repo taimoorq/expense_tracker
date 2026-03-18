@@ -5,7 +5,7 @@ FactoryBot.define do
     minimum_payment { 35 }
     due_day { 15 }
     priority { 1 }
-    account { "Mastercard" }
+    account { "Checking" }
     notes { "Snowball target" }
     active { true }
   end

@@ -21,11 +21,12 @@ class GenerateMonthPaymentPlans
         payee: plan.name,
         planned_amount: payment_amount,
         actual_amount: nil,
-        account: plan.account,
+        account: plan.account_name,
         status: :planned,
         need_or_want: "Need",
         notes: "Remaining: #{plan.remaining_balance.to_f}",
-        source_file: "payment_plan"
+        source_file: TemplateTypeRegistry.source_file_for(:payment_plan),
+        source_template: plan
       )
       created += 1
     end

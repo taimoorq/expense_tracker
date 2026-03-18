@@ -98,6 +98,19 @@ RSpec.describe "Expense entries", type: :request do
     expect(entry.status).to eq("paid")
   end
 
+  it "updates an entry with a linked source account" do
+    entry = create(:expense_entry, budget_month: budget_month, user: user, account: "Custom Label")
+    checking = create(:account, user: user, name: "Checking")
+
+    patch budget_month_expense_entry_path(budget_month, entry), params: {
+      expense_entry: { source_account_id: checking.id, account: "" }
+    }
+
+    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(entry.reload.source_account).to eq(checking)
+    expect(entry.account).to eq("Checking")
+  end
+
   it "marks an entry as paid from the row action payload" do
     entry = create(:expense_entry, budget_month: budget_month, user: user, payee: "Internet", planned_amount: 65.25, actual_amount: nil, status: :planned)
 

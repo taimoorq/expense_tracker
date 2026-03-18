@@ -171,7 +171,7 @@ class BudgetMonthsController < ApplicationController
   def clone_source_entries(source_month, target_month)
     return 0 unless source_month
 
-    source_month.expense_entries.where.not(source_file: "credit_card_estimate").find_each.sum do |entry|
+    source_month.expense_entries.where.not(source_file: TemplateTypeRegistry.source_file_for(:credit_card)).find_each.sum do |entry|
       target_month.expense_entries.create!(
         occurred_on: shifted_date(entry.occurred_on, target_month.month_on),
         section: entry.section,
@@ -183,7 +183,10 @@ class BudgetMonthsController < ApplicationController
         status: :planned,
         need_or_want: entry.need_or_want,
         notes: entry.notes,
-        source_file: entry.source_file
+        source_file: entry.source_file,
+        source_account_id: entry.source_account_id,
+        source_template_type: entry.source_template_type,
+        source_template_id: entry.source_template_id
       )
       1
     end

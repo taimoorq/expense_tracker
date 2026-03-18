@@ -24,11 +24,12 @@ class EstimateMonthCreditCards
         payee: card.name,
         planned_amount: amount.round(2),
         actual_amount: nil,
-        account: card.account,
+        account: card.account_name,
         status: :planned,
         need_or_want: "Need",
         notes: "Estimated from leftover cash",
-        source_file: "credit_card_estimate"
+        source_file: TemplateTypeRegistry.source_file_for(:credit_card),
+        source_template: card
       )
       created += 1
     end
@@ -66,7 +67,7 @@ class EstimateMonthCreditCards
   end
 
   def remove_existing_estimates
-    @budget_month.expense_entries.where(source_file: "credit_card_estimate").delete_all
+    @budget_month.expense_entries.where(source_file: TemplateTypeRegistry.source_file_for(:credit_card)).delete_all
   end
 
   def estimated_due_date_for(card)

@@ -4,11 +4,12 @@ RSpec.describe EstimateMonthCreditCards do
   it "replaces prior estimates and allocates available cash across the current user's cards" do
     user = create(:user)
     budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    funding_account = create(:account, user: user, name: "Checking")
     create(:expense_entry, budget_month: budget_month, user: user, section: :income, payee: "Salary", planned_amount: 1000, source_file: "manual")
     create(:expense_entry, budget_month: budget_month, user: user, section: :fixed, payee: "Rent", planned_amount: 400, source_file: "manual")
     create(:expense_entry, budget_month: budget_month, user: user, section: :debt, payee: "Old Estimate", planned_amount: 25, source_file: "credit_card_estimate")
 
-    first_card = create(:credit_card, user: user, name: "Visa", minimum_payment: 50, due_day: 10, priority: 1)
+    first_card = create(:credit_card, user: user, name: "Visa", minimum_payment: 50, due_day: 10, priority: 1, payment_account: funding_account, account: "Checking")
     second_card = create(:credit_card, user: user, name: "Mastercard", minimum_payment: 25, due_day: 22, priority: 2)
 
     created = described_class.new(budget_month: budget_month).call
@@ -19,6 +20,10 @@ RSpec.describe EstimateMonthCreditCards do
     expect(estimates.sum(:planned_amount).to_d).to eq(600.to_d)
     expect(estimates.find_by(payee: first_card.name).occurred_on).to eq(Date.new(2026, 3, 10))
     expect(estimates.find_by(payee: second_card.name).occurred_on).to eq(Date.new(2026, 3, 22))
+    expect(estimates.find_by(payee: first_card.name).account).to eq("Checking")
+    expect(estimates.pluck(:source_template_type).uniq).to eq([ "CreditCard" ])
+    expect(estimates.find_by(payee: first_card.name).source_template_id).to eq(first_card.id)
+    expect(estimates.find_by(payee: second_card.name).source_template_id).to eq(second_card.id)
   end
 
   it "clamps due day to the end of shorter months" do

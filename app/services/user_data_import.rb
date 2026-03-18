@@ -20,6 +20,8 @@ class UserDataImport
       counts[:planning_templates] = import_planning_templates(data[:planning_templates]) if scopes.include?("planning_templates")
       counts[:budget_months] = import_budget_months(data[:budget_months]) if scopes.include?("budget_months")
       counts[:accounts] = import_accounts(data[:accounts]) if scopes.include?("accounts")
+      PlanningTemplateAccountLinking.relink_for(user) if scopes.include?("planning_templates")
+      ExpenseEntryAccountLinking.relink_for(user) if scopes.include?("budget_months")
     end
 
     { success: true, counts: counts }

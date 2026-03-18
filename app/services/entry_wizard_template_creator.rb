@@ -1,11 +1,5 @@
 class EntryWizardTemplateCreator
-  TEMPLATE_TYPES = %w[pay_schedule subscription monthly_bill payment_plan].freeze
-  TEMPLATE_SECTIONS = {
-    "pay_schedule" => %w[income],
-    "subscription" => %w[fixed variable manual auto other],
-    "monthly_bill" => %w[fixed variable manual auto other],
-    "payment_plan" => %w[debt manual]
-  }.freeze
+  TEMPLATE_TYPES = TemplateTypeRegistry.wizard_template_types.freeze
 
   attr_reader :template_record
 
@@ -47,7 +41,7 @@ class EntryWizardTemplateCreator
       return nil
     end
 
-    unless TEMPLATE_SECTIONS.fetch(template_type).include?(@expense_entry.section)
+    unless TemplateTypeRegistry.wizard_sections_for(template_type).include?(@expense_entry.section)
       @error_messages = [ "Template: #{template_type.humanize} is not available for #{@expense_entry.section.humanize.downcase} entries." ]
       return nil
     end

@@ -94,8 +94,18 @@
               <%= form.text_field :payee, class: "fb-input", placeholder: "Vendor or source", data: { entry_wizard_target: "payee", action: "input->entry-wizard#updateSummary" } %>
             </div>
             <div>
+              <% wizard_account_options_list_id = "wizard-account-options-#{budget_month.id}" %>
               <%= form.label :account, class: "fb-label" %>
-              <%= form.text_field :account, class: "fb-input", placeholder: "Checking, Card, Savings...", data: { entry_wizard_target: "account", action: "input->entry-wizard#updateSummary" } %>
+              <%= form.text_field :account,
+                                  class: "fb-input",
+                                  placeholder: "Pick existing or type custom label",
+                                  list: wizard_account_options_list_id,
+                                  data: { entry_wizard_target: "account", action: "input->entry-wizard#updateSummary" } %>
+              <datalist id="<%= wizard_account_options_list_id %>">
+                <% active_account_names.each do |account_name| %>
+                  <option value="<%= account_name %>"></option>
+                <% end %>
+              </datalist>
             </div>
             <div>
               <%= form.label :notes, class: "fb-label" %>
@@ -176,11 +186,8 @@
                     <label for="planning_template_template_type" class="fb-label">Template Type</label>
                     <%= select_tag "planning_template[template_type]",
                         options_for_select([
-                          ["Choose a template type", ""],
-                          ["Pay Schedule", "pay_schedule"],
-                          ["Subscription", "subscription"],
-                          ["Monthly Bill", "monthly_bill"],
-                          ["Payment Plan", "payment_plan"]
+                          [ "Choose a template type", "" ],
+                          *wizard_template_type_options
                         ], selected_template_type),
                         class: "fb-select",
                         id: "planning_template_template_type",
