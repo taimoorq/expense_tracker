@@ -71,6 +71,6 @@ class EstimateMonthCreditCards
 
   def estimated_due_date_for(card)
     month_start = @budget_month.month_on.to_date.beginning_of_month
-    month_start.change(day: [card.due_day.to_i, month_start.end_of_month.day].min)
+    month_start.change(day: [ card.due_day.to_i, month_start.end_of_month.day ].min)
   end
 end

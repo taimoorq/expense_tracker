@@ -37,7 +37,7 @@
     <% settings_active = controller_name == "settings" %>
     <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
     <% help_active = controller_name == "help" %>
-    <% months_section_active = months_active || templates_active || new_month_active %>
+    <% months_section_active = months_active || new_month_active %>
     <% show_back_nav = !((controller_name == "budget_months" && action_name == "index") || controller_name == "overview") %>
 
     <button type="button" class="ta-sidebar-overlay" aria-label="Close navigation" data-sidebar-target="overlay" data-action="click->sidebar#close"></button>
@@ -65,17 +65,17 @@
               <% end %>
 
               <div class="ta-sidebar-sublinks">
-                <%= link_to planning_templates_path, class: ["ta-sidebar-sublink", (templates_active ? "ta-sidebar-sublink-active" : nil)], title: "Planning Templates", data: { action: "click->sidebar#closeOnMobile" } do %>
-                  <%= tabler_icon("template", classes: "ta-sidebar-sublink-icon") %>
-                  <span class="ta-sidebar-label">Planning Templates</span>
-                <% end %>
-
                 <%= link_to new_budget_month_path, class: ["ta-sidebar-sublink", (new_month_active ? "ta-sidebar-sublink-active" : nil)], title: "Add Month", data: { action: "click->sidebar#closeOnMobile" } do %>
                   <%= tabler_icon("calendar-plus", classes: "ta-sidebar-sublink-icon") %>
                   <span class="ta-sidebar-label">Add Month</span>
                 <% end %>
               </div>
             </div>
+
+            <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Planning Templates", data: { action: "click->sidebar#closeOnMobile" } do %>
+              <%= tabler_icon("template", classes: "ta-sidebar-link-icon") %>
+              <span class="ta-sidebar-label">Planning Templates</span>
+            <% end %>
 
             <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth", data: { action: "click->sidebar#closeOnMobile" } do %>
               <%= tabler_icon("cash", classes: "ta-sidebar-link-icon") %>
