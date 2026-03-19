@@ -21,6 +21,16 @@ class OverviewController < ApplicationController
       credit_cards: current_user.credit_cards.count
     }
     @template_total = @template_counts.values.sum
+    @linked_template_counts = {
+      pay_schedules: current_user.pay_schedules.where.not(linked_account_id: nil).count,
+      subscriptions: current_user.subscriptions.where.not(linked_account_id: nil).count,
+      monthly_bills: current_user.monthly_bills.where.not(linked_account_id: nil).count,
+      payment_plans: current_user.payment_plans.where.not(linked_account_id: nil).count,
+      credit_cards: current_user.credit_cards.where.not(payment_account_id: nil).count
+    }
+    @linked_template_total = @linked_template_counts.values.sum
+    @linked_entries_count = @current_month_entries.count { |entry| entry.source_account_id.present? }
+    @linked_paid_entries_count = @current_month_entries.count { |entry| entry.source_account_id.present? && entry.paid? }
 
     @template_actions_completed = 0
     if @current_month
@@ -46,6 +56,7 @@ class OverviewController < ApplicationController
     @latest_snapshot = current_user.account_snapshots.joins(:account).merge(Account.where(user: current_user)).order(recorded_on: :desc, created_at: :desc).first
     @accounts_with_snapshots_count = @accounts.count(&:latest_snapshot)
     @accounts_missing_snapshots_count = @accounts.count - @accounts_with_snapshots_count
+    @onboarding_visible = @current_month.nil? || @accounts.empty? || @template_total.zero? || @linked_template_total.zero?
 
     @next_step = next_step_definition
   end
@@ -53,11 +64,23 @@ class OverviewController < ApplicationController
   private
 
   def next_step_definition
-    if @current_month.nil?
+    if @accounts.empty?
       return {
         badge: "Start here",
+        title: "Add your first account",
+        description: "Accounts power linkage across templates and entries, and improve month review with account-aware context.",
+        primary_label: "Set up Accounts",
+        primary_path: accounts_path,
+        secondary_label: "Create Account",
+        secondary_path: new_account_path
+      }
+    end
+
+    if @current_month.nil?
+      return {
+        badge: "Next step",
         title: "Create your first month",
-        description: "Start with a month so you can add entries, review totals, and build a planning routine.",
+        description: "Start with a month so linked templates and entries have a place to drive your monthly review flow.",
         primary_label: "Create Month",
         primary_path: new_budget_month_path,
         secondary_label: "Open Planning Templates",
@@ -69,7 +92,7 @@ class OverviewController < ApplicationController
       return {
         badge: "Recommended",
         title: "Set up planning templates",
-        description: "Recurring templates make future months faster to build and reduce missed bills, paychecks, and plans.",
+        description: "Recurring templates make future months faster, and linking them to accounts keeps account context flowing into month entries.",
         primary_label: "Open Planning Templates",
         primary_path: planning_templates_path,
         secondary_label: "Open Plan and Edit",
@@ -77,11 +100,23 @@ class OverviewController < ApplicationController
       }
     end
 
+    if @linked_template_total.zero?
+      return {
+        badge: "Recommended",
+        title: "Link templates to accounts",
+        description: "Connected templates improve month visibility and keep account activity views and balances aligned.",
+        primary_label: "Manage Planning Templates",
+        primary_path: planning_templates_path,
+        secondary_label: "Open Accounts",
+        secondary_path: accounts_path
+      }
+    end
+
     if @current_month_entries.empty?
       return {
         badge: "Next step",
         title: "Build #{@current_month.label}",
-        description: "Start this month with recurring items or add the first one-off entry.",
+        description: "Start this month with recurring items. Linked templates will carry account context into generated entries.",
         primary_label: "Open Plan and Edit",
         primary_path: budget_month_path(@current_month, tab: "entries"),
         secondary_label: "Add Entry with Wizard",
