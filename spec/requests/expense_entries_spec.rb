@@ -60,6 +60,39 @@ RSpec.describe "Expense entries", type: :request do
     expect(subscription.due_day).to eq(8)
   end
 
+  it "creates a monthly bill template with explicit billing months from the wizard payload" do
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        expense_entry: {
+          occurred_on: "2026-07-15",
+          section: "fixed",
+          category: "Housing",
+          payee: "HOA",
+          planned_amount: "600.00",
+          account: "Checking",
+          status: "planned",
+          need_or_want: "Need",
+          notes: "Twice a year"
+        },
+        planning_template: {
+          enabled: "1",
+          template_type: "monthly_bill",
+          due_day: "15",
+          kind: "fixed_payment",
+          billing_frequency: "semiannual",
+          billing_months: [ "1", "7" ]
+        }
+      }
+    end.to change(budget_month.expense_entries, :count).by(1)
+      .and change(user.monthly_bills, :count).by(1)
+
+    bill = user.monthly_bills.order(:created_at).last
+    expect(bill.name).to eq("HOA")
+    expect(bill.billing_frequency).to eq("semiannual")
+    expect(bill.billing_months).to eq([ 1, 7 ])
+  end
+
   it "does not create the entry when the requested template is invalid" do
     expect do
       post budget_month_expense_entries_path(budget_month), params: {

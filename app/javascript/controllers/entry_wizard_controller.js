@@ -33,6 +33,7 @@ export default class extends Controller {
     "templateDayOne",
     "templateDayTwo",
     "templateKind",
+    "templateBillingFrequency",
     "templateTotalDue",
     "templateAmountPaid",
     "payScheduleFields",
@@ -89,6 +90,14 @@ export default class extends Controller {
     const value = event.currentTarget.dataset.sectionValue
     if (this.hasSectionTarget) this.sectionTarget.value = value
     this.syncTemplateOptions()
+    this.updateSummary()
+    this.clearError()
+  }
+
+  chooseAccount(event) {
+    if (!this.hasAccountTarget) return
+
+    this.accountTarget.value = event.currentTarget.dataset.accountValue || ""
     this.updateSummary()
     this.clearError()
   }
@@ -186,6 +195,15 @@ export default class extends Controller {
 
       if ((this.usesDueDayTemplateType()) && (!this.hasTemplateDueDayTarget || !this.templateDueDayTarget.value)) {
         return this.fail("Add a due day for the planning template.")
+      }
+
+      if (this.templateTypeTarget.value === "monthly_bill") {
+        const expectedMonths = this.expectedBillingMonthCount()
+        const selectedMonths = this.selectedBillingMonths().length
+
+        if (selectedMonths !== expectedMonths) {
+          return this.fail(`Choose ${expectedMonths} billing month${expectedMonths === 1 ? "" : "s"} for the monthly bill template.`)
+        }
       }
 
       if (this.templateTypeTarget.value === "payment_plan" && (!this.hasTemplateTotalDueTarget || !this.templateTotalDueTarget.value.trim())) {
@@ -318,7 +336,9 @@ export default class extends Controller {
     if (this.templateTypeTarget.value === "monthly_bill") {
       const kind = this.hasTemplateKindTarget ? this.humanize(this.templateKindTarget.value) : "Fixed Payment"
       const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
-      return `${templateType} • ${kind} • ${dueDay}`
+      const frequency = this.hasTemplateBillingFrequencyTarget ? this.humanize(this.templateBillingFrequencyTarget.value) : "Monthly"
+      const months = this.selectedBillingMonths().map((month) => this.calendarMonthName(month)).join(", ")
+      return `${templateType} • ${kind} • ${frequency} • ${months || "Months not set"} • ${dueDay}`
     }
 
     if (this.templateTypeTarget.value === "payment_plan") {
@@ -329,5 +349,27 @@ export default class extends Controller {
 
     const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
     return `${templateType} • ${dueDay}`
+  }
+
+  selectedBillingMonths() {
+    return Array.from(this.element.querySelectorAll('input[name="planning_template[billing_months][]"]:checked'))
+      .map((input) => Number(input.value))
+      .filter((month) => Number.isInteger(month) && month >= 1 && month <= 12)
+      .sort((left, right) => left - right)
+  }
+
+  expectedBillingMonthCount() {
+    if (!this.hasTemplateBillingFrequencyTarget) return 12
+
+    return {
+      monthly: 12,
+      quarterly: 4,
+      semiannual: 2,
+      annual: 1
+    }[this.templateBillingFrequencyTarget.value] || 12
+  }
+
+  calendarMonthName(month) {
+    return new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "long" })
   }
 }

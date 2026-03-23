@@ -8,10 +8,13 @@
   <% selected_total_due = template_params[:total_due] %>
   <% selected_amount_paid = template_params[:amount_paid] %>
   <% selected_kind = template_params[:kind].presence || "fixed_payment" %>
+  <% selected_billing_frequency = template_params[:billing_frequency].presence || "monthly" %>
+  <% selected_billing_months = Array(template_params[:billing_months]).reject(&:blank?).map(&:to_i) %>
+  <% selected_billing_months = MonthlyBill::BILLING_MONTHS_BY_FREQUENCY.fetch(selected_billing_frequency, (1..12).to_a) if selected_billing_months.empty? %>
   <% selected_cadence = template_params[:cadence].presence || "monthly" %>
   <% selected_weekend_adjustment = template_params[:weekend_adjustment].presence || "no_adjustment" %>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close click->template-modal#backdropClose">
-    <div class="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl flex flex-col max-h-[90vh]">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-template-modal-allow-backdrop-close-value="false" data-action="keydown.esc@window->template-modal#close">
+    <div class="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl flex flex-col max-h-[90vh]" data-template-modal-target="dialog">
       <div class="overflow-y-auto flex-1">
       <div class="mb-4 flex items-center justify-between gap-3">
         <div>
@@ -94,18 +97,24 @@
               <%= form.text_field :payee, class: "fb-input", placeholder: "Vendor or source", data: { entry_wizard_target: "payee", action: "input->entry-wizard#updateSummary" } %>
             </div>
             <div>
-              <% wizard_account_options_list_id = "wizard-account-options-#{budget_month.id}" %>
               <%= form.label :account, class: "fb-label" %>
               <%= form.text_field :account,
                                   class: "fb-input",
                                   placeholder: "Pick existing or type custom label",
-                                  list: wizard_account_options_list_id,
+                                  autocomplete: "off",
                                   data: { entry_wizard_target: "account", action: "input->entry-wizard#updateSummary" } %>
-              <datalist id="<%= wizard_account_options_list_id %>">
-                <% active_account_names.each do |account_name| %>
-                  <option value="<%= account_name %>"></option>
-                <% end %>
-              </datalist>
+              <% if active_account_names.any? %>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <% active_account_names.each do |account_name| %>
+                    <button type="button"
+                            class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                            data-action="click->entry-wizard#chooseAccount"
+                            data-account-value="<%= account_name %>">
+                      <%= account_name %>
+                    </button>
+                  <% end %>
+                </div>
+              <% end %>
             </div>
             <div>
               <%= form.label :notes, class: "fb-label" %>
@@ -236,6 +245,31 @@
                         class: "fb-select",
                         id: "planning_template_kind",
                         data: { entry_wizard_target: "templateKind", action: "change->entry-wizard#updateSummary" } %>
+                  </div>
+                  <div>
+                    <label for="planning_template_billing_frequency" class="fb-label">Billing Frequency</label>
+                    <%= select_tag "planning_template[billing_frequency]",
+                        options_for_select(billing_frequency_options, selected_billing_frequency),
+                        class: "fb-select",
+                        id: "planning_template_billing_frequency",
+                        data: { entry_wizard_target: "templateBillingFrequency", action: "change->entry-wizard#updateSummary" } %>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <span class="fb-label">Billing Months</span>
+                    <%= hidden_field_tag "planning_template[billing_months][]", "" %>
+                    <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <% calendar_month_options.each do |label, value| %>
+                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                          <%= check_box_tag "planning_template[billing_months][]",
+                                            value,
+                                            selected_billing_months.include?(value),
+                                            class: "fb-checkbox",
+                                            data: { action: "change->entry-wizard#updateSummary" } %>
+                          <span><%= label %></span>
+                        </label>
+                      <% end %>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500">Choose the months this bill should appear. Semiannual bills like HOA dues typically use two months.</p>
                   </div>
                 </div>
 

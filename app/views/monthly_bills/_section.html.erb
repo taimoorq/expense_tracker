@@ -3,18 +3,20 @@
   <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: anchored_return_to } %>
   <% show_collapsible_form = !budget_month && !monthly_bill.persisted? %>
   <% form_open = budget_month || monthly_bill.persisted? || monthly_bill.errors.any? %>
+  <% selected_billing_months = monthly_bill.billing_months %>
   <section id="monthly-bills" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <div class="mb-3 flex items-center gap-2">
       <h3 class="inline-flex items-center gap-2 text-lg font-semibold">
         <%= tabler_icon("cash", classes: "h-5 w-5 text-sky-600") %>
-        <span><%= budget_month ? "3) Monthly Bills (fixed + variable)" : "Monthly Bills (fixed + variable)" %></span>
+        <span><%= budget_month ? "3) Recurring Bills" : "Recurring Bills" %></span>
       </h3>
       <button type="button" class="ta-icon-btn" aria-label="Monthly Bills Help" title="Monthly Bills Help" data-action="click->help-modal#open" data-help-title="Monthly Bills Help" data-help-body="Fixed Payment: stable bills like mortgage or car payment.
-Variable Bill: amounts that vary monthly like utilities.
+Variable Bill: amounts that vary when due.
 
+    Pick a billing frequency and the specific months when the bill should be generated.
     Default amount is your estimate and can be adjusted later in the month entries."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
-    <p class="mb-3 text-sm text-slate-500">These are turned into planned month entries when you run generation.</p>
+    <p class="mb-3 text-sm text-slate-500">These are turned into planned entries only in the months you schedule.</p>
     <% if !budget_month && monthly_bill.persisted? %>
       <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
         <span>Editing <span class="font-semibold"><%= monthly_bill.name %></span></span>
@@ -71,6 +73,24 @@ Variable Bill: amounts that vary monthly like utilities.
         <p class="mt-1 text-xs text-slate-500">Day of the month the bill is usually due.</p>
       </div>
       <div>
+        <%= form.label :billing_frequency, "Billing Frequency", class: "fb-label" %>
+        <%= form.select :billing_frequency, billing_frequency_options, {}, class: "fb-select" %>
+        <p class="mt-1 text-xs text-slate-500">Choose how often this bill should appear in generated months.</p>
+      </div>
+      <div class="md:col-span-2 xl:col-span-3">
+        <span class="fb-label">Billing Months</span>
+        <%= hidden_field_tag "monthly_bill[billing_months][]", "" %>
+        <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <% calendar_month_options.each do |label, value| %>
+            <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              <%= check_box_tag "monthly_bill[billing_months][]", value, selected_billing_months.include?(value), class: "fb-checkbox" %>
+              <span><%= label %></span>
+            </label>
+          <% end %>
+        </div>
+        <p class="mt-1 text-xs text-slate-500">Monthly uses all 12 months. Quarterly uses 4, semiannual uses 2, and annual uses 1.</p>
+      </div>
+      <div>
         <%= form.label :linked_account_id, "Linked Account", class: "fb-label" %>
         <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select account (optional)" }, class: "fb-select" %>
       </div>
@@ -106,7 +126,8 @@ Variable Bill: amounts that vary monthly like utilities.
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="text-sm font-semibold text-slate-900"><%= item.name %></p>
-              <p class="mt-1 text-xs text-slate-500"><%= item.kind.humanize %> · due day <%= item.due_day %></p>
+              <p class="mt-1 text-xs text-slate-500"><%= item.kind.humanize %> · <%= item.billing_frequency.humanize %> · due day <%= item.due_day %></p>
+              <p class="mt-1 text-xs text-slate-500"><%= billing_months_summary(item) %></p>
               <% if item.account_name.present? %>
                 <p class="mt-1 text-xs text-slate-500">Paid from <%= item.account_name %></p>
               <% end %>
@@ -140,6 +161,7 @@ Variable Bill: amounts that vary monthly like utilities.
           <tr>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Name</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Type</th>
+            <th class="px-3 py-2 text-left font-medium text-slate-600">Schedule</th>
             <th class="px-3 py-2 text-right font-medium text-slate-600">Default</th>
             <th class="px-3 py-2 text-right font-medium text-slate-600">Due Day</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Account</th>
@@ -151,6 +173,7 @@ Variable Bill: amounts that vary monthly like utilities.
             <tr>
               <td class="px-3 py-2"><%= item.name %></td>
               <td class="px-3 py-2"><%= item.kind.humanize %></td>
+              <td class="px-3 py-2"><%= item.billing_frequency.humanize %>: <%= billing_months_summary(item) %></td>
               <td class="px-3 py-2 text-right"><%= number_to_currency(item.default_amount || 0) %></td>
               <td class="px-3 py-2 text-right"><%= item.due_day %></td>
               <td class="px-3 py-2"><%= item.account_name.presence || "—" %></td>

@@ -52,7 +52,7 @@ class UserDataImport
         user.subscriptions.create!(attributes.slice(:name, :amount, :due_day, :account, :notes, :active))
       end,
       monthly_bills: Array(data[:monthly_bills]).count do |attributes|
-        user.monthly_bills.create!(attributes.slice(:name, :kind, :default_amount, :due_day, :account, :notes, :active))
+        user.monthly_bills.create!(attributes.slice(:name, :kind, :default_amount, :due_day, :billing_frequency, :billing_months, :account, :notes, :active))
       end,
       payment_plans: Array(data[:payment_plans]).count do |attributes|
         user.payment_plans.create!(attributes.slice(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :notes, :active))

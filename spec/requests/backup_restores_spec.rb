@@ -9,7 +9,7 @@ RSpec.describe "Backup & restore", type: :request do
     checking = create(:account, user: user, name: "Checking")
     create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
     create(:subscription, user: user, name: "Netflix", linked_account: checking, account: "Legacy Card")
-    create(:monthly_bill, user: user, name: "Power", linked_account: checking, account: "Legacy Card", notes: "Electric utility")
+    create(:monthly_bill, user: user, name: "Power", linked_account: checking, account: "Legacy Card", notes: "Electric utility", billing_frequency: :semiannual, billing_months: [ 1, 7 ])
     create(:payment_plan, user: user, name: "Tax Plan", linked_account: checking, account: "Legacy Card", notes: "IRS installment")
     create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1, payment_account: checking, account: "Legacy Checking", notes: "Main rewards card")
     create(:account_snapshot, account: checking, recorded_on: Date.new(2026, 3, 15), balance: 2400)
@@ -34,6 +34,8 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "payment_plans", 0, "account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "notes")).to eq("Electric utility")
+    expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "billing_frequency")).to eq("semiannual")
+    expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "billing_months")).to eq([ 1, 7 ])
     expect(payload.dig("data", "planning_templates", "payment_plans", 0, "notes")).to eq("IRS installment")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "due_day")).to eq(18)
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "account")).to eq("Checking")
@@ -290,7 +292,7 @@ RSpec.describe "Backup & restore", type: :request do
               { name: "Mapped Subscription", amount: "19.99", due_day: 8, account: "Checking", active: true }
             ],
             monthly_bills: [
-              { name: "Mapped Bill", kind: "fixed_payment", default_amount: "88.00", due_day: 12, account: "Checking", active: true }
+              { name: "Mapped Bill", kind: "fixed_payment", default_amount: "88.00", due_day: 12, billing_frequency: "semiannual", billing_months: [ 1, 7 ], account: "Checking", active: true }
             ],
             payment_plans: [
               { name: "Mapped Plan", total_due: "1200.0", amount_paid: "200.0", monthly_target: "100.0", due_day: 18, account: "Checking", active: true }
@@ -313,6 +315,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(user.pay_schedules.find_by!(name: "Mapped Payroll").linked_account).to be_present
     expect(user.subscriptions.find_by!(name: "Mapped Subscription").linked_account).to be_present
     expect(user.monthly_bills.find_by!(name: "Mapped Bill").linked_account).to be_present
+    expect(user.monthly_bills.find_by!(name: "Mapped Bill").billing_months).to eq([ 1, 7 ])
     expect(user.payment_plans.find_by!(name: "Mapped Plan").linked_account).to be_present
   ensure
     file.close

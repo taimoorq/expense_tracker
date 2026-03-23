@@ -89,6 +89,8 @@ class EntryWizardTemplateCreator
       kind: @params[:kind].presence || "fixed_payment",
       default_amount: effective_amount,
       due_day: due_day,
+      billing_frequency: @params[:billing_frequency].presence || "monthly",
+      billing_months: billing_months,
       account: @expense_entry.account,
       active: true,
       notes: @expense_entry.notes
@@ -114,5 +116,13 @@ class EntryWizardTemplateCreator
 
   def effective_amount
     @expense_entry.planned_amount.presence || @expense_entry.actual_amount.presence
+  end
+
+  def billing_months
+    months = Array(@params[:billing_months]).reject(&:blank?).map(&:to_i)
+    return months if months.any?
+
+    frequency = @params[:billing_frequency].presence || "monthly"
+    MonthlyBill::BILLING_MONTHS_BY_FREQUENCY.fetch(frequency, [ (@expense_entry.occurred_on || Date.current).month ])
   end
 end

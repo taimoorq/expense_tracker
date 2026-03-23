@@ -8,6 +8,8 @@ class GenerateMonthMonthlyBills
     created = 0
 
     @bills.find_each do |bill|
+      next unless bill.scheduled_for_month?(@budget_month.month_on)
+
       due_date = bill.due_date_for_month(@budget_month.month_on)
       next if exists?(bill, due_date)
 

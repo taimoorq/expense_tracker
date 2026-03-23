@@ -55,6 +55,8 @@ RSpec.describe "Planning template CRUD", type: :request do
 
         if actual_value.is_a?(BigDecimal)
           expect(actual_value).to eq(value.to_d)
+        elsif actual_value.is_a?(Array)
+          expect(actual_value.map(&:to_s)).to eq(Array(value).map(&:to_s))
         else
           expect(actual_value.to_s).to eq(value.to_s)
         end
@@ -134,6 +136,8 @@ RSpec.describe "Planning template CRUD", type: :request do
         kind: "fixed_payment",
         default_amount: "110.00",
         due_day: 12,
+        billing_frequency: "semiannual",
+        billing_months: [ "1", "7" ],
         linked_account_id: create(:account, user: user, name: "Checking").id,
         account: "Checking",
         active: true,
@@ -145,6 +149,8 @@ RSpec.describe "Planning template CRUD", type: :request do
         name: "Water Bill",
         default_amount: "125.50",
         due_day: 14,
+        billing_frequency: "annual",
+        billing_months: [ "9" ],
         linked_account_id: create(:account, user: user, name: "Savings").id,
         account: "Checking"
       }

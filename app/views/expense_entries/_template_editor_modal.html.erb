@@ -46,6 +46,19 @@
           <%= form.select :kind, MonthlyBill.kinds.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
           <%= form.number_field :default_amount, step: 0.01, class: "fb-input", placeholder: "Default amount" %>
           <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
+          <%= form.select :billing_frequency, billing_frequency_options, {}, class: "fb-select" %>
+          <div class="sm:col-span-2">
+            <span class="fb-label">Billing Months</span>
+            <%= hidden_field_tag "monthly_bill[billing_months][]", "" %>
+            <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <% calendar_month_options.each do |label, value| %>
+                <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                  <%= check_box_tag "monthly_bill[billing_months][]", value, template_record.billing_months.include?(value), class: "fb-checkbox" %>
+                  <span><%= label %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
           <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select linked account (optional)" }, class: "fb-select" %>
           <%= form.text_field :account, class: "fb-input", placeholder: "Manual account label (optional)" %>
           <div class="sm:col-span-2"><%= form.text_field :notes, class: "fb-input", placeholder: "Notes" %></div>

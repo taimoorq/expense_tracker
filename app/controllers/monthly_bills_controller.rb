@@ -12,7 +12,11 @@ class MonthlyBillsController < ApplicationController
   end
 
   def permitted_attributes
-    [ :name, :kind, :default_amount, :due_day, :linked_account_id, :account, :active, :notes ]
+    [ :name, :kind, :default_amount, :due_day, :linked_account_id, :account, :active, :notes, :billing_frequency, { billing_months: [] } ]
+  end
+
+  def resource_params
+    params.require(:monthly_bill).permit(*permitted_attributes)
   end
 
   def create_success_message

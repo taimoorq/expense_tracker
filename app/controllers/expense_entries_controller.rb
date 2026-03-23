@@ -251,9 +251,11 @@ class ExpenseEntriesController < ApplicationController
       :day_of_month_one,
       :day_of_month_two,
       :weekend_adjustment,
+      :billing_frequency,
       :kind,
       :total_due,
-      :amount_paid
+      :amount_paid,
+      billing_months: []
     )
   end
 

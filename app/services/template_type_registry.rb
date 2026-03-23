@@ -22,7 +22,7 @@ class TemplateTypeRegistry
       param_key: :monthly_bill,
       recurring_source: true,
       wizard_sections: %w[fixed variable manual auto other],
-      permitted_attributes: [ :name, :kind, :default_amount, :due_day, :linked_account_id, :account, :active, :notes ]
+      permitted_attributes: [ :name, :kind, :default_amount, :due_day, :linked_account_id, :account, :active, :notes, :billing_frequency, { billing_months: [] } ]
     },
     payment_plan: {
       model_name: "PaymentPlan",

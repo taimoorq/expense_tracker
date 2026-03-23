@@ -52,6 +52,14 @@ RSpec.describe "Month generation actions", type: :request do
     end.to change(budget_month.expense_entries.where(source_file: "monthly_bill"), :count).by(1)
   end
 
+  it "skips monthly bills that are not scheduled for the target month" do
+    create(:monthly_bill, user: user, name: "HOA", due_day: 12, default_amount: 600, billing_frequency: :semiannual, billing_months: [ 1, 7 ])
+
+    expect do
+      post generate_monthly_bills_budget_month_path(budget_month)
+    end.not_to change(budget_month.expense_entries.where(source_file: "monthly_bill"), :count)
+  end
+
   it "generates payment plans from the current user's templates" do
     create(:payment_plan, user: user, name: "IRS Plan", due_day: 20, total_due: 1000, amount_paid: 100, monthly_target: 150)
 

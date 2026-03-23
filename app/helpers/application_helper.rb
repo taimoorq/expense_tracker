@@ -187,6 +187,20 @@ module ApplicationHelper
     TemplateTypeRegistry.wizard_template_types.map { |type| [ type.humanize, type ] }
   end
 
+  def billing_frequency_options
+    MonthlyBill.billing_frequencies.keys.map { |key| [ key.humanize, key ] }
+  end
+
+  def calendar_month_options
+    Date::MONTHNAMES.each_with_index.filter_map do |name, index|
+      [ name, index ] if index.positive?
+    end
+  end
+
+  def billing_months_summary(record)
+    Array(record.billing_months).sort.map { |month| Date::MONTHNAMES[month] }.join(", ")
+  end
+
   def legacy_tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)
     canonical_name = app_icon_aliases[name.to_s] || name.to_s
     path_data = app_icon_paths[canonical_name] || app_icon_paths["list-bullet"]
@@ -258,7 +272,7 @@ module ApplicationHelper
     when :subscriptions
       budget_month.user.subscriptions.active_only.to_a
     when :monthly_bills
-      budget_month.user.monthly_bills.active_only.to_a
+      budget_month.user.monthly_bills.active_only.select { |bill| bill.scheduled_for_month?(budget_month.month_on) }
     when :payment_plans
       budget_month.user.payment_plans.active_only.to_a
     when :credit_cards

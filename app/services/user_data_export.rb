@@ -80,6 +80,8 @@ class UserDataExport
           kind: record.kind,
           default_amount: decimal_string(record.default_amount),
           due_day: record.due_day,
+          billing_frequency: record.billing_frequency,
+          billing_months: record.billing_months,
           account: PlanningTemplateAccountLinking.resolved_account_name(record),
           notes: record.notes,
           active: record.active
