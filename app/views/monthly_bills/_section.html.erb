@@ -8,7 +8,7 @@
     <div class="mb-3 flex items-center gap-2">
       <h3 class="inline-flex items-center gap-2 text-lg font-semibold">
         <%= tabler_icon("cash", classes: "h-5 w-5 text-sky-600") %>
-        <span><%= budget_month ? "3) Recurring Bills" : "Recurring Bills" %></span>
+        <span><%= budget_month ? "3) Recurring Bills (Fixed or Variable)" : "Recurring Bills (Fixed or Variable)" %></span>
       </h3>
       <button type="button" class="ta-icon-btn" aria-label="Monthly Bills Help" title="Monthly Bills Help" data-action="click->help-modal#open" data-help-title="Monthly Bills Help" data-help-body="Fixed Payment: stable bills like mortgage or car payment.
 Variable Bill: amounts that vary when due.
