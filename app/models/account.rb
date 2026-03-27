@@ -1,6 +1,7 @@
 class Account < ApplicationRecord
   belongs_to :user
   has_many :account_snapshots, -> { order(recorded_on: :desc, created_at: :desc) }, dependent: :destroy
+  encrypts :teller_access_token
 
   enum :kind, {
     checking: 0,
@@ -16,6 +17,7 @@ class Account < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :kind, presence: true
+  validate :teller_fields_are_consistent
 
   scope :active_first, -> { order(active: :desc, name: :asc) }
   scope :assets, -> { where(kind: [ :checking, :savings, :brokerage, :retirement, :cash, :other_asset ]) }
@@ -57,5 +59,27 @@ class Account < ApplicationRecord
     end
 
     scope.to_a.sum { |entry| entry.income? ? entry.effective_amount.to_d : -entry.effective_amount.to_d }
+  end
+
+  def teller_connected?
+    teller_sync_enabled? && teller_account_id.present? && teller_access_token.present?
+  end
+
+  private
+
+  def teller_fields_are_consistent
+    return unless teller_related_fields_present?
+
+    if teller_account_id.blank?
+      errors.add(:teller_account_id, "must be present when Teller sync is enabled")
+    end
+
+    if teller_access_token.blank?
+      errors.add(:teller_access_token, "must be present when Teller sync is enabled")
+    end
+  end
+
+  def teller_related_fields_present?
+    teller_sync_enabled? || teller_account_id.present? || teller_enrollment_id.present? || teller_access_token.present?
   end
 end

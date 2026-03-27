@@ -29,6 +29,7 @@ Rails.application.routes.draw do
   post "backup_restore/import", to: "backup_restores#import", as: :import_backup_restore
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
   resources :accounts, except: [ :destroy ] do
+    post :sync_teller_snapshot, on: :member
     resources :account_snapshots, only: [ :create, :edit, :update, :destroy ]
   end
 
