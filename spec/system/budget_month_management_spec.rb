@@ -125,7 +125,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Creating and cloning months")
     expect(page).to have_content("Planning templates")
     expect(page).to have_content("Reviewing a month")
-    expect(page).to have_content("Add accounts early")
+    expect(page).to have_content("Add accounts first")
     expect(page).to have_link("Set up Accounts")
   end
 
