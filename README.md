@@ -82,7 +82,7 @@ After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL`
 
 ## Screenshots
 
-Current screenshots reflect the latest overview, planning templates, month review, accounts, and backup workflow.
+Current screenshots reflect the latest overview, planning templates, money-flow review, accounts, and backup workflow.
 
 <table>
 	<tr>
@@ -110,11 +110,11 @@ Current screenshots reflect the latest overview, planning templates, month revie
 			Reusable paycheck, subscription, bill, payment-plan, and credit-card definitions for faster month setup.
 		</td>
 		<td align="center">
-			<img src="app/assets/images/marketing/month-timeline-desktop.webp" alt="Month timeline" width="100%">
+			<img src="app/assets/images/marketing/money-flow.webp" alt="Monthly money flow graph" width="100%">
 			<br>
-			<strong>Timeline Review</strong>
+			<strong>Money Flow View</strong>
 			<br>
-			Grouped timeline sections, filters, and leftover context for month review.
+			See how income fans out into spending buckets and leftover cash for the month.
 		</td>
 	</tr>
 	<tr>
