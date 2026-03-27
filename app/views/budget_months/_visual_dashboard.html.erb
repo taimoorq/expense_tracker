@@ -2,6 +2,7 @@
   <% compact = local_assigns.fetch(:compact, false) %>
   <% entries = expense_entries.to_a %>
   <% outflow_entries = entries.reject(&:income?) %>
+  <% sankey_payload = MonthCashflowSankey.new(budget_month: budget_month, expense_entries: entries).payload %>
 
   <% section_totals = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.effective_amount.to_f } }.sort_by { |_k, v| -v } %>
   <% section_labels = section_totals.map { |k, _v| k.humanize } %>
@@ -66,7 +67,7 @@
   <section class="ta-card ta-surface-breakdown">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("chart-bar") %> Visual Budget Breakdown</h3>
-      <p class="ta-muted"><%= compact ? "Compact chart view" : "QuickBooks-style insight cards + interactive charts" %></p>
+      <p class="ta-muted"><%= compact ? "Compact chart view" : "" %></p>
     </div>
 
     <% unless compact %>
@@ -86,6 +87,50 @@
           <p class="mt-1 text-lg font-semibold">
             <%= top_category ? "#{top_category[0].humanize} (#{number_to_currency(top_category[1])})" : "—" %>
           </p>
+        </div>
+      </div>
+
+      <div class="mb-4 rounded-lg border border-emerald-100 bg-white/90 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Cash Flow</p>
+            <h4 class="mt-2 text-lg font-semibold text-slate-900">Monthly flow graph</h4>
+            <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This visual uses current-month entry payees and categories to show how income fans out into spending buckets and leftover cash.</p>
+          </div>
+          <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            <%= pluralize(sankey_payload[:links].count, "flow") %>
+          </div>
+        </div>
+
+        <div
+          class="mt-4 h-[28rem] rounded-2xl border border-slate-200 bg-slate-50/80"
+          data-controller="sankey-chart"
+          data-sankey-chart-title-value="Monthly Cash Flow"
+          data-sankey-chart-nodes-value="<%= sankey_payload[:nodes].to_json %>"
+          data-sankey-chart-links-value="<%= sankey_payload[:links].to_json %>"></div>
+
+        <div class="mt-4 grid gap-3 lg:grid-cols-3">
+          <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Income</p>
+            <p class="mt-2 text-xl font-semibold text-emerald-700"><%= number_to_currency(sankey_payload[:income_total]) %></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Outflow</p>
+            <p class="mt-2 text-xl font-semibold text-rose-700"><%= number_to_currency(sankey_payload[:outflow_total]) %></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Leftover</p>
+            <p class="mt-2 text-xl font-semibold <%= sankey_payload[:leftover_total] >= 0 ? 'text-emerald-700' : 'text-slate-900' %>"><%= number_to_currency(sankey_payload[:leftover_total]) %></p>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">What Would Make This Richer</p>
+          <ul class="mt-2 space-y-2 text-sm leading-6 text-amber-900">
+            <% sankey_payload[:limitations].each do |item| %>
+              <li><%= item %></li>
+            <% end %>
+          </ul>
         </div>
       </div>
 

@@ -70,8 +70,10 @@ class BudgetMonthsController < ApplicationController
 
   def estimate_credit_cards
     budget_month = current_user.budget_months.find(params[:id])
-    created_count = EstimateMonthCreditCards.new(budget_month: budget_month).call
-    handle_month_generation(budget_month, "Estimated #{created_count} credit-card payment entr#{created_count == 1 ? 'y' : 'ies'}.")
+    estimator = EstimateMonthCreditCards.new(budget_month: budget_month)
+    created_count = estimator.call
+    message = "Estimated #{created_count} credit-card payment entr#{created_count == 1 ? 'y' : 'ies'}."
+    handle_month_generation(budget_month, message)
   end
 
   private

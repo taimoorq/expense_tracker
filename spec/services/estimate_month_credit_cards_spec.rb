@@ -38,4 +38,24 @@ RSpec.describe EstimateMonthCreditCards do
 
     expect(estimate.occurred_on).to eq(Date.new(2026, 2, 28))
   end
+
+  it "tracks how many cards were skipped when leftover cash cannot fund them all" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(:expense_entry, budget_month: budget_month, user: user, section: :income, payee: "Salary", planned_amount: 125, source_file: "manual")
+    create(:credit_card, user: user, name: "Visa", minimum_payment: 100, due_day: 10, priority: 1)
+    create(:credit_card, user: user, name: "Mastercard", minimum_payment: 75, due_day: 12, priority: 2)
+
+    estimator = described_class.new(budget_month: budget_month)
+    created = estimator.call
+
+    expect(created).to eq(2)
+    expect(estimator.available_cash).to eq(125.to_d)
+    expect(estimator.minimum_required).to eq(175.to_d)
+    expect(estimator.created_count).to eq(2)
+    expect(estimator.skipped_count).to eq(0)
+    estimates = budget_month.expense_entries.where(source_file: "credit_card_estimate").order(:payee)
+    expect(estimates.pluck(:payee)).to eq([ "Mastercard", "Visa" ])
+    expect(estimates.sum(:planned_amount).to_d).to eq(175.to_d)
+  end
 end

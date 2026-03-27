@@ -176,6 +176,8 @@ For developers and contributors, the app is built with:
 - Devise
 - Turbo + Stimulus
 - Tailwind CSS
+- Chart.js (loaded from CDN for line, bar, doughnut, and other standard charts)
+- Apache ECharts (loaded from CDN for the monthly flow graph)
 - RSpec + FactoryBot
 
 ## Getting Started

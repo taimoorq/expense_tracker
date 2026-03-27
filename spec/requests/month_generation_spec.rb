@@ -76,4 +76,17 @@ RSpec.describe "Month generation actions", type: :request do
       post estimate_credit_cards_budget_month_path(budget_month)
     end.to change(budget_month.expense_entries.where(source_file: "credit_card_estimate"), :count).by(1)
   end
+
+  it "still creates minimum entries for all cards when leftover cash is below the total minimums" do
+    create(:expense_entry, budget_month: budget_month, user: user, section: :income, planned_amount: 125, payee: "Salary", source_file: "manual")
+    create(:credit_card, user: user, name: "Visa", minimum_payment: 100, priority: 1)
+    create(:credit_card, user: user, name: "Mastercard", minimum_payment: 75, priority: 2)
+
+    expect do
+      post estimate_credit_cards_budget_month_path(budget_month)
+    end.to change(budget_month.expense_entries.where(source_file: "credit_card_estimate"), :count).by(2)
+
+    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(flash[:notice]).to eq("Estimated 2 credit-card payment entries.")
+  end
 end

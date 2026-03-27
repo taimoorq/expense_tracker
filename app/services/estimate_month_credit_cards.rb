@@ -1,18 +1,22 @@
 class EstimateMonthCreditCards
+  attr_reader :available_cash, :created_count, :skipped_count, :minimum_required
+
   def initialize(budget_month:, cards: budget_month.user.credit_cards.active_only)
     @budget_month = budget_month
     @cards = cards.to_a
+    @available_cash = 0.to_d
+    @created_count = 0
+    @skipped_count = 0
+    @minimum_required = 0.to_d
   end
 
   def call
     return 0 if @cards.empty?
 
     remove_existing_estimates
-    available = available_cash
-    return 0 if available <= 0
-
-    allocations = allocate(available)
-    created = 0
+    @available_cash = calculated_available_cash
+    allocations = allocate(@available_cash)
+    @created_count = 0
 
     allocations.each do |card, amount|
       next if amount <= 0
@@ -31,15 +35,16 @@ class EstimateMonthCreditCards
         source_file: TemplateTypeRegistry.source_file_for(:credit_card),
         source_template: card
       )
-      created += 1
+      @created_count += 1
     end
 
-    created
+    @skipped_count = @cards.count - @created_count
+    @created_count
   end
 
   private
 
-  def available_cash
+  def calculated_available_cash
     non_card_outflow = @budget_month.expense_entries.reject do |entry|
       entry.section == "income" || entry.source_file == "credit_card_estimate"
     end.sum(&:effective_amount)
@@ -49,16 +54,13 @@ class EstimateMonthCreditCards
 
   def allocate(available)
     allocations = Hash.new(0)
-    remaining = available.to_d
+    @minimum_required = @cards.sum { |card| card.minimum_payment.to_d }
 
     @cards.each do |card|
-      min_pay = card.minimum_payment.to_d
-      pay = [ min_pay, remaining ].min
-      allocations[card] += pay
-      remaining -= pay
-      break if remaining <= 0
+      allocations[card] += card.minimum_payment.to_d
     end
 
+    remaining = available.to_d - @minimum_required
     return allocations if remaining <= 0
 
     per_card_extra = remaining / @cards.count
