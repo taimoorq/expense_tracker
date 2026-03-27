@@ -85,7 +85,7 @@ If you set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` in `.env` before startin
 
 If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
 
-After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` were configured. Regular users can create their own accounts at `/users/sign_up`. After seeding, you can also sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month, recurring demo templates, and manual account balance history.
+After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` were configured. Regular users can create their own accounts at `/users/sign_up`. After seeding, you can also sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month and seeded transaction history.
 
 ## Screenshots
 
@@ -257,7 +257,7 @@ In another terminal:
 - users only: `docker compose exec web bin/rails db:seed`
 - users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
 
-The default command creates the demo account only. Use `SEED_MODE=users_with_transactions` to also create the sample month, recurring demo templates, and manual accounts with balance snapshots.
+The default command creates or refreshes a demo account with reusable planning templates, linked manual accounts across the supported account kinds, and balance snapshots. Use `SEED_MODE=users_with_transactions` to also create the sample month and seeded transaction history.
 
 If you prefer storing these overrides in `.env` before running Docker, set:
 
@@ -386,7 +386,7 @@ You can:
 - sign in with your own account
 - use the seeded demo account after running `bin/rails db:seed`
 
-The default seed creates the demo user only. Use `SEED_MODE=users_with_transactions` if you want seeded month data, recurring templates, and manual account balance history as well.
+The default seed creates the demo user with planning templates and account data. Use `SEED_MODE=users_with_transactions` if you also want seeded month data and transaction history.
 
 Admin provisioning is normally handled during install by `bin/setup`, the Docker entrypoint, or `bin/rails admin:bootstrap` when `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are set.
 
@@ -539,7 +539,7 @@ This project includes demo data for evaluation and sample files for testing impo
 
 Running `bin/rails db:seed` creates or updates a demo user you can sign in with.
 
-By default this is a users-only seed. To also load the sample month, recurring demo templates, and manual account balance history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
+By default this is a users-only seed with reusable planning templates, linked accounts, and manual balance history but no budget month history. To also load the sample month and seeded transaction history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
 
 If `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are present, the same seed run can also create or update an admin user, but the normal path is to bootstrap that admin during install before other users begin signing up.
 
@@ -566,7 +566,8 @@ The demo data also:
 
 - attaches all seeded records to the sample user
 - creates starter recurring templates for pay, subscriptions, bills, plans, and cards
-- creates manual checking, savings, brokerage, and credit-card accounts with balance snapshots
+- links those templates to seeded accounts where appropriate so account rollups and account activity views have representative data
+- creates manual accounts across checking, savings, brokerage, retirement, cash, asset, credit-card, loan, and other-liability categories with balance snapshots
 - keeps demo cashflow positive for the seeded month
 - prints a summary of what was created or refreshed
 
@@ -617,7 +618,7 @@ Use `Accounts & Net Worth` from the sidebar when you want to track balances outs
 
 This area lets you:
 
-- create manual accounts for checking, savings, brokerage, retirement, and debt balances
+- create manual accounts for checking, savings, brokerage, retirement, cash, asset, and liability balances
 - record point-in-time balance snapshots without connecting live bank feeds
 - review the latest balance for each account from the accounts index
 - review linked month-entry activity and connected templates per account
@@ -639,6 +640,7 @@ Account linkage is intentionally hybrid so users can start simple and tighten da
 - month entries can store both a linked source account and a manual account label
 - display prefers the linked account name when present, then falls back to the manual label
 - imports and restores relink by account name when possible, so older backups remain usable
+- credit cards are slightly richer: they can link to the card account itself and separately store the payment account used to fund the estimated payment
 
 ### Create a Month
 
@@ -716,6 +718,14 @@ The guided entry wizard can also create supported planning templates while you a
 
 Each template type also supports optional account linkage, so generated month entries can carry account context automatically.
 
+Template account notes:
+
+- pay schedules, subscriptions, monthly bills, and payment plans can link directly to the account the entry should affect
+- the `Account` text field still works as a fallback label when you do not have a real account record yet
+- credit cards support both `Card Account` and `Paid From Account`
+- `Card Account` links the template to the liability account for that card
+- `Paid From Account` controls which account is used when estimated card-payment entries are created
+
 ### Review a Month
 
 Each budget month can be reviewed in four main views:
@@ -762,6 +772,7 @@ This area lets you:
 Backup/import account-linkage notes:
 
 - planning template exports include resolved account names so linkage can be restored across systems
+- credit-card template exports include both the linked card account and the payment account name
 - budget month entry exports include account context and source-template linkage metadata when present
 - restore ignores legacy fields that are no longer used and relinks accounts/templates where possible
 

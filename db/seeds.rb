@@ -16,6 +16,22 @@ unless valid_seed_modes.include?(seed_mode)
 end
 
 seed_transactions = seed_mode == "users_with_transactions"
+seeded_months_from_file = if File.exist?(seed_file)
+  CSV.read(seed_file, headers: true)
+     .filter_map do |row|
+       month_value = row["Month"].to_s.strip
+       next if month_value.blank?
+
+       begin
+         Date.strptime("#{month_value}-01", "%Y-%m-%d").beginning_of_month
+       rescue ArgumentError
+         nil
+       end
+     end
+     .uniq
+else
+  []
+end
 
 puts "Seeding Expense Tracker demo data..."
 puts "- Seed mode: #{seed_mode}"
@@ -27,10 +43,10 @@ admin_bootstrap_result = AdminBootstrapper.new.call
 puts "- Admin user #{admin_bootstrap_result.status}: #{admin_bootstrap_result.admin_user.email}" if admin_bootstrap_result.admin_user
 
 seeded_template_names = {
-  pay_schedules: [ "Primary Paycheck", "Main Paycheck" ],
+  pay_schedules: [ "Main Paycheck", "Side Hustle Paycheck" ],
   subscriptions: [ "Netflix", "Google One", "Apple iCloud", "Streaming Service", "Cloud Storage", "Device Backup" ],
-  monthly_bills: [ "Rent", "Housing Payment", "Electric" ],
-  payment_plans: [ "Tax Payment Plan", "Installment Plan" ],
+  monthly_bills: [ "Housing Payment", "Electric", "Car Insurance", "Property Taxes" ],
+  payment_plans: [ "Installment Plan", "Student Loan" ],
   credit_cards: [ "Visa Everyday", "Chase Freedom", "Everyday Visa", "Rewards Mastercard" ]
 }
 
@@ -38,7 +54,12 @@ seeded_account_names = [
   "Everyday Checking",
   "Emergency Savings",
   "Long-Term Brokerage",
-  "Rewards Visa Balance"
+  "401(k) Portfolio",
+  "Wallet Cash",
+  "Car Value",
+  "Rewards Visa Balance",
+  "Student Loan Balance",
+  "Home Repair Reserve"
 ]
 
 seed_user = User.find_or_initialize_by(email: seed_email)
@@ -62,153 +83,355 @@ seed_user.account_snapshots.where(account_id: seeded_account_ids).delete_all if 
 seed_user.accounts.where(id: seeded_account_ids).delete_all if seeded_account_ids.any?
 
 cleared_seed_entries = seed_user.expense_entries.where(source_file: [ seed_source, seed_buffer_source ]).delete_all
+cleared_seed_months = seed_user.budget_months
+                               .where(month_on: seeded_months_from_file)
+                               .left_outer_joins(:expense_entries)
+                               .where(expense_entries: { id: nil })
+                               .delete_all
 
 puts "- Cleared #{cleared_seed_entries} previously seeded entr#{cleared_seed_entries == 1 ? 'y' : 'ies'}"
+puts "- Cleared #{cleared_seed_months} previously seeded budget month entr#{cleared_seed_months == 1 ? 'y' : 'ies'}"
 
-if seed_transactions
-  template_upsert = lambda do |scope, lookup_attrs, assign_attrs = {}|
-    record = scope.find_or_initialize_by(lookup_attrs)
-    record.assign_attributes(assign_attrs)
-    record.save!
-    record
+template_upsert = lambda do |scope, lookup_attrs, assign_attrs = {}|
+  record = scope.find_or_initialize_by(lookup_attrs)
+  record.assign_attributes(assign_attrs)
+  record.save!
+  record
+end
+
+seeded_accounts = [
+  {
+    attrs: {
+      name: "Everyday Checking",
+      institution_name: "Chase",
+      kind: :checking,
+      include_in_net_worth: true,
+      include_in_cash: true,
+      active: true,
+      notes: "Primary spending account"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: 4250.32, available_balance: 4210.32, notes: "Month-end cash" },
+      { recorded_on: Date.new(2026, 2, 28), balance: 4630.11, available_balance: 4590.11, notes: "Month-end cash" },
+      { recorded_on: Date.new(2026, 3, 31), balance: 5084.46, available_balance: 5044.46, notes: "Month-end cash" }
+    ]
+  },
+  {
+    attrs: {
+      name: "Emergency Savings",
+      institution_name: "Ally",
+      kind: :savings,
+      include_in_net_worth: true,
+      include_in_cash: true,
+      active: true,
+      notes: "Cash reserve"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: 15000.0, notes: "Emergency fund" },
+      { recorded_on: Date.new(2026, 2, 28), balance: 15600.0, notes: "Emergency fund" },
+      { recorded_on: Date.new(2026, 3, 31), balance: 16200.0, notes: "Emergency fund" }
+    ]
+  },
+  {
+    attrs: {
+      name: "Long-Term Brokerage",
+      institution_name: "Vanguard",
+      kind: :brokerage,
+      include_in_net_worth: true,
+      include_in_cash: false,
+      active: true,
+      notes: "Index fund investments"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: 24850.75, notes: "Month-end market value" },
+      { recorded_on: Date.new(2026, 2, 28), balance: 25540.19, notes: "Month-end market value" },
+      { recorded_on: Date.new(2026, 3, 31), balance: 26210.44, notes: "Month-end market value" }
+    ]
+  },
+  {
+    attrs: {
+      name: "401(k) Portfolio",
+      institution_name: "Fidelity",
+      kind: :retirement,
+      include_in_net_worth: true,
+      include_in_cash: false,
+      active: true,
+      notes: "Employer retirement account"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: 44200.11, notes: "Statement balance" },
+      { recorded_on: Date.new(2026, 2, 28), balance: 44880.47, notes: "Statement balance" },
+      { recorded_on: Date.new(2026, 3, 31), balance: 45530.92, notes: "Statement balance" }
+    ]
+  },
+  {
+    attrs: {
+      name: "Wallet Cash",
+      institution_name: "On Hand",
+      kind: :cash,
+      include_in_net_worth: true,
+      include_in_cash: true,
+      active: true,
+      notes: "Cash on hand"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: 120.0, notes: "Cash on hand" },
+      { recorded_on: Date.new(2026, 2, 28), balance: 145.0, notes: "Cash on hand" },
+      { recorded_on: Date.new(2026, 3, 31), balance: 110.0, notes: "Cash on hand" }
+    ]
+  },
+  {
+    attrs: {
+      name: "Car Value",
+      institution_name: "Kelley Blue Book",
+      kind: :other_asset,
+      include_in_net_worth: true,
+      include_in_cash: false,
+      active: true,
+      notes: "Estimated vehicle value"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: 16200.0, notes: "Estimated market value" },
+      { recorded_on: Date.new(2026, 2, 28), balance: 16050.0, notes: "Estimated market value" },
+      { recorded_on: Date.new(2026, 3, 31), balance: 15900.0, notes: "Estimated market value" }
+    ]
+  },
+  {
+    attrs: {
+      name: "Rewards Visa Balance",
+      institution_name: "Chase",
+      kind: :credit_card,
+      include_in_net_worth: true,
+      include_in_cash: false,
+      active: true,
+      notes: "Liability account for card balance"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: -980.24, notes: "Statement balance" },
+      { recorded_on: Date.new(2026, 2, 28), balance: -740.91, notes: "Statement balance" },
+      { recorded_on: Date.new(2026, 3, 31), balance: -412.38, notes: "Statement balance" }
+    ]
+  },
+  {
+    attrs: {
+      name: "Student Loan Balance",
+      institution_name: "MOHELA",
+      kind: :loan,
+      include_in_net_worth: true,
+      include_in_cash: false,
+      active: true,
+      notes: "Remaining student loan principal"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: -12300.0, notes: "Loan principal" },
+      { recorded_on: Date.new(2026, 2, 28), balance: -12110.0, notes: "Loan principal" },
+      { recorded_on: Date.new(2026, 3, 31), balance: -11920.0, notes: "Loan principal" }
+    ]
+  },
+  {
+    attrs: {
+      name: "Home Repair Reserve",
+      institution_name: "House Ledger",
+      kind: :other_liability,
+      include_in_net_worth: true,
+      include_in_cash: false,
+      active: true,
+      notes: "Planned liability for upcoming repairs"
+    },
+    snapshots: [
+      { recorded_on: Date.new(2026, 1, 31), balance: -3200.0, notes: "Estimated obligation" },
+      { recorded_on: Date.new(2026, 2, 28), balance: -3000.0, notes: "Estimated obligation" },
+      { recorded_on: Date.new(2026, 3, 31), balance: -2850.0, notes: "Estimated obligation" }
+    ]
+  }
+]
+
+seeded_accounts.each do |account_seed|
+  account = seed_user.accounts.create!(account_seed[:attrs])
+  account_seed[:snapshots].each do |snapshot_attrs|
+    account.account_snapshots.create!(snapshot_attrs)
   end
+end
 
+accounts_by_name = seed_user.accounts.index_by(&:name)
+
+template_upsert.call(
+  seed_user.pay_schedules,
+  { name: "Main Paycheck" },
+  {
+    cadence: :semimonthly,
+    amount: 2500,
+    first_pay_on: Date.new(2026, 1, 15),
+    day_of_month_one: 15,
+    day_of_month_two: 30,
+    weekend_adjustment: :previous_friday,
+    linked_account: accounts_by_name.fetch("Everyday Checking"),
+    account: "Everyday Checking",
+    active: true
+  }
+)
+
+template_upsert.call(
+  seed_user.pay_schedules,
+  { name: "Side Hustle Paycheck" },
+  {
+    cadence: :monthly,
+    amount: 650,
+    first_pay_on: Date.new(2026, 1, 28),
+    day_of_month_one: 28,
+    weekend_adjustment: :next_monday,
+    linked_account: accounts_by_name.fetch("Emergency Savings"),
+    account: "Emergency Savings",
+    active: true
+  }
+)
+
+[
+  {
+    name: "Streaming Service",
+    amount: 21.19,
+    due_day: 19,
+    linked_account: accounts_by_name.fetch("Rewards Visa Balance"),
+    account: "Rewards Visa Balance",
+    notes: "Streaming subscription"
+  },
+  {
+    name: "Cloud Storage",
+    amount: 24.99,
+    due_day: 25,
+    linked_account: accounts_by_name.fetch("Rewards Visa Balance"),
+    account: "Rewards Visa Balance",
+    notes: "Cloud storage"
+  },
+  {
+    name: "Device Backup",
+    amount: 1.00,
+    due_day: 24,
+    linked_account: accounts_by_name.fetch("Rewards Visa Balance"),
+    account: "Rewards Visa Balance",
+    notes: "Device backup"
+  }
+].each do |subscription_attrs|
   template_upsert.call(
-    seed_user.pay_schedules,
-    { name: "Main Paycheck" },
-    {
-      cadence: :semimonthly,
-      amount: 2500,
-      first_pay_on: Date.new(2026, 1, 15),
-      day_of_month_one: 15,
-      day_of_month_two: 30,
-      weekend_adjustment: :previous_friday,
-      account: "Checking",
-      active: true
-    }
+    seed_user.subscriptions,
+    { name: subscription_attrs[:name] },
+    subscription_attrs.merge(active: true)
   )
+end
 
-  [
-    { name: "Streaming Service", amount: 21.19, due_day: 19, account: "Card", notes: "Streaming subscription" },
-    { name: "Cloud Storage", amount: 24.99, due_day: 25, account: "Card", notes: "Cloud storage" },
-    { name: "Device Backup", amount: 1.00, due_day: 24, account: "Card", notes: "Device backup" }
-  ].each do |subscription_attrs|
-    template_upsert.call(
-      seed_user.subscriptions,
-      { name: subscription_attrs[:name] },
-      subscription_attrs.merge(active: true)
-    )
-  end
+[
+  {
+    name: "Housing Payment",
+    kind: :fixed_payment,
+    default_amount: 1850,
+    due_day: 1,
+    linked_account: accounts_by_name.fetch("Everyday Checking"),
+    account: "Everyday Checking",
+    notes: "Housing",
+    billing_frequency: :monthly
+  },
+  {
+    name: "Electric",
+    kind: :variable_bill,
+    default_amount: 135,
+    due_day: 18,
+    linked_account: accounts_by_name.fetch("Everyday Checking"),
+    account: "Everyday Checking",
+    notes: "Utility estimate",
+    billing_frequency: :monthly
+  },
+  {
+    name: "Car Insurance",
+    kind: :fixed_payment,
+    default_amount: 110,
+    due_day: 7,
+    linked_account: accounts_by_name.fetch("Everyday Checking"),
+    account: "Everyday Checking",
+    notes: "Quarterly insurance premium",
+    billing_frequency: :quarterly,
+    billing_months: [ 1, 4, 7, 10 ]
+  },
+  {
+    name: "Property Taxes",
+    kind: :fixed_payment,
+    default_amount: 420,
+    due_day: 10,
+    linked_account: accounts_by_name.fetch("Home Repair Reserve"),
+    account: "Home Repair Reserve",
+    notes: "Semiannual property tax reserve",
+    billing_frequency: :semiannual,
+    billing_months: [ 1, 7 ]
+  }
+].each do |bill_attrs|
+  template_upsert.call(
+    seed_user.monthly_bills,
+    { name: bill_attrs[:name] },
+    bill_attrs.merge(active: true)
+  )
+end
 
-  [
-    { name: "Housing Payment", kind: :fixed_payment, default_amount: 1850, due_day: 1, account: "Checking", notes: "Housing" },
-    { name: "Electric", kind: :variable_bill, default_amount: 135, due_day: 18, account: "Checking", notes: "Utility estimate" }
-  ].each do |bill_attrs|
-    template_upsert.call(
-      seed_user.monthly_bills,
-      { name: bill_attrs[:name] },
-      bill_attrs.merge(active: true)
-    )
-  end
-
+[
+  {
+    name: "Installment Plan",
+    total_due: 2400,
+    amount_paid: 600,
+    monthly_target: 200,
+    due_day: 20,
+    linked_account: accounts_by_name.fetch("Home Repair Reserve"),
+    account: "Everyday Checking",
+    notes: "Sample installment plan"
+  },
+  {
+    name: "Student Loan",
+    total_due: 18000,
+    amount_paid: 6080,
+    monthly_target: 190,
+    due_day: 14,
+    linked_account: accounts_by_name.fetch("Student Loan Balance"),
+    account: "Everyday Checking",
+    notes: "Ongoing student loan payment"
+  }
+].each do |plan_attrs|
   template_upsert.call(
     seed_user.payment_plans,
-    { name: "Installment Plan" },
-    {
-      total_due: 2400,
-      amount_paid: 600,
-      monthly_target: 200,
-      due_day: 20,
-      account: "Checking",
-      notes: "Sample installment plan",
-      active: true
-    }
+    { name: plan_attrs[:name] },
+    plan_attrs.merge(active: true)
   )
+end
 
-  [
-    { name: "Everyday Visa", minimum_payment: 45, priority: 1, account: "Visa" },
-    { name: "Rewards Mastercard", minimum_payment: 35, priority: 2, account: "Mastercard" }
-  ].each do |card_attrs|
-    template_upsert.call(
-      seed_user.credit_cards,
-      { name: card_attrs[:name] },
-      card_attrs.merge(active: true, notes: "Seeded starter card")
-    )
-  end
+[
+  {
+    name: "Everyday Visa",
+    minimum_payment: 45,
+    due_day: 18,
+    priority: 1,
+    linked_account: accounts_by_name.fetch("Rewards Visa Balance"),
+    payment_account: accounts_by_name.fetch("Everyday Checking"),
+    account: "Everyday Checking",
+    notes: "Seeded starter card"
+  },
+  {
+    name: "Rewards Mastercard",
+    minimum_payment: 35,
+    due_day: 24,
+    priority: 2,
+    linked_account: accounts_by_name.fetch("Rewards Visa Balance"),
+    payment_account: accounts_by_name.fetch("Everyday Checking"),
+    account: "Everyday Checking",
+    notes: "Backup rewards card"
+  }
+].each do |card_attrs|
+  template_upsert.call(
+    seed_user.credit_cards,
+    { name: card_attrs[:name] },
+    card_attrs.merge(active: true)
+  )
+end
 
-  seeded_accounts = [
-    {
-      attrs: {
-        name: "Everyday Checking",
-        institution_name: "Chase",
-        kind: :checking,
-        include_in_net_worth: true,
-        include_in_cash: true,
-        active: true,
-        notes: "Primary spending account"
-      },
-      snapshots: [
-        { recorded_on: Date.new(2026, 1, 31), balance: 4250.32, available_balance: 4210.32, notes: "Month-end cash" },
-        { recorded_on: Date.new(2026, 2, 28), balance: 4630.11, available_balance: 4590.11, notes: "Month-end cash" },
-        { recorded_on: Date.new(2026, 3, 31), balance: 5084.46, available_balance: 5044.46, notes: "Month-end cash" }
-      ]
-    },
-    {
-      attrs: {
-        name: "Emergency Savings",
-        institution_name: "Ally",
-        kind: :savings,
-        include_in_net_worth: true,
-        include_in_cash: true,
-        active: true,
-        notes: "Cash reserve"
-      },
-      snapshots: [
-        { recorded_on: Date.new(2026, 1, 31), balance: 15000.0, notes: "Emergency fund" },
-        { recorded_on: Date.new(2026, 2, 28), balance: 15600.0, notes: "Emergency fund" },
-        { recorded_on: Date.new(2026, 3, 31), balance: 16200.0, notes: "Emergency fund" }
-      ]
-    },
-    {
-      attrs: {
-        name: "Long-Term Brokerage",
-        institution_name: "Vanguard",
-        kind: :brokerage,
-        include_in_net_worth: true,
-        include_in_cash: false,
-        active: true,
-        notes: "Index fund investments"
-      },
-      snapshots: [
-        { recorded_on: Date.new(2026, 1, 31), balance: 24850.75, notes: "Month-end market value" },
-        { recorded_on: Date.new(2026, 2, 28), balance: 25540.19, notes: "Month-end market value" },
-        { recorded_on: Date.new(2026, 3, 31), balance: 26210.44, notes: "Month-end market value" }
-      ]
-    },
-    {
-      attrs: {
-        name: "Rewards Visa Balance",
-        institution_name: "Chase",
-        kind: :credit_card,
-        include_in_net_worth: true,
-        include_in_cash: false,
-        active: true,
-        notes: "Liability account for card balance"
-      },
-      snapshots: [
-        { recorded_on: Date.new(2026, 1, 31), balance: -980.24, notes: "Statement balance" },
-        { recorded_on: Date.new(2026, 2, 28), balance: -740.91, notes: "Statement balance" },
-        { recorded_on: Date.new(2026, 3, 31), balance: -412.38, notes: "Statement balance" }
-      ]
-    }
-  ]
+puts "- Starter templates ready: #{seed_user.pay_schedules.count} pay schedules, #{seed_user.subscriptions.count} subscriptions, #{seed_user.monthly_bills.count} monthly bills, #{seed_user.payment_plans.count} payment plans, #{seed_user.credit_cards.count} credit cards"
+puts "- Seeded #{seed_user.accounts.count} manual accounts with #{seed_user.account_snapshots.count} balance snapshots"
 
-  seeded_accounts.each do |account_seed|
-    account = seed_user.accounts.create!(account_seed[:attrs])
-    account_seed[:snapshots].each do |snapshot_attrs|
-      account.account_snapshots.create!(snapshot_attrs)
-    end
-  end
+if seed_transactions
 
   raise "Seed file not found: #{seed_file}" unless File.exist?(seed_file)
 
@@ -217,16 +440,7 @@ if seed_transactions
 
   puts "- Loaded #{rows.size} transaction rows from CSV"
 
-  parsed_months = rows.filter_map do |row|
-    month_value = row["Month"].to_s.strip
-    next if month_value.blank?
-
-    begin
-      Date.strptime("#{month_value}-01", "%Y-%m-%d").beginning_of_month
-    rescue ArgumentError
-      nil
-    end
-  end.uniq
+  parsed_months = seeded_months_from_file
 
   puts "- Target budget months: #{parsed_months.map { |month| month.strftime('%B %Y') }.join(', ')}"
 
@@ -333,10 +547,8 @@ if seed_transactions
   end
 
   puts "- Added #{buffer_entries_created} cashflow buffer entr#{buffer_entries_created == 1 ? 'y' : 'ies'} to keep demo data cashflow positive"
-  puts "- Starter templates ready: #{seed_user.pay_schedules.count} pay schedules, #{seed_user.subscriptions.count} subscriptions, #{seed_user.monthly_bills.count} monthly bills, #{seed_user.payment_plans.count} payment plans, #{seed_user.credit_cards.count} credit cards"
-  puts "- Seeded #{seed_user.accounts.count} manual accounts with #{seed_user.account_snapshots.count} balance snapshots"
 else
-  puts "- Users-only mode selected; skipping recurring templates, transaction import, and manual account demo data"
+  puts "- Users-only mode selected; skipping budget months and transaction import while keeping seeded templates and account demo data"
 end
 
 puts "Seed complete."
