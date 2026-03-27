@@ -34,6 +34,17 @@ class AccountsController < ApplicationController
     @connected_templates_count = @connected_templates.values.sum(&:size)
   end
 
+  def sync_teller_snapshot
+    account = current_user.accounts.find(params[:id])
+    result = TellerAccountSnapshotSync.new(account: account).call
+
+    if result.success?
+      redirect_to account_path(account), notice: "Balance snapshot synced from Teller."
+    else
+      redirect_to account_path(account), alert: result.error
+    end
+  end
+
   def new
     @account = current_user.accounts.new(default_account_attributes)
     @initial_snapshot = @account.account_snapshots.new(recorded_on: Date.current)
@@ -76,7 +87,19 @@ class AccountsController < ApplicationController
   private
 
   def account_params
-    params.require(:account).permit(:name, :institution_name, :kind, :active, :include_in_net_worth, :include_in_cash, :notes)
+    params.require(:account).permit(
+      :name,
+      :institution_name,
+      :kind,
+      :active,
+      :include_in_net_worth,
+      :include_in_cash,
+      :notes,
+      :teller_sync_enabled,
+      :teller_account_id,
+      :teller_enrollment_id,
+      :teller_access_token
+    )
   end
 
   def default_account_attributes
