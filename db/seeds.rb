@@ -1,43 +1,24 @@
-require "csv"
-
-seed_file = Rails.root.join("db/seeds/march_2026_transactions.csv")
-seed_source = "seed:march_2026_inflated_income_60"
+seed_source = "seed:generated_history"
 seed_buffer_source = "seed:cashflow_buffer"
-income_multiplier = BigDecimal("1.6")
 target_leftover = BigDecimal("1200")
 seed_mode = ENV.fetch("SEED_MODE", "users").to_s.strip.presence || "users"
 valid_seed_modes = %w[users users_with_transactions]
 seed_email = ENV.fetch("SEED_USER_EMAIL", "demo@example.com")
 seed_password = ENV.fetch("SEED_USER_PASSWORD", "password123!")
 admin_seed_email = ENV["ADMIN_USER_EMAIL"].to_s.strip
+seeded_history_months = (1..6).map { |offset| Date.current.beginning_of_month.prev_month(offset) }.sort
 
 unless valid_seed_modes.include?(seed_mode)
   raise ArgumentError, "Invalid SEED_MODE=#{seed_mode.inspect}. Expected one of: #{valid_seed_modes.join(', ')}"
 end
 
 seed_transactions = seed_mode == "users_with_transactions"
-seeded_months_from_file = if File.exist?(seed_file)
-  CSV.read(seed_file, headers: true)
-     .filter_map do |row|
-       month_value = row["Month"].to_s.strip
-       next if month_value.blank?
-
-       begin
-         Date.strptime("#{month_value}-01", "%Y-%m-%d").beginning_of_month
-       rescue ArgumentError
-         nil
-       end
-     end
-     .uniq
-else
-  []
-end
 
 puts "Seeding Expense Tracker demo data..."
 puts "- Seed mode: #{seed_mode}"
 puts "- Demo user email: #{seed_email}"
 puts "- Admin user email: #{admin_seed_email}" if admin_seed_email.present?
-puts "- Seed transaction file: #{seed_file.relative_path_from(Rails.root)}" if seed_transactions
+puts "- Seed history months: #{seeded_history_months.map { |month| month.strftime('%B %Y') }.join(', ')}" if seed_transactions
 
 admin_bootstrap_result = AdminBootstrapper.new.call
 puts "- Admin user #{admin_bootstrap_result.status}: #{admin_bootstrap_result.admin_user.email}" if admin_bootstrap_result.admin_user
@@ -78,16 +59,11 @@ seed_user.subscriptions.where(name: seeded_template_names[:subscriptions]).delet
 seed_user.monthly_bills.where(name: seeded_template_names[:monthly_bills]).delete_all
 seed_user.payment_plans.where(name: seeded_template_names[:payment_plans]).delete_all
 seed_user.credit_cards.where(name: seeded_template_names[:credit_cards]).delete_all
+cleared_seed_entries = seed_user.expense_entries.where(source_file: [ seed_source, seed_buffer_source ]).delete_all
+cleared_seed_months = seed_user.budget_months.where(month_on: seeded_history_months).destroy_all.count
 seeded_account_ids = seed_user.accounts.where(name: seeded_account_names).pluck(:id)
 seed_user.account_snapshots.where(account_id: seeded_account_ids).delete_all if seeded_account_ids.any?
 seed_user.accounts.where(id: seeded_account_ids).delete_all if seeded_account_ids.any?
-
-cleared_seed_entries = seed_user.expense_entries.where(source_file: [ seed_source, seed_buffer_source ]).delete_all
-cleared_seed_months = seed_user.budget_months
-                               .where(month_on: seeded_months_from_file)
-                               .left_outer_joins(:expense_entries)
-                               .where(expense_entries: { id: nil })
-                               .delete_all
 
 puts "- Cleared #{cleared_seed_entries} previously seeded entr#{cleared_seed_entries == 1 ? 'y' : 'ies'}"
 puts "- Cleared #{cleared_seed_months} previously seeded budget month entr#{cleared_seed_months == 1 ? 'y' : 'ies'}"
@@ -432,96 +408,152 @@ puts "- Starter templates ready: #{seed_user.pay_schedules.count} pay schedules,
 puts "- Seeded #{seed_user.accounts.count} manual accounts with #{seed_user.account_snapshots.count} balance snapshots"
 
 if seed_transactions
-
-  raise "Seed file not found: #{seed_file}" unless File.exist?(seed_file)
-
-  rows = CSV.read(seed_file, headers: true)
-  raise "Seed CSV has no headers." if rows.headers.blank?
-
-  puts "- Loaded #{rows.size} transaction rows from CSV"
-
-  parsed_months = seeded_months_from_file
-
-  puts "- Target budget months: #{parsed_months.map { |month| month.strftime('%B %Y') }.join(', ')}"
-
-  budget_months = parsed_months.map do |month_on|
+  budget_months = seeded_history_months.map do |month_on|
     seed_user.budget_months.find_or_create_by!(month_on: month_on) do |month|
       month.label = month_on.strftime("%B %Y")
+      month.notes = "Seeded demo month generated from planning templates and manual account activity."
     end
   end
 
   puts "- Prepared #{budget_months.count} budget month entr#{budget_months.count == 1 ? 'y' : 'ies'} for #{seed_user.email}"
+  manual_entry_count = 0
 
-  parse_date = lambda do |value|
-    text = value.to_s.strip
-    next nil if text.blank?
+  budget_months.each_with_index do |budget_month, index|
+    GenerateMonthPaychecks.new(budget_month: budget_month).call
+    GenerateMonthSubscriptions.new(budget_month: budget_month).call
+    GenerateMonthMonthlyBills.new(budget_month: budget_month).call
+    GenerateMonthPaymentPlans.new(budget_month: budget_month).call
 
-    Date.parse(text)
-  rescue ArgumentError
-    nil
-  end
+    checking_account = accounts_by_name.fetch("Everyday Checking")
+    credit_card_account = accounts_by_name.fetch("Rewards Visa Balance")
+    savings_account = accounts_by_name.fetch("Emergency Savings")
+    brokerage_account = accounts_by_name.fetch("Long-Term Brokerage")
 
-  parse_amount = lambda do |value|
-    text = value.to_s.gsub(/[,$]/, "").strip
-    next nil if text.blank?
-
-    BigDecimal(text)
-  rescue ArgumentError
-    nil
-  end
-
-  normalize_section = lambda do |section|
-    key = section.to_s.downcase.strip
-    ExpenseEntry.sections.key?(key) ? key : "other"
-  end
-
-  normalize_status = lambda do |status|
-    key = status.to_s.downcase.strip
-    ExpenseEntry.statuses.key?(key) ? key : "planned"
-  end
-
-  rows_created = 0
-
-  rows.each do |row|
-    month_value = row["Month"].to_s.strip
-    next if month_value.blank?
-
-    begin
-      month_on = Date.strptime("#{month_value}-01", "%Y-%m-%d").beginning_of_month
-    rescue ArgumentError
-      next
+    [
+      {
+        occurred_on: budget_month.month_on.change(day: 5),
+        section: :variable,
+        category: "Groceries",
+        payee: "Neighborhood Market",
+        planned_amount: BigDecimal("420") + index * 14,
+        actual_amount: BigDecimal("418") + index * 14,
+        source_account: checking_account,
+        status: :paid,
+        need_or_want: "Need",
+        notes: "Seeded grocery spending",
+        source_file: seed_source
+      },
+      {
+        occurred_on: budget_month.month_on.change(day: 9),
+        section: :variable,
+        category: "Fuel",
+        payee: "Fuel Stop",
+        planned_amount: BigDecimal("78") + index * 3,
+        actual_amount: BigDecimal("76") + index * 3,
+        source_account: checking_account,
+        status: :paid,
+        need_or_want: "Need",
+        notes: "Seeded transportation spending",
+        source_file: seed_source
+      },
+      {
+        occurred_on: budget_month.month_on.change(day: 12),
+        section: :variable,
+        category: "Dining",
+        payee: "Dinner Out",
+        planned_amount: BigDecimal("92") + index * 5,
+        actual_amount: BigDecimal("89") + index * 5,
+        source_account: credit_card_account,
+        status: :paid,
+        need_or_want: "Want",
+        notes: "Seeded discretionary card spending",
+        source_file: seed_source
+      },
+      {
+        occurred_on: budget_month.month_on.change(day: 16),
+        section: :manual,
+        category: "Savings",
+        payee: "Emergency Savings Transfer",
+        planned_amount: BigDecimal("250") + index * 10,
+        actual_amount: BigDecimal("250") + index * 10,
+        source_account: savings_account,
+        status: :paid,
+        need_or_want: "Need",
+        notes: "Seeded savings transfer",
+        source_file: seed_source
+      },
+      {
+        occurred_on: budget_month.month_on.change(day: 23),
+        section: :manual,
+        category: "Investing",
+        payee: "Brokerage Contribution",
+        planned_amount: BigDecimal("300") + index * 15,
+        actual_amount: BigDecimal("300") + index * 15,
+        source_account: brokerage_account,
+        status: :paid,
+        need_or_want: "Need",
+        notes: "Seeded investment contribution",
+        source_file: seed_source
+      }
+    ].each do |entry_attrs|
+      budget_month.expense_entries.create!(
+        occurred_on: entry_attrs[:occurred_on],
+        section: entry_attrs[:section],
+        category: entry_attrs[:category],
+        payee: entry_attrs[:payee],
+        planned_amount: entry_attrs[:planned_amount],
+        actual_amount: entry_attrs[:actual_amount],
+        source_account: entry_attrs[:source_account],
+        account: entry_attrs[:source_account].name,
+        status: entry_attrs[:status],
+        need_or_want: entry_attrs[:need_or_want],
+        notes: entry_attrs[:notes],
+        source_file: entry_attrs[:source_file]
+      )
+      manual_entry_count += 1
     end
 
-    budget_month = budget_months.find { |month| month.month_on == month_on }
-    next if budget_month.blank?
-
-    section_key = normalize_section.call(row["Section"])
-    planned_amount = parse_amount.call(row["Planned Amount"])
-    actual_amount = parse_amount.call(row["Actual Amount"])
-
-    if section_key == "income"
-      planned_amount = planned_amount&.*(income_multiplier)
-      actual_amount = actual_amount&.*(income_multiplier)
+    if index == 1
+      budget_month.expense_entries.create!(
+        occurred_on: budget_month.month_on.change(day: 11),
+        section: :income,
+        category: "Bonus",
+        payee: "Performance Bonus",
+        planned_amount: BigDecimal("1800"),
+        actual_amount: BigDecimal("1800"),
+        source_account: checking_account,
+        account: checking_account.name,
+        status: :paid,
+        need_or_want: "Need",
+        notes: "Seeded one-time bonus income",
+        source_file: seed_source
+      )
+      manual_entry_count += 1
     end
 
-    budget_month.expense_entries.create!(
-      occurred_on: parse_date.call(row["Date"]),
-      section: section_key,
-      category: row["Category"],
-      payee: row["Payee"],
-      planned_amount: planned_amount,
-      actual_amount: actual_amount,
-      account: row["Account"],
-      status: normalize_status.call(row["Status"]),
-      need_or_want: row["Need or Want"],
-      notes: row["Notes"],
-      source_file: seed_source
-    )
+    if index == 3
+      budget_month.expense_entries.create!(
+        occurred_on: budget_month.month_on.change(day: 21),
+        section: :manual,
+        category: "Home Repair",
+        payee: "Emergency Plumber",
+        planned_amount: BigDecimal("640"),
+        actual_amount: BigDecimal("615"),
+        source_account: checking_account,
+        account: checking_account.name,
+        status: :paid,
+        need_or_want: "Need",
+        notes: "Seeded one-time home repair payment",
+        source_file: seed_source
+      )
+      manual_entry_count += 1
+    end
 
-    rows_created += 1
+    EstimateMonthCreditCards.new(budget_month: budget_month).call
+    AutoCompleteRecurringEntries.new(entries: budget_month.expense_entries, as_of: budget_month.month_on.end_of_month).call
   end
 
-  puts "- Added #{rows_created} seeded transaction entr#{rows_created == 1 ? 'y' : 'ies'}"
+  puts "- Added #{manual_entry_count} seeded manual entr#{manual_entry_count == 1 ? 'y' : 'ies'} across generated month history"
 
   buffer_entries_created = 0
 
@@ -548,7 +580,7 @@ if seed_transactions
 
   puts "- Added #{buffer_entries_created} cashflow buffer entr#{buffer_entries_created == 1 ? 'y' : 'ies'} to keep demo data cashflow positive"
 else
-  puts "- Users-only mode selected; skipping budget months and transaction import while keeping seeded templates and account demo data"
+  puts "- Users-only mode selected; skipping generated budget months while keeping seeded templates and account demo data"
 end
 
 puts "Seed complete."

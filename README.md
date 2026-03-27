@@ -42,7 +42,7 @@ With it, a user can:
 - restart from an overview dashboard that highlights the current month, quick actions, planning-template status, and account context
 - build a fresh month or start from a previous month instead of recreating the same structure every time
 - review the same budget in a timeline, calendar, or editable list depending on how they like to think about money
-- import transactions from CSV files to get a month filled in faster
+- add manual adjustments and one-off entries once the recurring structure is in place
 - reuse recurring items so routine planning takes less manual work through dedicated planning templates
 - preview and restore versioned JSON backups, including optional encrypted exports and reference sample backup files
 - estimate credit-card payments based on the cash left in the month rather than guessing in isolation
@@ -97,7 +97,7 @@ Current screenshots reflect the latest overview, planning templates, money-flow 
 			<br>
 			<strong>Months</strong>
 			<br>
-			Open the month list, create a month, review template coverage, and import CSV activity.
+			Open the month list, create a month, and review template coverage before jumping back into a saved month.
 		</td>
 	</tr>
 	<tr>
@@ -168,7 +168,7 @@ Current screenshots reflect the latest overview, planning templates, money-flow 
 ### Entries and Review
 
 - See your budget in multiple views so you can review the same data as a timeline, a calendar, a breakdown, or a detailed entry list
-- Add transactions the way that fits your workflow, whether that means entering them manually, using the guided wizard, launching the wizard from month views, or importing a CSV
+- Add transactions the way that fits your workflow, whether that means entering them manually, using the guided wizard, or launching the wizard from month views
 - Upload past transactions to get a month populated faster instead of rebuilding everything by hand
 - Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
 - Toggle between grouped timeline sections and a full month list without leaving the same review surface
@@ -525,7 +525,7 @@ This project includes demo data for evaluation and sample files for testing impo
 
 Running `bin/rails db:seed` creates or updates a demo user you can sign in with.
 
-By default this is a users-only seed with reusable planning templates, linked accounts, and manual balance history but no budget month history. To also load the sample month and seeded transaction history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
+By default this is a users-only seed with reusable planning templates, linked accounts, and manual balance history but no budget month history. To also load six past months of generated demo history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
 
 If `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are present, the same seed run can also create or update an admin user, but the normal path is to bootstrap that admin during install before other users begin signing up.
 
@@ -542,11 +542,9 @@ You can override these when seeding with:
 - `ADMIN_USER_EMAIL=admin@example.com`
 - `ADMIN_USER_PASSWORD=choose-a-strong-password`
 
-### Seeded Demo Month
+### Seeded Demo Months
 
-When `SEED_MODE=users_with_transactions`, the seed process also imports:
-
-- `db/seeds/march_2026_transactions.csv`
+When `SEED_MODE=users_with_transactions`, the seed process also generates six past months of demo history from the seeded planning templates and accounts.
 
 The demo data also:
 
@@ -554,10 +552,10 @@ The demo data also:
 - creates starter recurring templates for pay, subscriptions, bills, plans, and cards
 - links those templates to seeded accounts where appropriate so account rollups and account activity views have representative data
 - creates manual accounts across checking, savings, brokerage, retirement, cash, asset, credit-card, loan, and other-liability categories with balance snapshots
-- keeps demo cashflow positive for the seeded month
+- creates generated month entries from those templates across the previous six months
+- adds realistic manual spending, savings, and investing entries on top of the generated template entries
+- keeps demo cashflow positive for the seeded months
 - prints a summary of what was created or refreshed
-
-Income values in the demo seed are inflated by 60% so the sample data stays privacy-friendly while still feeling realistic.
 
 ### Sample CSV Files
 
@@ -591,7 +589,7 @@ That guide covers:
 - the overview dashboard and how to re-enter the workflow quickly
 - Accounts & Net Worth, including linked-account behavior
 - creating or cloning months
-- adding entries manually, with the wizard, or through CSV import
+- adding entries manually or with the guided wizard
 - planning templates and the current account-linkage model
 - reviewing a month in Budget, Breakdown, Calendar, and Plan and Edit
 - backup and restore behavior, including account-aware exports and restores

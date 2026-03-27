@@ -83,8 +83,9 @@ RSpec.describe "db/seeds" do
       user = User.find_by!(email: seed_email)
 
       expect(user.valid_password?(seed_password)).to be(true)
-      expect(user.budget_months).not_to be_empty
+      expect(user.budget_months.count).to eq(6)
       expect(user.expense_entries).not_to be_empty
+      expect(user.budget_months.order(:month_on).pluck(:month_on)).to eq((1..6).map { |offset| Date.current.beginning_of_month.prev_month(offset) }.sort)
       expect(user.pay_schedules.count).to eq(2)
       expect(user.subscriptions.count).to eq(3)
       expect(user.monthly_bills.count).to eq(4)
@@ -97,6 +98,9 @@ RSpec.describe "db/seeds" do
       expect(user.accounts.find_by!(name: "401(k) Portfolio").retirement?).to be(true)
       expect(user.credit_cards.find_by!(name: "Everyday Visa").linked_account&.name).to eq("Rewards Visa Balance")
       expect(user.credit_cards.find_by!(name: "Everyday Visa").payment_account&.name).to eq("Everyday Checking")
+      expect(user.expense_entries.where(source_file: "seed:generated_history")).to exist
+      expect(user.expense_entries.find_by(payee: "Performance Bonus")).to be_present
+      expect(user.expense_entries.find_by(payee: "Emergency Plumber")).to be_present
     end
 
     it "can switch the same user back to users-only mode" do
