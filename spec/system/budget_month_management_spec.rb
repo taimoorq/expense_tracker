@@ -60,10 +60,15 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_months_path
 
+    month_labels = within("#existing-months tbody") do
+      all("tr td:first-child a", minimum: 3).map(&:text)
+    end
+
     expect(page).to have_content("3 months in 2026")
     expect(page).to have_content("March 2026")
     expect(page).to have_content("January 2026")
-    expect(page.body.index("March 2026")).to be < page.body.index("April 2026")
+    expect(month_labels).to include("March 2026", "April 2026", "January 2026")
+    expect(month_labels.index("March 2026")).to be < month_labels.index("April 2026")
     expect(page).not_to have_content("December 2025")
     expect(page).to have_link("2025")
 
@@ -503,7 +508,8 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit root_path
 
-    click_button "Sign out"
+    first("button[aria-label='Open account menu']").click
+    click_button "Sign out", match: :first
 
     expect(page).to have_content("Signed out successfully")
     expect(page).to have_content("Create account")
