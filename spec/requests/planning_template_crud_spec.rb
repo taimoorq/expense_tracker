@@ -203,6 +203,7 @@ RSpec.describe "Planning template CRUD", type: :request do
         minimum_payment: "45.00",
         due_day: 18,
         priority: 1,
+        linked_account_id: create(:account, user: user, name: "Visa Account").id,
         payment_account_id: create(:account, user: user, name: "Checking").id,
         account: "Checking",
         active: true,
@@ -215,6 +216,7 @@ RSpec.describe "Planning template CRUD", type: :request do
         minimum_payment: "55.00",
         due_day: 21,
         priority: 2,
+        linked_account_id: create(:account, user: user, name: "Barclays Account").id,
         payment_account_id: create(:account, user: user, name: "Savings").id,
         account: "Savings"
       }

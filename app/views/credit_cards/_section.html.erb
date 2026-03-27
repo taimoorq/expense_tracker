@@ -11,10 +11,11 @@
       </h3>
       <button type="button" class="ta-icon-btn" aria-label="Credit Cards Help" title="Credit Cards Help" data-action="click->help-modal#open" data-help-title="Credit Cards Help" data-help-body="Used by 'Estimate Cards' in month view.
 
+Card Account: optional account this template represents.
+Paid From Account: optional account used for the estimated payment entry.
+Manual Account Label: optional fallback text if no paid-from account is linked.
 Minimum: minimum amount to prioritize first.
 Due Day: day of month the estimated payment should be scheduled.
-Payment Account: optional linked account used for estimated entries.
-Manual Account Label: optional fallback text if no account is linked.
 Priority: lower number gets allocated first.
     After minimums, leftover can be spread across cards."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
@@ -75,8 +76,12 @@ Priority: lower number gets allocated first.
         <p class="mt-1 text-xs text-slate-500">Estimated payments are dated on this day each month.</p>
       </div>
       <div>
-        <%= form.label :linked_account_id, "Linked Account", class: "fb-label" %>
+        <%= form.label :linked_account_id, "Card Account", class: "fb-label" %>
         <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select account (optional)" }, class: "fb-select" %>
+      </div>
+      <div>
+        <%= form.label :payment_account_id, "Paid From Account", class: "fb-label" %>
+        <%= form.collection_select :payment_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select payment account (optional)" }, class: "fb-select" %>
       </div>
       <div>
         <%= form.label :account, "Manual Account Label", class: "fb-label" %>
@@ -111,6 +116,9 @@ Priority: lower number gets allocated first.
             <div>
               <p class="text-sm font-semibold text-slate-900"><%= item.name %></p>
               <p class="mt-1 text-xs text-slate-500">Priority <%= item.priority %> · Due day <%= item.due_day %></p>
+              <% if item.linked_account.present? %>
+                <p class="mt-1 text-xs text-slate-500">Card account <%= item.linked_account.name %></p>
+              <% end %>
               <% if item.account_name.present? %>
                 <p class="mt-1 text-xs text-slate-500">Pays from <%= item.account_name %></p>
               <% end %>
@@ -146,6 +154,7 @@ Priority: lower number gets allocated first.
             <th class="px-3 py-2 text-right font-medium text-slate-600">Minimum</th>
             <th class="px-3 py-2 text-right font-medium text-slate-600">Priority</th>
             <th class="px-3 py-2 text-right font-medium text-slate-600">Due Day</th>
+            <th class="px-3 py-2 text-left font-medium text-slate-600">Card Account</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Payment Account</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Action</th>
           </tr>
@@ -157,6 +166,7 @@ Priority: lower number gets allocated first.
               <td class="px-3 py-2 text-right"><%= number_to_currency(item.minimum_payment) %></td>
               <td class="px-3 py-2 text-right"><%= item.priority %></td>
               <td class="px-3 py-2 text-right"><%= item.due_day %></td>
+              <td class="px-3 py-2"><%= item.linked_account&.name.presence || "—" %></td>
               <td class="px-3 py-2"><%= item.account_name.presence || "—" %></td>
               <td class="px-3 py-2">
                 <% if budget_month %>

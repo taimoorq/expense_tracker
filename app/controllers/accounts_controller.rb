@@ -26,7 +26,8 @@ class AccountsController < ApplicationController
       "Subscriptions" => current_user.subscriptions.where(linked_account_id: @account.id).order(active: :desc, due_day: :asc, name: :asc).to_a,
       "Monthly Bills" => current_user.monthly_bills.where(linked_account_id: @account.id).order(active: :desc, due_day: :asc, name: :asc).to_a,
       "Payment Plans" => current_user.payment_plans.where(linked_account_id: @account.id).order(active: :desc, due_day: :asc, name: :asc).to_a,
-      "Credit Cards" => current_user.credit_cards.where(payment_account_id: @account.id).order(active: :desc, priority: :asc, name: :asc).to_a
+      "Credit Cards" => current_user.credit_cards.where(linked_account_id: @account.id).order(active: :desc, priority: :asc, name: :asc).to_a,
+      "Credit Card Payments" => current_user.credit_cards.where(payment_account_id: @account.id).order(active: :desc, priority: :asc, name: :asc).to_a
     }
     @connected_templates_count = @connected_templates.values.sum(&:size)
   end

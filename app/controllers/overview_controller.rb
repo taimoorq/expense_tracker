@@ -26,7 +26,7 @@ class OverviewController < ApplicationController
       subscriptions: current_user.subscriptions.where.not(linked_account_id: nil).count,
       monthly_bills: current_user.monthly_bills.where.not(linked_account_id: nil).count,
       payment_plans: current_user.payment_plans.where.not(linked_account_id: nil).count,
-      credit_cards: current_user.credit_cards.where.not(payment_account_id: nil).count
+      credit_cards: current_user.credit_cards.where.not(linked_account_id: nil).count
     }
     @linked_template_total = @linked_template_counts.values.sum
     @linked_entries_count = @current_month_entries.count { |entry| entry.source_account_id.present? }

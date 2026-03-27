@@ -1,21 +1,11 @@
 <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
 <% content_for :page_header do %>
-  <div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="flex flex-wrap items-center gap-3">
     <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
       <%= tabler_icon("calendar-month", classes: "h-6 w-6 text-indigo-600") %>
       <span>Months</span>
     </h2>
-    <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-      <%= link_to planning_templates_path, class: "fb-btn-secondary ta-action-btn" do %>
-        <%= tabler_icon("template", classes: "ta-action-icon text-slate-600") %>
-        <span>Planning Templates</span>
-      <% end %>
-      <%= link_to new_budget_month_path, class: "fb-btn-primary ta-action-btn" do %>
-        <%= tabler_icon("plus", classes: "ta-action-icon text-indigo-100") %>
-        <span>New Month</span>
-      <% end %>
-    </div>
   </div>
 <% end %>
 
@@ -29,8 +19,14 @@
         </h2>
         <p class="ta-muted mt-1">Open a budget month, review totals, or clone a previous setup into the next available month.</p>
       </div>
-      <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-        <%= pluralize(@visible_budget_months.count, "month") %> in <%= @selected_year %>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+          <%= pluralize(@visible_budget_months.count, "month") %> in <%= @selected_year %>
+        </div>
+        <%= link_to new_budget_month_path, class: "fb-btn-primary ta-action-btn" do %>
+          <%= tabler_icon("plus", classes: "ta-action-icon text-indigo-100") %>
+          <span>New Month</span>
+        <% end %>
       </div>
     </div>
 

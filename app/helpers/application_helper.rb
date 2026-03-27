@@ -183,6 +183,26 @@ module ApplicationHelper
     user.accounts.active_first.pluck(:name)
   end
 
+  def month_jump_options(user = current_user)
+    return [] if user.blank?
+
+    user.budget_months.recent_first.map do |month|
+      month_date = month.month_on.to_date
+
+      {
+        label: month.label,
+        subtitle: month_date.strftime("%B %Y"),
+        url: budget_month_path(month),
+        search_text: [
+          month.label,
+          month_date.strftime("%B %Y"),
+          month_date.strftime("%b %Y"),
+          month_date.strftime("%Y-%m")
+        ].join(" ").downcase
+      }
+    end
+  end
+
   def wizard_template_type_options
     TemplateTypeRegistry.wizard_template_types.map { |type| [ type.humanize, type ] }
   end

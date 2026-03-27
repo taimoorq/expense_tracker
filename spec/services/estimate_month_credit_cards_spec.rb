@@ -21,6 +21,7 @@ RSpec.describe EstimateMonthCreditCards do
     expect(estimates.find_by(payee: first_card.name).occurred_on).to eq(Date.new(2026, 3, 10))
     expect(estimates.find_by(payee: second_card.name).occurred_on).to eq(Date.new(2026, 3, 22))
     expect(estimates.find_by(payee: first_card.name).account).to eq("Checking")
+    expect(estimates.find_by(payee: first_card.name).source_account).to eq(funding_account)
     expect(estimates.pluck(:source_template_type).uniq).to eq([ "CreditCard" ])
     expect(estimates.find_by(payee: first_card.name).source_template_id).to eq(first_card.id)
     expect(estimates.find_by(payee: second_card.name).source_template_id).to eq(second_card.id)

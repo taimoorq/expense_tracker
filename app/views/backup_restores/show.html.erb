@@ -1,6 +1,6 @@
 <div class="space-y-6">
   <% content_for :page_header do %>
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-3">
       <div>
         <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
           <%= tabler_icon("cloud-arrow-up", classes: "h-6 w-6 text-indigo-600") %>
@@ -8,10 +8,6 @@
         </h2>
         <p class="mt-1 text-sm text-slate-600">Export or restore planning templates, months, and accounts with a versioned JSON backup.</p>
       </div>
-      <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
-        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
-        <span>Back to Home</span>
-      <% end %>
     </div>
   <% end %>
 

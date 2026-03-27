@@ -105,10 +105,25 @@
 
     <main class="ta-main">
       <header class="ta-topbar">
-        <div class="ta-topbar-row">
+        <div class="ta-topbar-row flex-wrap sm:flex-nowrap">
+          <% if user_signed_in? %>
+            <div class="flex w-full items-center justify-between gap-3 sm:hidden">
+              <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-sidebar-target="toggleButton" data-action="click->sidebar#toggle">
+                <span class="ta-mobile-toggle-icon" data-sidebar-target="mobileOpenIcon"><%= tabler_icon("menu-2", classes: "ta-action-icon-lg") %></span>
+                <span class="ta-mobile-toggle-icon hidden" data-sidebar-target="mobileCloseIcon"><%= tabler_icon("x", classes: "ta-action-icon-lg") %></span>
+                <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "ta-action-icon-lg") %></span>
+                <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="collapseIcon"><%= tabler_icon("chevron-left", classes: "ta-action-icon-lg") %></span>
+              </button>
+
+              <div class="ta-topbar-user-actions">
+                <%= render "shared/user_menu" %>
+              </div>
+            </div>
+          <% end %>
+
           <div class="ta-topbar-heading-group">
           <% if user_signed_in? %>
-            <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-sidebar-target="toggleButton" data-action="click->sidebar#toggle">
+            <button type="button" class="ta-icon-btn hidden sm:inline-flex" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-sidebar-target="toggleButton" data-action="click->sidebar#toggle">
               <span class="ta-mobile-toggle-icon" data-sidebar-target="mobileOpenIcon"><%= tabler_icon("menu-2", classes: "ta-action-icon-lg") %></span>
               <span class="ta-mobile-toggle-icon hidden" data-sidebar-target="mobileCloseIcon"><%= tabler_icon("x", classes: "ta-action-icon-lg") %></span>
               <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="expandIcon"><%= tabler_icon("chevron-right", classes: "ta-action-icon-lg") %></span>
@@ -135,15 +150,12 @@
           </div>
 
           <% if user_signed_in? %>
-            <div class="ta-topbar-user-actions">
-              <%= link_to edit_user_registration_path, class: "ta-user-chip ta-user-chip-compact" do %>
-                <%= tabler_icon("user-circle", classes: "ta-action-icon") %>
-                <span class="ta-user-chip-label"><%= current_user.email %></span>
-              <% end %>
-              <%= button_to destroy_user_session_path, method: :delete, class: "fb-btn-secondary ta-action-btn ta-sign-out-btn" do %>
-                <%= tabler_icon("logout", classes: "ta-action-icon") %>
-                <span class="ta-sign-out-label">Sign out</span>
-              <% end %>
+            <div class="w-full sm:order-none sm:w-auto sm:flex-none lg:mx-4">
+              <%= render "shared/month_jump" %>
+            </div>
+
+            <div class="hidden sm:flex ta-topbar-user-actions">
+              <%= render "shared/user_menu" %>
             </div>
           <% else %>
             <div class="flex items-center gap-2">

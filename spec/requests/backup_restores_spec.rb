@@ -7,11 +7,12 @@ RSpec.describe "Backup & restore", type: :request do
 
   it "exports the selected scopes as versioned JSON" do
     checking = create(:account, user: user, name: "Checking")
+    visa_account = create(:account, user: user, name: "Visa Account", kind: :credit_card)
     create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
     create(:subscription, user: user, name: "Netflix", linked_account: checking, account: "Legacy Card")
     create(:monthly_bill, user: user, name: "Power", linked_account: checking, account: "Legacy Card", notes: "Electric utility", billing_frequency: :semiannual, billing_months: [ 1, 7 ])
     create(:payment_plan, user: user, name: "Tax Plan", linked_account: checking, account: "Legacy Card", notes: "IRS installment")
-    create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1, payment_account: checking, account: "Legacy Checking", notes: "Main rewards card")
+    create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, priority: 1, linked_account: visa_account, payment_account: checking, account: "Legacy Checking", notes: "Main rewards card")
     create(:account_snapshot, account: checking, recorded_on: Date.new(2026, 3, 15), balance: 2400)
     create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
 
@@ -39,6 +40,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "planning_templates", "payment_plans", 0, "notes")).to eq("IRS installment")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "due_day")).to eq(18)
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "linked_account")).to eq("Visa Account")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "notes")).to eq("Main rewards card")
   end
 
@@ -226,6 +228,7 @@ RSpec.describe "Backup & restore", type: :request do
 
   it "relinks imported credit cards to existing accounts by account name" do
     create(:account, user: user, name: "Checking")
+    create(:account, user: user, name: "Mapped Visa Account", kind: :credit_card)
 
     file = Tempfile.new([ "expense-tracker-backup", ".json" ])
     file.write(
@@ -247,6 +250,7 @@ RSpec.describe "Backup & restore", type: :request do
                 due_day: 17,
                 priority: 1,
                 account: "Checking",
+                linked_account: "Mapped Visa Account",
                 active: true
               }
             ]
@@ -266,6 +270,8 @@ RSpec.describe "Backup & restore", type: :request do
     expect(response).to have_http_status(:ok)
     card = user.credit_cards.find_by!(name: "Mapped Visa")
     expect(card.account).to eq("Checking")
+    expect(card.linked_account).to be_present
+    expect(card.linked_account.name).to eq("Mapped Visa Account")
     expect(card.payment_account).to be_present
     expect(card.payment_account.name).to eq("Checking")
   ensure
@@ -426,6 +432,75 @@ RSpec.describe "Backup & restore", type: :request do
     expect(imported_entry.source_account).to eq(user.accounts.find_by!(name: "Imported Checking"))
     expect(user.accounts.reload.pluck(:name)).to eq([ "Imported Checking" ])
     expect(user.account_snapshots.reload.pluck(:notes)).to eq([ "Imported snapshot" ])
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "relinks imported credit card template accounts after importing accounts in the same restore" do
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "planning_templates", "accounts" ],
+        data: {
+          planning_templates: {
+            pay_schedules: [],
+            subscriptions: [],
+            monthly_bills: [],
+            payment_plans: [],
+            credit_cards: [
+              {
+                name: "Imported Visa",
+                minimum_payment: "60.0",
+                due_day: 12,
+                priority: 1,
+                linked_account: "Imported Visa",
+                account: "Imported Checking",
+                active: true
+              }
+            ]
+          },
+          accounts: [
+            {
+              name: "Imported Checking",
+              institution_name: "Sample Bank",
+              kind: "checking",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: true,
+              notes: nil,
+              account_snapshots: []
+            },
+            {
+              name: "Imported Visa",
+              institution_name: "Sample Bank",
+              kind: "credit_card",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: false,
+              notes: nil,
+              account_snapshots: []
+            }
+          ]
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "credit-card-linked-account-import.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "planning_templates", "accounts" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    card = user.credit_cards.find_by!(name: "Imported Visa")
+    expect(card.linked_account&.name).to eq("Imported Visa")
+    expect(card.payment_account&.name).to eq("Imported Checking")
   ensure
     file.close
     file.unlink

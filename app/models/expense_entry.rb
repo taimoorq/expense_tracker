@@ -81,6 +81,7 @@ class ExpenseEntry < ApplicationRecord
 
   def source_template_account
     return nil if source_template.blank?
+    return source_template.payment_account if source_template.respond_to?(:payment_account) && source_template.payment_account.present?
     return source_template.linked_account if source_template.respond_to?(:linked_account)
     return source_template.payment_account if source_template.respond_to?(:payment_account)
 

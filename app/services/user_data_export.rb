@@ -106,6 +106,7 @@ class UserDataExport
           due_day: record.due_day,
           priority: record.priority,
           account: PlanningTemplateAccountLinking.resolved_account_name(record),
+          linked_account: record.linked_account&.name,
           notes: record.notes,
           active: record.active
         }

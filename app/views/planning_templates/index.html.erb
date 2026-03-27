@@ -1,14 +1,10 @@
 <div class="space-y-[5px]">
   <% content_for :page_header do %>
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-3">
       <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
         <%= tabler_icon("template", classes: "h-6 w-6 text-indigo-600") %>
         <span>Planning Templates</span>
       </h2>
-      <%= link_to budget_months_path, class: "fb-btn-secondary ta-action-btn" do %>
-        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
-        <span>Back to Months</span>
-      <% end %>
     </div>
   <% end %>
 

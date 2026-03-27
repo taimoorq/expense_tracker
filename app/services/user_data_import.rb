@@ -21,6 +21,7 @@ class UserDataImport
       counts[:budget_months] = import_budget_months(data[:budget_months]) if scopes.include?("budget_months")
       counts[:accounts] = import_accounts(data[:accounts]) if scopes.include?("accounts")
       PlanningTemplateAccountLinking.relink_for(user) if scopes.include?("planning_templates")
+      relink_credit_card_template_accounts(data[:planning_templates]) if scopes.include?("planning_templates")
       ExpenseEntryAccountLinking.relink_for(user) if scopes.include?("budget_months")
     end
 
@@ -58,7 +59,11 @@ class UserDataImport
         user.payment_plans.create!(attributes.slice(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :notes, :active))
       end,
       credit_cards: Array(data[:credit_cards]).count do |attributes|
-        user.credit_cards.create!(attributes.slice(:name, :minimum_payment, :due_day, :priority, :account, :notes, :active))
+        user.credit_cards.create!(
+          attributes.slice(:name, :minimum_payment, :due_day, :priority, :account, :notes, :active).merge(
+            linked_account: user.accounts.find_by(name: attributes[:linked_account])
+          )
+        )
       end
     }
   end
@@ -118,6 +123,18 @@ class UserDataImport
 
   def failure(message)
     { success: false, error: message }
+  end
+
+  def relink_credit_card_template_accounts(planning_template_data)
+    Array(planning_template_data[:credit_cards]).each do |attributes|
+      next if attributes[:linked_account].blank?
+
+      card = user.credit_cards.find_by(name: attributes[:name])
+      account = user.accounts.find_by(name: attributes[:linked_account])
+      next if card.blank? || account.blank?
+
+      card.update!(linked_account: account)
+    end
   end
 
   def relink_entry_source_template(entry, entry_attributes)

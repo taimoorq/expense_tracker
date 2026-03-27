@@ -1,0 +1,38 @@
+<div class="relative" data-controller="user-menu" data-action="click@window->user-menu#closeFromOutside keydown.esc->user-menu#closeOnEsc">
+  <button
+    type="button"
+    class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+    aria-label="Open account menu"
+    aria-expanded="false"
+    data-user-menu-target="button"
+    data-action="click->user-menu#toggle"
+  >
+    <%= tabler_icon("user-circle", classes: "h-5 w-5") %>
+  </button>
+
+  <div
+    class="absolute right-0 top-[calc(100%+0.5rem)] z-40 hidden w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10"
+    data-user-menu-target="menu"
+  >
+    <div class="border-b border-slate-100 bg-slate-50 px-4 py-3">
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Signed in as</p>
+      <p class="mt-1 truncate text-sm font-semibold text-slate-900"><%= current_user.email %></p>
+    </div>
+
+    <div class="p-2">
+      <%= link_to edit_user_registration_path, class: "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700" do %>
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+          <%= tabler_icon("settings", classes: "h-4 w-4") %>
+        </span>
+        <span class="flex-1">Profile settings</span>
+      <% end %>
+
+      <%= button_to destroy_user_session_path, method: :delete, class: "mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50" do %>
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+          <%= tabler_icon("logout", classes: "h-4 w-4") %>
+        </span>
+        <span class="flex-1">Sign out</span>
+      <% end %>
+    </div>
+  </div>
+</div>

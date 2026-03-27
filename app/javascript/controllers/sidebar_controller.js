@@ -33,7 +33,7 @@ export default class extends Controller {
     if (this.isDesktop() || !this.mobileOpen) return
     if (!this.hasSidebarTarget) return
 
-    const clickedToggle = this.hasToggleButtonTarget && this.toggleButtonTarget.contains(event.target)
+    const clickedToggle = this.hasToggleButtonTarget && this.toggleButtonTargets.some((button) => button.contains(event.target))
     const clickedInsideSidebar = this.sidebarTarget.contains(event.target)
 
     if (!clickedToggle && !clickedInsideSidebar) {
@@ -80,11 +80,25 @@ export default class extends Controller {
   updateIcons() {
     const desktop = this.isDesktop()
 
-    if (this.hasExpandIconTarget) this.expandIconTarget.classList.toggle("hidden", !desktop || !this.desktopCollapsed)
-    if (this.hasCollapseIconTarget) this.collapseIconTarget.classList.toggle("hidden", !desktop || this.desktopCollapsed)
-    if (this.hasMobileOpenIconTarget) this.mobileOpenIconTarget.classList.toggle("hidden", desktop || this.mobileOpen)
-    if (this.hasMobileCloseIconTarget) this.mobileCloseIconTarget.classList.toggle("hidden", desktop || !this.mobileOpen)
-    if (this.hasToggleButtonTarget) this.toggleButtonTarget.setAttribute("aria-expanded", String(desktop ? !this.desktopCollapsed : this.mobileOpen))
+    if (this.hasExpandIconTarget) {
+      this.expandIconTargets.forEach((icon) => icon.classList.toggle("hidden", !desktop || !this.desktopCollapsed))
+    }
+
+    if (this.hasCollapseIconTarget) {
+      this.collapseIconTargets.forEach((icon) => icon.classList.toggle("hidden", !desktop || this.desktopCollapsed))
+    }
+
+    if (this.hasMobileOpenIconTarget) {
+      this.mobileOpenIconTargets.forEach((icon) => icon.classList.toggle("hidden", desktop || this.mobileOpen))
+    }
+
+    if (this.hasMobileCloseIconTarget) {
+      this.mobileCloseIconTargets.forEach((icon) => icon.classList.toggle("hidden", desktop || !this.mobileOpen))
+    }
+
+    if (this.hasToggleButtonTarget) {
+      this.toggleButtonTargets.forEach((button) => button.setAttribute("aria-expanded", String(desktop ? !this.desktopCollapsed : this.mobileOpen)))
+    }
   }
 
   isDesktop() {

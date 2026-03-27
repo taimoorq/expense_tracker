@@ -27,8 +27,8 @@ class PlanningTemplateAccountLinking
     {
       relation: :credit_cards,
       includes: :payment_account,
-      association: :linked_account,
-      id_attribute: :linked_account_id
+      association: :payment_account,
+      id_attribute: :payment_account_id
     }
   ].freeze
 

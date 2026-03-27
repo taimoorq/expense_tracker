@@ -65,6 +65,7 @@ class UserDataSampleBackup
               minimum_payment: "75.00",
               due_day: 24,
               priority: 1,
+              linked_account: "Example Visa",
               account: "Credit Card",
               notes: "Sample credit card minimum payment",
               active: true
