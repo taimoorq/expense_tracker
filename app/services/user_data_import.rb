@@ -59,8 +59,11 @@ class UserDataImport
         user.payment_plans.create!(attributes.slice(:name, :total_due, :amount_paid, :monthly_target, :due_day, :account, :notes, :active))
       end,
       credit_cards: Array(data[:credit_cards]).count do |attributes|
+        payment_account_name = attributes[:payment_account].presence || attributes[:account]
         user.credit_cards.create!(
-          attributes.slice(:name, :minimum_payment, :due_day, :priority, :account, :notes, :active).merge(
+          attributes.slice(:name, :minimum_payment, :due_day, :priority, :notes, :active).merge(
+            account: payment_account_name,
+            payment_account: user.accounts.find_by(name: payment_account_name),
             linked_account: user.accounts.find_by(name: attributes[:linked_account])
           )
         )

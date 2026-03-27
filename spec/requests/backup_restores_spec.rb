@@ -39,7 +39,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "billing_months")).to eq([ 1, 7 ])
     expect(payload.dig("data", "planning_templates", "payment_plans", 0, "notes")).to eq("IRS installment")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "due_day")).to eq(18)
-    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "payment_account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "linked_account")).to eq("Visa Account")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "notes")).to eq("Main rewards card")
   end
@@ -124,6 +124,8 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.fetch("sample_notice")).to include("Reference-only sample backup")
     expect(payload.fetch("scopes")).to contain_exactly("planning_templates", "budget_months", "accounts")
     expect(payload.dig("data", "planning_templates", "pay_schedules")).not_to be_empty
+    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "payment_account")).to eq("Example Checking")
+    expect(payload.dig("data", "planning_templates", "credit_cards", 0, "linked_account")).to eq("Example Visa")
     expect(payload.dig("data", "budget_months", 0, "expense_entries")).not_to be_empty
     expect(payload.dig("data", "accounts", 0, "account_snapshots")).not_to be_empty
   end
@@ -249,7 +251,7 @@ RSpec.describe "Backup & restore", type: :request do
                 minimum_payment: "40.0",
                 due_day: 17,
                 priority: 1,
-                account: "Checking",
+                payment_account: "Checking",
                 linked_account: "Mapped Visa Account",
                 active: true
               }
@@ -458,7 +460,7 @@ RSpec.describe "Backup & restore", type: :request do
                 due_day: 12,
                 priority: 1,
                 linked_account: "Imported Visa",
-                account: "Imported Checking",
+                payment_account: "Imported Checking",
                 active: true
               }
             ]

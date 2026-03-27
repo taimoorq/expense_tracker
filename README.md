@@ -13,6 +13,7 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 	- [Run with Docker](#run-with-docker)
 	- [Run Locally](#run-locally)
 - [Authentication](#authentication)
+- [Color Schemes](#color-schemes)
 - [Self-Hosted HTTPS](#self-hosted-https)
 - [Updating a Self-Hosted Install](#updating-a-self-hosted-install)
 - [Demo and Sample Data](#demo-and-sample-data)
@@ -346,28 +347,6 @@ Common local `.env` uses:
 
 ## Authentication
 
-## Color Schemes
-
-The app theme is driven by five-color presets defined in `ThemePalette`.
-
-The active scheme is stored in a signed cookie, so users can switch themes without a database migration.
-
-To add another scheme later, add one more entry to `ThemePalette::PRESETS` with:
-
-- a unique key
-- a display name
-- five hex colors in the same light-to-dark palette style
-
-The current default scheme is `earth` and uses:
-
-- `#C3A995`
-- `#AB947E`
-- `#6F5E53`
-- `#8A7968`
-- `#593D3B`
-
-Additional presets can be added the same way. The current built-in alternates are `indigo`, `emerald`, `sage`, and `sunset`.
-
 The app requires sign-in so each account only sees its own months, entries, imports, and recurring templates.
 
 There is also a separate admin authentication surface for user-access management. The admin console is intentionally limited to identity metadata, access-state changes, and admin audit logs. It does not provide routes for viewing budget months, entries, templates, or account balances.
@@ -415,6 +394,28 @@ You can still create an admin manually from the Rails console if that fits your 
 - `AdminUser.create!(email: "admin@example.com", password: "password123!", password_confirmation: "password123!")`
 
 For stronger hardening in production, run the admin surface with a restricted PostgreSQL role that can only read `users`, `admin_users`, and `admin_audit_logs`, plus update `users.access_state`.
+
+## Color Schemes
+
+The app theme is driven by five-color presets defined in `ThemePalette`.
+
+The active scheme is stored in a signed cookie, so users can switch themes without a database migration.
+
+To add another scheme later, add one more entry to `ThemePalette::PRESETS` with:
+
+- a unique key
+- a display name
+- five hex colors in the same light-to-dark palette style
+
+The current default scheme is `earth` and uses:
+
+- `#C3A995`
+- `#AB947E`
+- `#6F5E53`
+- `#8A7968`
+- `#593D3B`
+
+Additional presets can be added the same way. The current built-in alternates are `indigo`, `emerald`, `sage`, and `sunset`.
 
 ## Self-Hosted HTTPS
 

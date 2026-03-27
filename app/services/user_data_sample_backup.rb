@@ -66,7 +66,7 @@ class UserDataSampleBackup
               due_day: 24,
               priority: 1,
               linked_account: "Example Visa",
-              account: "Credit Card",
+              payment_account: "Example Checking",
               notes: "Sample credit card minimum payment",
               active: true
             }
@@ -129,6 +129,23 @@ class UserDataSampleBackup
                 balance: "2380.00",
                 available_balance: "2325.00",
                 notes: "Mid-month sample snapshot"
+              }
+            ]
+          },
+          {
+            name: "Example Visa",
+            institution_name: "Sample Bank",
+            kind: "credit_card",
+            active: true,
+            include_in_net_worth: true,
+            include_in_cash: false,
+            notes: "Sample credit card liability account",
+            account_snapshots: [
+              {
+                recorded_on: "2026-03-15",
+                balance: "-640.00",
+                available_balance: nil,
+                notes: "Sample statement balance"
               }
             ]
           }

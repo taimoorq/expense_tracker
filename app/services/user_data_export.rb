@@ -105,7 +105,7 @@ class UserDataExport
           minimum_payment: decimal_string(record.minimum_payment),
           due_day: record.due_day,
           priority: record.priority,
-          account: PlanningTemplateAccountLinking.resolved_account_name(record),
+          payment_account: record.payment_account&.name || record.account,
           linked_account: record.linked_account&.name,
           notes: record.notes,
           active: record.active
