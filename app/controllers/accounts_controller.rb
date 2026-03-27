@@ -1,15 +1,17 @@
 class AccountsController < ApplicationController
   def index
-    @accounts = current_user.accounts.includes(:account_snapshots).active_first
+    summary = Accounts::Summary.new(user: current_user, include_trend: true).call
+    @accounts = summary.fetch(:accounts)
     @account = current_user.accounts.new
-    @net_worth_accounts = @accounts.select(&:include_in_net_worth)
-    @assets_total = @net_worth_accounts.select(&:asset?).sum(&:display_balance)
-    @liabilities_total = @net_worth_accounts.select(&:liability?).sum { |account| account.display_balance.abs }
-    @net_worth_total = @assets_total - @liabilities_total
-    @latest_snapshot = current_user.account_snapshots.joins(:account).merge(Account.where(user: current_user)).order(recorded_on: :desc, created_at: :desc).first
-    @accounts_with_snapshots_count = @accounts.count(&:latest_snapshot)
-    @accounts_missing_snapshots_count = @accounts.count - @accounts_with_snapshots_count
-    @trend_labels, @trend_values = net_worth_trend(@net_worth_accounts)
+    @net_worth_accounts = summary.fetch(:net_worth_accounts)
+    @assets_total = summary.fetch(:assets_total)
+    @liabilities_total = summary.fetch(:liabilities_total)
+    @net_worth_total = summary.fetch(:net_worth_total)
+    @latest_snapshot = summary.fetch(:latest_snapshot)
+    @accounts_with_snapshots_count = summary.fetch(:accounts_with_snapshots_count)
+    @accounts_missing_snapshots_count = summary.fetch(:accounts_missing_snapshots_count)
+    @trend_labels = summary.fetch(:trend_labels)
+    @trend_values = summary.fetch(:trend_values)
   end
 
   def show
@@ -72,21 +74,6 @@ class AccountsController < ApplicationController
   end
 
   private
-
-  def net_worth_trend(accounts)
-    dated_snapshots = accounts.index_with { |account| account.account_snapshots.sort_by(&:recorded_on) }
-    trend_dates = dated_snapshots.values.flatten.map(&:recorded_on).uniq.sort
-
-    labels = trend_dates.map { |date| date.strftime("%b %-d") }
-    values = trend_dates.map do |date|
-      accounts.sum do |account|
-        latest_snapshot = dated_snapshots.fetch(account).select { |snapshot| snapshot.recorded_on <= date }.last
-        latest_snapshot&.balance.to_f
-      end.round(2)
-    end
-
-    [ labels, values ]
-  end
 
   def account_params
     params.require(:account).permit(:name, :institution_name, :kind, :active, :include_in_net_worth, :include_in_cash, :notes)
