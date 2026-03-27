@@ -1,6 +1,12 @@
 require "rails_helper"
 
 RSpec.describe MonthCashflowSankey do
+  around do |example|
+    Rails.cache.clear
+    example.run
+    Rails.cache.clear
+  end
+
   it "builds a month-level sankey payload from income, outflow, and leftover" do
     user = create(:user)
     budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 4, 1), label: "April 2026")
@@ -42,5 +48,20 @@ RSpec.describe MonthCashflowSankey do
     other_link = payload[:links].find { |link| link[:target] == "Other Outflow" }
     expect(other_link).to be_present
     expect(other_link[:value]).to be > 0
+  end
+
+  it "caches payloads until the month entries change" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 4, 1), label: "April 2026")
+    create(:expense_entry, budget_month: budget_month, user: user, section: :income, payee: "Main Paycheck", planned_amount: 3000)
+    create(:expense_entry, budget_month: budget_month, user: user, section: :fixed, category: "Housing", payee: "Rent", planned_amount: 1200)
+
+    first_payload = described_class.cached_payload(budget_month: budget_month)
+    create(:expense_entry, budget_month: budget_month, user: user, section: :variable, category: "Groceries", payee: "Market", planned_amount: 250)
+
+    second_payload = described_class.cached_payload(budget_month: budget_month)
+
+    expect(first_payload[:links]).not_to eq(second_payload[:links])
+    expect(second_payload[:links]).to include({ source: "Income", target: "Groceries", value: 250.0 })
   end
 end

@@ -34,6 +34,6 @@ export default class extends Controller {
       panel.classList.toggle("hidden", !isActive)
     })
 
-    document.dispatchEvent(new CustomEvent("tabs:switched", { bubbles: true }))
+    document.dispatchEvent(new CustomEvent("tabs:switched", { bubbles: true, detail: { name } }))
   }
 }

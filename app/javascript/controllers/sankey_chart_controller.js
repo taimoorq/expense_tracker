@@ -1,24 +1,34 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  static targets = ["chart", "loading", "error", "errorMessage"]
   static values = {
     title: String,
     nodes: Array,
-    links: Array
+    links: Array,
+    timeoutMs: { type: Number, default: 4000 }
   }
 
   connect() {
     this.beforeCacheHandler = () => this.destroyChart()
-    this.resizeHandler = () => this.chart?.resize()
+    this.resizeHandler = () => this.resizeOrRender()
+    this.tabsSwitchedHandler = () => this.resizeOrRender()
+    this.turboRenderHandler = () => this.resizeOrRender()
+    this.loadingTimer = null
 
     document.addEventListener("turbo:before-cache", this.beforeCacheHandler)
     window.addEventListener("resize", this.resizeHandler)
+    document.addEventListener("tabs:switched", this.tabsSwitchedHandler)
+    document.addEventListener("turbo:render", this.turboRenderHandler)
+    document.addEventListener("turbo:load", this.turboRenderHandler)
 
+    this.showLoading()
     this.renderWhenReady()
   }
 
   disconnect() {
     this.destroyChart()
+    this.clearLoadingTimer()
 
     if (this.beforeCacheHandler) {
       document.removeEventListener("turbo:before-cache", this.beforeCacheHandler)
@@ -27,25 +37,59 @@ export default class extends Controller {
     if (this.resizeHandler) {
       window.removeEventListener("resize", this.resizeHandler)
     }
+
+    if (this.tabsSwitchedHandler) {
+      document.removeEventListener("tabs:switched", this.tabsSwitchedHandler)
+    }
+
+    if (this.turboRenderHandler) {
+      document.removeEventListener("turbo:render", this.turboRenderHandler)
+      document.removeEventListener("turbo:load", this.turboRenderHandler)
+    }
   }
 
   renderWhenReady() {
+    if (!this.isVisible()) {
+      this.deferRender()
+      return
+    }
+
     if (window.echarts) {
-      this.renderChart()
+      this.renderChartSafely()
       return
     }
 
     this.waitRetries = (this.waitRetries || 0) + 1
-    if (this.waitRetries > 20) return
+    if (this.waitRetries > 20) {
+      this.showError("The graph library took too long to load. Refresh the page and try again.")
+      return
+    }
+
+    if (!this.loadingTimer) {
+      this.loadingTimer = setTimeout(() => {
+        this.showLoading("Still loading the monthly flow graph…")
+      }, this.timeoutMsValue)
+    }
 
     setTimeout(() => this.renderWhenReady(), 50)
   }
 
+  renderChartSafely() {
+    try {
+      this.renderChart()
+      this.showChart()
+    } catch (error) {
+      this.showError(error?.message || "The graph could not be rendered.")
+    }
+  }
+
   renderChart() {
     this.destroyChart()
-    if (!window.echarts) return
+    if (!window.echarts) {
+      throw new Error("ECharts is not available.")
+    }
 
-    this.chart = window.echarts.init(this.element)
+    this.chart = window.echarts.init(this.chartTarget)
     this.chart.setOption({
       animationDuration: 500,
       tooltip: {
@@ -98,5 +142,55 @@ export default class extends Controller {
 
     this.chart.dispose()
     this.chart = null
+  }
+
+  resizeOrRender() {
+    if (!this.isVisible()) return
+
+    if (this.chart) {
+      requestAnimationFrame(() => this.chart?.resize())
+      return
+    }
+
+    this.showLoading()
+    this.renderWhenReady()
+  }
+
+  showLoading(message = "Loading the monthly flow graph…") {
+    this.clearLoadingTimer()
+    this.loadingTarget.querySelector("[data-loading-text]")?.replaceChildren(document.createTextNode(message))
+    this.loadingTarget.classList.remove("hidden")
+    this.chartTarget.classList.add("hidden")
+    this.errorTarget.classList.add("hidden")
+  }
+
+  showChart() {
+    this.clearLoadingTimer()
+    this.loadingTarget.classList.add("hidden")
+    this.errorTarget.classList.add("hidden")
+    this.chartTarget.classList.remove("hidden")
+  }
+
+  showError(message) {
+    this.clearLoadingTimer()
+    this.errorMessageTarget.textContent = message
+    this.errorTarget.classList.remove("hidden")
+    this.loadingTarget.classList.add("hidden")
+    this.chartTarget.classList.add("hidden")
+  }
+
+  clearLoadingTimer() {
+    if (!this.loadingTimer) return
+
+    clearTimeout(this.loadingTimer)
+    this.loadingTimer = null
+  }
+
+  isVisible() {
+    return this.element.offsetParent !== null && this.element.getClientRects().length > 0
+  }
+
+  deferRender() {
+    requestAnimationFrame(() => this.renderWhenReady())
   }
 }
