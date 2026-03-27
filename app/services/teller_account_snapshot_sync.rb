@@ -16,7 +16,7 @@ class TellerAccountSnapshotSync
     snapshot = account.account_snapshots.find_or_initialize_by(recorded_on: recorded_on)
     snapshot.balance = balances.fetch("ledger").presence || balances.fetch("available")
     snapshot.available_balance = balances["available"]
-    snapshot.notes = [snapshot.notes.presence, "Synced from Teller"].compact.uniq.join(" - ")
+    snapshot.notes = [ snapshot.notes.presence, "Synced from Teller" ].compact.uniq.join(" - ")
     snapshot.save!
 
     account.update!(teller_last_synced_at: Time.current)

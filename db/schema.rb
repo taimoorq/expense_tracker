@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_27_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_27_133000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -37,10 +37,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_27_120000) do
     t.integer "kind", default: 0, null: false
     t.string "name", null: false
     t.text "notes"
+    t.text "teller_access_token"
+    t.string "teller_account_id"
+    t.string "teller_enrollment_id"
+    t.datetime "teller_last_synced_at"
+    t.boolean "teller_sync_enabled", default: false, null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_accounts_on_active"
     t.index ["kind"], name: "index_accounts_on_kind"
+    t.index ["teller_account_id"], name: "index_accounts_on_teller_account_id"
+    t.index ["teller_enrollment_id"], name: "index_accounts_on_teller_enrollment_id"
+    t.index ["teller_sync_enabled"], name: "index_accounts_on_teller_sync_enabled"
     t.index ["user_id", "name"], name: "index_accounts_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_accounts_on_user_id"
   end
