@@ -7,6 +7,14 @@ RSpec.describe "Overview", type: :system do
     create(:expense_entry,
       budget_month: current_month,
       user: user,
+      section: :income,
+      category: "Paycheck",
+      payee: "Employer A",
+      planned_amount: 3_200,
+      status: :paid)
+    create(:expense_entry,
+      budget_month: current_month,
+      user: user,
       occurred_on: Date.current,
       section: :fixed,
       category: "Utilities",
@@ -27,6 +35,8 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("Accounts Snapshot")
     expect(page).to have_content("Quick Actions")
     expect(page).to have_content("Set up the month in the right order")
+    expect(page).to have_content("#{Date.current.year} money flow")
+    expect(page).to have_content("Loading the #{Date.current.year} cash flow graph")
     expect(page).to have_link("Set Up Templates")
     expect(page).to have_content("Adjust as the month unfolds")
     expect(page).to have_content("Done")
@@ -48,6 +58,7 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_link("Set up Accounts")
     expect(page).to have_link("Create Account")
     expect(page).to have_content("Set up the month in the right order")
+    expect(page).to have_content("No #{Date.current.year} cash flow to chart yet")
     expect(page).to have_content("Next")
   end
 end

@@ -4,6 +4,7 @@ export default class extends Controller {
   static targets = ["chart", "loading", "error", "errorMessage"]
   static values = {
     title: String,
+    loadingLabel: String,
     nodes: Array,
     links: Array,
     timeoutMs: { type: Number, default: 4000 }
@@ -61,13 +62,13 @@ export default class extends Controller {
 
     this.waitRetries = (this.waitRetries || 0) + 1
     if (this.waitRetries > 20) {
-      this.showError("The graph library took too long to load. Refresh the page and try again.")
+      this.showError(`The ${this.graphLabel()} took too long to load. Refresh the page and try again.`)
       return
     }
 
     if (!this.loadingTimer) {
       this.loadingTimer = setTimeout(() => {
-        this.showLoading("Still loading the monthly flow graph…")
+        this.showLoading(`Still loading the ${this.graphLabel()}…`)
       }, this.timeoutMsValue)
     }
 
@@ -192,5 +193,17 @@ export default class extends Controller {
 
   deferRender() {
     requestAnimationFrame(() => this.renderWhenReady())
+  }
+
+  graphLabel() {
+    if (this.hasLoadingLabelValue && this.loadingLabelValue.length > 0) {
+      return this.loadingLabelValue
+    }
+
+    if (this.hasTitleValue && this.titleValue.length > 0) {
+      return this.titleValue
+    }
+
+    return "graph"
   }
 }

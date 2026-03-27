@@ -57,6 +57,17 @@ class OverviewController < ApplicationController
     @accounts_with_snapshots_count = @accounts.count(&:latest_snapshot)
     @accounts_missing_snapshots_count = @accounts.count - @accounts_with_snapshots_count
     @onboarding_visible = @current_month.nil? || @accounts.empty? || @template_total.zero? || @linked_template_total.zero?
+    @overview_cashflow_year = Date.current.year
+    @year_budget_months = current_user.budget_months
+      .where(month_on: Date.new(@overview_cashflow_year, 1, 1)..Date.new(@overview_cashflow_year, 12, 31))
+      .includes(:expense_entries)
+      .order(:month_on)
+      .to_a
+    @year_cashflow_payload = YearCashflowSankey.cached_payload(
+      user: current_user,
+      year: @overview_cashflow_year,
+      budget_months: @year_budget_months
+    )
 
     @next_step = next_step_definition
   end
