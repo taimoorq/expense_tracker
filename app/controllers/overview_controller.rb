@@ -68,7 +68,7 @@ class OverviewController < ApplicationController
       return {
         badge: "Start here",
         title: "Add your first account",
-        description: "Accounts power linkage across templates and entries, and improve month review with account-aware context.",
+        description: "Start with the real accounts you expect to use so templates and month entries have somewhere to link later.",
         primary_label: "Set up Accounts",
         primary_path: accounts_path,
         secondary_label: "Create Account",
@@ -76,27 +76,15 @@ class OverviewController < ApplicationController
       }
     end
 
-    if @current_month.nil?
-      return {
-        badge: "Next step",
-        title: "Create your first month",
-        description: "Start with a month so linked templates and entries have a place to drive your monthly review flow.",
-        primary_label: "Create Month",
-        primary_path: new_budget_month_path,
-        secondary_label: "Open Planning Templates",
-        secondary_path: planning_templates_path
-      }
-    end
-
     if @template_total.zero?
       return {
         badge: "Recommended",
         title: "Set up planning templates",
-        description: "Recurring templates make future months faster, and linking them to accounts keeps account context flowing into month entries.",
+        description: "Add the incoming and outgoing items you expect each month first, then your first month can pull that recurring structure in immediately.",
         primary_label: "Open Planning Templates",
         primary_path: planning_templates_path,
-        secondary_label: "Open Plan and Edit",
-        secondary_path: budget_month_path(@current_month, tab: "entries")
+        secondary_label: "Open Accounts",
+        secondary_path: accounts_path
       }
     end
 
@@ -104,7 +92,7 @@ class OverviewController < ApplicationController
       return {
         badge: "Recommended",
         title: "Link templates to accounts",
-        description: "Connected templates improve month visibility and keep account activity views and balances aligned.",
+        description: "Link the templates you just set up so generated month entries and account views stay aligned from the start.",
         primary_label: "Manage Planning Templates",
         primary_path: planning_templates_path,
         secondary_label: "Open Accounts",
@@ -112,11 +100,23 @@ class OverviewController < ApplicationController
       }
     end
 
+    if @current_month.nil?
+      return {
+        badge: "Next step",
+        title: "Create your first month",
+        description: "Once accounts and templates are ready, create the month and import the recurring template items into it.",
+        primary_label: "Create Month",
+        primary_path: new_budget_month_path,
+        secondary_label: "Open Planning Templates",
+        secondary_path: planning_templates_path
+      }
+    end
+
     if @current_month_entries.empty?
       return {
         badge: "Next step",
-        title: "Build #{@current_month.label}",
-        description: "Start this month with recurring items. Linked templates will carry account context into generated entries.",
+        title: "Import templates into #{@current_month.label}",
+        description: "Start the month by pulling in the recurring templates you already saved, then adjust the entries from there.",
         primary_label: "Open Plan and Edit",
         primary_path: budget_month_path(@current_month, tab: "entries"),
         secondary_label: "Add Entry with Wizard",
@@ -153,7 +153,7 @@ class OverviewController < ApplicationController
     {
       badge: "On track",
       title: "Keep the month current",
-      description: "Review the budget, check calendar timing, and keep balances and statuses up to date.",
+      description: "Make manual adjustments as the month changes, mark items paid as they happen, and keep review views current.",
       primary_label: "Open Budget",
       primary_path: budget_month_path(@current_month, tab: "timeline"),
       secondary_label: "Open Calendar",

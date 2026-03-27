@@ -26,8 +26,9 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("Planning Templates")
     expect(page).to have_content("Accounts Snapshot")
     expect(page).to have_content("Quick Actions")
-    expect(page).to have_content("Build a linked monthly workflow")
-    expect(page).to have_link("Manage and Link Templates")
+    expect(page).to have_content("Set up the month in the right order")
+    expect(page).to have_link("Set Up Templates")
+    expect(page).to have_content("Adjust as the month unfolds")
     expect(page).to have_content("Done")
 
     all(:link, "Open Plan and Edit").first.click
@@ -46,7 +47,7 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("Add your first account")
     expect(page).to have_link("Set up Accounts")
     expect(page).to have_link("Create Account")
-    expect(page).to have_content("Build a linked monthly workflow")
+    expect(page).to have_content("Set up the month in the right order")
     expect(page).to have_content("Next")
   end
 end

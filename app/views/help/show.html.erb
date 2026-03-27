@@ -18,7 +18,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <h3 class="text-lg font-semibold text-slate-900">Start here</h3>
-        <p class="mt-1 text-sm leading-6 text-slate-600">Expense Tracker is organized around monthly planning. Most people begin on Home, then add accounts, create or clone a month, add or import entries, and review everything using the Budget, Breakdown, and Plan and Edit views.</p>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Expense Tracker is organized around monthly planning. Most people begin on Home, set up accounts, save their recurring planning templates, create or clone a month, import those templates into it, and then adjust and mark items paid as the month unfolds.</p>
       </div>
     </div>
     <div class="mt-4 flex flex-wrap gap-2">
@@ -42,8 +42,9 @@
         </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">Home is a lightweight Overview page. The Months screen is where existing months, imports, and month-related actions now live.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-          <li><strong class="text-slate-900">Use Home as a landing page:</strong> it is reserved for future overview widgets and summaries.</li>
-          <li><strong class="text-slate-900">Add accounts early:</strong> linked accounts show up in monthly views, make account filters more useful, and keep account balance rollups accurate.</li>
+          <li><strong class="text-slate-900">Use Home as a landing page:</strong> the overview is meant to point you toward the next setup step or the month that most needs attention.</li>
+          <li><strong class="text-slate-900">Add accounts first:</strong> linked accounts show up in monthly views, make account filters more useful, and keep account balance rollups accurate.</li>
+          <li><strong class="text-slate-900">Save templates before the first month:</strong> doing that makes Plan and Edit much faster once the month exists.</li>
           <li><strong class="text-slate-900">Use Months to open a month fast:</strong> jump back into an active month or revisit an older one.</li>
           <li><strong class="text-slate-900">Use Months for quick import:</strong> drag and drop a CSV there when you want to populate a month faster.</li>
         </ul>
@@ -54,11 +55,11 @@
           <%= tabler_icon("copy", classes: "h-5 w-5 text-indigo-600") %>
           <span>Creating and cloning months</span>
         </h3>
-        <p class="mt-2 text-sm leading-6 text-slate-600">Each month is its own working budget. The month wizard helps decide whether to start fresh or clone a previous month.</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Each month is its own working budget. Most people set up templates first, then use the month wizard to start fresh or clone a previous month and pull those templates into the new month.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h4 class="font-medium text-slate-900">Start fresh</h4>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Best when income, notes, or the overall budget structure is changing. You manually enter the month basics before building out entries.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Best when income, notes, or the overall budget structure is changing. You manually enter the month basics and then use Plan and Edit to pull in the recurring template items you want.</p>
           </div>
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h4 class="font-medium text-slate-900">Clone an existing month</h4>
@@ -72,13 +73,14 @@
           <%= tabler_icon("list", classes: "h-5 w-5 text-indigo-600") %>
           <span>Adding and managing entries</span>
         </h3>
-        <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments.</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments after your recurring template structure is in place.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-          <li><strong class="text-slate-900">Manual entry form:</strong> useful for quick edits and one-off transactions.</li>
+          <li><strong class="text-slate-900">Manual entry form:</strong> useful for quick edits and one-off transactions that appear after the month has already been set up.</li>
           <li><strong class="text-slate-900">Entry wizard:</strong> useful when you want a more guided flow through the fields and may want to save the result as a planning template.</li>
           <li><strong class="text-slate-900">CSV import:</strong> useful when you already have transaction data outside the app and want to avoid retyping it.</li>
           <li><strong class="text-slate-900">Planned vs actual amounts:</strong> planned helps with forecasting, actual helps track what really happened.</li>
-          <li><strong class="text-slate-900">Status:</strong> use planned, paid, and other statuses to track progress through the month.</li>
+          <li><strong class="text-slate-900">Status:</strong> use planned, paid, and other statuses to track progress through the month, and mark items paid as they clear.</li>
+          <li><strong class="text-slate-900">Recurring auto-marking:</strong> some recurring template-generated entries can automatically mark themselves paid when they become due.</li>
         </ul>
       </section>
 
@@ -87,7 +89,12 @@
           <%= tabler_icon("template", classes: "h-5 w-5 text-emerald-600") %>
           <span>Planning templates</span>
         </h3>
-        <p class="mt-2 text-sm leading-6 text-slate-600">Templates save recurring budget items so common parts of a month can be generated instead of rebuilt by hand.</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Add planning templates for the recurring monthly transactions you expect so you do not have to rebuild the same month from scratch. This is where you store paychecks, bills, subscriptions, payment plans, and card payments before you create the month.</p>
+        <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+          <li><strong class="text-slate-900">Save the recurring items you expect:</strong> store income, bills, debt payments, subscriptions, and other repeating activity once, then pull them into future months from Plan and Edit.</li>
+          <li><strong class="text-slate-900">Connect templates to the right accounts:</strong> link a template to the account it affects so the month is easier to scan and account balances stay more useful.</li>
+          <li><strong class="text-slate-900">For credit cards, connect both sides of the payment:</strong> link the card account that is being paid down and the checking or cash account that will make the payment.</li>
+        </ul>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 p-4">
             <h4 class="font-medium text-slate-900">Paycheck schedules</h4>
@@ -117,7 +124,7 @@
           <%= tabler_icon("chart-pie", classes: "h-5 w-5 text-indigo-600") %>
           <span>Reviewing a month</span>
         </h3>
-        <p class="mt-2 text-sm leading-6 text-slate-600">Once entries are in place, the app gives several ways to review and manage the month.</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Once entries are in place, the app gives several ways to review and manage the month while you keep adjusting amounts, adding one-offs, and marking activity paid.</p>
         <div class="mt-4 space-y-4">
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h4 class="font-medium text-slate-900">Budget view</h4>
@@ -133,7 +140,7 @@
           </div>
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h4 class="font-medium text-slate-900">Plan and Edit view</h4>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Use this to add recurring template items, create one-off entries manually, and manage the month list in one place.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Use this to import recurring template items, create one-off entries manually, and manage the month list in one place.</p>
           </div>
         </div>
       </section>
@@ -148,6 +155,7 @@
         <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Reason-based pills:</strong> filters are based on the values that actually exist in the current month, making focused review easier.</li>
           <li><strong class="text-slate-900">Template actions:</strong> the Plan and Edit tab includes actions for adding paychecks, subscriptions, bills, and plans from saved templates.</li>
+          <li><strong class="text-slate-900">Auto-completion:</strong> recurring template-generated entries can automatically mark themselves paid when they become due.</li>
           <li><strong class="text-slate-900">Card payment estimates:</strong> the app can recompute estimated credit-card payments from available leftover cash.</li>
           <li><strong class="text-slate-900">Template safeguards:</strong> older months that look complete hide template action buttons to reduce accidental duplication.</li>
           <li><strong class="text-slate-900">Private account data:</strong> each signed-in user only sees their own months, entries, imports, and templates.</li>
@@ -160,12 +168,12 @@
           <span>Recommended first steps</span>
         </h3>
         <ol class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-          <li>1. Add your main accounts first (checking, cards, savings, debt).</li>
-          <li>2. Create a month or clone the most recent one.</li>
-          <li>3. Add recurring templates if the month has regular income or bills.</li>
-          <li>4. Open the Plan and Edit tab to add template-based entries or enter them manually.</li>
-          <li>5. Import a CSV if you already have transaction history to bring in.</li>
-          <li>6. Review the month in Budget, Breakdown, and Plan and Edit views, where linked account names help with scanning and cleanup.</li>
+          <li>1. Add your main accounts first and record snapshots if you want a balance starting point.</li>
+          <li>2. Add recurring planning templates for the incoming and outgoing activity you expect.</li>
+          <li>3. Create a month or clone the most recent one.</li>
+          <li>4. Open Plan and Edit and pull those planning templates into the month.</li>
+          <li>5. Import a CSV or add one-off items manually as the real month unfolds.</li>
+          <li>6. Mark items paid, update actual amounts, and review the month in Budget, Breakdown, Calendar, and Plan and Edit.</li>
         </ol>
       </section>
 
