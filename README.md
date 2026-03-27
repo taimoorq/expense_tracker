@@ -146,9 +146,21 @@ Current screenshots reflect the latest overview, planning templates, money-flow 
 
 ## Features
 
-### Month Setup and Workflow
+### Accounts and Context
 
 - Start from an overview dashboard that surfaces the current month, attention items, planning-template progress, account summaries, and quick actions
+- Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
+- Link templates and entries to accounts while still allowing a manual account label when needed
+- Show linked account context directly in month review views and account activity
+
+### Planning Templates and Automation
+
+- Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
+- Save supported wizard-created entries directly as planning templates when you want a one-off action to become reusable later
+- Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
+
+### Month Setup and Workflow
+
 - Plan each month in one place so income, bills, subscriptions, debt payments, and discretionary spending stay visible together
 - Start a new month quickly by cloning an existing one, which saves time when your budget structure stays mostly the same
 - Keep workflow guidance available inside the app through a dedicated Help area
@@ -161,18 +173,6 @@ Current screenshots reflect the latest overview, planning templates, money-flow 
 - Upload past transactions to get a month populated faster instead of rebuilding everything by hand
 - Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
 - Toggle between grouped timeline sections and a full month list without leaving the same review surface
-
-### Planning Templates and Automation
-
-- Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
-- Save supported wizard-created entries directly as planning templates when you want a one-off action to become reusable later
-- Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
-
-### Accounts and Context
-
-- Link templates and entries to accounts while still allowing a manual account label when needed
-- Show linked account context directly in month review views and account activity
-- Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
 
 ### Backup and Privacy
 
