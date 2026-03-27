@@ -20,17 +20,7 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 	- [Sample User](#sample-user)
 	- [Seeded Demo Month](#seeded-demo-month)
 	- [Sample CSV Files](#sample-csv-files)
-- [Workflow](#workflow)
-	- [Overview Dashboard](#overview-dashboard)
-	- [Accounts and Net Worth](#accounts-and-net-worth)
-	- [Account Linkage Model](#account-linkage-model)
-	- [Create a Month](#create-a-month)
-	- [Clone Month Behavior](#clone-month-behavior)
-	- [Add or Import Entries](#add-or-import-entries)
-	- [Planning Templates](#planning-templates)
-	- [Review a Month](#review-a-month)
-	- [Backup and Restore](#backup-and-restore)
-	- [Help and Documentation](#help-and-documentation)
+- [User Documentation](#user-documentation)
 - [Open Source Readiness](#open-source-readiness)
 - [Development Commands](#development-commands)
 - [Troubleshooting](#troubleshooting)
@@ -46,6 +36,8 @@ Planning templates and month entries can optionally link to accounts, so account
 
 Hosted product overview and screenshots: https://financetracking.app/
 
+Hosted user documentation for current app behavior: https://financetracking.app/docs.html
+
 With it, a user can:
 
 - restart from an overview dashboard that highlights the current month, quick actions, planning-template status, and account context
@@ -58,7 +50,7 @@ With it, a user can:
 - record manual account balance snapshots and review a simple net worth trend over time
 - keep in-app help available so the intended workflow is documented inside the product
 
-The sections below are split between user-focused guidance for using the app and developer-focused guidance for running, testing, and publishing the project.
+This README focuses on installing, configuring, seeding, and operating the app. User-facing walkthroughs of the current product flow now live in the hosted documentation above.
 
 For most people, the easiest way to try the app is the Docker setup below because it avoids local Ruby, PostgreSQL, and system package setup.
 
@@ -595,195 +587,22 @@ Expected transaction columns:
 - `Need or Want`
 - `Notes`
 
-## Workflow
+## User Documentation
 
-This section explains the main user flow through the app.
+Current user-facing documentation lives on the hosted site instead of in this README:
 
-### Overview Dashboard
+- https://financetracking.app/docs.html
 
-The overview dashboard is the main starting point after sign-in.
+That guide covers:
 
-It shows:
-
-- the current month and a fast path back into it
-- next-step and quick-action cards for common planning tasks
-- planning-template coverage status so missing recurring structure is easy to spot
-- account summary context and recent balance visibility
-- quick access to month creation, imports, templates, accounts, backup and restore, and help
-
-Use the overview when you want to restart from context instead of deciding where to click first.
-
-### Accounts and Net Worth
-
-Use `Accounts & Net Worth` from the sidebar when you want to track balances outside the monthly budget workflow.
-
-This area lets you:
-
-- create manual accounts for checking, savings, brokerage, retirement, cash, asset, and liability balances
-- record point-in-time balance snapshots without connecting live bank feeds
-- review the latest balance for each account from the accounts index
-- review linked month-entry activity and connected templates per account
-- see a simple net worth trend built from snapshot history
-- edit or delete snapshots when you need to clean up manual balance history
-
-This section stays usable even if you have not updated balances recently, while still supporting optional linkage from templates and entries back to accounts.
-
-Current balance behavior:
-
-- `Current Balance` is computed from the latest manual snapshot plus paid linked entry activity after that snapshot date
-- this avoids mutating historical snapshots while still reflecting newer posted activity
-
-### Account Linkage Model
-
-Account linkage is intentionally hybrid so users can start simple and tighten data quality over time:
-
-- planning templates can store both a linked account reference and a manual account label
-- month entries can store both a linked source account and a manual account label
-- display prefers the linked account name when present, then falls back to the manual label
-- imports and restores relink by account name when possible, so older backups remain usable
-- credit cards are slightly richer: they can link to the card account itself and separately store the payment account used to fund the estimated payment
-
-### Create a Month
-
-Click `New Month` to open the month wizard.
-
-The wizard gives two ways to begin:
-
-- `Clone an existing month`
-	- choose a source month
-	- review the success preview
-	- create the next available month automatically
-- `Start fresh`
-	- go to the next step
-	- enter the month date, label, income, and notes manually
-
-Cloning is useful when most of the next month will look like the last one.
-
-### Clone Month Behavior
-
-When a month is cloned into a new month:
-
-- all entries are copied
-- dates are shifted into the target month
-- `actual_amount` is cleared
-- `status` is reset to `planned`
-- `planned_amount` uses the source `actual_amount` when present, otherwise the source `planned_amount`
-- the target month is the next available month that does not already exist for that user
-
-### Add or Import Entries
-
-Once a month exists, entries can be added in the way that best matches the situation:
-
-- `Plan and Edit` tab
-	- add recurring items from templates
-	- add entries manually with the standard form
-	- review and update the month list in one place
-- `Add Entry with Wizard`
-	- use the guided multi-step entry flow
-	- optionally save supported entries as planning templates while you add them
-- CSV import
-	- import a file from the dashboard
-	- imported rows create or update the correct month automatically
-
-Common entry fields include:
-
-- date
-- payee
-- reason/category
-- status
-- planned amount
-- actual amount
-- account
-- notes
-
-For account fields specifically:
-
-- `Linked account` is best when you want account-level rollups and account activity views to stay accurate
-- `Account` text label still works as a fallback when no account record exists yet
-
-### Planning Templates
-
-Use the planning templates area to save items that should show up again in future months.
-
-Template types include:
-
-- pay schedules
-- subscriptions
-- monthly bills
-- payment plans
-- credit cards
-
-This reduces repetitive data entry and keeps recurring planning consistent from month to month.
-
-The guided entry wizard can also create supported planning templates while you add an entry, which is useful when a one-off entry turns out to be something you want to reuse later.
-
-Each template type also supports optional account linkage, so generated month entries can carry account context automatically.
-
-Template account notes:
-
-- pay schedules, subscriptions, monthly bills, and payment plans can link directly to the account the entry should affect
-- the `Account` text field still works as a fallback label when you do not have a real account record yet
-- credit cards support both `Card Account` and `Paid From Account`
-- `Card Account` links the template to the liability account for that card
-- `Paid From Account` controls which account is used when estimated card-payment entries are created
-
-### Review a Month
-
-Each budget month can be reviewed in four main views:
-
-- `Timeline`
-	- grouped view of entries with totals by group
-	- optional full-list mode for scanning the entire month without leaving the timeline area
-	- account column in desktop table views for faster account-aware review
-	- row-level filters for date, payee, reason, and status
-	- pill filters based on the actual reason values in that month
-	- direct links to launch the guided entry wizard
-- `Breakdown`
-	- chart-focused view for the visual budget breakdown
-	- keeps graphs separate from the main timeline workflow
-- `Calendar`
-	- date-based view of entries
-	- pill filters using the same month-specific reason values
-	- direct access to the guided entry wizard from the calendar surface
-- `Plan and Edit`
-	- template generation actions, manual entry, and month-list editing in one workflow
-
-Additional month actions help keep planning current:
-
-- `Clone Month`
-	- create a new month from the current one
-- `Add from planning templates`
-	- adds planned entries from saved paychecks, subscriptions, monthly bills, and payment plans
-	- available inside the `Plan and Edit` tab on active or incomplete months
-	- hidden when an older month appears complete
-- `Estimate Card Payments`
-	- recomputes estimated credit-card payment entries from available leftover cash
-
-### Backup and Restore
-
-Use `Backup & Restore` from the main navigation when you want to move or safeguard your data.
-
-This area lets you:
-
-- export planning templates, months, and account data as versioned JSON backups
-- protect exports with optional password encryption
-- preview an import before restoring data into the current install
-- download a sample backup file to inspect the expected structure first
-
-Backup/import account-linkage notes:
-
-- planning template exports include resolved account names so linkage can be restored across systems
-- credit-card template exports include both the linked card account and the payment account name
-- budget month entry exports include account context and source-template linkage metadata when present
-- restore ignores legacy fields that are no longer used and relinks accounts/templates where possible
-
-The restore flow is designed to make it easier to verify what will be imported before anything is written.
-
-### Help and Documentation
-
-Use the Help area from the signed-in navigation when you want the app to explain its intended workflow.
-
-This documentation covers the purpose of the main screens, how the planning flow fits together, and what users should expect from the month-building process.
+- the overview dashboard and how to re-enter the workflow quickly
+- Accounts & Net Worth, including linked-account behavior
+- creating or cloning months
+- adding entries manually, with the wizard, or through CSV import
+- planning templates and the current account-linkage model
+- reviewing a month in Budget, Breakdown, Calendar, and Plan and Edit
+- backup and restore behavior, including account-aware exports and restores
+- how the hosted docs and in-app Help page complement each other
 
 ## Open Source Readiness
 

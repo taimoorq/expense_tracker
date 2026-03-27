@@ -217,6 +217,10 @@ module ApplicationHelper
     end
   end
 
+  def hosted_documentation_url
+    "https://financetracking.app/docs.html"
+  end
+
   def billing_months_summary(record)
     Array(record.billing_months).sort.map { |month| Date::MONTHNAMES[month] }.join(", ")
   end
