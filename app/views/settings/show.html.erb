@@ -17,7 +17,7 @@
         <% if latest_release.present? %>
           <p class="mt-3 font-semibold text-slate-900">Current app release</p>
           <p class="mt-1"><%= latest_release.label %></p>
-          <%= link_to "View release notes", help_path(anchor: "whats-new"), class: "mt-2 inline-flex text-sm font-medium text-indigo-600 hover:text-indigo-700" %>
+          <%= link_to "View release notes", help_releases_path, class: "mt-2 inline-flex text-sm font-medium text-indigo-600 hover:text-indigo-700" %>
         <% end %>
       </div>
     </div>
