@@ -475,6 +475,23 @@ Before updating:
 - review `.env.example` and compare it to your existing `.env` for any new required settings
 - keep your current database volume or database server intact so user data is preserved
 
+### Developer release-note workflow
+
+This app includes an in-product release feed for self-hosted users. Developers should update it whenever a deploy includes user-visible changes worth calling out.
+
+For each new release:
+
+1. Add a new top entry to `config/releases.yml`.
+2. Use a new version string, release date, short title, one-sentence summary, and a few plain-language change bullets.
+3. Keep the newest release first so it becomes the current in-app version.
+4. Ship that file change in the same commit or release branch as the product changes it describes.
+
+How it works:
+
+- the latest entry in `config/releases.yml` is treated as the current app release
+- signed-in users see a banner and Help badge until they mark that release as read
+- old entries remain visible in Help as release history, so do not delete them during normal updates
+
 ### Docker update flow
 
 If you are running the included Docker setup:

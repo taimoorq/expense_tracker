@@ -10,7 +10,8 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
-  helper_method :available_themes, :current_theme, :current_theme_class, :current_theme_css_variables, :current_theme_meta_color
+  helper_method :available_themes, :current_theme, :current_theme_class, :current_theme_css_variables, :current_theme_meta_color,
+    :latest_release, :latest_unread_release, :unread_release_count
 
   protected
 
@@ -53,6 +54,22 @@ class ApplicationController < ActionController::Base
 
   def current_theme_meta_color
     current_theme.meta_color
+  end
+
+  def latest_release
+    ReleaseCatalog.latest
+  end
+
+  def latest_unread_release
+    return unless user_signed_in?
+
+    current_user.latest_unread_release
+  end
+
+  def unread_release_count
+    return 0 unless user_signed_in?
+
+    current_user.unread_release_count
   end
 
   def enforce_current_user_access_state

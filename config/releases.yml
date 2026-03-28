@@ -1,0 +1,17 @@
+releases:
+  - version: "0.4.0"
+    released_on: "2026-03-28"
+    title: "In-app release notes"
+    summary: "The app now highlights new updates so self-hosted users can see what changed after each deploy."
+    changes:
+      - "Added a repo-backed release log that ships with the app."
+      - "Shows a global update banner until each signed-in user marks the latest release as seen."
+      - "Displays unread release badges in navigation and a release history section in Help."
+  - version: "0.3.0"
+    released_on: "2026-03-23"
+    title: "Billing schedule updates"
+    summary: "Monthly bills can now carry richer scheduling details so recurring planning is easier to maintain."
+    changes:
+      - "Expanded monthly bill scheduling support."
+      - "Improved linked-account planning behavior for recurring templates."
+      - "Refined month setup flow to make recurring data easier to review."

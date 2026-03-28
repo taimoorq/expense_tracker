@@ -221,6 +221,16 @@ module ApplicationHelper
     "https://financetracking.app/docs.html"
   end
 
+  def formatted_release_date(date)
+    date.strftime("%B %-d, %Y")
+  end
+
+  def release_unread?(release, user = current_user)
+    return false if user.blank?
+
+    user.unread_releases.any? { |entry| entry.version == release.version }
+  end
+
   def billing_months_summary(record)
     Array(record.billing_months).sort.map { |month| Date::MONTHNAMES[month] }.join(", ")
   end

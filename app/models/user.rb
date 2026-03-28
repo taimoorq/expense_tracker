@@ -36,6 +36,7 @@ class User < ApplicationRecord
 
   validates :default_landing_page, inclusion: { in: default_landing_pages.keys }
   validates :preferred_month_view, inclusion: { in: preferred_month_views.keys }
+  validates :last_seen_release_version, length: { maximum: 50 }, allow_blank: true
 
   def active_for_authentication?
     super && access_state_active?
@@ -58,5 +59,17 @@ class User < ApplicationRecord
     else
       Rails.application.routes.url_helpers.root_path
     end
+  end
+
+  def unread_releases
+    ReleaseCatalog.unread_for(self)
+  end
+
+  def unread_release_count
+    unread_releases.size
+  end
+
+  def latest_unread_release
+    unread_releases.first
   end
 end
