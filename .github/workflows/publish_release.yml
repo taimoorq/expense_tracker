@@ -1,0 +1,87 @@
+name: Publish Release
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - config/releases.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.4
+
+      - name: Read latest release entry
+        id: release
+        run: |
+          ruby <<'RUBY'
+          require "yaml"
+
+          payload = YAML.safe_load(File.read("config/releases.yml"), permitted_classes: [], aliases: false) || {}
+          release = Array(payload["releases"]).first
+
+          abort("config/releases.yml does not contain any releases") unless release
+
+          version = release.fetch("version").to_s
+          title = release.fetch("title").to_s
+          summary = release.fetch("summary").to_s
+          released_on = release.fetch("released_on").to_s
+          changes = Array(release.fetch("changes")).map(&:to_s)
+
+          body = +"#{summary}\n\n"
+          body << "Released on: #{released_on}\n\n"
+          body << "## Changes\n"
+          changes.each do |change|
+            body << "- #{change}\n"
+          end
+
+          File.open(ENV.fetch("GITHUB_OUTPUT"), "a") do |file|
+            file.puts("version=#{version}")
+            file.puts("tag=v#{version}")
+            file.puts("title=#{title}")
+            file.puts("released_on=#{released_on}")
+            file.puts("body<<EOF")
+            file.puts(body)
+            file.puts("EOF")
+          end
+          RUBY
+
+      - name: Check whether the GitHub release already exists
+        id: existing_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.release.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Git tag if needed
+        if: steps.existing_release.outputs.exists != 'true'
+        run: |
+          git tag "${{ steps.release.outputs.tag }}"
+          git push origin "${{ steps.release.outputs.tag }}"
+
+      - name: Publish GitHub release
+        if: steps.existing_release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.release.outputs.tag }}" \
+            --title "${{ steps.release.outputs.tag }}: ${{ steps.release.outputs.title }}" \
+            --notes "${{ steps.release.outputs.body }}"

@@ -1,4 +1,10 @@
 releases:
+  - version: "0.4.1"
+    released_on: "2026-03-28"
+    title: "GitHub release notes integration"
+    summary: "The app now automatically creates a release in the GitHub repo for each new version, making it easier to track changes and updates."
+    changes:
+      - "Automatically creates a release in the GitHub repo for each new version."
   - version: "0.4.0"
     released_on: "2026-03-28"
     title: "In-app release notes"

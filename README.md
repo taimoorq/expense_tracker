@@ -485,12 +485,14 @@ For each new release:
 2. Use a new version string, release date, short title, one-sentence summary, and a few plain-language change bullets.
 3. Keep the newest release first so it becomes the current in-app version.
 4. Ship that file change in the same commit or release branch as the product changes it describes.
+5. After that change lands on `main`, GitHub Actions automatically creates the matching git tag and publishes the GitHub Release if that version does not already exist yet.
 
 How it works:
 
 - the latest entry in `config/releases.yml` is treated as the current app release
 - signed-in users see a banner and Help badge until they mark that release as read
 - old entries remain visible in Help as release history, so do not delete them during normal updates
+- `.github/workflows/publish_release.yml` reads the top release entry on pushes to `main` and publishes `vX.Y.Z` automatically
 
 ### Docker update flow
 
