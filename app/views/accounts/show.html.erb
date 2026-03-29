@@ -2,25 +2,13 @@
 <% persisted_snapshots = @account.account_snapshots.select(&:persisted?).sort_by { |snapshot| [snapshot.recorded_on, snapshot.created_at] }.reverse %>
 
 <% content_for :page_header do %>
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.kind.humanize %></p>
-      <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-        <%= tabler_icon("building-library", classes: "h-6 w-6 text-indigo-600") %>
-        <span><%= @account.name %></span>
-      </h2>
-      <p class="mt-1 text-sm text-slate-600"><%= @account.institution_name.presence || "Manual account" %></p>
-    </div>
-    <div class="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
-      <%= link_to edit_account_path(@account), class: "fb-btn-secondary ta-action-btn" do %>
-        <%= tabler_icon("edit", classes: "ta-action-icon text-slate-600") %>
-        <span>Edit Account</span>
-      <% end %>
-      <%= link_to accounts_path, class: "fb-btn-secondary ta-action-btn" do %>
-        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
-        <span>Back to Accounts</span>
-      <% end %>
-    </div>
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.kind.humanize %></p>
+    <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
+      <%= tabler_icon("building-library", classes: "h-6 w-6 text-indigo-600") %>
+      <span><%= @account.name %></span>
+    </h2>
+    <p class="mt-1 text-sm text-slate-600"><%= @account.institution_name.presence || "Manual account" %></p>
   </div>
 <% end %>
 
@@ -251,6 +239,38 @@
   </section>
 
   <aside class="space-y-6">
+    <section class="ta-card">
+      <div class="mb-4">
+        <h2 class="ta-section-title inline-flex items-center gap-2">
+          <%= tabler_icon("settings-2", classes: "ta-action-icon-lg text-indigo-600") %>
+          Account details
+        </h2>
+        <p class="ta-muted mt-1">Update how this account is named, grouped, and included in reporting.</p>
+      </div>
+
+      <dl class="space-y-3 text-sm text-slate-600">
+        <div class="flex items-start justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+          <dt class="font-semibold text-slate-900">Institution</dt>
+          <dd class="text-right"><%= @account.institution_name.presence || "Manual account" %></dd>
+        </div>
+        <div class="flex items-start justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+          <dt class="font-semibold text-slate-900">Net worth</dt>
+          <dd class="text-right"><%= @account.include_in_net_worth? ? "Included" : "Excluded" %></dd>
+        </div>
+        <div class="flex items-start justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+          <dt class="font-semibold text-slate-900">Cash totals</dt>
+          <dd class="text-right"><%= @account.include_in_cash? ? "Included" : "Excluded" %></dd>
+        </div>
+      </dl>
+
+      <div class="mt-4">
+        <%= link_to edit_account_path(@account), class: "fb-btn-secondary ta-action-btn w-full justify-center" do %>
+          <%= tabler_icon("edit", classes: "ta-action-icon text-slate-600") %>
+          <span>Edit Account</span>
+        <% end %>
+      </div>
+    </section>
+
     <section class="ta-card h-fit xl:sticky xl:top-6">
       <div class="mb-4">
         <h2 class="ta-section-title inline-flex items-center gap-2">

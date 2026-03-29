@@ -126,5 +126,7 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_button("Connected Templates")
     expect(page).to have_content("Acme Payroll")
     expect(page).to have_content("Net impact")
+    expect(page).to have_link("Edit Account", href: edit_account_path(account))
+    expect(page).to have_no_link("Back to Accounts")
   end
 end
