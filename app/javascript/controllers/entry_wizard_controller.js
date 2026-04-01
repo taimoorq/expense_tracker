@@ -22,8 +22,10 @@ export default class extends Controller {
     "summaryWhen",
     "summaryAmounts",
     "summaryNotes",
+    "summaryRecurring",
     "summaryTemplate",
     "error",
+    "recurringLink",
     "templateEnabled",
     "templateFields",
     "templateType",
@@ -136,6 +138,10 @@ export default class extends Controller {
     if (this.hasSummaryNotesTarget) {
       const notes = this.hasNotesTarget ? this.notesTarget.value.trim() : ""
       this.summaryNotesTarget.textContent = notes || "No notes"
+    }
+
+    if (this.hasSummaryRecurringTarget) {
+      this.summaryRecurringTarget.textContent = this.recurringLinkSummary()
     }
 
     if (this.hasSummaryTemplateTarget) {
@@ -322,7 +328,7 @@ export default class extends Controller {
 
   templateSummary() {
     if (!this.templateEnabled()) return "One-off entry only"
-    if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) return "Planning template enabled, type not chosen yet"
+    if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) return "Save as recurring is on, but the recurring type is not chosen yet"
 
     const templateType = this.humanize(this.templateTypeTarget.value)
 
@@ -349,6 +355,14 @@ export default class extends Controller {
 
     const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
     return `${templateType} • ${dueDay}`
+  }
+
+  recurringLinkSummary() {
+    if (!this.hasRecurringLinkTarget || !this.recurringLinkTarget.value) return "No recurring link"
+
+    const selectedOption = this.recurringLinkTarget.selectedOptions[0]
+    const label = selectedOption ? selectedOption.textContent.trim() : "Linked recurring item"
+    return `Linked to ${label}`
   }
 
   selectedBillingMonths() {

@@ -93,6 +93,34 @@ RSpec.describe "Expense entries", type: :request do
     expect(bill.billing_months).to eq([ 1, 7 ])
   end
 
+  it "creates a wizard entry linked to an existing recurring transaction" do
+    credit_card = create(:credit_card, user: user, name: "Visa", minimum_payment: 75, due_day: 21, active: true)
+
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        recurring_link: "CreditCard:#{credit_card.id}",
+        expense_entry: {
+          occurred_on: "2026-03-22",
+          section: "debt",
+          category: "Credit Card",
+          payee: "Visa",
+          planned_amount: "125.00",
+          account: "Checking",
+          status: "planned",
+          need_or_want: "Need",
+          notes: "Extra payment"
+        }
+      }
+    end.to change { budget_month.expense_entries.reload.count }.by(1)
+
+    entry = budget_month.expense_entries.order(:created_at).last
+
+    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(entry.source_template).to eq(credit_card)
+    expect(entry.source_file).to eq("manual")
+  end
+
   it "does not create the entry when the requested template is invalid" do
     expect do
       post budget_month_expense_entries_path(budget_month), params: {

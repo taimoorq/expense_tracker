@@ -77,11 +77,13 @@ class ExpenseEntriesController < ApplicationController
 
   def create
     @expense_entry = @budget_month.expense_entries.new(expense_entry_params)
+    @expense_entry.source_file = "manual" if @expense_entry.source_file.blank?
+    assign_selected_recurring_source(@expense_entry)
     template_creator = EntryWizardTemplateCreator.new(user: current_user, expense_entry: @expense_entry, params: planning_template_params)
     saved_successfully = false
 
     ActiveRecord::Base.transaction do
-      if @expense_entry.save
+      if @expense_entry.errors.none? && @expense_entry.save
         if template_creator.save
           saved_successfully = true
         else
@@ -257,6 +259,30 @@ class ExpenseEntriesController < ApplicationController
       :amount_paid,
       billing_months: []
     )
+  end
+
+  def assign_selected_recurring_source(expense_entry)
+    token = params[:recurring_link].to_s
+    return if token.blank?
+
+    recurring_source = recurring_source_from_token(token)
+    if recurring_source.present?
+      expense_entry.source_template = recurring_source
+    else
+      expense_entry.errors.add(:base, "Choose a valid recurring transaction to link.")
+    end
+  end
+
+  def recurring_source_from_token(token)
+    model_name, record_id = token.split(":", 2)
+    return nil if model_name.blank? || record_id.blank?
+
+    definition = TemplateTypeRegistry::TEMPLATE_DEFINITIONS.values.find { |entry| entry[:model_name] == model_name }
+    return nil if definition.blank?
+
+    scope = current_user.public_send(model_name.underscore.pluralize)
+    scope = scope.active_only if scope.respond_to?(:active_only)
+    scope.find_by(id: record_id)
   end
 
   def template_record_for_entry(entry)

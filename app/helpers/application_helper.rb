@@ -207,6 +207,18 @@ module ApplicationHelper
     TemplateTypeRegistry.wizard_template_types.map { |type| [ type.humanize, type ] }
   end
 
+  def recurring_link_options(user = current_user)
+    return [] if user.blank?
+
+    [
+      [ "Credit Cards", user.credit_cards.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
+      [ "Monthly Bills", user.monthly_bills.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
+      [ "Payment Plans", user.payment_plans.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
+      [ "Subscriptions", user.subscriptions.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
+      [ "Pay Schedules", user.pay_schedules.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ]
+    ].reject { |_group, options| options.empty? }
+  end
+
   def billing_frequency_options
     MonthlyBill.billing_frequencies.keys.map { |key| [ key.humanize, key ] }
   end
@@ -233,6 +245,27 @@ module ApplicationHelper
 
   def billing_months_summary(record)
     Array(record.billing_months).sort.map { |month| Date::MONTHNAMES[month] }.join(", ")
+  end
+
+  def recurring_link_value(record)
+    "#{record.class.name}:#{record.id}"
+  end
+
+  def recurring_link_label(record)
+    case record
+    when CreditCard
+      "#{record.name} - minimum #{number_to_currency(record.minimum_payment)} - due day #{record.due_day}"
+    when MonthlyBill
+      "#{record.name} - #{record.kind.humanize} - due day #{record.due_day}"
+    when PaymentPlan
+      "#{record.name} - target #{number_to_currency(record.monthly_amount)} - due day #{record.due_day}"
+    when Subscription
+      "#{record.name} - #{number_to_currency(record.amount)} - due day #{record.due_day}"
+    when PaySchedule
+      "#{record.name} - #{number_to_currency(record.amount)} - #{record.cadence.humanize}"
+    else
+      record.try(:name).presence || record.class.name.humanize
+    end
   end
 
   def legacy_tabler_icon(name, classes: "h-4 w-4", size: nil, stroke: 1.5, title: nil)
