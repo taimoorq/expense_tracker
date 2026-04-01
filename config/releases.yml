@@ -1,4 +1,11 @@
 releases:
+  - version: "0.4.4"
+    released_on: "2026-03-31"
+    title: "Seed login documentation update"
+    summary: "The README now explains that all seeded test users share the same seed password for a given run and lists the all_test_users email addresses."
+    changes:
+      - "Documented that SEED_USER_PASSWORD applies to every seeded non-admin user created in the same run."
+      - "Added the exact all_test_users email list to the seed documentation."
   - version: "0.4.3"
     released_on: "2026-03-31"
     title: "Expanded developer seed profiles"

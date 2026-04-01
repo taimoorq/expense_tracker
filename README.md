@@ -556,6 +556,8 @@ Seeded credentials:
 - Email: `demo@example.com`
 - Password: `password123!`
 
+All seeded non-admin users created in the same run use the current `SEED_USER_PASSWORD` value. If you set `SEED_USER_PASSWORD=my-secret`, every seeded test user created by that run will use `my-secret`.
+
 You can override these when seeding with:
 
 - `SEED_PROFILE=demo`, `new_user`, `recurring_heavy`, `month_history_heavy`, `account_heavy`, `manual_adjustments`, or `all_test_users`
@@ -577,9 +579,19 @@ The seed script now supports multiple dev-focused personas:
 - `manual_adjustments`: realistic months with exceptions, skipped items, and manual entries linked back to recurring transactions
 - `all_test_users`: creates the full set above in one run for local QA
 
+When `SEED_PROFILE=all_test_users`, the seeded user emails are:
+
+- primary demo user: whatever `SEED_USER_EMAIL` is set to, or `demo@example.com` by default
+- `new-user@example.com`
+- `recurring-heavy@example.com`
+- `month-history@example.com`
+- `account-heavy@example.com`
+- `manual-adjustments@example.com`
+
 Suggested dev command:
 
 - `SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
+- `SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions SEED_USER_PASSWORD=password123! bin/rails db:seed`
 
 ### Seeded Demo Months
 
