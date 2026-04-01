@@ -155,9 +155,9 @@ RSpec.describe "Planning template CRUD", type: :request do
         account: "Checking"
       }
     },
-    create_notice: "Monthly bill template saved.",
-    update_notice: "Monthly bill template updated.",
-    destroy_notice: "Monthly bill template removed."
+    create_notice: "Monthly bill saved.",
+    update_notice: "Monthly bill updated.",
+    destroy_notice: "Monthly bill removed."
 
   include_examples "planning template resource",
     collection_name: "payment_plans",

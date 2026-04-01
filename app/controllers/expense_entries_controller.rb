@@ -93,7 +93,7 @@ class ExpenseEntriesController < ApplicationController
 
     if saved_successfully
       prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new)
-      success_message = template_creator.requested? ? "Entry and planning template added." : "Entry added."
+      success_message = template_creator.requested? ? "Entry and recurring transaction added." : "Entry added."
 
       respond_to do |format|
         format.turbo_stream do
@@ -153,13 +153,13 @@ class ExpenseEntriesController < ApplicationController
     if @template_record.nil?
       respond_to do |format|
         format.turbo_stream do
-          flash.now[:alert] = "Template source for this entry could not be found."
+          flash.now[:alert] = "Recurring source for this entry could not be found."
           render turbo_stream: [
             turbo_stream.replace("flash", partial: "shared/flash"),
             turbo_stream.replace("template_editor_modal", partial: "expense_entries/template_editor_empty")
           ], status: :not_found
         end
-        format.html { redirect_to @budget_month, alert: "Template source for this entry could not be found." }
+        format.html { redirect_to @budget_month, alert: "Recurring source for this entry could not be found." }
       end
       return
     end
@@ -173,13 +173,13 @@ class ExpenseEntriesController < ApplicationController
     if @template_record.nil?
       respond_to do |format|
         format.turbo_stream do
-          flash.now[:alert] = "Template source for this entry could not be found."
+          flash.now[:alert] = "Recurring source for this entry could not be found."
           render turbo_stream: [
             turbo_stream.replace("flash", partial: "shared/flash"),
             turbo_stream.replace("template_editor_modal", partial: "expense_entries/template_editor_empty")
           ], status: :not_found
         end
-        format.html { redirect_to @budget_month, alert: "Template source for this entry could not be found." }
+        format.html { redirect_to @budget_month, alert: "Recurring source for this entry could not be found." }
       end
       return
     end
@@ -187,13 +187,13 @@ class ExpenseEntriesController < ApplicationController
     if @template_record.update(template_params_for(@template_record))
       respond_to do |format|
         format.turbo_stream do
-          flash.now[:notice] = "Template updated."
+          flash.now[:notice] = "Recurring item updated."
           render turbo_stream: [
             turbo_stream.replace("flash", partial: "shared/flash"),
             turbo_stream.replace("template_editor_modal", partial: "expense_entries/template_editor_empty")
           ]
         end
-        format.html { redirect_to @budget_month, notice: "Template updated." }
+        format.html { redirect_to @budget_month, notice: "Recurring item updated." }
       end
     else
       respond_to do |format|

@@ -102,7 +102,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_css('[data-month-list="scrollable"][style*="max-height: 26rem"]', visible: :all)
   end
 
-  it "shows a planning template overview on the months page" do
+  it "shows a recurring transactions overview on the months page" do
     user = create(:user, email: "templateoverview@example.com")
     create(:pay_schedule, user: user, name: "Main Job")
     create(:subscription, user: user, name: "Netflix")
@@ -113,11 +113,11 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_months_path
 
-    expect(page).to have_content("Planning templates")
+    expect(page).to have_content("Recurring")
     expect(page).to have_content("5 total")
     expect(page).to have_link("Pay schedules")
     expect(page).to have_link("Monthly bills")
-    expect(page).to have_link("Manage Planning Templates")
+    expect(page).to have_link("Manage Recurring")
   end
 
   it "shows a help and documentation page from the sidebar" do
@@ -131,7 +131,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Help & Documentation")
     expect(page).to have_content("A guided overview of what each part of the app does")
     expect(page).to have_content("Creating and cloning months")
-    expect(page).to have_content("Planning templates")
+    expect(page).to have_content("Recurring Transactions")
     expect(page).to have_content("Reviewing a month")
     expect(page).to have_content("Add accounts first")
     expect(page).to have_link("Set up Accounts")
@@ -146,7 +146,7 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     expect(page).to have_content("looks complete")
-    expect(page).not_to have_content("Add from planning templates")
+    expect(page).not_to have_content("Add from recurring")
     expect(page).not_to have_button("Add Paychecks")
     expect(page).not_to have_button("Add Subscriptions")
     expect(page).not_to have_button("Add Monthly Bills")
@@ -164,7 +164,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_css('section[data-controller="tabs"][data-tabs-default-tab-value="entries"]')
     expect(page).to have_button("Plan and Edit")
     expect(page).to have_content("Plan and Edit This Month")
-    expect(page).to have_content("Build the month from templates")
+    expect(page).to have_content("Build the month from recurring")
     expect(page).to have_button("Estimate Card Payments")
   end
 
@@ -201,7 +201,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).not_to have_button("Add Monthly Bills")
   end
 
-  it "opens planning templates from the plan and edit panel", js: true do
+  it "opens recurring transactions from the plan and edit panel", js: true do
     user = create(:user, email: "planedittemplates@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
 
@@ -209,10 +209,10 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     click_button "Plan and Edit"
-    click_link "Open Planning Templates"
+    click_link "Open Recurring"
 
     expect(page).to have_current_path(planning_templates_path)
-    expect(page).to have_content("Planning Templates")
+    expect(page).to have_content("Recurring Transactions")
   end
 
   it "shows a separate breakdown tab for the visual charts" do

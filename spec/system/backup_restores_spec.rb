@@ -80,7 +80,7 @@ RSpec.describe "Backup & restore", type: :system do
 
     expect(page).to have_content("Import Preview")
     expect(page).to have_content("Encrypted backup")
-    expect(page).to have_content("1 template will replace the current template library")
+    expect(page).to have_content("1 recurring transaction will replace the current recurring library")
     expect(page).to have_content("1 account and 1 snapshot will be restored")
     expect(page).to have_button("Restore Selected Data")
   ensure
@@ -113,7 +113,7 @@ RSpec.describe "Backup & restore", type: :system do
     click_button "Restore Selected Data"
 
     expect(page).to have_content("Import complete")
-    expect(page).to have_content("Import complete: restored 5 planning templates.")
+    expect(page).to have_content("Import complete: restored 5 recurring transactions.")
   ensure
     file.close
     file.unlink

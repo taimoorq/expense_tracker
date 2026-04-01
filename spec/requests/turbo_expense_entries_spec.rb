@@ -60,7 +60,7 @@ RSpec.describe "Expense entries turbo responses", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
     expect(response.body).to include('target="template_editor_modal"')
-    expect(response.body).to include("Template updated.")
+    expect(response.body).to include("Recurring item updated.")
     expect(schedule.reload.amount.to_d).to eq(3100.to_d)
   end
 end

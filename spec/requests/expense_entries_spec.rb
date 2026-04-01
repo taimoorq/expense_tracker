@@ -27,7 +27,7 @@ RSpec.describe "Expense entries", type: :request do
     expect(budget_month.expense_entries.last.user).to eq(user)
   end
 
-  it "creates an entry and a planning template from the wizard payload" do
+  it "creates an entry and a recurring transaction from the wizard payload" do
     expect do
       post budget_month_expense_entries_path(budget_month), params: {
         wizard_flow: "1",
@@ -52,7 +52,7 @@ RSpec.describe "Expense entries", type: :request do
       .and change(user.subscriptions, :count).by(1)
 
     expect(response).to redirect_to(budget_month_path(budget_month))
-    expect(flash[:notice]).to eq("Entry and planning template added.")
+    expect(flash[:notice]).to eq("Entry and recurring transaction added.")
 
     subscription = user.subscriptions.order(:created_at).last
     expect(subscription.name).to eq("Netflix")

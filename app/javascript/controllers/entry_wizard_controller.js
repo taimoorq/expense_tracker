@@ -190,11 +190,11 @@ export default class extends Controller {
 
     if (this.index === this.stepTargets.length - 1 && this.templateEnabled()) {
       if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) {
-        return this.fail("Choose which planning template type to save.")
+        return this.fail("Choose which recurring transaction type to save.")
       }
 
       if ((this.usesDueDayTemplateType()) && (!this.hasTemplateDueDayTarget || !this.templateDueDayTarget.value)) {
-        return this.fail("Add a due day for the planning template.")
+        return this.fail("Add a due day for the recurring transaction.")
       }
 
       if (this.templateTypeTarget.value === "monthly_bill") {
@@ -207,7 +207,7 @@ export default class extends Controller {
       }
 
       if (this.templateTypeTarget.value === "payment_plan" && (!this.hasTemplateTotalDueTarget || !this.templateTotalDueTarget.value.trim())) {
-        return this.fail("Add the total due for the payment plan template.")
+        return this.fail("Add the total due for the payment plan recurring transaction.")
       }
 
       if (this.templateTypeTarget.value === "pay_schedule" && this.hasTemplateCadenceTarget && this.templateCadenceTarget.value === "semimonthly") {

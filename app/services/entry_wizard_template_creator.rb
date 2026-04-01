@@ -28,7 +28,7 @@ class EntryWizardTemplateCreator
     return @error_messages if @error_messages.any?
     return [] if @template_record.nil?
 
-    @template_record.errors.full_messages.map { |message| "Template: #{message}" }
+    @template_record.errors.full_messages.map { |message| "Recurring: #{message}" }
   end
 
   private
@@ -37,12 +37,12 @@ class EntryWizardTemplateCreator
     template_type = @params[:template_type].presence
 
     unless TEMPLATE_TYPES.include?(template_type)
-      @error_messages = [ "Template: choose a valid planning template type." ]
+      @error_messages = [ "Recurring: choose a valid recurring transaction type." ]
       return nil
     end
 
     unless TemplateTypeRegistry.wizard_sections_for(template_type).include?(@expense_entry.section)
-      @error_messages = [ "Template: #{template_type.humanize} is not available for #{@expense_entry.section.humanize.downcase} entries." ]
+      @error_messages = [ "Recurring: #{template_type.humanize} is not available for #{@expense_entry.section.humanize.downcase} entries." ]
       return nil
     end
 

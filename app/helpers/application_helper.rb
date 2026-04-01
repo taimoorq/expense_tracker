@@ -73,7 +73,7 @@ module ApplicationHelper
       {
         badge: "Choose a new password",
         title: "Set a fresh password",
-        description: "Create a strong password so you can get back to tracking months, imports, and recurring plans.",
+        description: "Create a strong password so you can get back to tracking months, imports, and recurring transactions.",
         gradient: "from-fuchsia-700 via-violet-700 to-indigo-700",
         panel_tint: "from-fuchsia-500/20 via-violet-500/10 to-indigo-400/20",
         glow: "bg-fuchsia-400/30",
@@ -162,7 +162,7 @@ module ApplicationHelper
     [
       [ "Overview", "overview" ],
       [ "Months", "months" ],
-      [ "Planning Templates", "planning_templates" ],
+      [ "Recurring", "planning_templates" ],
       [ "Accounts & Net Worth", "accounts" ],
       [ "Settings", "settings" ]
     ]

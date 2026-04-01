@@ -20,9 +20,9 @@ module Overview
       if context.fetch(:template_total).zero?
         return {
           badge: "Recommended",
-          title: "Set up planning templates",
+          title: "Set up recurring transactions",
           description: "Add the incoming and outgoing items you expect each month first, then your first month can pull that recurring structure in immediately.",
-          primary_label: "Open Planning Templates",
+          primary_label: "Open Recurring",
           primary_path: Rails.application.routes.url_helpers.planning_templates_path,
           secondary_label: "Open Accounts",
           secondary_path: Rails.application.routes.url_helpers.accounts_path
@@ -34,7 +34,7 @@ module Overview
           badge: "Recommended",
           title: "Link templates to accounts",
           description: "Link the templates you just set up so generated month entries and account views stay aligned from the start.",
-          primary_label: "Manage Planning Templates",
+          primary_label: "Manage Recurring",
           primary_path: Rails.application.routes.url_helpers.planning_templates_path,
           secondary_label: "Open Accounts",
           secondary_path: Rails.application.routes.url_helpers.accounts_path
@@ -47,10 +47,10 @@ module Overview
         return {
           badge: "Next step",
           title: "Create your first month",
-          description: "Once accounts and templates are ready, create the month and import the recurring template items into it.",
+          description: "Once accounts and recurring transactions are ready, create the month and import those recurring items into it.",
           primary_label: "Create Month",
           primary_path: Rails.application.routes.url_helpers.new_budget_month_path,
-          secondary_label: "Open Planning Templates",
+          secondary_label: "Open Recurring",
           secondary_path: Rails.application.routes.url_helpers.planning_templates_path
         }
       end
@@ -58,8 +58,8 @@ module Overview
       if context.fetch(:current_month_entries).empty?
         return {
           badge: "Next step",
-          title: "Import templates into #{current_month.label}",
-          description: "Start the month by pulling in the recurring templates you already saved, then adjust the entries from there.",
+          title: "Import recurring transactions into #{current_month.label}",
+          description: "Start the month by pulling in the recurring transactions you already saved, then adjust the entries from there.",
           primary_label: "Open Plan and Edit",
           primary_path: Rails.application.routes.url_helpers.budget_month_path(current_month, tab: "entries"),
           secondary_label: "Add Entry with Wizard",

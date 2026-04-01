@@ -26,11 +26,11 @@ RSpec.describe "Template editor", type: :system do
 
     visit edit_template_budget_month_expense_entry_path(budget_month, budget_month.expense_entries.last)
 
-    expect(page).to have_content("Edit Template: Pay schedule")
+    expect(page).to have_content("Edit Recurring: Pay schedule")
     fill_in "pay_schedule_amount", with: "3200"
     click_button "Save"
 
-    expect(page).to have_content("Template updated.")
+    expect(page).to have_content("Recurring item updated.")
     expect(schedule.reload.amount.to_d).to eq(3200.to_d)
   end
 

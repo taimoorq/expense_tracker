@@ -43,7 +43,7 @@ With it, a user can:
 - build a fresh month or start from a previous month instead of recreating the same structure every time
 - review the same budget in a timeline, calendar, or editable list depending on how they like to think about money
 - add manual adjustments and one-off entries once the recurring structure is in place
-- reuse recurring items so routine planning takes less manual work through dedicated planning templates
+- reuse recurring items so routine planning takes less manual work through dedicated recurring transactions
 - preview and restore versioned JSON backups, including optional encrypted exports and reference sample backup files
 - estimate credit-card payments based on the cash left in the month rather than guessing in isolation
 - record manual account balance snapshots and review a simple net worth trend over time
@@ -81,7 +81,7 @@ After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL`
 
 ## Screenshots
 
-Current screenshots reflect the latest overview, planning templates, money-flow review, accounts, and backup workflow.
+Current screenshots reflect the latest overview, recurring transactions, money-flow review, accounts, and backup workflow.
 
 <table>
 	<tr>
@@ -104,7 +104,7 @@ Current screenshots reflect the latest overview, planning templates, money-flow 
 		<td align="center">
 			<img src="app/assets/images/marketing/planning-templates.webp" alt="Planning templates" width="100%">
 			<br>
-			<strong>Planning Templates</strong>
+			<strong>Recurring Transactions</strong>
 			<br>
 			Reusable paycheck, subscription, bill, payment-plan, and credit-card definitions for faster month setup.
 		</td>
@@ -152,10 +152,10 @@ Current screenshots reflect the latest overview, planning templates, money-flow 
 - Link templates and entries to accounts while still allowing a manual account label when needed
 - Show linked account context directly in month review views and account activity
 
-### Planning Templates and Automation
+### Recurring Transactions and Automation
 
 - Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
-- Save supported wizard-created entries directly as planning templates when you want a one-off action to become reusable later
+- Save supported wizard-created entries directly as recurring transactions when you want a one-off action to become reusable later
 - Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
 
 ### Month Setup and Workflow
@@ -175,7 +175,7 @@ Current screenshots reflect the latest overview, planning templates, money-flow 
 
 ### Backup and Privacy
 
-- Export and restore planning templates, months, and account data through versioned JSON backups with optional password encryption
+- Export and restore recurring transactions, months, and account data through versioned JSON backups with optional password encryption
 - Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
 - Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
@@ -265,7 +265,7 @@ In another terminal:
 - users only: `docker compose exec web bin/rails db:seed`
 - users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
 
-The default command creates or refreshes a demo account with reusable planning templates, linked manual accounts across the supported account kinds, and balance snapshots. Use `SEED_MODE=users_with_transactions` to also create the sample month and seeded transaction history.
+The default command creates or refreshes a demo account with reusable recurring transactions, linked manual accounts across the supported account kinds, and balance snapshots. Use `SEED_MODE=users_with_transactions` to also create the sample month and seeded transaction history.
 
 If you prefer storing these overrides in `.env` before running Docker, set:
 
@@ -282,7 +282,7 @@ From there, the admin can sign in through `/admin/sign_in`, and end users can cr
 
 #### Automatic recurring completion
 
-Due recurring template-generated entries are automatically marked as done by setting their status to `paid` and copying the planned amount into the actual amount when needed.
+Due recurring-generated entries are automatically marked as done by setting their status to `paid` and copying the planned amount into the actual amount when needed.
 
 This works in two ways:
 
@@ -354,7 +354,7 @@ Common local `.env` uses:
 
 ## Authentication
 
-The app requires sign-in so each account only sees its own months, entries, imports, and recurring templates.
+The app requires sign-in so each account only sees its own months, entries, imports, and recurring transactions.
 
 There is also a separate admin authentication surface for user-access management. The admin console is intentionally limited to identity metadata, access-state changes, and admin audit logs. It does not provide routes for viewing budget months, entries, templates, or account balances.
 
@@ -372,7 +372,7 @@ You can:
 - sign in with your own account
 - use the seeded demo account after running `bin/rails db:seed`
 
-The default seed creates the demo user with planning templates and account data. Use `SEED_MODE=users_with_transactions` if you also want seeded month data and transaction history.
+The default seed creates the demo user with recurring transactions and account data. Use `SEED_MODE=users_with_transactions` if you also want seeded month data and transaction history.
 
 Admin provisioning is normally handled during install by `bin/setup`, the Docker entrypoint, or `bin/rails admin:bootstrap` when `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are set.
 
@@ -544,7 +544,7 @@ This project includes demo data for evaluation and sample files for testing impo
 
 Running `bin/rails db:seed` creates or updates a demo user you can sign in with.
 
-By default this is a users-only seed with reusable planning templates, linked accounts, and manual balance history but no budget month history. To also load six past months of generated demo history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
+By default this is a users-only seed with reusable recurring transactions, linked accounts, and manual balance history but no budget month history. To also load six past months of generated demo history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
 
 If `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are present, the same seed run can also create or update an admin user, but the normal path is to bootstrap that admin during install before other users begin signing up.
 
@@ -563,12 +563,12 @@ You can override these when seeding with:
 
 ### Seeded Demo Months
 
-When `SEED_MODE=users_with_transactions`, the seed process also generates six past months of demo history from the seeded planning templates and accounts.
+When `SEED_MODE=users_with_transactions`, the seed process also generates six past months of demo history from the seeded recurring transactions and accounts.
 
 The demo data also:
 
 - attaches all seeded records to the sample user
-- creates starter recurring templates for pay, subscriptions, bills, plans, and cards
+- creates starter recurring transactions for pay, subscriptions, bills, plans, and cards
 - links those templates to seeded accounts where appropriate so account rollups and account activity views have representative data
 - creates manual accounts across checking, savings, brokerage, retirement, cash, asset, credit-card, loan, and other-liability categories with balance snapshots
 - creates generated month entries from those templates across the previous six months
@@ -609,7 +609,7 @@ That guide covers:
 - Accounts & Net Worth, including linked-account behavior
 - creating or cloning months
 - adding entries manually or with the guided wizard
-- planning templates and the current account-linkage model
+- recurring transactions and the current account-linkage model
 - reviewing a month in Budget, Breakdown, Calendar, and Plan and Edit
 - backup and restore behavior, including account-aware exports and restores
 - how the hosted docs and in-app Help page complement each other

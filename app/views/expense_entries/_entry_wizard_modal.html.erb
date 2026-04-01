@@ -180,33 +180,33 @@
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Reuse This Later</p>
-                  <p class="mt-1 text-sm text-slate-600">Optionally save this wizard entry as a planning template for future months.</p>
+                  <p class="mt-1 text-sm text-slate-600">Optionally save this wizard entry as a recurring transaction for future months.</p>
                 </div>
                 <label class="flex items-center gap-2 text-sm font-medium text-slate-900">
                   <%= hidden_field_tag "planning_template[enabled]", "0" %>
                   <%= check_box_tag "planning_template[enabled]", "1", template_enabled, class: "fb-checkbox", data: { entry_wizard_target: "templateEnabled", action: "change->entry-wizard#toggleTemplateFields change->entry-wizard#updateSummary" } %>
-                  Save as template
+                  Save as recurring
                 </label>
               </div>
 
               <div class="mt-4 space-y-4 <%= template_enabled ? '' : 'hidden' %>" data-entry-wizard-target="templateFields">
                 <div class="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label for="planning_template_template_type" class="fb-label">Template Type</label>
+                    <label for="planning_template_template_type" class="fb-label">Recurring Transaction Type</label>
                     <%= select_tag "planning_template[template_type]",
                         options_for_select([
-                          [ "Choose a template type", "" ],
+                          [ "Choose a recurring transaction type", "" ],
                           *wizard_template_type_options
                         ], selected_template_type),
                         class: "fb-select",
                         id: "planning_template_template_type",
                         data: { entry_wizard_target: "templateType", action: "change->entry-wizard#updateTemplateOptions change->entry-wizard#updateTemplateFields change->entry-wizard#updateSummary" } %>
-                    <p class="mt-1 text-xs text-slate-500">Template name uses the payee/source. Account, notes, and date are reused from this entry.</p>
+                    <p class="mt-1 text-xs text-slate-500">The recurring item uses the payee/source. Account, notes, and date are reused from this entry.</p>
                   </div>
                   <div>
                     <label for="planning_template_due_day" class="fb-label">Due Day</label>
                     <%= number_field_tag "planning_template[due_day]", selected_due_day, min: 1, max: 31, class: "fb-input", id: "planning_template_due_day", data: { entry_wizard_target: "templateDueDay", action: "input->entry-wizard#updateSummary" } %>
-                    <p class="mt-1 text-xs text-slate-500">Used by subscription, monthly bill, and payment plan templates.</p>
+                    <p class="mt-1 text-xs text-slate-500">Used by subscription, monthly bill, and payment plan recurring items.</p>
                   </div>
                 </div>
 

@@ -20,14 +20,14 @@ class MonthlyBillsController < ApplicationController
   end
 
   def create_success_message
-    "Monthly bill template saved."
+    "Monthly bill saved."
   end
 
   def destroy_success_message
-    "Monthly bill template removed."
+    "Monthly bill removed."
   end
 
   def update_success_message
-    "Monthly bill template updated."
+    "Monthly bill updated."
   end
 end

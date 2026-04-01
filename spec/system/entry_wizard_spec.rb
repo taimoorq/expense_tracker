@@ -43,12 +43,12 @@ RSpec.describe "Entry wizard", type: :system do
     fill_in "Notes", with: "Save as template", visible: :all
     fill_in "Date", with: "2026-03-08", visible: :all
     fill_in "Planned amount", with: "19.99", visible: :all
-    check "Save as template", visible: :all
-    select "Subscription", from: "Template Type", visible: :all
+    check "Save as recurring", visible: :all
+    select "Subscription", from: "Recurring Transaction Type", visible: :all
     fill_in "Due Day", with: "8", visible: :all
     click_button "Save Entry", visible: :all
 
-    expect(page).to have_content("Entry and planning template added.")
+    expect(page).to have_content("Entry and recurring transaction added.")
     expect(page).to have_content("Netflix")
     expect(user.subscriptions.order(:created_at).last.name).to eq("Netflix")
   end

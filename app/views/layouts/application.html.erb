@@ -73,9 +73,9 @@
               </div>
             </div>
 
-            <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Planning Templates", data: { action: "click->sidebar#closeOnMobile" } do %>
-              <%= tabler_icon("template", classes: "ta-sidebar-link-icon") %>
-              <span class="ta-sidebar-label">Planning Templates</span>
+            <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Recurring Transactions", data: { action: "click->sidebar#closeOnMobile" } do %>
+              <%= tabler_icon("repeat", classes: "ta-sidebar-link-icon") %>
+              <span class="ta-sidebar-label">Recurring</span>
             <% end %>
 
             <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth", data: { action: "click->sidebar#closeOnMobile" } do %>

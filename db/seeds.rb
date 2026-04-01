@@ -411,7 +411,7 @@ if seed_transactions
   budget_months = seeded_history_months.map do |month_on|
     seed_user.budget_months.find_or_create_by!(month_on: month_on) do |month|
       month.label = month_on.strftime("%B %Y")
-      month.notes = "Seeded demo month generated from planning templates and manual account activity."
+      month.notes = "Seeded demo month generated from recurring transactions and manual account activity."
     end
   end
 

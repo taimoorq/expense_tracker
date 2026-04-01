@@ -145,7 +145,7 @@ class BackupRestoresController < ApplicationController
   def scope_cards
     {
       "planning_templates" => {
-        title: "Planning Templates",
+        title: "Recurring Transactions",
         description: "Paycheck schedules, subscriptions, monthly bills, payment plans, and credit cards.",
         count: current_user.pay_schedules.count + current_user.subscriptions.count + current_user.monthly_bills.count + current_user.payment_plans.count + current_user.credit_cards.count,
         detail: [
@@ -177,7 +177,7 @@ class BackupRestoresController < ApplicationController
     if counts[:planning_templates]
       template_counts = counts[:planning_templates]
       total_templates = template_counts.values.sum
-      parts << "#{total_templates} planning template#{'s' unless total_templates == 1}"
+      parts << "#{total_templates} recurring transaction#{'s' unless total_templates == 1}"
     end
 
     if counts[:budget_months]

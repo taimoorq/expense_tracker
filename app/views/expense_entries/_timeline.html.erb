@@ -186,8 +186,8 @@
                           <% if generated_from_template %>
                             <%= link_to edit_template_budget_month_expense_entry_path(entry.budget_month, entry),
                                         class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
-                                        title: "Edit template",
-                                        aria: { label: "Edit template" },
+                                        title: "Edit recurring item",
+                                        aria: { label: "Edit recurring item" },
                                         data: { turbo_frame: "template_editor_modal" } do %>
                               <%= tabler_icon("file-pencil", classes: "h-4 w-4 text-violet-600") %>
                               <span>Template</span>
