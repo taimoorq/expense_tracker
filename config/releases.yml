@@ -1,4 +1,12 @@
 releases:
+  - version: "0.4.3"
+    released_on: "2026-03-31"
+    title: "Expanded developer seed profiles"
+    summary: "The app now supports multiple seed profiles for local testing, including recurring-heavy, month-history, account-heavy, and manual-adjustment scenarios."
+    changes:
+      - "Added named seed profiles for different testing states instead of relying on one demo user."
+      - "Added an all_test_users profile to create a full local QA set in one seed run."
+      - "Updated seed documentation and sample scenarios for recurring-linked manual entries."
   - version: "0.4.2"
     released_on: "2026-03-31"
     title: "Recurring transactions terminology refresh"

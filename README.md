@@ -70,6 +70,7 @@ If the goal is to get the app running as quickly as possible, use Docker:
 6. Optional: load seed data in another terminal
 	- users only: `docker compose exec web bin/rails db:seed`
 	- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
+	- all dev test users: `docker compose exec web env SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
 
 This Docker setup is meant to run from a local git checkout of the repository. That is what makes later updates work with `git pull` followed by `docker compose up -d --build`.
 
@@ -77,7 +78,7 @@ If you set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` in `.env` before startin
 
 If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
 
-After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` were configured. Regular users can create their own accounts at `/users/sign_up`. After seeding, you can also sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month and seeded transaction history.
+After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` were configured. Regular users can create their own accounts at `/users/sign_up`. After seeding, you can also sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month and seeded transaction history, or `SEED_PROFILE=all_test_users` when you want multiple QA-focused seed personas.
 
 ## Screenshots
 
@@ -264,14 +265,16 @@ In another terminal:
 
 - users only: `docker compose exec web bin/rails db:seed`
 - users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
+- all dev test users: `docker compose exec web env SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
 
-The default command creates or refreshes a demo account with reusable recurring transactions, linked manual accounts across the supported account kinds, and balance snapshots. Use `SEED_MODE=users_with_transactions` to also create the sample month and seeded transaction history.
+The default command creates or refreshes a demo account with reusable recurring transactions, linked manual accounts across the supported account kinds, and balance snapshots. Use `SEED_MODE=users_with_transactions` to also create the sample month and seeded transaction history. Use `SEED_PROFILE=all_test_users` to add a broader set of targeted dev personas for QA and UI review.
 
 If you prefer storing these overrides in `.env` before running Docker, set:
 
 - `ADMIN_USER_EMAIL=admin@example.com`
 - `ADMIN_USER_PASSWORD=strong-password`
 - `SEED_MODE=users_with_transactions` when you want full demo data
+- `SEED_PROFILE=all_test_users` when you want multiple targeted test users
 
 Then:
 
@@ -555,11 +558,28 @@ Seeded credentials:
 
 You can override these when seeding with:
 
+- `SEED_PROFILE=demo`, `new_user`, `recurring_heavy`, `month_history_heavy`, `account_heavy`, `manual_adjustments`, or `all_test_users`
 - `SEED_MODE=users` or `SEED_MODE=users_with_transactions`
 - `SEED_USER_EMAIL=your-email@example.com`
 - `SEED_USER_PASSWORD=your-password`
 - `ADMIN_USER_EMAIL=admin@example.com`
 - `ADMIN_USER_PASSWORD=choose-a-strong-password`
+
+### Seed Profiles
+
+The seed script now supports multiple dev-focused personas:
+
+- `demo`: the balanced default user with recurring transactions, linked accounts, and optional month history
+- `new_user`: a near-empty account for onboarding and first-run testing
+- `recurring_heavy`: many recurring transactions with no month history, useful for recurring-library views
+- `month_history_heavy`: a recurring-rich user with 12 months of history for timeline and month-review testing
+- `account_heavy`: broader account coverage with extra snapshots and linked recurring/account behavior
+- `manual_adjustments`: realistic months with exceptions, skipped items, and manual entries linked back to recurring transactions
+- `all_test_users`: creates the full set above in one run for local QA
+
+Suggested dev command:
+
+- `SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
 
 ### Seeded Demo Months
 

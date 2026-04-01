@@ -7,12 +7,14 @@ RSpec.describe "db/seeds" do
 
   around do |example|
     original_mode = ENV["SEED_MODE"]
+    original_profile = ENV["SEED_PROFILE"]
     original_email = ENV["SEED_USER_EMAIL"]
     original_password = ENV["SEED_USER_PASSWORD"]
     original_admin_email = ENV["ADMIN_USER_EMAIL"]
     original_admin_password = ENV["ADMIN_USER_PASSWORD"]
 
     ENV["SEED_MODE"] = seed_mode
+    ENV["SEED_PROFILE"] = seed_profile
     ENV["SEED_USER_EMAIL"] = seed_email
     ENV["SEED_USER_PASSWORD"] = seed_password
     ENV["ADMIN_USER_EMAIL"] = admin_seed_email
@@ -21,12 +23,14 @@ RSpec.describe "db/seeds" do
     example.run
   ensure
     ENV["SEED_MODE"] = original_mode
+    ENV["SEED_PROFILE"] = original_profile
     ENV["SEED_USER_EMAIL"] = original_email
     ENV["SEED_USER_PASSWORD"] = original_password
     ENV["ADMIN_USER_EMAIL"] = original_admin_email
     ENV["ADMIN_USER_PASSWORD"] = original_admin_password
   end
 
+  let(:seed_profile) { "demo" }
   let(:seed_password) { "password123!" }
   let(:admin_seed_email) { nil }
   let(:admin_seed_password) { nil }
@@ -98,7 +102,7 @@ RSpec.describe "db/seeds" do
       expect(user.accounts.find_by!(name: "401(k) Portfolio").retirement?).to be(true)
       expect(user.credit_cards.find_by!(name: "Everyday Visa").linked_account&.name).to eq("Rewards Visa Balance")
       expect(user.credit_cards.find_by!(name: "Everyday Visa").payment_account&.name).to eq("Everyday Checking")
-      expect(user.expense_entries.where(source_file: "seed:generated_history")).to exist
+      expect(user.expense_entries.where(source_file: "seed:demo:generated_history")).to exist
       expect(user.expense_entries.find_by(payee: "Performance Bonus")).to be_present
       expect(user.expense_entries.find_by(payee: "Emergency Plumber")).to be_present
     end
@@ -120,6 +124,49 @@ RSpec.describe "db/seeds" do
       expect(user.credit_cards.count).to eq(2)
       expect(user.accounts.count).to eq(9)
       expect(user.account_snapshots.count).to eq(27)
+    end
+  end
+
+  context "when seeding the recurring-heavy profile" do
+    let(:seed_mode) { "users" }
+    let(:seed_profile) { "recurring_heavy" }
+    let(:seed_email) { "recurring-heavy-spec@example.com" }
+
+    it "creates a user with a large recurring library and no month history" do
+      expect { load_seed }.to change(User, :count).by(1)
+
+      user = User.find_by!(email: seed_email)
+
+      expect(user.budget_months).to be_empty
+      expect(user.expense_entries).to be_empty
+      expect(user.pay_schedules.count).to eq(3)
+      expect(user.subscriptions.count).to eq(9)
+      expect(user.monthly_bills.count).to eq(7)
+      expect(user.payment_plans.count).to eq(4)
+      expect(user.credit_cards.count).to eq(4)
+      expect(user.accounts.count).to eq(9)
+      expect(user.credit_cards.find_by!(name: "Travel Rewards Visa").payment_account&.name).to eq("Everyday Checking")
+    end
+  end
+
+  context "when seeding all test users" do
+    let(:seed_mode) { "users_with_transactions" }
+    let(:seed_profile) { "all_test_users" }
+    let(:seed_email) { "demo-seed-spec@example.com" }
+
+    it "creates the full set of seeded testing personas" do
+      expect { load_seed }.to change(User, :count).by(6)
+
+      expect(User.find_by!(email: seed_email).budget_months.count).to eq(6)
+      expect(User.find_by!(email: "new-user@example.com").budget_months).to be_empty
+      expect(User.find_by!(email: "recurring-heavy@example.com").subscriptions.count).to eq(9)
+      expect(User.find_by!(email: "month-history@example.com").budget_months.count).to eq(12)
+      expect(User.find_by!(email: "account-heavy@example.com").accounts.count).to eq(11)
+
+      manual_user = User.find_by!(email: "manual-adjustments@example.com")
+      extra_payment = manual_user.expense_entries.find_by!(notes: "Extra payment linked to recurring card")
+      expect(extra_payment.source_template).to eq(manual_user.credit_cards.find_by!(name: "Everyday Visa"))
+      expect(extra_payment.source_file).to eq("manual")
     end
   end
 
