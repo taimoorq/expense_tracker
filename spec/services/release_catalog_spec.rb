@@ -5,13 +5,14 @@ RSpec.describe ReleaseCatalog do
     it "returns all releases when the user has never seen one" do
       user = build(:user, last_seen_release_version: nil)
 
-      expect(described_class.unread_for(user).map(&:version)).to eq(%w[0.4.0 0.3.0])
+      expect(described_class.unread_for(user).map(&:version)).to eq(described_class.releases.map(&:version))
     end
 
     it "returns only releases newer than the last seen version" do
-      user = build(:user, last_seen_release_version: "0.3.0")
+      seen_release = described_class.releases.last
+      user = build(:user, last_seen_release_version: seen_release.version)
 
-      expect(described_class.unread_for(user).map(&:version)).to eq(%w[0.4.0])
+      expect(described_class.unread_for(user).map(&:version)).to eq(described_class.releases[0...-1].map(&:version))
     end
   end
 end

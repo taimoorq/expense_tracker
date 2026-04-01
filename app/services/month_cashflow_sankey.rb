@@ -1,16 +1,18 @@
 class MonthCashflowSankey
   DEFAULT_CATEGORY_LIMIT = 8
 
-  def self.cached_payload(budget_month:, expense_entries: budget_month.expense_entries, category_limit: DEFAULT_CATEGORY_LIMIT)
+  def self.cached_payload(budget_month:, expense_entries: nil, category_limit: DEFAULT_CATEGORY_LIMIT)
+    expense_entries ||= fresh_expense_entries(budget_month)
+
     Rails.cache.fetch(cache_key_for(budget_month: budget_month, expense_entries: expense_entries, category_limit: category_limit), expires_in: 12.hours) do
       new(budget_month: budget_month, expense_entries: expense_entries, category_limit: category_limit).payload
     end
   end
 
-  def initialize(budget_month:, expense_entries: budget_month.expense_entries, category_limit: DEFAULT_CATEGORY_LIMIT)
+  def initialize(budget_month:, expense_entries: nil, category_limit: DEFAULT_CATEGORY_LIMIT)
     @budget_month = budget_month
-    @expense_entries = expense_entries
-    @entries = expense_entries.to_a
+    @expense_entries = expense_entries || self.class.send(:fresh_expense_entries, budget_month)
+    @entries = @expense_entries.to_a
     @category_limit = category_limit
   end
 
@@ -28,6 +30,11 @@ class MonthCashflowSankey
   private
 
   attr_reader :budget_month, :expense_entries, :entries, :category_limit
+
+  def self.fresh_expense_entries(budget_month)
+    budget_month.expense_entries.reset
+  end
+  private_class_method :fresh_expense_entries
 
   def self.cache_key_for(budget_month:, expense_entries:, category_limit:)
     relation_updated_at =
