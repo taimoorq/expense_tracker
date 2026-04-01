@@ -110,6 +110,22 @@ class UserDataSampleBackup
                 source_file: "monthly_bill",
                 source_template_type: "MonthlyBill",
                 source_template_name: "Example Electric"
+              },
+              {
+                occurred_on: "2026-03-24",
+                section: "debt",
+                category: "Credit Card",
+                payee: "Example Visa",
+                planned_amount: "120.00",
+                actual_amount: nil,
+                account: "Example Checking",
+                source_account: "Example Checking",
+                status: "planned",
+                need_or_want: "Need",
+                notes: "Manual extra payment linked to the recurring card",
+                source_file: "manual",
+                source_template_type: "CreditCard",
+                source_template_name: "Example Visa"
               }
             ]
           }

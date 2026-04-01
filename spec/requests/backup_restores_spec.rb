@@ -92,6 +92,36 @@ RSpec.describe "Backup & restore", type: :request do
     expect(entry["source_template_name"]).to eq("Acme Payroll")
   end
 
+  it "exports manual entries linked to recurring transactions with linkage metadata" do
+    checking = create(:account, user: user, name: "Checking")
+    visa = create(:credit_card, user: user, name: "Visa", minimum_payment: 45, due_day: 18, payment_account: checking, account: "Legacy Checking")
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(
+      :expense_entry,
+      budget_month: month,
+      user: user,
+      payee: "Visa",
+      category: "Credit Card",
+      section: :debt,
+      status: :planned,
+      planned_amount: 125,
+      source_file: "manual",
+      source_template: visa,
+      source_account: checking,
+      account: "Checking",
+      notes: "Extra payment"
+    )
+
+    post export_backup_restore_path, params: { export_scopes: [ "budget_months" ] }
+
+    payload = JSON.parse(response.body)
+    entry = payload.dig("data", "budget_months", 0, "expense_entries", 0)
+    expect(entry["source_file"]).to eq("manual")
+    expect(entry["source_account"]).to eq("Checking")
+    expect(entry["source_template_type"]).to eq("CreditCard")
+    expect(entry["source_template_name"]).to eq("Visa")
+  end
+
   it "exports an encrypted backup when a password is provided" do
     create(:pay_schedule, user: user, name: "Acme Payroll")
 
@@ -434,6 +464,93 @@ RSpec.describe "Backup & restore", type: :request do
     expect(imported_entry.source_account).to eq(user.accounts.find_by!(name: "Imported Checking"))
     expect(user.accounts.reload.pluck(:name)).to eq([ "Imported Checking" ])
     expect(user.account_snapshots.reload.pluck(:notes)).to eq([ "Imported snapshot" ])
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "relinks imported manual entries to recurring transactions by exported template metadata" do
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "planning_templates", "budget_months", "accounts" ],
+        data: {
+          planning_templates: {
+            pay_schedules: [],
+            subscriptions: [],
+            monthly_bills: [],
+            payment_plans: [],
+            credit_cards: [
+              {
+                name: "Imported Visa",
+                minimum_payment: "60.0",
+                due_day: 12,
+                priority: 1,
+                payment_account: "Imported Checking",
+                linked_account: nil,
+                active: true
+              }
+            ]
+          },
+          budget_months: [
+            {
+              label: "March 2026",
+              month_on: "2026-03-01",
+              leftover: nil,
+              notes: "Imported month",
+              expense_entries: [
+                {
+                  occurred_on: "2026-03-22",
+                  section: "debt",
+                  category: "Credit Card",
+                  payee: "Imported Visa",
+                  planned_amount: "125.00",
+                  actual_amount: nil,
+                  account: "Imported Checking",
+                  source_account: "Imported Checking",
+                  status: "planned",
+                  need_or_want: "Need",
+                  notes: "Extra payment",
+                  source_file: "manual",
+                  source_template_type: "CreditCard",
+                  source_template_name: "Imported Visa"
+                }
+              ]
+            }
+          ],
+          accounts: [
+            {
+              name: "Imported Checking",
+              institution_name: "Bank",
+              kind: "checking",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: true,
+              notes: nil,
+              account_snapshots: []
+            }
+          ]
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "manual-linked-entry-backup.json")
+
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "planning_templates", "budget_months", "accounts" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    imported_entry = user.expense_entries.find_by!(payee: "Imported Visa", notes: "Extra payment")
+    expect(imported_entry.source_file).to eq("manual")
+    expect(imported_entry.source_template).to eq(user.credit_cards.find_by!(name: "Imported Visa"))
+    expect(imported_entry.source_account).to eq(user.accounts.find_by!(name: "Imported Checking"))
   ensure
     file.close
     file.unlink

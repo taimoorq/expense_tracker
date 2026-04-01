@@ -175,7 +175,7 @@ Current screenshots reflect the latest overview, recurring transactions, money-f
 
 ### Backup and Privacy
 
-- Export and restore recurring transactions, months, and account data through versioned JSON backups with optional password encryption
+- Export and restore recurring transactions, months, and account data through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items
 - Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
 - Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
