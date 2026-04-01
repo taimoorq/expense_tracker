@@ -31,7 +31,7 @@ Expense Tracker is built for people who budget by month and want one place to pl
 
 It also includes a manual accounts area for tracking balances in checking, savings, brokerage, retirement, and debt accounts without relying on live bank syncing.
 
-Planning templates and month entries can optionally link to accounts, so account context carries through month workflows instead of living only in the balances area.
+Recurring transactions and month entries can optionally link to accounts, so account context carries through month workflows instead of living only in the balances area.
 
 Hosted product overview and screenshots: https://financetracking.app/
 
@@ -39,7 +39,7 @@ Hosted user documentation for current app behavior: https://financetracking.app/
 
 With it, a user can:
 
-- restart from an overview dashboard that highlights the current month, quick actions, planning-template status, and account context
+- restart from an overview dashboard that highlights the current month, quick actions, recurring status, and account context
 - build a fresh month or start from a previous month instead of recreating the same structure every time
 - review the same budget in a timeline, calendar, or editable list depending on how they like to think about money
 - add manual adjustments and one-off entries once the recurring structure is in place
@@ -90,19 +90,19 @@ Current screenshots reflect the latest overview, recurring transactions, money-f
 			<br>
 			<strong>Overview Dashboard</strong>
 			<br>
-			Current month, attention items, planning-template status, account context, and quick actions from one landing screen.
+			Current month, attention items, recurring status, account context, and quick actions from one landing screen.
 		</td>
 		<td align="center">
 			<img src="app/assets/images/marketing/months-overview-desktop.webp" alt="Months screen" width="100%">
 			<br>
 			<strong>Months</strong>
 			<br>
-			Open the month list, create a month, and review template coverage before jumping back into a saved month.
+			Open the month list, create a month, and review recurring coverage before jumping back into a saved month.
 		</td>
 	</tr>
 	<tr>
 		<td align="center">
-			<img src="app/assets/images/marketing/planning-templates.webp" alt="Planning templates" width="100%">
+			<img src="app/assets/images/marketing/planning-templates.webp" alt="Recurring Transactions" width="100%">
 			<br>
 			<strong>Recurring Transactions</strong>
 			<br>
@@ -122,7 +122,7 @@ Current screenshots reflect the latest overview, recurring transactions, money-f
 			<br>
 			<strong>Guided Entry Wizard</strong>
 			<br>
-			Multi-step entry flow for adding one-off items and optionally saving supported entries as templates.
+			Multi-step entry flow for adding one-off items and optionally saving supported entries as recurring transactions.
 		</td>
 		<td align="center">
 			<img src="app/assets/images/marketing/accounts-overview-desktop.webp" alt="Accounts and net worth" width="100%">
@@ -147,9 +147,9 @@ Current screenshots reflect the latest overview, recurring transactions, money-f
 
 ### Accounts and Context
 
-- Start from an overview dashboard that surfaces the current month, attention items, planning-template progress, account summaries, and quick actions
+- Start from an overview dashboard that surfaces the current month, attention items, recurring progress, account summaries, and quick actions
 - Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
-- Link templates and entries to accounts while still allowing a manual account label when needed
+- Link recurring transactions and entries to accounts while still allowing a manual account label when needed
 - Show linked account context directly in month review views and account activity
 
 ### Recurring Transactions and Automation
@@ -356,7 +356,7 @@ Common local `.env` uses:
 
 The app requires sign-in so each account only sees its own months, entries, imports, and recurring transactions.
 
-There is also a separate admin authentication surface for user-access management. The admin console is intentionally limited to identity metadata, access-state changes, and admin audit logs. It does not provide routes for viewing budget months, entries, templates, or account balances.
+There is also a separate admin authentication surface for user-access management. The admin console is intentionally limited to identity metadata, access-state changes, and admin audit logs. It does not provide routes for viewing budget months, entries, recurring transactions, or account balances.
 
 The intended install flow is:
 
@@ -532,7 +532,7 @@ If you are running the app directly on a server without Docker:
 
 ### Demo data note
 
-Regular user accounts, budget months, templates, snapshots, and admin audit logs are stored in the database and survive normal updates.
+Regular user accounts, budget months, recurring transactions, snapshots, and admin audit logs are stored in the database and survive normal updates.
 
 `bin/rails db:seed` is only for creating or refreshing the demo user and sample data. It is not required for routine self-hosted upgrades.
 
@@ -569,10 +569,10 @@ The demo data also:
 
 - attaches all seeded records to the sample user
 - creates starter recurring transactions for pay, subscriptions, bills, plans, and cards
-- links those templates to seeded accounts where appropriate so account rollups and account activity views have representative data
+- links those recurring transactions to seeded accounts where appropriate so account rollups and account activity views have representative data
 - creates manual accounts across checking, savings, brokerage, retirement, cash, asset, credit-card, loan, and other-liability categories with balance snapshots
-- creates generated month entries from those templates across the previous six months
-- adds realistic manual spending, savings, and investing entries on top of the generated template entries
+- creates generated month entries from those recurring transactions across the previous six months
+- adds realistic manual spending, savings, and investing entries on top of the generated recurring entries
 - keeps demo cashflow positive for the seeded months
 - prints a summary of what was created or refreshed
 

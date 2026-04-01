@@ -1,4 +1,12 @@
 releases:
+  - version: "0.4.2"
+    released_on: "2026-03-31"
+    title: "Recurring transactions terminology refresh"
+    summary: "The app now uses Recurring Transactions consistently across the product, documentation, and marketing site."
+    changes:
+      - "Renamed user-facing planning template copy to Recurring Transactions, with Recurring used where space is tight."
+      - "Updated navigation, overview actions, help content, and public documentation to match the new terminology."
+      - "Refreshed the recurring section icon to use a repeat-style symbol."
   - version: "0.4.1"
     released_on: "2026-03-28"
     title: "GitHub release notes integration"
