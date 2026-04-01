@@ -1,6 +1,14 @@
 require "rails_helper"
 
 RSpec.describe "Budget month management", type: :system do
+  include ActiveSupport::Testing::TimeHelpers
+
+  around do |example|
+    travel_to Time.zone.local(2026, 3, 15, 12, 0, 0) do
+      example.run
+    end
+  end
+
   it "allows a signed in user to create a budget month" do
     user = create(:user, email: "planner@example.com")
 
