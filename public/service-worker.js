@@ -1,6 +1,5 @@
-const CACHE_NAME = "expense-tracker-shell-v2"
+const CACHE_NAME = "expense-tracker-shell-v3"
 const PRECACHE_URLS = [
-  "/",
   "/site.webmanifest",
   "/favicon-32x32.png",
   "/apple-touch-icon.png",
@@ -50,17 +49,6 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return
 
   const url = new URL(event.request.url)
-
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => cacheResponse(event.request, response))
-        .catch(async () => {
-          return (await caches.match(event.request)) || caches.match("/")
-        })
-    )
-    return
-  }
 
   if (!isStaticAsset(event.request, url)) return
 

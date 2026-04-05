@@ -139,7 +139,7 @@ First Pay On: anchor date for recurrence.
                 <span>Delete</span>
               <% end %>
             <% else %>
-              <%= link_to planning_templates_path(edit_pay_schedule_id: schedule.id, anchor: "pay-schedules"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
+              <%= link_to edit_pay_schedule_planning_templates_path(schedule, anchor: "pay-schedules"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                 <%= tabler_icon("pencil", classes: "ta-action-icon text-slate-600") %>
                 <span>Edit</span>
               <% end %>
@@ -178,7 +178,7 @@ First Pay On: anchor date for recurrence.
                   <%= button_to "Delete", pay_schedule_path(schedule, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this schedule?" } } %>
                 <% else %>
                   <div class="flex items-center gap-2">
-                    <%= link_to planning_templates_path(edit_pay_schedule_id: schedule.id, anchor: "pay-schedules"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit schedule", aria: { label: "Edit schedule" } do %>
+                    <%= link_to edit_pay_schedule_planning_templates_path(schedule, anchor: "pay-schedules"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit schedule", aria: { label: "Edit schedule" } do %>
                       <%= tabler_icon("pencil", classes: "ta-action-icon-sm text-slate-600") %>
                     <% end %>
                     <%= button_to pay_schedule_path(schedule, action_params), method: :delete, class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Delete schedule", aria: { label: "Delete schedule" }, form: { data: { turbo_confirm: "Delete this schedule?" } } do %>

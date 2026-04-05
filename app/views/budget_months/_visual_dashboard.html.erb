@@ -1,3 +1,7 @@
+<% content_for :head do %>
+  <%= chart_library_tags %>
+<% end %>
+
 <%= turbo_frame_tag "visual_dashboard" do %>
   <% compact = local_assigns.fetch(:compact, false) %>
   <% entries = expense_entries.to_a %>

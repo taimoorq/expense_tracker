@@ -132,7 +132,7 @@ Priority: lower number gets allocated first.
                 <span>Delete</span>
               <% end %>
             <% else %>
-              <%= link_to planning_templates_path(edit_credit_card_id: item.id, anchor: "credit-cards"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
+              <%= link_to edit_credit_card_planning_templates_path(item, anchor: "credit-cards"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                 <%= tabler_icon("pencil", classes: "ta-action-icon text-slate-600") %>
                 <span>Edit</span>
               <% end %>
@@ -173,7 +173,7 @@ Priority: lower number gets allocated first.
                   <%= button_to "Delete", credit_card_path(item, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this card?" } } %>
                 <% else %>
                   <div class="flex items-center gap-2">
-                    <%= link_to planning_templates_path(edit_credit_card_id: item.id, anchor: "credit-cards"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit card", aria: { label: "Edit card" } do %>
+                    <%= link_to edit_credit_card_planning_templates_path(item, anchor: "credit-cards"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit card", aria: { label: "Edit card" } do %>
                       <%= tabler_icon("pencil", classes: "ta-action-icon-sm text-slate-600") %>
                     <% end %>
                     <%= button_to credit_card_path(item, action_params), method: :delete, class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Delete card", aria: { label: "Delete card" }, form: { data: { turbo_confirm: "Delete this card?" } } do %>

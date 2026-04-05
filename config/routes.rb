@@ -30,10 +30,18 @@ Rails.application.routes.draw do
   post "backup_restore/preview", to: "backup_restores#preview", as: :preview_backup_restore
   post "backup_restore/import", to: "backup_restores#import", as: :import_backup_restore
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
+  get "planning_templates/pay-schedules/:edit_pay_schedule_id/edit", to: "planning_templates#index", as: :edit_pay_schedule_planning_templates
+  get "planning_templates/subscriptions/:edit_subscription_id/edit", to: "planning_templates#index", as: :edit_subscription_planning_templates
+  get "planning_templates/monthly-bills/:edit_monthly_bill_id/edit", to: "planning_templates#index", as: :edit_monthly_bill_planning_templates
+  get "planning_templates/payment-plans/:edit_payment_plan_id/edit", to: "planning_templates#index", as: :edit_payment_plan_planning_templates
+  get "planning_templates/credit-cards/:edit_credit_card_id/edit", to: "planning_templates#index", as: :edit_credit_card_planning_templates
   resources :accounts, except: [ :destroy ] do
     resources :account_snapshots, only: [ :create, :edit, :update, :destroy ]
   end
 
+  get "budget_months/year/:year", to: "budget_months#index", as: :budget_months_year, constraints: { year: /\d{4}/ }
+  get "budget_months/new/from/:source_month_id", to: "budget_months#new", as: :new_budget_month_from
+  get "budget_months/:id/:tab", to: "budget_months#show", as: :budget_month_tab, constraints: { tab: /timeline|breakdown|calendar|entries/ }
   resources :budget_months, only: [ :index, :show, :new, :create ] do
     post :generate_paychecks, on: :member
     post :generate_subscriptions, on: :member

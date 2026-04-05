@@ -19,7 +19,7 @@
         <% end %>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <%= link_to new_budget_month_path(source_month_id: @budget_month.id), class: "fb-btn-secondary ta-action-btn" do %>
+        <%= link_to new_budget_month_from_path(@budget_month), class: "fb-btn-secondary ta-action-btn" do %>
           <%= tabler_icon("copy", classes: "ta-action-icon text-slate-600") %>
           <span>Clone Month</span>
         <% end %>

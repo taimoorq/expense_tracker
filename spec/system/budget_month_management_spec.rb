@@ -40,7 +40,7 @@ RSpec.describe "Budget month management", type: :system do
     create(:expense_entry, budget_month: month, user: user, payee: "Rent", planned_amount: 1200)
 
     sign_in_as(user)
-    visit new_budget_month_path(source_month_id: month.id)
+    visit new_budget_month_from_path(month)
 
     expect(page).to have_content("Success preview")
     expect(page).to have_content("April 2026")
@@ -82,12 +82,14 @@ RSpec.describe "Budget month management", type: :system do
 
     click_link "2025"
 
+    expect(page).to have_current_path(budget_months_year_path(2025), ignore_query: false)
     expect(page).to have_content("1 month in 2025")
     expect(page).to have_content("December 2025")
     expect(page).not_to have_content("March 2026")
 
     click_link "2026"
 
+    expect(page).to have_current_path(budget_months_path, ignore_query: false)
     expect(page).to have_content("3 months in 2026")
     expect(page).to have_content("March 2026")
     expect(page).not_to have_content("December 2025")

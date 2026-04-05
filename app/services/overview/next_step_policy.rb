@@ -61,7 +61,7 @@ module Overview
           title: "Import recurring transactions into #{current_month.label}",
           description: "Start the month by pulling in the recurring transactions you already saved, then adjust the entries from there.",
           primary_label: "Open Plan and Edit",
-          primary_path: Rails.application.routes.url_helpers.budget_month_path(current_month, tab: "entries"),
+          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries"),
           secondary_label: "Add Entry with Wizard",
           secondary_path: Rails.application.routes.url_helpers.new_wizard_budget_month_expense_entries_path(current_month),
           secondary_turbo_frame: "entry_wizard_modal"
@@ -74,9 +74,9 @@ module Overview
           title: "Review #{context.fetch(:review_attention_count)} attention item#{context.fetch(:review_attention_count) == 1 ? "" : "s"}",
           description: "Some entries are due, missing details, or marked paid without an actual amount.",
           primary_label: "Open Plan and Edit",
-          primary_path: Rails.application.routes.url_helpers.budget_month_path(current_month, tab: "entries"),
+          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries"),
           secondary_label: "Open Budget",
-          secondary_path: Rails.application.routes.url_helpers.budget_month_path(current_month, tab: "timeline")
+          secondary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline")
         }
       end
 
@@ -89,7 +89,7 @@ module Overview
           primary_path: Rails.application.routes.url_helpers.new_wizard_budget_month_expense_entries_path(current_month),
           primary_turbo_frame: "entry_wizard_modal",
           secondary_label: "Open Budget",
-          secondary_path: Rails.application.routes.url_helpers.budget_month_path(current_month, tab: "timeline")
+          secondary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline")
         }
       end
 
@@ -98,9 +98,9 @@ module Overview
         title: "Keep the month current",
         description: "Make manual adjustments as the month changes, mark items paid as they happen, and keep review views current.",
         primary_label: "Open Budget",
-        primary_path: Rails.application.routes.url_helpers.budget_month_path(current_month, tab: "timeline"),
+        primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline"),
         secondary_label: "Open Calendar",
-        secondary_path: Rails.application.routes.url_helpers.budget_month_path(current_month, tab: "calendar")
+        secondary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "calendar")
       }
     end
 

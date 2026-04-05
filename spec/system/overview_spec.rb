@@ -43,7 +43,7 @@ RSpec.describe "Overview", type: :system do
 
     all(:link, "Open Plan and Edit").first.click
 
-    expect(page).to have_current_path(budget_month_path(current_month, tab: "entries"), ignore_query: false)
+    expect(page).to have_current_path(budget_month_tab_path(current_month, "entries"), ignore_query: false)
     expect(page).to have_content("Plan and Edit This Month")
   end
 

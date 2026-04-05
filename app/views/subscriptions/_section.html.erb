@@ -120,7 +120,7 @@ Due day: day of month this usually charges.
                 <span>Delete</span>
               <% end %>
             <% else %>
-              <%= link_to planning_templates_path(edit_subscription_id: item.id, anchor: "subscriptions"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
+              <%= link_to edit_subscription_planning_templates_path(item, anchor: "subscriptions"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                 <%= tabler_icon("pencil", classes: "ta-action-icon text-slate-600") %>
                 <span>Edit</span>
               <% end %>
@@ -157,7 +157,7 @@ Due day: day of month this usually charges.
                   <%= button_to "Delete", subscription_path(item, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this subscription?" } } %>
                 <% else %>
                   <div class="flex items-center gap-2">
-                    <%= link_to planning_templates_path(edit_subscription_id: item.id, anchor: "subscriptions"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit subscription", aria: { label: "Edit subscription" } do %>
+                    <%= link_to edit_subscription_planning_templates_path(item, anchor: "subscriptions"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit subscription", aria: { label: "Edit subscription" } do %>
                       <%= tabler_icon("pencil", classes: "ta-action-icon-sm text-slate-600") %>
                     <% end %>
                     <%= button_to subscription_path(item, action_params), method: :delete, class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Delete subscription", aria: { label: "Delete subscription" }, form: { data: { turbo_confirm: "Delete this subscription?" } } do %>

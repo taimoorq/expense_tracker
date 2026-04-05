@@ -233,6 +233,13 @@ module ApplicationHelper
     "https://financetracking.app/docs.html"
   end
 
+  def chart_library_tags
+    safe_join([
+      javascript_include_tag("https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js", defer: true, crossorigin: "anonymous"),
+      javascript_include_tag("https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js", defer: true, crossorigin: "anonymous")
+    ])
+  end
+
   def formatted_release_date(date)
     date.strftime("%B %-d, %Y")
   end

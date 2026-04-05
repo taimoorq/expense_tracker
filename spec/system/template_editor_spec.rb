@@ -50,7 +50,7 @@ RSpec.describe "Template editor", type: :system do
     find("a[aria-label='Edit schedule']").click
 
     expect(page).to have_current_path(
-      planning_templates_path(edit_pay_schedule_id: schedule.id),
+      edit_pay_schedule_planning_templates_path(schedule),
       ignore_query: false
     )
     expect(page).to have_content("Editing Acme Payroll")

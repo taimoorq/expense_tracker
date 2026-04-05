@@ -24,8 +24,6 @@
 
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" defer></script>
     <%= javascript_importmap_tags %>
   </head>
 
@@ -54,41 +52,41 @@
       <% if user_signed_in? %>
         <div class="ta-sidebar-body">
           <nav class="ta-sidebar-nav">
-            <%= link_to root_path, class: ["ta-sidebar-link", (overview_active ? "ta-sidebar-link-active" : nil)], title: "Overview", data: { action: "click->sidebar#closeOnMobile" } do %>
+            <%= link_to root_path, class: ["ta-sidebar-link", (overview_active ? "ta-sidebar-link-active" : nil)], title: "Overview", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("home", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Home</span>
             <% end %>
 
             <div class="ta-sidebar-group">
-              <%= link_to budget_months_path, class: ["ta-sidebar-link", (months_section_active ? "ta-sidebar-link-active" : nil)], title: "Months", data: { action: "click->sidebar#closeOnMobile" } do %>
+              <%= link_to budget_months_path, class: ["ta-sidebar-link", (months_section_active ? "ta-sidebar-link-active" : nil)], title: "Months", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
                 <%= tabler_icon("calendar-month", classes: "ta-sidebar-link-icon") %>
                 <span class="ta-sidebar-label">Months</span>
               <% end %>
 
               <div class="ta-sidebar-sublinks">
-                <%= link_to new_budget_month_path, class: ["ta-sidebar-sublink", (new_month_active ? "ta-sidebar-sublink-active" : nil)], title: "Add Month", data: { action: "click->sidebar#closeOnMobile" } do %>
+                <%= link_to new_budget_month_path, class: ["ta-sidebar-sublink", (new_month_active ? "ta-sidebar-sublink-active" : nil)], title: "Add Month", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
                   <%= tabler_icon("calendar-plus", classes: "ta-sidebar-sublink-icon") %>
                   <span class="ta-sidebar-label">Add Month</span>
                 <% end %>
               </div>
             </div>
 
-            <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Recurring Transactions", data: { action: "click->sidebar#closeOnMobile" } do %>
+            <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], title: "Recurring Transactions", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("repeat", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Recurring</span>
             <% end %>
 
-            <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth", data: { action: "click->sidebar#closeOnMobile" } do %>
+            <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], title: "Accounts & Net Worth", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("credit-card", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Accounts & Net Worth</span>
             <% end %>
 
-            <%= link_to backup_restore_path, class: ["ta-sidebar-link", (backup_restore_active ? "ta-sidebar-link-active" : nil)], title: "Backup & Restore", data: { action: "click->sidebar#closeOnMobile" } do %>
+            <%= link_to backup_restore_path, class: ["ta-sidebar-link", (backup_restore_active ? "ta-sidebar-link-active" : nil)], title: "Backup & Restore", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("shield-lock", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Backup & Restore</span>
             <% end %>
 
-            <%= link_to help_path, class: ["ta-sidebar-link", (help_active ? "ta-sidebar-link-active" : nil)], title: "Help & Documentation", data: { action: "click->sidebar#closeOnMobile" } do %>
+            <%= link_to help_path, class: ["ta-sidebar-link", (help_active ? "ta-sidebar-link-active" : nil)], title: "Help & Documentation", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("help", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Help & Documentation</span>
               <% if unread_release_count.positive? %>
@@ -100,7 +98,7 @@
           </nav>
 
           <div class="ta-sidebar-footer">
-            <%= link_to settings_path, class: ["ta-sidebar-link", (settings_active ? "ta-sidebar-link-active" : nil)], title: "Settings", data: { action: "click->sidebar#closeOnMobile" } do %>
+            <%= link_to settings_path, class: ["ta-sidebar-link", (settings_active ? "ta-sidebar-link-active" : nil)], title: "Settings", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("adjustments", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Settings</span>
             <% end %>

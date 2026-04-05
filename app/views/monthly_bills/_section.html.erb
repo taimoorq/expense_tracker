@@ -141,7 +141,7 @@ Variable Bill: amounts that vary when due.
                 <span>Delete</span>
               <% end %>
             <% else %>
-              <%= link_to planning_templates_path(edit_monthly_bill_id: item.id, anchor: "monthly-bills"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
+              <%= link_to edit_monthly_bill_planning_templates_path(item, anchor: "monthly-bills"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                 <%= tabler_icon("pencil", classes: "ta-action-icon text-slate-600") %>
                 <span>Edit</span>
               <% end %>
@@ -182,7 +182,7 @@ Variable Bill: amounts that vary when due.
                   <%= button_to "Delete", monthly_bill_path(item, action_params), method: :delete, class: "rounded-md border border-rose-300 px-2 py-1 text-rose-700 hover:bg-rose-50", form: { data: { turbo_confirm: "Delete this monthly bill?" } } %>
                 <% else %>
                   <div class="flex items-center gap-2">
-                    <%= link_to planning_templates_path(edit_monthly_bill_id: item.id, anchor: "monthly-bills"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit monthly bill", aria: { label: "Edit monthly bill" } do %>
+                    <%= link_to edit_monthly_bill_planning_templates_path(item, anchor: "monthly-bills"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Edit monthly bill", aria: { label: "Edit monthly bill" } do %>
                       <%= tabler_icon("pencil", classes: "ta-action-icon-sm text-slate-600") %>
                     <% end %>
                     <%= button_to monthly_bill_path(item, action_params), method: :delete, class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs", title: "Delete monthly bill", aria: { label: "Delete monthly bill" }, form: { data: { turbo_confirm: "Delete this bill?" } } do %>

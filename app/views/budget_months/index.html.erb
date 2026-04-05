@@ -36,7 +36,7 @@
       <% end %>
       <% if @previous_years.any? %>
         <% @previous_years.each do |year| %>
-          <%= link_to budget_months_path(year: year), class: ["rounded-full border px-3 py-1 text-xs font-semibold transition", (@selected_year == year ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700")] do %>
+          <%= link_to budget_months_year_path(year), class: ["rounded-full border px-3 py-1 text-xs font-semibold transition", (@selected_year == year ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700")] do %>
             <span><%= year %></span>
           <% end %>
         <% end %>
@@ -85,7 +85,7 @@
                 <%= tabler_icon("calendar-month", classes: "ta-action-icon text-indigo-600") %>
                 <span>Open</span>
               <% end %>
-              <%= link_to new_budget_month_path(source_month_id: month.id), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
+              <%= link_to new_budget_month_from_path(month), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                 <%= tabler_icon("copy", classes: "ta-action-icon text-slate-600") %>
                 <span>Clone</span>
               <% end %>
@@ -131,7 +131,7 @@
                   <span>Open</span>
                 <% end %>
 
-                <%= link_to new_budget_month_path(source_month_id: month.id), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                <%= link_to new_budget_month_from_path(month), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
                   <%= tabler_icon("copy", classes: "ta-action-icon text-slate-600") %>
                   <span>Clone</span>
                 <% end %>
