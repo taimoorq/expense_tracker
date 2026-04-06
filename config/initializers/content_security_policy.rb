@@ -28,6 +28,6 @@ Rails.application.configure do
   # Importmap and CDN-backed script tags render inline bootstrap scripts, so
   # attach a per-request nonce and let Rails add it to supported helpers.
   config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
-  config.content_security_policy_nonce_directives = %w(script-src)
+  config.content_security_policy_nonce_directives = %w[script-src]
   config.content_security_policy_nonce_auto = true
 end
