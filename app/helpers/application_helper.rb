@@ -407,6 +407,8 @@ module ApplicationHelper
       "eye-off" => "eye-off",
       "help" => "question-mark-circle",
       "layout-list" => "queue-list",
+      "layout-sidebar-left-expand" => "layout-sidebar-left-expand",
+      "layout-sidebar-left-collapse" => "layout-sidebar-left-collapse",
       "login" => "arrow-right-on-rectangle",
       "logout" => "arrow-left-on-rectangle",
       "user-plus" => "user-plus",
@@ -592,6 +594,16 @@ module ApplicationHelper
       "menu-2" => [
         { d: "M4.5 7.5h15" },
         { d: "M4.5 16.5h15" }
+      ],
+      "layout-sidebar-left-expand" => [
+        { d: "M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" },
+        { d: "M9 4v16" },
+        { d: "M14 10l2 2l-2 2" }
+      ],
+      "layout-sidebar-left-collapse" => [
+        { d: "M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" },
+        { d: "M9 4v16" },
+        { d: "M15 10l-2 2l2 2" }
       ],
       "lock-closed" => [
         { d: "M16.5 10.5V7.875a4.5 4.5 0 1 0 -9 0V10.5" },
