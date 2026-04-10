@@ -170,6 +170,26 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_button("Estimate Card Payments")
   end
 
+  it "shows previous and next month navigation around the month title" do
+    user = create(:user, email: "monthnav@example.com")
+    january = create(:budget_month, user: user, month_on: Date.new(2026, 1, 1), label: "January 2026")
+    february = create(:budget_month, user: user, month_on: Date.new(2026, 2, 1), label: "February 2026")
+    march = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+    sign_in_as(user)
+    visit budget_month_path(february)
+
+    expect(page).to have_css('a[aria-label="View January 2026"]')
+    expect(page).to have_css('a[aria-label="View March 2026"]')
+
+    find('a[aria-label="View January 2026"]').click
+    expect(page).to have_current_path(budget_month_path(january))
+
+    visit budget_month_path(february)
+    find('a[aria-label="View March 2026"]').click
+    expect(page).to have_current_path(budget_month_path(march))
+  end
+
   it "keeps add monthly bills available until all saved bill templates are represented", js: true do
     user = create(:user, email: "monthlybillcoverage@example.com")
     month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")

@@ -27,6 +27,8 @@ class BudgetMonthsController < ApplicationController
     auto_complete_due_recurring_entries(@budget_month.expense_entries)
     @expense_entries = @budget_month.expense_entries.chronological
     @expense_entry = @budget_month.expense_entries.new
+    @previous_budget_month = current_user.budget_months.where("month_on < ?", @budget_month.month_on).order(month_on: :desc).first
+    @next_budget_month = current_user.budget_months.where("month_on > ?", @budget_month.month_on).order(month_on: :asc).first
   end
 
   def new

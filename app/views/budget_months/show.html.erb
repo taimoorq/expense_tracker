@@ -10,9 +10,29 @@
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-          <%= tabler_icon("calendar-month", classes: "h-6 w-6 text-indigo-600") %>
-          <span><%= @budget_month.label %></span>
+        <h2 class="inline-flex items-center gap-3 text-2xl font-semibold">
+          <% if @previous_budget_month %>
+            <%= link_to(requested_tab ? budget_month_tab_path(@previous_budget_month, requested_tab) : budget_month_path(@previous_budget_month),
+                        class: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600",
+                        title: @previous_budget_month.label,
+                        aria: { label: "View #{@previous_budget_month.label}" }) do %>
+              <%= tabler_icon("chevron-left", classes: "h-5 w-5") %>
+            <% end %>
+          <% end %>
+
+          <span class="inline-flex items-center gap-2">
+            <%= tabler_icon("calendar-month", classes: "h-6 w-6 text-indigo-600") %>
+            <span><%= @budget_month.label %></span>
+          </span>
+
+          <% if @next_budget_month %>
+            <%= link_to(requested_tab ? budget_month_tab_path(@next_budget_month, requested_tab) : budget_month_path(@next_budget_month),
+                        class: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600",
+                        title: @next_budget_month.label,
+                        aria: { label: "View #{@next_budget_month.label}" }) do %>
+              <%= tabler_icon("chevron-right", classes: "h-5 w-5") %>
+            <% end %>
+          <% end %>
         </h2>
         <% if generation_actions_hidden %>
           <p class="ta-muted mt-1">This month looks complete, so template generation actions are hidden to avoid unnecessary changes.</p>
