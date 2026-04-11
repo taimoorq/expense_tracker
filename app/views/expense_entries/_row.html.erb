@@ -1,4 +1,5 @@
 <% reason_for_entry = entry.category.presence || entry.section.humanize %>
+<% timeline_view = local_assigns[:timeline_view] %>
 <tr id="<%= dom_id(entry) %>"
   data-expense-entries-filter-target="row"
   data-date="<%= entry.occurred_on&.iso8601 %>"
@@ -22,6 +23,7 @@
                       method: :patch,
                       params: {
                         mark_as_paid: "1",
+                        timeline_view: timeline_view,
                         expense_entry: {
                           actual_amount: entry.actual_amount.presence || entry.planned_amount
                         }
@@ -32,7 +34,7 @@
           <%= tabler_icon("check-circle", classes: "h-4 w-4 text-emerald-600") %>
         <% end %>
       <% end %>
-      <%= link_to edit_budget_month_expense_entry_path(budget_month, entry),
+      <%= link_to edit_budget_month_expense_entry_path(budget_month, entry, timeline_view: timeline_view),
                   data: { turbo_frame: "entry_editor_modal" },
                   class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
                   title: "Edit entry",
@@ -41,6 +43,7 @@
       <% end %>
       <%= button_to budget_month_expense_entry_path(budget_month, entry),
                     method: :delete,
+                    params: { timeline_view: timeline_view },
                     class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
                     title: "Delete entry",
                     aria: { label: "Delete entry" },

@@ -103,9 +103,24 @@
 }
 
 @supports (view-transition-name: none) {
+	::view-transition-group(.ta-vt-shell) {
+		animation-duration: 0.38s;
+		animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	::view-transition-group(.ta-vt-nav) {
+		animation-duration: 0.26s;
+		animation-timing-function: ease-out;
+	}
+
 	::view-transition-group(.ta-vt-card) {
 		animation-duration: 0.32s;
 		animation-timing-function: ease;
+	}
+
+	::view-transition-group(.ta-vt-panel) {
+		animation-duration: 0.3s;
+		animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 	}
 
 	::view-transition-group(.ta-vt-row) {
@@ -113,11 +128,85 @@
 		animation-timing-function: ease;
 	}
 
+	::view-transition-old(.ta-vt-panel) {
+		animation: ta-vt-panel-old 0.2s ease both;
+	}
+
+	::view-transition-new(.ta-vt-panel) {
+		animation: ta-vt-panel-new 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+
+	::view-transition-old(.ta-vt-nav) {
+		animation: ta-vt-nav-old 0.18s ease both;
+	}
+
+	::view-transition-new(.ta-vt-nav) {
+		animation: ta-vt-nav-new 0.24s ease-out both;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
+		::view-transition-group(.ta-vt-shell),
+		::view-transition-group(.ta-vt-nav),
 		::view-transition-group(.ta-vt-card),
+		::view-transition-group(.ta-vt-panel),
 		::view-transition-group(.ta-vt-row) {
 			animation-duration: 0s;
 		}
+
+		::view-transition-old(.ta-vt-nav),
+		::view-transition-new(.ta-vt-nav),
+		::view-transition-old(.ta-vt-panel),
+		::view-transition-new(.ta-vt-panel) {
+			animation: none;
+		}
+	}
+}
+
+@keyframes ta-vt-panel-old {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+
+@keyframes ta-vt-panel-new {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes ta-vt-nav-old {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	to {
+		opacity: 0.7;
+		transform: translateY(-4px);
+	}
+}
+
+@keyframes ta-vt-nav-new {
+	from {
+		opacity: 0.75;
+		transform: translateY(4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
 	}
 }
 

@@ -1,6 +1,6 @@
 <%= turbo_frame_tag "timeline_section" do %>
   <% timeline_leftover = local_assigns[:budget_month]&.calculated_leftover || expense_entries.sum(&:cashflow_amount) %>
-  <% default_timeline_view = local_assigns[:default_timeline_view] || "sections" %>
+  <% default_timeline_view = local_assigns[:default_timeline_view].presence_in(%w[sections full-list calendar]) || "sections" %>
   <% reason_for_entry = ->(entry) { entry.category.presence || entry.section.humanize } %>
   <% reason_pills = expense_entries.filter_map { |entry| reason_for_entry.call(entry).to_s.strip.presence }
                     .tally
@@ -8,29 +8,29 @@
                     .first(8) %>
   <% timeline_view_urls = {
     sections: budget_month_tab_path(budget_month, "timeline"),
-    "full-list": budget_month_tab_path(budget_month, "timeline"),
+    "full-list": budget_month_tab_path(budget_month, "timeline", view: "full-list"),
     calendar: budget_month_tab_path(budget_month, "calendar")
   } %>
-  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups expense-entries-filter tabs" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" data-tabs-default-tab-value="<%= default_timeline_view %>" data-tabs-tab-urls-value="<%= timeline_view_urls.to_json %>" data-action="tabs:switched@document->expense-entries-filter#restoreAndRefresh">
+  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups expense-entries-filter" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" style="view-transition-name: month-budget-shell; view-transition-class: ta-vt-shell;">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Budget</h3>
         <p class="mt-1 text-sm text-slate-500">Switch between grouped entries, a flat month list, or calendar view.</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <div class="ta-tab-list" role="tablist" aria-label="Budget view mode">
-          <button type="button" class="ta-tab ta-tab-active" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="sections" data-action="click->tabs#switch" data-tabs-name-param="sections" aria-label="Grouped">
+        <div class="ta-tab-list" role="tablist" aria-label="Budget view mode" style="view-transition-name: month-budget-tabs; view-transition-class: ta-vt-nav;">
+          <%= link_to timeline_view_urls[:sections], class: ["ta-tab", ("ta-tab-active" if default_timeline_view == "sections")], role: "tab", "aria-selected": (default_timeline_view == "sections").to_s, "aria-label": "Grouped", data: { turbo_frame: "_top" } do %>
             <span class="inline-flex items-center gap-2"><%= tabler_icon("rectangle-group", classes: "ta-tab-icon") %><span class="hidden sm:inline">Grouped</span></span>
-          </button>
-          <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="full-list" data-action="click->tabs#switch" data-tabs-name-param="full-list" aria-label="Full List">
+          <% end %>
+          <%= link_to timeline_view_urls[:"full-list"], class: ["ta-tab", ("ta-tab-active" if default_timeline_view == "full-list")], role: "tab", "aria-selected": (default_timeline_view == "full-list").to_s, "aria-label": "Full List", data: { turbo_frame: "_top" } do %>
             <span class="inline-flex items-center gap-2"><%= tabler_icon("list-bullet", classes: "ta-tab-icon") %><span class="hidden sm:inline">Full List</span></span>
-          </button>
-          <button type="button" class="ta-tab" role="tab" aria-selected="false" data-tabs-target="tab" data-tab-name="calendar" data-action="click->tabs#switch" data-tabs-name-param="calendar" aria-label="Calendar">
+          <% end %>
+          <%= link_to timeline_view_urls[:calendar], class: ["ta-tab", ("ta-tab-active" if default_timeline_view == "calendar")], role: "tab", "aria-selected": (default_timeline_view == "calendar").to_s, "aria-label": "Calendar", data: { turbo_frame: "_top" } do %>
             <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "ta-tab-icon") %><span class="hidden sm:inline">Calendar</span></span>
-          </button>
+          <% end %>
         </div>
 
-        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add Entry with Wizard", aria: { label: "Add Entry with Wizard" } do %>
+        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add Entry with Wizard", aria: { label: "Add Entry with Wizard" } do %>
           <%= tabler_icon("plus", classes: "h-4 w-4") %>
           <span class="hidden sm:inline">Add Entry with Wizard</span>
         <% end %>
@@ -60,7 +60,7 @@
 
     <% grouped_entries << ["Other", remaining_entries] if remaining_entries.any? %>
 
-    <div data-tabs-target="panel" data-panel-name="sections" role="tabpanel" class="space-y-4">
+    <div data-panel-name="sections" role="tabpanel" class="<%= default_timeline_view == "sections" ? "space-y-4" : "hidden space-y-4" %>" <%= %(style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;") if default_timeline_view == "sections" %>>
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#expandAll">
         <%= tabler_icon("chevron-down", classes: "h-4 w-4 text-slate-600") %>
@@ -157,6 +157,7 @@
                                           method: :patch,
                                           params: {
                                             mark_as_paid: "1",
+                                            timeline_view: default_timeline_view,
                                             expense_entry: {
                                               actual_amount: entry.actual_amount.presence || entry.planned_amount
                                             }
@@ -168,7 +169,7 @@
                             <% end %>
                           <% end %>
 
-                          <%= link_to edit_budget_month_expense_entry_path(entry.budget_month, entry),
+                          <%= link_to edit_budget_month_expense_entry_path(entry.budget_month, entry, timeline_view: default_timeline_view),
                                       class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
                                       title: "Edit entry",
                                       aria: { label: "Edit entry" },
@@ -181,6 +182,7 @@
 
                           <%= button_to budget_month_expense_entry_path(entry.budget_month, entry),
                                         method: :delete,
+                                        params: { timeline_view: default_timeline_view },
                                         class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
                                         title: "Delete entry",
                                         aria: { label: "Delete entry" },
@@ -213,7 +215,7 @@
       <div class="rounded-[22px] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center">
         <p class="ta-muted">No entries for this month yet.</p>
         <div class="mt-4 flex justify-center">
-          <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add First Entry with Wizard", aria: { label: "Add First Entry with Wizard" } do %>
+          <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add First Entry with Wizard", aria: { label: "Add First Entry with Wizard" } do %>
             <%= tabler_icon("plus", classes: "h-4 w-4") %>
             <span class="hidden sm:inline">Add First Entry with Wizard</span>
           <% end %>
@@ -222,11 +224,11 @@
     <% end %>
     </div>
 
-    <div data-tabs-target="panel" data-panel-name="full-list" role="tabpanel" class="hidden space-y-4">
-      <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4" %>
+    <div data-panel-name="full-list" role="tabpanel" class="<%= default_timeline_view == "full-list" ? "space-y-4" : "hidden space-y-4" %>" <%= %(style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;") if default_timeline_view == "full-list" %>>
+      <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4", timeline_view: default_timeline_view %>
     </div>
 
-    <div data-tabs-target="panel" data-panel-name="calendar" role="tabpanel" class="hidden space-y-4">
+    <div data-panel-name="calendar" role="tabpanel" class="<%= default_timeline_view == "calendar" ? "space-y-4" : "hidden space-y-4" %>" <%= %(style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;") if default_timeline_view == "calendar" %>>
       <div class="ta-surface-calendar">
         <%= render "expense_entries/calendar_grid", budget_month: budget_month, expense_entries: expense_entries %>
       </div>

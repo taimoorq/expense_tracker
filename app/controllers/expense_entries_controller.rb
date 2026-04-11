@@ -49,7 +49,7 @@ class ExpenseEntriesController < ApplicationController
 
   def update
     if @expense_entry.update(normalized_expense_entry_params)
-      prepare_month_refresh_state(@budget_month)
+      prepare_month_refresh_state(@budget_month, timeline_view: current_timeline_view)
 
       respond_to do |format|
         format.turbo_stream do
@@ -93,14 +93,18 @@ class ExpenseEntriesController < ApplicationController
     end
 
     if saved_successfully
-      prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new)
+      prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new, timeline_view: current_timeline_view)
       success_message = template_creator.requested? ? "Entry and recurring transaction added." : "Entry added."
 
       respond_to do |format|
         format.turbo_stream do
-          render_month_page_refresh(message: success_message, include_entry_form: true, reset_entry_wizard_modal: true)
+          if params[:wizard_flow] == "1"
+            render_month_page_refresh(message: success_message, include_entry_form: true, reset_entry_wizard_modal: true)
+          else
+            redirect_to month_redirect_path(tab: "entries"), notice: success_message, status: :see_other
+          end
         end
-        format.html { redirect_to @budget_month, notice: success_message }
+        format.html { redirect_to month_redirect_path(tab: "entries"), notice: success_message, status: :see_other }
       end
     else
       if @expense_entry.persisted?
@@ -138,7 +142,7 @@ class ExpenseEntriesController < ApplicationController
 
   def destroy
     @expense_entry.destroy
-    prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new)
+    prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new, timeline_view: current_timeline_view)
 
     respond_to do |format|
       format.turbo_stream do
@@ -292,5 +296,21 @@ class ExpenseEntriesController < ApplicationController
     return {} unless record.class.respond_to?(:template_param_key)
 
     params.require(record.class.template_param_key).permit(*record.class.template_permitted_attributes)
+  end
+
+  def current_timeline_view
+    return "calendar" if params[:tab] == "calendar"
+
+    params[:timeline_view].presence_in(%w[sections full-list calendar])
+  end
+
+  def month_redirect_path(tab:)
+    if tab == "timeline" && current_timeline_view == "calendar"
+      budget_month_tab_path(@budget_month, "calendar")
+    elsif tab == "timeline"
+      budget_month_tab_path(@budget_month, "timeline", view: current_timeline_view.presence_in(%w[full-list]))
+    else
+      budget_month_tab_path(@budget_month, tab)
+    end
   end
 end

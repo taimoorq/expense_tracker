@@ -3,11 +3,12 @@ module MonthPageRefresh
 
   private
 
-  def prepare_month_refresh_state(budget_month, expense_entry: nil, auto_complete_recurring: false)
+  def prepare_month_refresh_state(budget_month, expense_entry: nil, auto_complete_recurring: false, timeline_view: nil)
     @budget_month = budget_month
     auto_complete_due_recurring_entries(@budget_month.expense_entries) if auto_complete_recurring
     @expense_entries = @budget_month.expense_entries.chronological
     @expense_entry = expense_entry if expense_entry
+    @timeline_view = timeline_view if timeline_view.present?
   end
 
   def render_month_page_refresh(message:, include_entry_form: false, reset_entry_editor_modal: false, reset_entry_wizard_modal: false, status: :ok)
@@ -39,7 +40,7 @@ module MonthPageRefresh
   end
 
   def month_entries_locals
-    { budget_month: @budget_month, expense_entries: @expense_entries }
+    { budget_month: @budget_month, expense_entries: @expense_entries, default_timeline_view: @timeline_view, timeline_view: @timeline_view }
   end
 
   def month_summary_locals

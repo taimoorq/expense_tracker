@@ -19,6 +19,7 @@
 
       <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-wizard entry-preview", action: "submit->entry-wizard#validateSubmit turbo:submit-start->entry-wizard#submitStart turbo:submit-end->entry-wizard#submitEnd" }, class: "space-y-4" do |form| %>
         <%= hidden_field_tag :wizard_flow, "1" %>
+        <%= hidden_field_tag :timeline_view, params[:timeline_view] if params[:timeline_view].present? %>
 
         <%= render "expense_entries/entry_wizard_progress", wizard_steps: wizard.wizard_steps %>
 

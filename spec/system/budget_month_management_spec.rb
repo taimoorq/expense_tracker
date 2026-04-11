@@ -163,8 +163,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_css('section[data-controller="tabs"][data-tabs-default-tab-value="entries"]')
-    expect(page).to have_button("Plan and Edit")
+    expect(page).to have_link("Plan and Edit")
     expect(page).to have_content("Plan and Edit This Month")
     expect(page).to have_content("Build the month from recurring")
     expect(page).to have_button("Estimate Card Payments")
@@ -207,7 +206,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(february)
 
-    click_button "Plan and Edit"
+    click_link "Plan and Edit"
     expect(page).to have_current_path(budget_month_tab_path(february, "entries"), ignore_query: false)
 
     find('a[aria-label="View January 2026"]').click
@@ -216,7 +215,7 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(february)
 
     within("[data-panel-name='timeline']") do
-      click_button "Calendar"
+      click_link "Calendar"
     end
 
     expect(page).to have_current_path(budget_month_tab_path(february, "calendar"), ignore_query: false)
@@ -246,7 +245,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    click_button "Plan and Edit"
+    click_link "Plan and Edit"
 
     expect(page).to have_button("Add Monthly Bills")
     expect(page).to have_text(/1 of 2 templates represented/i)
@@ -265,7 +264,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    click_button "Plan and Edit"
+    click_link "Plan and Edit"
     click_link "Open Recurring"
 
     expect(page).to have_current_path(planning_templates_path)
@@ -276,18 +275,21 @@ RSpec.describe "Budget month management", type: :system do
     user = create(:user, email: "breakdown@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     checking = create(:account, user: user, name: "Checking")
-    create(:expense_entry, budget_month: month, user: user, category: "Groceries", payee: "Market", section: :variable, status: :planned, planned_amount: 120, source_account: checking)
+    create(:expense_entry, budget_month: month, user: user, category: "Groceries", payee: "Market", section: :variable, status: :paid, planned_amount: 120, actual_amount: 150, occurred_on: Date.current.beginning_of_month + 5.days, source_account: checking)
     create(:expense_entry, budget_month: month, user: user, category: "Paycheck", payee: "Employer", section: :income, status: :planned, planned_amount: 2800, source_account: checking)
 
     sign_in_as(user)
     visit budget_month_tab_path(month, "breakdown")
 
-    expect(page).to have_button("Breakdown")
+    expect(page).to have_link("Breakdown")
     expect(page).to have_css('[data-panel-name="breakdown"]')
     expect(page).to have_content("Visual Budget Breakdown")
     expect(page).to have_content("Charged vs paid to by account")
     expect(page).to have_css('[data-chart-title-value="Charged vs Paid To by Account"]', visible: :all)
     expect(page).to have_content("1 tracked account")
+    expect(page).to have_no_css('[data-chart-title-value="Planned vs Actual by Section"]', visible: :all)
+    expect(page).to have_no_css('[data-chart-title-value="Weekly Spending Trend (Planned vs Actual)"]', visible: :all)
+    expect(page).to have_no_css('[data-chart-title-value="Entry-Level Planned vs Actual"]', visible: :all)
   end
 
   it "surfaces account flow in the month summary cards" do
@@ -333,7 +335,7 @@ RSpec.describe "Budget month management", type: :system do
 
     sign_in_as(user)
     visit budget_month_path(month)
-    click_button "Calendar", match: :first
+    click_link "Calendar", match: :first
 
     expect(page).to have_select("timeline_category_filter", with_options: [ "Groceries (1)", "Fuel (1)" ])
     select "Groceries (1)", from: "timeline_category_filter"
@@ -354,7 +356,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_text("Market")
     expect(page).not_to have_text("Gas")
 
-    click_button "Calendar", match: :first
+    click_link "Calendar", match: :first
     expect(page).to have_select("timeline_category_filter", selected: "Groceries (1)")
     expect(page).to have_text("Market")
     expect(page).not_to have_text("Gas")
@@ -433,24 +435,63 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_button("Grouped")
-    expect(page).to have_button("Full List")
+    expect(page).to have_link("Grouped")
+    expect(page).to have_link("Full List")
     expect(page).to have_content("Other")
     expect(page).to have_button("Expand all")
     expect(page).to have_button("Collapse all")
 
-    click_button "Full List"
+    click_link "Full List"
 
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "full-list"), ignore_query: false)
     expect(page).to have_content("Phone")
     expect(page).to have_content("Utilities")
     expect(page).to have_text(/actual/i)
     expect(page).not_to have_button("Expand all")
     expect(page).not_to have_button("Collapse all")
 
-    click_button "Grouped"
+    click_link "Grouped"
 
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline"), ignore_query: false)
     expect(page).to have_content("Budget")
     expect(page).to have_button("Expand all")
+  end
+
+  it "keeps the full list view active after marking an entry as paid", js: true do
+    user = create(:user, email: "fulllistpersist@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    entry = create(:expense_entry, budget_month: month, user: user, payee: "Phone", category: "Utilities", planned_amount: 45.10, actual_amount: nil, status: :planned)
+
+    sign_in_as(user)
+    visit budget_month_tab_path(month, "timeline", view: "full-list")
+
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "full-list"), ignore_query: false)
+    click_button "Mark as paid", match: :first
+
+    expect(page).to have_content("Entry updated.")
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "full-list"), ignore_query: false)
+    expect(page).to have_content("Phone")
+    expect(page).not_to have_button("Expand all")
+    expect(entry.reload.status).to eq("paid")
+  end
+
+  it "returns quick add submissions to the plan and edit tab", js: true do
+    user = create(:user, email: "quickaddredirect@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+
+    sign_in_as(user)
+    visit budget_month_tab_path(month, "entries")
+
+    execute_script("document.querySelector('turbo-frame#entry_form details')?.setAttribute('open', 'open')")
+    fill_in "Date", with: Date.current.iso8601
+    fill_in "Category", with: "Coffee"
+    fill_in "Payee", with: "Cafe"
+    fill_in "Planned amount", with: "8.50"
+    click_button "Add Entry"
+
+    expect(page).to have_current_path(budget_month_tab_path(month, "entries"), ignore_query: false)
+    expect(page).to have_content("Plan and Edit This Month")
+    expect(month.expense_entries.where(payee: "Cafe").exists?).to be(true)
   end
 
   it "opens the guided wizard from the timeline", js: true do
@@ -478,7 +519,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    click_button "Calendar", match: :first
+    click_link "Calendar", match: :first
     click_link "Add Entry with Wizard"
 
     expect(page).to have_content("Add Entry with Wizard")
@@ -582,6 +623,7 @@ RSpec.describe "Budget month management", type: :system do
 
         sign_in_as(user)
         visit budget_month_path(month)
+        click_link "Plan and Edit"
 
         expect(page).to have_content("Paycheck entries are already in this month.")
         expect(page).to have_content("Subscription entries are already in this month.")

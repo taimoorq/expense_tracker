@@ -13,13 +13,6 @@
   <% section_labels = section_totals.map { |k, _v| k.humanize } %>
   <% section_values = section_totals.map { |_k, v| v.round(2) } %>
 
-  <% planned_by_section = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.planned_amount.to_f } } %>
-  <% actual_by_section = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.actual_amount.to_f } } %>
-  <% section_keys = (planned_by_section.keys + actual_by_section.keys).uniq %>
-  <% section_compare_labels = section_keys.map(&:humanize) %>
-  <% planned_compare_values = section_keys.map { |key| planned_by_section[key].to_f.round(2) } %>
-  <% actual_compare_values = section_keys.map { |key| actual_by_section[key].to_f.round(2) } %>
-
   <% running = 0.0 %>
   <% ordered_entries = entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
   <% line_labels = [] %>
@@ -32,13 +25,6 @@
 
   <% spending_entries = outflow_entries.select { |entry| entry.occurred_on.present? } %>
 
-  <% weekly_planned_map = spending_entries.group_by { |entry| entry.occurred_on.beginning_of_week }.transform_values { |items| items.sum { |item| item.planned_amount.to_f } } %>
-  <% weekly_actual_map = spending_entries.group_by { |entry| entry.occurred_on.beginning_of_week }.transform_values { |items| items.sum { |item| item.actual_amount.to_f } } %>
-  <% week_keys = (weekly_planned_map.keys + weekly_actual_map.keys).uniq.sort %>
-  <% weekly_labels = week_keys.map { |week_start| "Week of #{week_start.strftime('%b %-d')}" } %>
-  <% weekly_planned_values = week_keys.map { |key| weekly_planned_map[key].to_f.round(2) } %>
-  <% weekly_actual_values = week_keys.map { |key| weekly_actual_map[key].to_f.round(2) } %>
-
   <% running_outflow = 0.0 %>
   <% cumulative_outflow_labels = [] %>
   <% cumulative_outflow_values = [] %>
@@ -46,13 +32,6 @@
     <% running_outflow += entry.effective_amount.to_f %>
     <% cumulative_outflow_labels << entry.occurred_on.strftime("%b %-d") %>
     <% cumulative_outflow_values << running_outflow.round(2) %>
-  <% end %>
-
-  <% planned_vs_actual_points = outflow_entries.filter_map do |entry| %>
-    <% planned_amount = entry.planned_amount.to_f %>
-    <% actual_amount = entry.actual_amount.to_f %>
-    <% next if planned_amount.zero? && actual_amount.zero? %>
-    <% { x: planned_amount.round(2), y: actual_amount.round(2) } %>
   <% end %>
 
   <% category_totals = outflow_entries.group_by { |entry| entry.category.presence || "Uncategorized" }.map do |category, items| %>
@@ -231,7 +210,7 @@
         <% end %>
       </div>
 
-      <div class="grid gap-4 xl:grid-cols-3">
+      <div class="grid gap-4 xl:grid-cols-2">
         <div class="rounded-lg border border-indigo-100 bg-white/90 p-3">
           <div class="h-72">
             <canvas
@@ -240,20 +219,6 @@
               data-chart-title-value="Outflow by Section"
               data-chart-labels-value="<%= section_labels.to_json %>"
               data-chart-data-value="<%= section_values.to_json %>"></canvas>
-          </div>
-        </div>
-
-        <div class="rounded-lg border border-sky-100 bg-white/90 p-3">
-          <div class="h-72">
-            <canvas
-              data-controller="chart"
-              data-chart-type-value="bar"
-              data-chart-title-value="Planned vs Actual by Section"
-              data-chart-labels-value="<%= section_compare_labels.to_json %>"
-              data-chart-datasets-value="<%= [
-                { label: 'Planned', data: planned_compare_values, backgroundColor: 'rgba(79, 70, 229, 0.6)' },
-                { label: 'Actual', data: actual_compare_values, backgroundColor: 'rgba(14, 165, 233, 0.6)' }
-              ].to_json %>"></canvas>
           </div>
         </div>
 
@@ -269,22 +234,7 @@
         </div>
       </div>
 
-      <div class="mt-4 grid gap-4 xl:grid-cols-2">
-        <div class="rounded-lg border border-sky-100 bg-white/90 p-3">
-          <div class="h-72">
-            <canvas
-              data-controller="chart"
-              data-chart-type-value="bar"
-              data-chart-title-value="Weekly Spending Trend (Planned vs Actual)"
-              data-chart-labels-value="<%= weekly_labels.to_json %>"
-              data-chart-datasets-value="<%= [
-                { label: 'Planned', data: weekly_planned_values, backgroundColor: 'rgba(79, 70, 229, 0.55)' },
-                { label: 'Actual', data: weekly_actual_values, backgroundColor: 'rgba(16, 185, 129, 0.55)' }
-              ].to_json %>"
-              data-chart-options-value="<%= { scales: { y: { beginAtZero: true } } }.to_json %>"></canvas>
-          </div>
-        </div>
-
+      <div class="mt-4 grid gap-4 xl:grid-cols-1">
         <div class="rounded-lg border border-indigo-100 bg-white/90 p-3">
           <div class="h-72">
             <canvas
@@ -345,28 +295,6 @@
         </div>
       </div>
 
-      <div class="mt-4 rounded-lg border border-violet-100 bg-white/90 p-3">
-        <div class="h-80">
-          <canvas
-            data-controller="chart"
-            data-chart-type-value="scatter"
-            data-chart-title-value="Entry-Level Planned vs Actual"
-            data-chart-datasets-value="<%= [
-              {
-                label: 'Entries',
-                data: planned_vs_actual_points,
-                backgroundColor: 'rgba(79, 70, 229, 0.55)',
-                borderColor: 'rgba(79, 70, 229, 0.85)'
-              }
-            ].to_json %>"
-            data-chart-options-value="<%= {
-              scales: {
-                x: { title: { display: true, text: 'Planned Amount' }, beginAtZero: true },
-                y: { title: { display: true, text: 'Actual Amount' }, beginAtZero: true }
-              }
-            }.to_json %>"></canvas>
-        </div>
-      </div>
     <% else %>
       <div class="space-y-4">
         <div class="rounded-lg border border-emerald-100 bg-white/80 p-3">
@@ -388,20 +316,6 @@
           </div>
         </div>
 
-        <div class="rounded-lg border border-sky-100 bg-white/90 p-3">
-          <div class="h-56">
-            <canvas
-              data-controller="chart"
-              data-chart-type-value="bar"
-              data-chart-title-value="Planned vs Actual"
-              data-chart-labels-value="<%= section_compare_labels.to_json %>"
-              data-chart-datasets-value="<%= [
-                { label: 'Planned', data: planned_compare_values, backgroundColor: 'rgba(79, 70, 229, 0.6)' },
-                { label: 'Actual', data: actual_compare_values, backgroundColor: 'rgba(14, 165, 233, 0.6)' }
-              ].to_json %>"></canvas>
-          </div>
-        </div>
-
         <div class="rounded-lg border border-violet-100 bg-white/90 p-3">
           <div class="h-56">
             <canvas
@@ -410,21 +324,6 @@
               data-chart-title-value="Running Net"
               data-chart-labels-value="<%= line_labels.to_json %>"
               data-chart-data-value="<%= line_values.to_json %>"></canvas>
-          </div>
-        </div>
-
-        <div class="rounded-lg border border-sky-100 bg-white/90 p-3">
-          <div class="h-56">
-            <canvas
-              data-controller="chart"
-              data-chart-type-value="bar"
-              data-chart-title-value="Weekly Spending"
-              data-chart-labels-value="<%= weekly_labels.to_json %>"
-              data-chart-datasets-value="<%= [
-                { label: 'Planned', data: weekly_planned_values, backgroundColor: 'rgba(79, 70, 229, 0.55)' },
-                { label: 'Actual', data: weekly_actual_values, backgroundColor: 'rgba(16, 185, 129, 0.55)' }
-              ].to_json %>"
-              data-chart-options-value="<%= { scales: { y: { beginAtZero: true } } }.to_json %>"></canvas>
           </div>
         </div>
 

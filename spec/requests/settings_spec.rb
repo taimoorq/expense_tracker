@@ -36,7 +36,8 @@ RSpec.describe "Settings", type: :request do
     get budget_month_path(budget_month)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('data-tabs-default-tab-value="calendar"')
+    expect(response.body).to include(%(href="#{budget_month_tab_path(budget_month, "calendar")}"))
+    expect(response.body).to include('aria-selected="true"')
   end
 
   it "places the quick actions section above the continue section on overview" do

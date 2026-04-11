@@ -1,3 +1,5 @@
+<% timeline_view = local_assigns[:timeline_view] %>
+
 <div class="space-y-3 md:hidden">
   <% expense_entries.each do |entry| %>
     <article id="<%= dom_id(entry) %>" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -30,6 +32,7 @@
                         method: :patch,
                         params: {
                           mark_as_paid: "1",
+                          timeline_view: timeline_view,
                           expense_entry: {
                             actual_amount: entry.actual_amount.presence || entry.planned_amount
                           }
@@ -41,7 +44,7 @@
             <span>Mark Paid</span>
           <% end %>
         <% end %>
-        <%= link_to edit_budget_month_expense_entry_path(budget_month, entry),
+        <%= link_to edit_budget_month_expense_entry_path(budget_month, entry, timeline_view: timeline_view),
                     data: { turbo_frame: "entry_editor_modal" },
                     class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm",
                     title: "Edit entry",
@@ -51,6 +54,7 @@
         <% end %>
         <%= button_to budget_month_expense_entry_path(budget_month, entry),
                       method: :delete,
+                      params: { timeline_view: timeline_view },
                       class: "fb-btn-danger ta-action-btn !px-3 !py-2 !text-sm",
                       title: "Delete entry",
                       aria: { label: "Delete entry" },
@@ -80,7 +84,7 @@
     </thead>
     <tbody class="divide-y divide-slate-100">
       <% expense_entries.each do |entry| %>
-        <%= render "expense_entries/row", budget_month: budget_month, entry: entry %>
+        <%= render "expense_entries/row", budget_month: budget_month, entry: entry, timeline_view: timeline_view %>
       <% end %>
     </tbody>
   </table>
