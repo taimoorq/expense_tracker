@@ -1,0 +1,1 @@
+GenerateMonthRecurringEntries = Recurring::GenerateMonthRecurringEntries

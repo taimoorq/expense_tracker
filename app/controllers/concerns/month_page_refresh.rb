@@ -55,6 +55,6 @@ module MonthPageRefresh
   end
 
   def auto_complete_due_recurring_entries(entries)
-    AutoCompleteRecurringEntries.new(entries: entries, as_of: Date.current).call
+    Budgeting::AutoCompleteRecurringEntries.new(entries: entries, as_of: Date.current).call
   end
 end

@@ -183,11 +183,46 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_css('a[aria-label="View March 2026"]')
 
     find('a[aria-label="View January 2026"]').click
-    expect(page).to have_current_path(budget_month_path(january))
+    expect(page).to have_current_path(budget_month_tab_path(january, "entries"), ignore_query: false)
 
     visit budget_month_path(february)
     find('a[aria-label="View March 2026"]').click
-    expect(page).to have_current_path(budget_month_path(march))
+    expect(page).to have_current_path(budget_month_tab_path(march, "entries"), ignore_query: false)
+  end
+
+  it "keeps the active month view in the URL for tab switches and month navigation", js: true do
+    user = create(:user, email: "monthtabsync@example.com")
+    january = create(:budget_month, user: user, month_on: Date.new(2026, 1, 1), label: "January 2026")
+    february = create(:budget_month, user: user, month_on: Date.new(2026, 2, 1), label: "February 2026")
+    create(:expense_entry,
+      budget_month: february,
+      user: user,
+      occurred_on: Date.new(2026, 2, 7),
+      section: :fixed,
+      category: "Rent",
+      payee: "Landlord",
+      planned_amount: 1200,
+      status: :planned)
+
+    sign_in_as(user)
+    visit budget_month_path(february)
+
+    click_button "Plan and Edit"
+    expect(page).to have_current_path(budget_month_tab_path(february, "entries"), ignore_query: false)
+
+    find('a[aria-label="View January 2026"]').click
+    expect(page).to have_current_path(budget_month_tab_path(january, "entries"), ignore_query: false)
+
+    visit budget_month_path(february)
+
+    within("[data-panel-name='timeline']") do
+      click_button "Calendar"
+    end
+
+    expect(page).to have_current_path(budget_month_tab_path(february, "calendar"), ignore_query: false)
+
+    find('a[aria-label="View January 2026"]').click
+    expect(page).to have_current_path(budget_month_tab_path(january, "calendar"), ignore_query: false)
   end
 
   it "keeps add monthly bills available until all saved bill templates are represented", js: true do
@@ -406,6 +441,9 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_content("Add Entry with Wizard")
     expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_content("This saves directly into #{month.label}")
+    expect(page).to have_content("Step 1")
+    expect(page).to have_content("Review")
   end
 
   it "opens the guided wizard from the calendar view", js: true do

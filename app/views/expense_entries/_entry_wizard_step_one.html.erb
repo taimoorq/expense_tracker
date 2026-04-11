@@ -1,0 +1,33 @@
+<section data-entry-wizard-target="step" class="space-y-4">
+  <div>
+    <h4 class="text-lg font-semibold text-slate-900">1. What kind of entry is this?</h4>
+    <p class="ta-muted mt-1">Choose the broad type first. This helps organize budget and reporting.</p>
+  </div>
+
+  <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+    <% entry_wizard_section_options.each do |option| %>
+      <button type="button" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50" data-action="click->entry-wizard#chooseSection" data-section-value="<%= option[:value] %>">
+        <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <%= tabler_icon(option[:icon], classes: "h-4 w-4 #{option[:color_class]}") %>
+          <span><%= option[:label] %></span>
+        </div>
+        <p class="mt-1 text-xs text-slate-500"><%= option[:description] %></p>
+      </button>
+    <% end %>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div>
+      <%= form.label :section, class: "fb-label" %>
+      <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "section", action: "change->entry-wizard#syncTemplateOptions change->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <%= form.label :status, class: "fb-label" %>
+      <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "status", action: "change->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <%= form.label :need_or_want, "Need / Want", class: "fb-label" %>
+      <%= form.select :need_or_want, [["Need", "Need"], ["Want", "Want"], ["Leave blank", ""]], {}, class: "fb-select", data: { entry_wizard_target: "need", action: "change->entry-wizard#updateSummary" } %>
+    </div>
+  </div>
+</section>

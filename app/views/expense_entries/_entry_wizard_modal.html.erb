@@ -1,37 +1,28 @@
 <%= turbo_frame_tag "entry_wizard_modal" do %>
-  <% template_params = params[:planning_template].presence || {} %>
-  <% template_enabled = ActiveModel::Type::Boolean.new.cast(template_params[:enabled]) %>
-  <% selected_template_type = template_params[:template_type].to_s %>
-  <% selected_due_day = template_params[:due_day].presence || expense_entry.occurred_on&.day %>
-  <% selected_day_of_month_one = template_params[:day_of_month_one].presence || expense_entry.occurred_on&.day %>
-  <% selected_day_of_month_two = template_params[:day_of_month_two] %>
-  <% selected_total_due = template_params[:total_due] %>
-  <% selected_amount_paid = template_params[:amount_paid] %>
-  <% selected_kind = template_params[:kind].presence || "fixed_payment" %>
-  <% selected_billing_frequency = template_params[:billing_frequency].presence || "monthly" %>
-  <% selected_billing_months = Array(template_params[:billing_months]).reject(&:blank?).map(&:to_i) %>
-  <% selected_billing_months = MonthlyBill::BILLING_MONTHS_BY_FREQUENCY.fetch(selected_billing_frequency, (1..12).to_a) if selected_billing_months.empty? %>
-  <% selected_cadence = template_params[:cadence].presence || "monthly" %>
-  <% selected_weekend_adjustment = template_params[:weekend_adjustment].presence || "no_adjustment" %>
-  <% selected_recurring_link = params[:recurring_link].presence || (expense_entry.source_template.present? ? recurring_link_value(expense_entry.source_template) : nil) %>
+  <% wizard = entry_wizard_presenter(budget_month: budget_month, expense_entry: expense_entry) %>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-template-modal-allow-backdrop-close-value="false" data-action="keydown.esc@window->template-modal#close">
     <div class="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl flex flex-col max-h-[90vh]" data-template-modal-target="dialog">
       <div class="overflow-y-auto flex-1">
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("adjustments", classes: "h-4 w-4 text-violet-600") %> Add Entry with Wizard</h3>
-          <p class="ta-muted mt-1">A guided flow for adding expenses or income step by step.</p>
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-800">
+              <%= tabler_icon("adjustments", classes: "h-3.5 w-3.5") %>
+              <span>Guided entry flow</span>
+            </div>
+            <h3 class="mt-3 ta-section-title">Add Entry with Wizard</h3>
+            <p class="ta-muted mt-1">This saves directly into <span class="font-semibold text-slate-700"><%= budget_month.label %></span> and can optionally create a recurring transaction while you enter it.</p>
+          </div>
+          <button type="button" class="ta-icon-btn" aria-label="Close entry wizard" title="Close" data-action="click->template-modal#close">
+            <%= tabler_icon("x", classes: "h-4 w-4 text-slate-500") %>
+          </button>
         </div>
-        <button type="button" class="ta-icon-btn" aria-label="Close entry wizard" title="Close" data-action="click->template-modal#close">
-          <%= tabler_icon("x", classes: "h-4 w-4 text-slate-500") %>
-        </button>
-      </div>
 
-      <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-wizard entry-preview", action: "submit->entry-wizard#validateSubmit" }, class: "space-y-4" do |form| %>
+      <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-wizard entry-preview", action: "submit->entry-wizard#validateSubmit turbo:submit-start->entry-wizard#submitStart turbo:submit-end->entry-wizard#submitEnd" }, class: "space-y-4" do |form| %>
         <%= hidden_field_tag :wizard_flow, "1" %>
 
+        <%= render "expense_entries/entry_wizard_progress", wizard_steps: wizard.wizard_steps %>
+
         <div class="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
-          <div class="text-sm font-medium text-slate-700" data-entry-wizard-target="progress"></div>
           <div data-entry-wizard-target="error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
         </div>
 
@@ -41,282 +32,19 @@
           </div>
         <% end %>
 
-        <section data-entry-wizard-target="step" class="space-y-4">
-          <div>
-            <h4 class="text-lg font-semibold text-slate-900">1. What kind of entry is this?</h4>
-            <p class="ta-muted mt-1">Choose the broad type first. This helps organize budget and reporting.</p>
-          </div>
+        <%= render "expense_entries/entry_wizard_step_one", form: form %>
 
-          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <% [
-              ["Income", "income", "cash", "text-emerald-600"],
-              ["Recurring Bill", "fixed", "repeat", "text-sky-600"],
-              ["Flexible Spending", "variable", "list", "text-amber-600"],
-              ["Debt Payment", "debt", "chart-bar", "text-rose-600"],
-              ["Manual Adjustment", "manual", "adjustments", "text-violet-600"],
-              ["Auto / Vehicle", "auto", "calendar-plus", "text-slate-600"]
-            ].each do |label, value, icon, color_class| %>
-              <button type="button" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50" data-action="click->entry-wizard#chooseSection" data-section-value="<%= value %>">
-                <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <%= tabler_icon(icon, classes: "h-4 w-4 #{color_class}") %>
-                  <span><%= label %></span>
-                </div>
-                <p class="mt-1 text-xs text-slate-500">Sets the section for this entry.</p>
-              </button>
-            <% end %>
-          </div>
+        <%= render "expense_entries/entry_wizard_step_two",
+            form: form,
+            selected_recurring_link: wizard.selected_recurring_link %>
 
-          <div class="grid gap-3 sm:grid-cols-3">
-            <div>
-              <%= form.label :section, class: "fb-label" %>
-              <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "section", action: "change->entry-wizard#syncTemplateOptions change->entry-wizard#updateSummary" } %>
-            </div>
-            <div>
-              <%= form.label :status, class: "fb-label" %>
-              <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "status", action: "change->entry-wizard#updateSummary" } %>
-            </div>
-            <div>
-              <%= form.label :need_or_want, "Need / Want", class: "fb-label" %>
-              <%= form.select :need_or_want, [["Need", "Need"], ["Want", "Want"], ["Leave blank", ""]], {}, class: "fb-select", data: { entry_wizard_target: "need", action: "change->entry-wizard#updateSummary" } %>
-            </div>
-          </div>
-        </section>
+        <%= render "expense_entries/entry_wizard_step_three", form: form %>
 
-        <section data-entry-wizard-target="step" class="hidden space-y-4">
-          <div>
-            <h4 class="text-lg font-semibold text-slate-900">2. Who is it for and what is it?</h4>
-            <p class="ta-muted mt-1">Add the payee/source, category, and account details.</p>
-          </div>
+        <%= render "expense_entries/entry_wizard_review_step",
+            budget_month: budget_month,
+            wizard: wizard %>
 
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div>
-              <%= form.label :category, class: "fb-label" %>
-              <%= form.text_field :category, class: "fb-input", placeholder: "Groceries, Rent, Paycheck...", data: { entry_wizard_target: "category", action: "input->entry-wizard#updateSummary" } %>
-            </div>
-            <div>
-              <%= form.label :payee, class: "fb-label" %>
-              <%= form.text_field :payee, class: "fb-input", placeholder: "Vendor or source", data: { entry_wizard_target: "payee", action: "input->entry-wizard#updateSummary" } %>
-            </div>
-            <div>
-              <%= form.label :account, class: "fb-label" %>
-              <%= form.text_field :account,
-                                  class: "fb-input",
-                                  placeholder: "Pick existing or type custom label",
-                                  autocomplete: "off",
-                                  data: { entry_wizard_target: "account", action: "input->entry-wizard#updateSummary" } %>
-              <% if active_account_names.any? %>
-                <div class="mt-2 flex flex-wrap gap-2">
-                  <% active_account_names.each do |account_name| %>
-                    <button type="button"
-                            class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
-                            data-action="click->entry-wizard#chooseAccount"
-                            data-account-value="<%= account_name %>">
-                      <%= account_name %>
-                    </button>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-            <div>
-              <%= form.label :notes, class: "fb-label" %>
-              <%= form.text_field :notes, class: "fb-input", placeholder: "Optional details", data: { entry_wizard_target: "notes", action: "input->entry-wizard#updateSummary" } %>
-            </div>
-            <div class="sm:col-span-2">
-              <label for="recurring_link" class="fb-label">Link to Recurring Transaction</label>
-              <%= select_tag :recurring_link,
-                             grouped_options_for_select(recurring_link_options, selected_recurring_link),
-                             include_blank: "No recurring link",
-                             class: "fb-select",
-                             id: "recurring_link",
-                             data: { entry_wizard_target: "recurringLink", action: "change->entry-wizard#updateSummary" } %>
-              <p class="mt-1 text-xs text-slate-500">Use this when the entry is an extra payment, off-schedule charge, or manual variation tied to an existing recurring item.</p>
-            </div>
-          </div>
-        </section>
-
-        <section data-entry-wizard-target="step" class="hidden space-y-4">
-          <div>
-            <h4 class="text-lg font-semibold text-slate-900">3. When and how much?</h4>
-            <p class="ta-muted mt-1">Add the date and at least one amount.</p>
-          </div>
-
-          <div class="grid gap-3 sm:grid-cols-3">
-            <div>
-              <%= form.label :occurred_on, "Date", class: "fb-label" %>
-              <%= form.date_field :occurred_on, class: "fb-input", data: { entry_wizard_target: "date", action: "change->entry-wizard#updateSummary" } %>
-            </div>
-            <div>
-              <%= form.label :planned_amount, class: "fb-label" %>
-              <%= form.number_field :planned_amount, step: 0.01, class: "fb-input", placeholder: "0.00", data: { entry_wizard_target: "planned", action: "input->entry-preview#update input->entry-wizard#updateSummary", entry_preview_target: "planned" } %>
-            </div>
-            <div>
-              <%= form.label :actual_amount, class: "fb-label" %>
-              <%= form.number_field :actual_amount, step: 0.01, class: "fb-input", placeholder: "0.00", data: { entry_wizard_target: "actual", action: "input->entry-preview#update input->entry-wizard#updateSummary", entry_preview_target: "actual" } %>
-            </div>
-          </div>
-
-          <div class="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">
-            Effective amount: <span class="ml-1 font-semibold" data-entry-preview-target="effective">$0.00</span>
-          </div>
-        </section>
-
-        <section data-entry-wizard-target="step" class="hidden space-y-4">
-          <div>
-            <h4 class="text-lg font-semibold text-slate-900">4. Review before saving</h4>
-            <p class="ta-muted mt-1">Confirm the details below, then save your entry.</p>
-          </div>
-
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</p>
-              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summarySection">Not set</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Category / Payee / Account</p>
-              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryWho">Not set</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Date</p>
-              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryWhen">Not set</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Amounts</p>
-              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryAmounts">Planned: $0.00 • Actual: $0.00</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</p>
-              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryNotes">No notes</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Recurring Link</p>
-              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryRecurring">No recurring link</p>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Reuse This Later</p>
-                  <p class="mt-1 text-sm text-slate-600">Optionally save this wizard entry as a recurring transaction for future months.</p>
-                </div>
-                <label class="flex items-center gap-2 text-sm font-medium text-slate-900">
-                  <%= hidden_field_tag "planning_template[enabled]", "0" %>
-                  <%= check_box_tag "planning_template[enabled]", "1", template_enabled, class: "fb-checkbox", data: { entry_wizard_target: "templateEnabled", action: "change->entry-wizard#toggleTemplateFields change->entry-wizard#updateSummary" } %>
-                  Save as recurring
-                </label>
-              </div>
-
-              <div class="mt-4 space-y-4 <%= template_enabled ? '' : 'hidden' %>" data-entry-wizard-target="templateFields">
-                <div class="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label for="planning_template_template_type" class="fb-label">Recurring Transaction Type</label>
-                    <%= select_tag "planning_template[template_type]",
-                        options_for_select([
-                          [ "Choose a recurring transaction type", "" ],
-                          *wizard_template_type_options
-                        ], selected_template_type),
-                        class: "fb-select",
-                        id: "planning_template_template_type",
-                        data: { entry_wizard_target: "templateType", action: "change->entry-wizard#updateTemplateOptions change->entry-wizard#updateTemplateFields change->entry-wizard#updateSummary" } %>
-                    <p class="mt-1 text-xs text-slate-500">The recurring item uses the payee/source. Account, notes, and date are reused from this entry.</p>
-                  </div>
-                  <div>
-                    <label for="planning_template_due_day" class="fb-label">Due Day</label>
-                    <%= number_field_tag "planning_template[due_day]", selected_due_day, min: 1, max: 31, class: "fb-input", id: "planning_template_due_day", data: { entry_wizard_target: "templateDueDay", action: "input->entry-wizard#updateSummary" } %>
-                    <p class="mt-1 text-xs text-slate-500">Used by subscription, monthly bill, and payment plan recurring items.</p>
-                  </div>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2 <%= selected_template_type == 'pay_schedule' ? '' : 'hidden' %>" data-entry-wizard-target="payScheduleFields">
-                  <div>
-                    <label for="planning_template_cadence" class="fb-label">Cadence</label>
-                    <%= select_tag "planning_template[cadence]",
-                        options_for_select(PaySchedule.cadences.keys.map { |key| [key.humanize, key] }, selected_cadence),
-                        class: "fb-select",
-                        id: "planning_template_cadence",
-                        data: { entry_wizard_target: "templateCadence", action: "change->entry-wizard#updateTemplateFields change->entry-wizard#updateSummary" } %>
-                  </div>
-                  <div>
-                    <label for="planning_template_weekend_adjustment" class="fb-label">Weekend Rule</label>
-                    <%= select_tag "planning_template[weekend_adjustment]",
-                        options_for_select(PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, selected_weekend_adjustment),
-                        class: "fb-select",
-                        id: "planning_template_weekend_adjustment",
-                        data: { entry_wizard_target: "templateWeekendAdjustment", action: "change->entry-wizard#updateSummary" } %>
-                  </div>
-                  <div>
-                    <label for="planning_template_day_of_month_one" class="fb-label">Day #1</label>
-                    <%= number_field_tag "planning_template[day_of_month_one]", selected_day_of_month_one, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_one", data: { entry_wizard_target: "templateDayOne", action: "input->entry-wizard#updateSummary" } %>
-                  </div>
-                  <div class="<%= selected_cadence == 'semimonthly' ? '' : 'hidden' %>" data-entry-wizard-target="payScheduleSecondDayFields">
-                    <label for="planning_template_day_of_month_two" class="fb-label">Day #2</label>
-                    <%= number_field_tag "planning_template[day_of_month_two]", selected_day_of_month_two, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_two", data: { entry_wizard_target: "templateDayTwo", action: "input->entry-wizard#updateSummary" } %>
-                  </div>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2 <%= selected_template_type == 'monthly_bill' ? '' : 'hidden' %>" data-entry-wizard-target="monthlyBillFields">
-                  <div>
-                    <label for="planning_template_kind" class="fb-label">Bill Type</label>
-                    <%= select_tag "planning_template[kind]",
-                        options_for_select(MonthlyBill.kinds.keys.map { |key| [key.humanize, key] }, selected_kind),
-                        class: "fb-select",
-                        id: "planning_template_kind",
-                        data: { entry_wizard_target: "templateKind", action: "change->entry-wizard#updateSummary" } %>
-                  </div>
-                  <div>
-                    <label for="planning_template_billing_frequency" class="fb-label">Billing Frequency</label>
-                    <%= select_tag "planning_template[billing_frequency]",
-                        options_for_select(billing_frequency_options, selected_billing_frequency),
-                        class: "fb-select",
-                        id: "planning_template_billing_frequency",
-                        data: { entry_wizard_target: "templateBillingFrequency", action: "change->entry-wizard#updateSummary" } %>
-                  </div>
-                  <div class="sm:col-span-2">
-                    <span class="fb-label">Billing Months</span>
-                    <%= hidden_field_tag "planning_template[billing_months][]", "" %>
-                    <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      <% calendar_month_options.each do |label, value| %>
-                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                          <%= check_box_tag "planning_template[billing_months][]",
-                                            value,
-                                            selected_billing_months.include?(value),
-                                            class: "fb-checkbox",
-                                            data: { action: "change->entry-wizard#updateSummary" } %>
-                          <span><%= label %></span>
-                        </label>
-                      <% end %>
-                    </div>
-                    <p class="mt-1 text-xs text-slate-500">Choose the months this bill should appear. Semiannual bills like HOA dues typically use two months.</p>
-                  </div>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2 <%= selected_template_type == 'payment_plan' ? '' : 'hidden' %>" data-entry-wizard-target="paymentPlanFields">
-                  <div>
-                    <label for="planning_template_total_due" class="fb-label">Total Due</label>
-                    <%= number_field_tag "planning_template[total_due]", selected_total_due, step: 0.01, min: 0, class: "fb-input", id: "planning_template_total_due", data: { entry_wizard_target: "templateTotalDue", action: "input->entry-wizard#updateSummary" } %>
-                  </div>
-                  <div>
-                    <label for="planning_template_amount_paid" class="fb-label">Amount Paid So Far</label>
-                    <%= number_field_tag "planning_template[amount_paid]", selected_amount_paid, step: 0.01, min: 0, class: "fb-input", id: "planning_template_amount_paid", data: { entry_wizard_target: "templateAmountPaid", action: "input->entry-wizard#updateSummary" } %>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Recurring Save Summary</p>
-              <p class="mt-1 text-sm text-slate-900" data-entry-wizard-target="summaryTemplate">One-off entry only</p>
-            </div>
-          </div>
-        </section>
-
-        <div class="flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
-          <div class="flex items-center gap-2">
-            <button type="button" class="fb-btn-secondary hidden" data-entry-wizard-target="backButton" data-action="click->entry-wizard#back">Back</button>
-            <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Cancel</button>
-          </div>
-          <div class="flex items-center gap-2">
-            <button type="button" class="fb-btn-secondary" data-entry-wizard-target="nextButton" data-action="click->entry-wizard#next">Next</button>
-            <%= form.submit "Save Entry", class: "fb-btn-primary hidden", data: { entry_wizard_target: "submitButton" } %>
-          </div>
-        </div>
+        <%= render "expense_entries/entry_wizard_footer", form: form %>
       <% end %>
     </div>
   </div>

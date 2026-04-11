@@ -6,7 +6,12 @@
                     .tally
                     .sort_by { |reason, count| [-count, reason.downcase] }
                     .first(8) %>
-  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups expense-entries-filter tabs" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" data-tabs-default-tab-value="<%= default_timeline_view %>" data-action="tabs:switched@document->expense-entries-filter#restoreAndRefresh">
+  <% timeline_view_urls = {
+    sections: budget_month_tab_path(budget_month, "timeline"),
+    "full-list": budget_month_tab_path(budget_month, "timeline"),
+    calendar: budget_month_tab_path(budget_month, "calendar")
+  } %>
+  <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups expense-entries-filter tabs" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" data-tabs-default-tab-value="<%= default_timeline_view %>" data-tabs-tab-urls-value="<%= timeline_view_urls.to_json %>" data-action="tabs:switched@document->expense-entries-filter#restoreAndRefresh">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Budget</h3>

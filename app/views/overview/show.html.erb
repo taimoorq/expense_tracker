@@ -9,16 +9,10 @@
   </div>
 <% end %>
 
+<% overview = @overview %>
+
 <div class="space-y-6">
-  <% if @onboarding_visible %>
-    <% step1_done = @accounts.any? %>
-    <% step2_done = @template_total.positive? && @linked_template_total == @template_total %>
-    <% step2_started = @template_total.positive? || @linked_template_total.positive? %>
-    <% step3_done = @current_month.present? && @current_month_entries.any? %>
-    <% step3_started = @current_month.present? %>
-    <% step4_done = @current_month_entries.any? && (@review_attention_count.zero? || @linked_paid_entries_count.positive?) %>
-    <% step4_started = @current_month_entries.any? %>
-    <% onboarding_complete = step1_done && step2_done && step3_done && step4_done %>
+  <% if overview.onboarding_visible %>
     <section class="ta-card ta-surface-plan-soft">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -26,48 +20,23 @@
           <h3 class="mt-2 text-xl font-semibold text-slate-900">Set up the month in the right order</h3>
           <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Start with accounts, then save the recurring transactions you expect, create a month and import them into it, and finally make manual updates as the real month unfolds.</p>
         </div>
-        <span class="rounded-full px-3 py-1 text-xs font-semibold <%= onboarding_complete ? 'bg-emerald-100 text-emerald-800' : ((step1_done || step2_started || step3_started || step4_started) ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-700') %>">
-          <%= onboarding_complete ? "Complete" : ((step1_done || step2_started || step3_started || step4_started) ? "In progress" : "Start here") %>
+        <span class="rounded-full px-3 py-1 text-xs font-semibold <%= overview.onboarding_status[:classes] %>">
+          <%= overview.onboarding_status[:label] %>
         </span>
       </div>
 
       <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-2xl border bg-white/90 p-4 <%= step1_done ? 'border-emerald-200' : 'border-slate-200' %>">
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Step 1</p>
-            <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold <%= step1_done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' %>"><%= step1_done ? "Done" : "Next" %></span>
-          </div>
-          <h4 class="mt-2 text-sm font-semibold text-slate-900">Add accounts</h4>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Create checking, savings, card, or debt accounts first, and optionally add opening balance snapshots.</p>
-          <p class="mt-3 text-xs font-semibold text-slate-700"><%= pluralize(@accounts.count, "account") %> set up</p>
-        </article>
-        <article class="rounded-2xl border bg-white/90 p-4 <%= step2_done ? 'border-emerald-200' : (step2_started ? 'border-indigo-200' : 'border-slate-200') %>">
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Step 2</p>
-            <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold <%= step2_done ? 'bg-emerald-100 text-emerald-700' : (step2_started ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600') %>"><%= step2_done ? "Done" : (step2_started ? "In progress" : "Next") %></span>
-          </div>
-          <h4 class="mt-2 text-sm font-semibold text-slate-900">Set up recurring transactions</h4>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Save the incoming and outgoing items you expect, then link them to accounts where possible.</p>
-          <p class="mt-3 text-xs font-semibold text-slate-700"><%= @linked_template_total %> of <%= @template_total %> recurring transactions linked</p>
-        </article>
-        <article class="rounded-2xl border bg-white/90 p-4 <%= step3_done ? 'border-emerald-200' : (step3_started ? 'border-indigo-200' : 'border-slate-200') %>">
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Step 3</p>
-            <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold <%= step3_done ? 'bg-emerald-100 text-emerald-700' : (step3_started ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600') %>"><%= step3_done ? "Done" : (step3_started ? "In progress" : "Next") %></span>
-          </div>
-          <h4 class="mt-2 text-sm font-semibold text-slate-900">Create a month and import recurring</h4>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Create the month, then use Plan and Edit to pull the saved recurring transactions into it.</p>
-          <p class="mt-3 text-xs font-semibold text-slate-700"><%= @current_month ? "#{@current_month_entries.count} entries in #{@current_month.label}" : "No month created yet" %></p>
-        </article>
-        <article class="rounded-2xl border bg-white/90 p-4 <%= step4_done ? 'border-emerald-200' : (step4_started ? 'border-indigo-200' : 'border-slate-200') %>">
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Step 4</p>
-            <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold <%= step4_done ? 'bg-emerald-100 text-emerald-700' : (step4_started ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600') %>"><%= step4_done ? "Done" : (step4_started ? "In progress" : "Next") %></span>
-          </div>
-          <h4 class="mt-2 text-sm font-semibold text-slate-900">Adjust as the month unfolds</h4>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Add one-off items, update amounts, and mark entries paid as you go. Some recurring items may also auto-complete when due.</p>
-          <p class="mt-3 text-xs font-semibold text-slate-700"><%= @current_month ? "#{@review_attention_count} items still need review" : "Review starts after month setup" %></p>
-        </article>
+        <% overview.onboarding_steps.each do |step| %>
+          <article class="rounded-2xl border bg-white/90 p-4 <%= step[:card_classes] %>">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Step <%= step[:number] %></p>
+              <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold <%= step[:badge_classes] %>"><%= step[:badge_label] %></span>
+            </div>
+            <h4 class="mt-2 text-sm font-semibold text-slate-900"><%= step[:title] %></h4>
+            <p class="mt-1 text-xs leading-5 text-slate-600"><%= step[:description] %></p>
+            <p class="mt-3 text-xs font-semibold text-slate-700"><%= step[:metric] %></p>
+          </article>
+        <% end %>
       </div>
 
       <div class="mt-4 flex flex-wrap items-center gap-2">
@@ -79,8 +48,8 @@
           <%= tabler_icon("repeat", classes: "ta-action-icon text-slate-600") %>
           <span>Set Up Recurring</span>
         <% end %>
-        <% if @current_month %>
-          <%= link_to budget_month_tab_path(@current_month, "entries"), class: "fb-btn-secondary ta-action-btn" do %>
+        <% if overview.current_month %>
+          <%= link_to budget_month_tab_path(overview.current_month, "entries"), class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("list", classes: "ta-action-icon text-slate-600") %>
             <span>Import Recurring into Month</span>
           <% end %>
@@ -114,14 +83,14 @@
           <p class="mt-1 text-xs leading-5 text-slate-600">Start a fresh month or clone from the latest one.</p>
         <% end %>
 
-        <%= link_to(@current_month ? new_budget_month_from_path(@current_month) : budget_months_path(anchor: "existing-months"), class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50") do %>
+        <%= link_to(overview.current_month ? new_budget_month_from_path(overview.current_month) : budget_months_path(anchor: "existing-months"), class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50") do %>
           <p class="text-[13px] font-semibold text-slate-900">Clone Latest Month</p>
           <p class="mt-1 text-xs leading-5 text-slate-600">Reuse the most recent setup for the next available month.</p>
         <% end %>
 
-        <%= link_to(@current_month ? new_wizard_budget_month_expense_entries_path(@current_month) : new_budget_month_path, class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50", data: (@current_month ? { turbo_frame: "entry_wizard_modal" } : {})) do %>
+        <%= link_to(overview.current_month ? new_wizard_budget_month_expense_entries_path(overview.current_month) : new_budget_month_path, class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50", data: (overview.current_month ? { turbo_frame: "entry_wizard_modal" } : {})) do %>
           <p class="text-[13px] font-semibold text-slate-900">Add Entry with Wizard</p>
-          <p class="mt-1 text-xs leading-5 text-slate-600"><%= @current_month ? "Open the guided wizard directly for the active month." : "Create a month first, then use the guided wizard for one-off items." %></p>
+          <p class="mt-1 text-xs leading-5 text-slate-600"><%= overview.current_month ? "Open the guided wizard directly for the active month." : "Create a month first, then use the guided wizard for one-off items." %></p>
         <% end %>
 
         <%= link_to budget_months_path(anchor: "quick-import"), class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50" do %>
@@ -142,42 +111,31 @@
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Continue</p>
-          <h3 class="mt-2 text-2xl font-semibold text-slate-900"><%= @current_month ? @current_month.label : "No active month yet" %></h3>
-          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            <%= @current_month ? "Jump back into the month most likely to need attention right now." : "Create a month first, then return here for faster shortcuts and review widgets." %>
-          </p>
+          <h3 class="mt-2 text-2xl font-semibold text-slate-900"><%= overview.continue_title %></h3>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"><%= overview.continue_description %></p>
         </div>
         <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          <%= @current_month&.month_on == Date.current.beginning_of_month ? "Current month" : (@current_month ? "Most recent month" : "Setup needed") %>
+          <%= overview.continue_badge_label %>
         </div>
       </div>
 
       <div class="mt-5 grid gap-3 sm:grid-cols-3">
-        <div class="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Leftover</p>
-          <p class="mt-2 text-2xl font-semibold <%= @current_month && @current_month.calculated_leftover >= 0 ? 'text-emerald-700' : 'text-slate-900' %>"><%= @current_month ? number_to_currency(@current_month.calculated_leftover) : "-" %></p>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Entries</p>
-          <p class="mt-2 text-2xl font-semibold text-slate-900"><%= @current_month ? @current_month_entries.count : 0 %></p>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Needs review</p>
-          <p class="mt-2 text-2xl font-semibold text-slate-900"><%= @current_month ? @review_attention_count : 0 %></p>
-        </div>
+        <% overview.continue_stats.each do |item| %>
+          <%= render "overview/stat_card", item: item %>
+        <% end %>
       </div>
 
       <div class="mt-5 flex flex-wrap items-center gap-2">
-        <% if @current_month %>
-          <%= link_to budget_month_tab_path(@current_month, "timeline"), class: "fb-btn-primary ta-action-btn" do %>
+        <% if overview.current_month %>
+          <%= link_to budget_month_tab_path(overview.current_month, "timeline"), class: "fb-btn-primary ta-action-btn" do %>
             <%= tabler_icon("timeline", classes: "ta-action-icon text-indigo-100") %>
             <span>Open Budget</span>
           <% end %>
-          <%= link_to budget_month_tab_path(@current_month, "entries"), class: "fb-btn-secondary ta-action-btn" do %>
+          <%= link_to budget_month_tab_path(overview.current_month, "entries"), class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("list", classes: "ta-action-icon text-slate-600") %>
             <span>Open Plan and Edit</span>
           <% end %>
-          <%= link_to budget_month_tab_path(@current_month, "calendar"), class: "fb-btn-secondary ta-action-btn" do %>
+          <%= link_to budget_month_tab_path(overview.current_month, "calendar"), class: "fb-btn-secondary ta-action-btn" do %>
             <%= tabler_icon("calendar-month", classes: "ta-action-icon text-slate-600") %>
             <span>Open Calendar</span>
           <% end %>
@@ -193,11 +151,11 @@
         <% end %>
       </div>
 
-      <% if @recent_months.any? %>
+      <% if overview.recent_months.any? %>
         <div class="mt-5 border-t border-slate-200 pt-4">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Recent months</p>
           <div class="mt-3 grid gap-2 sm:grid-cols-2">
-            <% @recent_months.each do |month| %>
+            <% overview.recent_months.each do |month| %>
               <%= link_to budget_month_path(month), class: "flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
                 <span><%= month.label %></span>
                 <span class="font-semibold"><%= number_to_currency(month.calculated_leftover) %></span>
@@ -209,18 +167,18 @@
     </article>
 
     <article class="ta-card ta-surface-plan-soft h-fit">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @next_step[:badge] %></p>
-      <h3 class="mt-3 text-xl font-semibold text-slate-900"><%= @next_step[:title] %></h3>
-      <p class="mt-2 text-sm leading-6 text-slate-600"><%= @next_step[:description] %></p>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= overview.next_step_badge %></p>
+      <h3 class="mt-3 text-xl font-semibold text-slate-900"><%= overview.next_step_title %></h3>
+      <p class="mt-2 text-sm leading-6 text-slate-600"><%= overview.next_step_description %></p>
 
       <div class="mt-5 space-y-3">
-        <%= link_to @next_step[:primary_path], class: "fb-btn-primary ta-action-btn w-full justify-center", data: (@next_step[:primary_turbo_frame] ? { turbo_frame: @next_step[:primary_turbo_frame] } : {}) do %>
+        <%= link_to overview.next_step_primary_action[:path], class: "fb-btn-primary ta-action-btn w-full justify-center", data: (overview.next_step_primary_action[:turbo_frame] ? { turbo_frame: overview.next_step_primary_action[:turbo_frame] } : {}) do %>
           <%= tabler_icon("arrow-right", classes: "ta-action-icon text-indigo-100") %>
-          <span><%= @next_step[:primary_label] %></span>
+          <span><%= overview.next_step_primary_action[:label] %></span>
         <% end %>
-        <%= link_to @next_step[:secondary_path], class: "fb-btn-secondary ta-action-btn w-full justify-center", data: (@next_step[:secondary_turbo_frame] ? { turbo_frame: @next_step[:secondary_turbo_frame] } : {}) do %>
+        <%= link_to overview.next_step_secondary_action[:path], class: "fb-btn-secondary ta-action-btn w-full justify-center", data: (overview.next_step_secondary_action[:turbo_frame] ? { turbo_frame: overview.next_step_secondary_action[:turbo_frame] } : {}) do %>
           <%= tabler_icon("sparkles", classes: "ta-action-icon text-slate-600") %>
-          <span><%= @next_step[:secondary_label] %></span>
+          <span><%= overview.next_step_secondary_action[:label] %></span>
         <% end %>
       </div>
 
@@ -235,26 +193,26 @@
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Cash Flow</p>
-        <h3 class="mt-2 text-xl font-semibold text-slate-900"><%= @overview_cashflow_year %> money flow</h3>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This visual combines all saved months in <%= @overview_cashflow_year %> so you can see how income has flowed into spending buckets and leftover cash across the year so far.</p>
+        <h3 class="mt-2 text-xl font-semibold text-slate-900"><%= overview.overview_cashflow_year %> money flow</h3>
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This visual combines all saved months in <%= overview.overview_cashflow_year %> so you can see how income has flowed into spending buckets and leftover cash across the year so far.</p>
       </div>
       <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-        <%= pluralize(@year_budget_months.count, "month") %>
+        <%= pluralize(overview.year_budget_months.count, "month") %>
       </div>
     </div>
 
-    <% if @year_cashflow_payload[:links].any? %>
+    <% if overview.cashflow_available? %>
       <div
         class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-3"
         data-controller="sankey-chart"
-        data-sankey-chart-title-value="<%= "#{@overview_cashflow_year} cash flow graph" %>"
-        data-sankey-chart-loading-label-value="<%= "#{@overview_cashflow_year} cash flow graph" %>"
+        data-sankey-chart-title-value="<%= overview.cashflow_chart_title %>"
+        data-sankey-chart-loading-label-value="<%= overview.cashflow_chart_title %>"
         data-sankey-chart-timeout-ms-value="4000"
-        data-sankey-chart-nodes-value="<%= @year_cashflow_payload[:nodes].to_json %>"
-        data-sankey-chart-links-value="<%= @year_cashflow_payload[:links].to_json %>">
+        data-sankey-chart-nodes-value="<%= overview.year_cashflow_payload[:nodes].to_json %>"
+        data-sankey-chart-links-value="<%= overview.year_cashflow_payload[:links].to_json %>">
         <div data-sankey-chart-target="loading" class="flex h-[24rem] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80 px-6 text-center">
           <div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-500"></div>
-          <p class="mt-4 text-sm font-semibold text-slate-900" data-loading-text>Loading the <%= @overview_cashflow_year %> cash flow graph…</p>
+          <p class="mt-4 text-sm font-semibold text-slate-900" data-loading-text>Loading the <%= overview.overview_cashflow_year %> cash flow graph…</p>
           <p class="mt-2 max-w-md text-sm leading-6 text-slate-500">We are preparing a year-to-date view of income, outflow buckets, and leftover cash.</p>
         </div>
         <div data-sankey-chart-target="error" class="hidden h-[24rem] rounded-xl border border-rose-200 bg-rose-50/80 px-6 py-8">
@@ -262,7 +220,7 @@
             <div class="rounded-full bg-white p-3 text-rose-600 shadow-sm">
               <%= tabler_icon("alert-circle", classes: "h-7 w-7") %>
             </div>
-            <h4 class="mt-4 text-lg font-semibold text-rose-900">The <%= @overview_cashflow_year %> cash flow graph could not load</h4>
+            <h4 class="mt-4 text-lg font-semibold text-rose-900">The <%= overview.overview_cashflow_year %> cash flow graph could not load</h4>
             <p class="mt-2 max-w-lg text-sm leading-6 text-rose-800" data-sankey-chart-target="errorMessage">Something went wrong while rendering this graph.</p>
           </div>
         </div>
@@ -270,35 +228,22 @@
       </div>
 
       <div class="mt-4 grid gap-3 lg:grid-cols-4">
-        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Months Included</p>
-          <p class="mt-2 text-xl font-semibold text-slate-900"><%= @year_cashflow_payload[:month_count] %></p>
-        </div>
-        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Income</p>
-          <p class="mt-2 text-xl font-semibold text-emerald-700"><%= number_to_currency(@year_cashflow_payload[:income_total]) %></p>
-        </div>
-        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Outflow</p>
-          <p class="mt-2 text-xl font-semibold text-rose-700"><%= number_to_currency(@year_cashflow_payload[:outflow_total]) %></p>
-        </div>
-        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Leftover</p>
-          <p class="mt-2 text-xl font-semibold <%= @year_cashflow_payload[:leftover_total] >= 0 ? 'text-emerald-700' : 'text-slate-900' %>"><%= number_to_currency(@year_cashflow_payload[:leftover_total]) %></p>
-        </div>
+        <% overview.cashflow_stat_cards.each do |item| %>
+          <%= render "overview/stat_card", item: item %>
+        <% end %>
       </div>
 
       <div class="mt-4 rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">How to read this</p>
         <ul class="mt-2 space-y-2 text-sm leading-6 text-amber-900">
-          <% @year_cashflow_payload[:limitations].each do |item| %>
+          <% overview.year_cashflow_payload[:limitations].each do |item| %>
             <li><%= item %></li>
           <% end %>
         </ul>
       </div>
     <% else %>
       <div class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-8">
-        <h4 class="text-lg font-semibold text-slate-900">No <%= @overview_cashflow_year %> cash flow to chart yet</h4>
+        <h4 class="text-lg font-semibold text-slate-900">No <%= overview.overview_cashflow_year %> cash flow to chart yet</h4>
         <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Once you have saved months with income and spending entries this year, this section will show how money has moved through the year so far.</p>
       </div>
     <% end %>
@@ -313,25 +258,21 @@
             <%= tabler_icon("check-circle", classes: "h-5 w-5 text-amber-600") %>
             <span>What needs review</span>
           </h3>
-          <p class="mt-2 text-sm leading-6 text-slate-600"><%= @current_month ? "Counts are based on #{@current_month.label}." : "Create a month to start surfacing review items here." %></p>
+          <p class="mt-2 text-sm leading-6 text-slate-600"><%= overview.attention_queue_description %></p>
         </div>
-        <div class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"><%= @current_month ? @review_attention_count : 0 %></div>
+        <div class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"><%= overview.attention_queue_total %></div>
       </div>
 
       <div class="mt-4 space-y-3">
-        <% [
-          ["Still planned and due", @due_planned_count],
-          ["Missing key details", @missing_details_count],
-          ["Paid without actual", @paid_missing_actual_count]
-        ].each do |label, count| %>
-          <% if @current_month %>
-            <%= link_to budget_month_tab_path(@current_month, "entries"), class: "flex items-center justify-between rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm text-slate-700 transition hover:border-amber-200 hover:bg-amber-50" do %>
-              <span><%= label %></span>
-              <span class="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700"><%= count %></span>
+        <% overview.attention_items.each do |item| %>
+          <% if overview.current_month %>
+            <%= link_to budget_month_tab_path(overview.current_month, "entries"), class: "flex items-center justify-between rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm text-slate-700 transition hover:border-amber-200 hover:bg-amber-50" do %>
+              <span><%= item[:label] %></span>
+              <span class="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700"><%= item[:count] %></span>
             <% end %>
           <% else %>
             <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-500">
-              <span><%= label %></span>
+              <span><%= item[:label] %></span>
               <span class="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600">0</span>
             </div>
           <% end %>
@@ -349,30 +290,17 @@
           </h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">Saved recurring transactions reduce rebuilding each month, and linked recurring items carry account context into entries.</p>
         </div>
-        <div class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800"><%= @template_total %> total</div>
+        <div class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800"><%= overview.template_total %> total</div>
       </div>
 
       <div class="mt-4 grid gap-2 sm:grid-cols-2">
-        <%= link_to planning_templates_path(anchor: "pay-schedules"), class: "flex items-center justify-between rounded-xl border border-slate-200 bg-white/85 px-3 py-3 text-sm text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" do %>
-          <span>Pay schedules</span>
-          <span class="font-semibold"><%= @template_counts[:pay_schedules] %></span>
-        <% end %>
-        <%= link_to planning_templates_path(anchor: "subscriptions"), class: "flex items-center justify-between rounded-xl border border-slate-200 bg-white/85 px-3 py-3 text-sm text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" do %>
-          <span>Subscriptions</span>
-          <span class="font-semibold"><%= @template_counts[:subscriptions] %></span>
-        <% end %>
-        <%= link_to planning_templates_path(anchor: "monthly-bills"), class: "flex items-center justify-between rounded-xl border border-slate-200 bg-white/85 px-3 py-3 text-sm text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" do %>
-          <span>Monthly bills</span>
-          <span class="font-semibold"><%= @template_counts[:monthly_bills] %></span>
-        <% end %>
-        <%= link_to planning_templates_path(anchor: "payment-plans"), class: "flex items-center justify-between rounded-xl border border-slate-200 bg-white/85 px-3 py-3 text-sm text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" do %>
-          <span>Payment plans</span>
-          <span class="font-semibold"><%= @template_counts[:payment_plans] %></span>
+        <% overview.recurring_breakdown_items.each do |item| %>
+          <%= render "overview/linked_summary_item", item: item %>
         <% end %>
       </div>
 
       <div class="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-600">
-        <span class="font-semibold text-slate-800"><%= @linked_template_total %></span> linked recurring transaction<%= @linked_template_total == 1 ? "" : "s" %> currently connected to accounts.
+        <%= overview.recurring_linked_summary %>
       </div>
 
       <%= link_to planning_templates_path, class: "fb-btn-secondary ta-action-btn mt-4 w-full justify-center" do %>
@@ -391,23 +319,17 @@
           </h3>
           <p class="mt-2 text-sm leading-6 text-slate-600">Keep balances visible without bank sync, while linked entries keep account activity current in monthly workflows.</p>
         </div>
-        <div class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800"><%= pluralize(@accounts.count, "account") %></div>
+        <div class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800"><%= overview.accounts_badge_label %></div>
       </div>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-2">
-        <div class="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Net worth</p>
-          <p class="mt-2 text-2xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Latest snapshot</p>
-          <p class="mt-2 text-sm font-semibold text-slate-900"><%= @latest_snapshot ? l(@latest_snapshot.recorded_on, format: :long) : "No snapshots yet" %></p>
-          <p class="mt-1 text-xs text-slate-500"><%= @latest_snapshot ? @latest_snapshot.account.name : "Add an account balance to start tracking." %></p>
-        </div>
+        <% overview.account_snapshot_cards.each do |item| %>
+          <%= render "overview/stat_card", item: item %>
+        <% end %>
       </div>
 
       <div class="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-600">
-        <span class="font-semibold text-slate-800"><%= @linked_entries_count %></span> linked month entr<%= @linked_entries_count == 1 ? "y" : "ies" %> in <%= @current_month&.label || "the active month" %> (<%= @linked_paid_entries_count %> paid).
+        <%= overview.linked_entries_summary %>
       </div>
 
       <div class="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-600">
@@ -427,5 +349,5 @@
     </article>
   </section>
 
-  <%= render "expense_entries/entry_wizard_empty" if @current_month %>
+  <%= render "expense_entries/entry_wizard_empty" if overview.current_month %>
 </div>

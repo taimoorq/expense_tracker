@@ -52,4 +52,112 @@ RSpec.describe "Entry wizard", type: :system do
     expect(page).to have_content("Netflix")
     expect(user.subscriptions.order(:created_at).last.name).to eq("Netflix")
   end
+
+  it "shows a pending save state while the turbo submission is in flight", js: true do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+    sign_in_as(user)
+    visit budget_month_path(budget_month)
+
+    click_button "Plan and Edit"
+    click_link "Open Guided Wizard"
+
+    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+
+    within("turbo-frame#entry_wizard_modal") do
+      select "Income", from: "Section"
+      select "Planned", from: "Status"
+      click_button "Next"
+
+      fill_in "Category", with: "Paycheck"
+      fill_in "Payee", with: "Consulting Client"
+      fill_in "Account", with: "Checking"
+      click_button "Next"
+
+      fill_in "Date", with: "2026-03-18"
+      fill_in "Planned amount", with: "1400"
+      click_button "Next"
+    end
+
+    execute_script(<<~JS)
+      window.__originalWizardFetch = window.fetch.bind(window)
+      window.fetch = (...args) => new Promise((resolve, reject) => {
+        setTimeout(() => {
+          window.__originalWizardFetch(...args).then(resolve).catch(reject)
+        }, 400)
+      })
+    JS
+
+    within("turbo-frame#entry_wizard_modal") do
+      click_button "Save Entry"
+    end
+
+    expect(page).to have_css("turbo-frame#entry_wizard_modal button[aria-busy='true'][disabled]", text: "Saving entry...")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton'][disabled]", text: "Cancel")
+
+    expect(page).to have_content("Entry added.")
+  end
+
+  it "recovers cleanly when a turbo wizard submission returns validation errors", js: true do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    other_user = create(:user)
+    other_subscription = create(:subscription, user: other_user, name: "Other User Subscription")
+    forged_token = "#{other_subscription.class.name}:#{other_subscription.id}"
+
+    sign_in_as(user)
+    visit budget_month_path(budget_month)
+
+    click_button "Plan and Edit"
+    click_link "Open Guided Wizard"
+
+    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+
+    within("turbo-frame#entry_wizard_modal") do
+      select "Fixed", from: "Section"
+      select "Planned", from: "Status"
+      click_button "Next"
+
+      fill_in "Category", with: "Streaming"
+      fill_in "Payee", with: "Movie Box"
+      fill_in "Account", with: "Checking"
+      click_button "Next"
+
+      fill_in "Date", with: "2026-03-18"
+      fill_in "Planned amount", with: "19.99"
+      click_button "Next"
+    end
+
+    execute_script(<<~JS)
+      const select = document.querySelector("turbo-frame#entry_wizard_modal select#recurring_link")
+      const option = document.createElement("option")
+      option.value = "#{forged_token}"
+      option.textContent = "Forged recurring link"
+      select.appendChild(option)
+      select.value = "#{forged_token}"
+      select.dispatchEvent(new Event("change", { bubbles: true }))
+
+      window.__originalWizardFetch = window.fetch.bind(window)
+      window.fetch = (...args) => new Promise((resolve, reject) => {
+        setTimeout(() => {
+          window.__originalWizardFetch(...args).then(resolve).catch(reject)
+        }, 400)
+      })
+    JS
+
+    within("turbo-frame#entry_wizard_modal") do
+      click_button "Save Entry"
+    end
+
+    expect(page).to have_css("turbo-frame#entry_wizard_modal button[aria-busy='true'][disabled]", text: "Saving entry...")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton'][disabled]", text: "Cancel")
+
+    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_content("Choose a valid recurring transaction to link.")
+    expect(page).to have_no_css("turbo-frame#entry_wizard_modal button[aria-busy='true']")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton']:not([disabled])", text: "Cancel")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='nextButton']:not([disabled])", text: "Next")
+    expect(budget_month.expense_entries.reload.count).to eq(0)
+  end
 end

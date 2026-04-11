@@ -204,7 +204,36 @@ module ApplicationHelper
   end
 
   def wizard_template_type_options
-    TemplateTypeRegistry.wizard_template_types.map { |type| [ type.humanize, type ] }
+    Recurring::TemplateCatalog.wizard_template_types.map { |type| [ type.humanize, type ] }
+  end
+
+  def entry_wizard_presenter(budget_month:, expense_entry:)
+    Budgeting::EntryWizardPresenter.new(
+      budget_month: budget_month,
+      expense_entry: expense_entry,
+      params: params,
+      wizard_steps: entry_wizard_steps
+    )
+  end
+
+  def entry_wizard_steps
+    [
+      { number: 1, title: "Type", description: "Choose the section and status." },
+      { number: 2, title: "Details", description: "Capture payee, category, account, and notes." },
+      { number: 3, title: "Amounts", description: "Set the date and at least one amount." },
+      { number: 4, title: "Review", description: "Confirm the entry and optionally save it as recurring." }
+    ]
+  end
+
+  def entry_wizard_section_options
+    [
+      { label: "Income", value: "income", icon: "cash", color_class: "text-emerald-600", description: "Paychecks, side income, reimbursements, and other inflow." },
+      { label: "Recurring Bill", value: "fixed", icon: "repeat", color_class: "text-sky-600", description: "Predictable monthly costs like rent, insurance, or utilities." },
+      { label: "Flexible Spending", value: "variable", icon: "list", color_class: "text-amber-600", description: "Groceries, dining, shopping, and other changing spend." },
+      { label: "Debt Payment", value: "debt", icon: "chart-bar", color_class: "text-rose-600", description: "Cards, loans, and structured payoff entries." },
+      { label: "Manual Adjustment", value: "manual", icon: "adjustments", color_class: "text-violet-600", description: "Catch-up entries, corrections, and one-off bookkeeping." },
+      { label: "Auto / Vehicle", value: "auto", icon: "car", color_class: "text-slate-600", description: "Gas, repairs, registration, and vehicle-specific costs." }
+    ]
   end
 
   def recurring_link_options(user = current_user)
@@ -357,9 +386,7 @@ module ApplicationHelper
   end
 
   def template_matches_entry?(template, entry, month_on)
-    return template.matches_entry?(entry) if template.is_a?(CreditCard)
-
-    template.matches_entry?(entry, month_on: month_on)
+    template.matches_entry_for_month?(entry, month_on: month_on)
   end
 
   def app_icon_partial_path(name)

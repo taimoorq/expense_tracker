@@ -6,16 +6,38 @@
   <% preferred_tab = current_user.preferred_month_view.presence_in(%w[timeline breakdown calendar entries]) %>
   <% default_tab = (requested_tab == "calendar" || preferred_tab == "calendar") ? "timeline" : (requested_tab || (@expense_entries.empty? ? "entries" : (preferred_tab || "timeline"))) %>
   <% default_timeline_view = (requested_tab == "calendar" || preferred_tab == "calendar") ? "calendar" : "sections" %>
+  <% active_navigation_tab = requested_tab == "calendar" ? "calendar" : default_tab %>
+  <% current_month_tab_urls = {
+    timeline: budget_month_tab_path(@budget_month, "timeline"),
+    breakdown: budget_month_tab_path(@budget_month, "breakdown"),
+    entries: budget_month_tab_path(@budget_month, "entries")
+  } %>
+  <% previous_month_tab_urls = @previous_budget_month ? {
+    timeline: budget_month_tab_path(@previous_budget_month, "timeline"),
+    calendar: budget_month_tab_path(@previous_budget_month, "calendar"),
+    breakdown: budget_month_tab_path(@previous_budget_month, "breakdown"),
+    entries: budget_month_tab_path(@previous_budget_month, "entries")
+  } : nil %>
+  <% next_month_tab_urls = @next_budget_month ? {
+    timeline: budget_month_tab_path(@next_budget_month, "timeline"),
+    calendar: budget_month_tab_path(@next_budget_month, "calendar"),
+    breakdown: budget_month_tab_path(@next_budget_month, "breakdown"),
+    entries: budget_month_tab_path(@next_budget_month, "entries")
+  } : nil %>
 
   <% content_for :page_header do %>
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-3" data-controller="month-navigation" data-month-navigation-current-tab-value="<%= active_navigation_tab %>" data-action="tabs:switched@document->month-navigation#sync">
       <div>
         <h2 class="inline-flex items-center gap-3 text-2xl font-semibold">
           <% if @previous_budget_month %>
-            <%= link_to(requested_tab ? budget_month_tab_path(@previous_budget_month, requested_tab) : budget_month_path(@previous_budget_month),
+            <%= link_to(previous_month_tab_urls[active_navigation_tab.to_sym],
                         class: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600",
                         title: @previous_budget_month.label,
-                        aria: { label: "View #{@previous_budget_month.label}" }) do %>
+                        aria: { label: "View #{@previous_budget_month.label}" },
+                        data: {
+                          month_navigation_target: "link",
+                          tab_urls: previous_month_tab_urls.to_json
+                        }) do %>
               <%= tabler_icon("chevron-left", classes: "h-5 w-5") %>
             <% end %>
           <% end %>
@@ -26,10 +48,14 @@
           </span>
 
           <% if @next_budget_month %>
-            <%= link_to(requested_tab ? budget_month_tab_path(@next_budget_month, requested_tab) : budget_month_path(@next_budget_month),
+            <%= link_to(next_month_tab_urls[active_navigation_tab.to_sym],
                         class: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600",
                         title: @next_budget_month.label,
-                        aria: { label: "View #{@next_budget_month.label}" }) do %>
+                        aria: { label: "View #{@next_budget_month.label}" },
+                        data: {
+                          month_navigation_target: "link",
+                          tab_urls: next_month_tab_urls.to_json
+                        }) do %>
               <%= tabler_icon("chevron-right", classes: "h-5 w-5") %>
             <% end %>
           <% end %>
@@ -47,7 +73,7 @@
     </div>
   <% end %>
 
-  <section class="ta-card ta-surface-shell" data-controller="tabs" data-tabs-default-tab-value="<%= default_tab %>">
+  <section class="ta-card ta-surface-shell" data-controller="tabs" data-tabs-default-tab-value="<%= default_tab %>" data-tabs-tab-urls-value="<%= current_month_tab_urls.to_json %>">
     <div class="mb-4 ta-tab-list" role="tablist" aria-label="Month view tabs">
       <button type="button" class="ta-tab ta-tab-active" role="tab" aria-selected="true" data-tabs-target="tab" data-tab-name="timeline" data-action="click->tabs#switch" data-tabs-name-param="timeline">
         <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "ta-tab-icon") %> Budget</span>

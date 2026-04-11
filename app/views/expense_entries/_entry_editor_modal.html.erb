@@ -9,7 +9,19 @@
         </button>
       </div>
 
-      <%= form_with model: [budget_month, expense_entry], class: "grid gap-3 sm:grid-cols-2" do |form| %>
+      <%= form_with model: [budget_month, expense_entry],
+                    class: "grid gap-3 sm:grid-cols-2",
+                    data: {
+                      controller: "turbo-submit",
+                      action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
+                      turbo_submit_default_label_value: "Update Entry",
+                      turbo_submit_pending_label_value: "Saving changes..."
+                    } do |form| %>
+        <% if expense_entry.errors.any? %>
+          <div class="sm:col-span-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <%= expense_entry.errors.full_messages.join(", ") %>
+          </div>
+        <% end %>
         <%= render "expense_entries/edit_fields", form: form, notes_input: :text_area, notes_rows: 4, notes_wrapper_class: "sm:col-span-2" %>
         <%= render "expense_entries/edit_actions",
                    form: form,
@@ -18,6 +30,7 @@
                    mark_paid_class: "fb-btn-secondary ta-action-btn",
                    submit_label: "Update Entry",
                    submit_class: "fb-btn-primary",
+                   enable_submit_state: true,
                    cancel_button: true,
                    cancel_label: "Cancel",
                    cancel_class: "fb-btn-secondary",

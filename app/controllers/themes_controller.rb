@@ -1,8 +1,8 @@
 class ThemesController < ApplicationController
   def update
-    theme = ThemePalette.fetch(params[:theme])
+    theme = Platform::ThemePalette.fetch(params[:theme])
 
-    cookies.signed.permanent[ThemePalette::COOKIE_KEY] = {
+    cookies.signed.permanent[Platform::ThemePalette::COOKIE_KEY] = {
       value: theme.key,
       httponly: true,
       secure: Rails.application.config.force_ssl,

@@ -1,0 +1,4 @@
+<%= link_to item[:path], class: "flex items-center justify-between rounded-xl border border-slate-200 bg-white/85 px-3 py-3 text-sm text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" do %>
+  <span><%= item[:label] %></span>
+  <span class="font-semibold"><%= item[:count] %></span>
+<% end %>

@@ -1,0 +1,92 @@
+<div class="mt-4 space-y-4 <%= wizard.template_enabled? ? '' : 'hidden' %>" data-entry-wizard-target="templateFields">
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <label for="planning_template_template_type" class="fb-label">Recurring Transaction Type</label>
+      <%= select_tag "planning_template[template_type]",
+          options_for_select(wizard.template_type_options, wizard.selected_template_type),
+          class: "fb-select",
+          id: "planning_template_template_type",
+          data: { entry_wizard_target: "templateType", action: "change->entry-wizard#updateTemplateOptions change->entry-wizard#updateTemplateFields change->entry-wizard#updateSummary" } %>
+      <p class="mt-1 text-xs text-slate-500">The recurring item uses the payee/source. Account, notes, and date are reused from this entry.</p>
+    </div>
+    <div>
+      <label for="planning_template_due_day" class="fb-label">Due Day</label>
+      <%= number_field_tag "planning_template[due_day]", wizard.selected_due_day, min: 1, max: 31, class: "fb-input", id: "planning_template_due_day", data: { entry_wizard_target: "templateDueDay", action: "input->entry-wizard#updateSummary" } %>
+      <p class="mt-1 text-xs text-slate-500">Used by subscription, monthly bill, and payment plan recurring items.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 <%= wizard.selected_template_type == 'pay_schedule' ? '' : 'hidden' %>" data-entry-wizard-target="payScheduleFields">
+    <div>
+      <label for="planning_template_cadence" class="fb-label">Cadence</label>
+      <%= select_tag "planning_template[cadence]",
+          options_for_select(wizard.cadence_options, wizard.selected_cadence),
+          class: "fb-select",
+          id: "planning_template_cadence",
+          data: { entry_wizard_target: "templateCadence", action: "change->entry-wizard#updateTemplateFields change->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <label for="planning_template_weekend_adjustment" class="fb-label">Weekend Rule</label>
+      <%= select_tag "planning_template[weekend_adjustment]",
+          options_for_select(wizard.weekend_adjustment_options, wizard.selected_weekend_adjustment),
+          class: "fb-select",
+          id: "planning_template_weekend_adjustment",
+          data: { entry_wizard_target: "templateWeekendAdjustment", action: "change->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <label for="planning_template_day_of_month_one" class="fb-label">Day #1</label>
+      <%= number_field_tag "planning_template[day_of_month_one]", wizard.selected_day_of_month_one, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_one", data: { entry_wizard_target: "templateDayOne", action: "input->entry-wizard#updateSummary" } %>
+    </div>
+    <div class="<%= wizard.selected_cadence == 'semimonthly' ? '' : 'hidden' %>" data-entry-wizard-target="payScheduleSecondDayFields">
+      <label for="planning_template_day_of_month_two" class="fb-label">Day #2</label>
+      <%= number_field_tag "planning_template[day_of_month_two]", wizard.selected_day_of_month_two, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_two", data: { entry_wizard_target: "templateDayTwo", action: "input->entry-wizard#updateSummary" } %>
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 <%= wizard.selected_template_type == 'monthly_bill' ? '' : 'hidden' %>" data-entry-wizard-target="monthlyBillFields">
+    <div>
+      <label for="planning_template_kind" class="fb-label">Bill Type</label>
+      <%= select_tag "planning_template[kind]",
+          options_for_select(wizard.monthly_bill_kind_options, wizard.selected_kind),
+          class: "fb-select",
+          id: "planning_template_kind",
+          data: { entry_wizard_target: "templateKind", action: "change->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <label for="planning_template_billing_frequency" class="fb-label">Billing Frequency</label>
+      <%= select_tag "planning_template[billing_frequency]",
+          options_for_select(wizard.billing_frequency_options, wizard.selected_billing_frequency),
+          class: "fb-select",
+          id: "planning_template_billing_frequency",
+          data: { entry_wizard_target: "templateBillingFrequency", action: "change->entry-wizard#updateSummary" } %>
+    </div>
+    <div class="sm:col-span-2">
+      <span class="fb-label">Billing Months</span>
+      <%= hidden_field_tag "planning_template[billing_months][]", "" %>
+      <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <% wizard.calendar_month_options.each do |label, value| %>
+          <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <%= check_box_tag "planning_template[billing_months][]",
+                              value,
+                              wizard.selected_billing_months.include?(value),
+                              class: "fb-checkbox",
+                              data: { action: "change->entry-wizard#updateSummary" } %>
+            <span><%= label %></span>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-1 text-xs text-slate-500">Choose the months this bill should appear. Semiannual bills like HOA dues typically use two months.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 <%= wizard.selected_template_type == 'payment_plan' ? '' : 'hidden' %>" data-entry-wizard-target="paymentPlanFields">
+    <div>
+      <label for="planning_template_total_due" class="fb-label">Total Due</label>
+      <%= number_field_tag "planning_template[total_due]", wizard.selected_total_due, step: 0.01, min: 0, class: "fb-input", id: "planning_template_total_due", data: { entry_wizard_target: "templateTotalDue", action: "input->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <label for="planning_template_amount_paid" class="fb-label">Amount Paid So Far</label>
+      <%= number_field_tag "planning_template[amount_paid]", wizard.selected_amount_paid, step: 0.01, min: 0, class: "fb-input", id: "planning_template_amount_paid", data: { entry_wizard_target: "templateAmountPaid", action: "input->entry-wizard#updateSummary" } %>
+    </div>
+  </div>
+</div>

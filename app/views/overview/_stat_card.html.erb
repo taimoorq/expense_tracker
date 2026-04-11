@@ -1,0 +1,7 @@
+<div class="rounded-2xl border border-slate-200 bg-white/85 px-4 py-3">
+  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= item[:label] %></p>
+  <p class="mt-2 <%= item[:value_size_classes] || 'text-2xl' %> font-semibold <%= item[:value_classes] || 'text-slate-900' %>"><%= item[:value] %></p>
+  <% if item[:subtitle].present? %>
+    <p class="mt-1 text-xs text-slate-500"><%= item[:subtitle] %></p>
+  <% end %>
+</div>

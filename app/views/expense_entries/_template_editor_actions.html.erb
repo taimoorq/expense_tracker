@@ -1,0 +1,7 @@
+<div class="flex justify-end gap-2">
+  <%= button_tag "Cancel", type: :button, class: "fb-btn-secondary", data: { action: "click->template-modal#close", turbo_submit_target: "cancelButton" } %>
+  <%= form.button type: :submit, class: "fb-btn-primary inline-flex items-center gap-2", data: { turbo_submit_target: "submitButton" } do %>
+    <span class="hidden inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" data-turbo-submit-target="submitSpinner"></span>
+    <span data-turbo-submit-target="submitLabel">Save</span>
+  <% end %>
+</div>

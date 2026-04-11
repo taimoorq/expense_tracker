@@ -1,0 +1,51 @@
+<section data-entry-wizard-target="step" class="hidden space-y-4">
+  <div>
+    <h4 class="text-lg font-semibold text-slate-900">2. Who is it for and what is it?</h4>
+    <p class="ta-muted mt-1">Add the payee/source, category, and account details.</p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <%= form.label :category, class: "fb-label" %>
+      <%= form.text_field :category, class: "fb-input", placeholder: "Groceries, Rent, Paycheck...", data: { entry_wizard_target: "category", action: "input->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <%= form.label :payee, class: "fb-label" %>
+      <%= form.text_field :payee, class: "fb-input", placeholder: "Vendor or source", data: { entry_wizard_target: "payee", action: "input->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <%= form.label :account, class: "fb-label" %>
+      <%= form.text_field :account,
+                          class: "fb-input",
+                          placeholder: "Pick existing or type custom label",
+                          autocomplete: "off",
+                          data: { entry_wizard_target: "account", action: "input->entry-wizard#updateSummary" } %>
+      <% if active_account_names.any? %>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <% active_account_names.each do |account_name| %>
+            <button type="button"
+                    class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                    data-action="click->entry-wizard#chooseAccount"
+                    data-account-value="<%= account_name %>">
+              <%= account_name %>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :notes, class: "fb-label" %>
+      <%= form.text_field :notes, class: "fb-input", placeholder: "Optional details", data: { entry_wizard_target: "notes", action: "input->entry-wizard#updateSummary" } %>
+    </div>
+    <div class="sm:col-span-2">
+      <label for="recurring_link" class="fb-label">Link to Recurring Transaction</label>
+      <%= select_tag :recurring_link,
+                     grouped_options_for_select(recurring_link_options, selected_recurring_link),
+                     include_blank: "No recurring link",
+                     class: "fb-select",
+                     id: "recurring_link",
+                     data: { entry_wizard_target: "recurringLink", action: "change->entry-wizard#updateSummary" } %>
+      <p class="mt-1 text-xs text-slate-500">Use this when the entry is an extra payment, off-schedule charge, or manual variation tied to an existing recurring item.</p>
+    </div>
+  </div>
+</section>

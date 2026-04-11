@@ -1,9 +1,19 @@
 class PaySchedule < ApplicationRecord
+  include PlanningTemplateMetadata
+  include RecurringEntryTemplate
   include TemplateAccountLinkable
 
   belongs_to :user
   belongs_to :linked_account, class_name: "Account", optional: true
   template_account_association :linked_account
+  planning_template_metadata(
+    type_key: :pay_schedule,
+    source_file: "pay_schedule",
+    param_key: :pay_schedule,
+    recurring_source: true,
+    wizard_sections: %w[income],
+    permitted_attributes: [ :name, :cadence, :amount, :first_pay_on, :day_of_month_one, :day_of_month_two, :weekend_adjustment, :linked_account_id, :account, :active ]
+  )
 
   enum :cadence, {
     weekly: 0,
@@ -50,17 +60,33 @@ class PaySchedule < ApplicationRecord
   end
 
   def matches_entry?(entry, month_on:)
-    return false if entry.blank? || entry.occurred_on.blank?
-    return false unless comparable_text(entry.payee) == comparable_text(name)
-    return false unless pay_dates_for_month(month_on).include?(entry.occurred_on)
+    matches_entry_for_month?(entry, month_on: month_on)
+  end
 
-    entry.source_file == "pay_schedule" || entry.income?
+  def recurring_month_occurrences(month_on)
+    pay_dates_for_month(month_on)
   end
 
   private
 
-  def comparable_text(value)
-    value.to_s.strip.downcase
+  def generated_entry_amount(month_on:, occurred_on:)
+    amount
+  end
+
+  def generated_entry_section
+    :income
+  end
+
+  def generated_entry_category
+    "Paycheck"
+  end
+
+  def generated_entry_notes(month_on:, occurred_on:)
+    "Generated from pay schedule"
+  end
+
+  def strict_matching_amount?
+    true
   end
 
   def recurring_dates(month_start, month_end, interval_days)
