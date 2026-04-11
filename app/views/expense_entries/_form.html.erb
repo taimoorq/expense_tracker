@@ -70,6 +70,7 @@ Need/Want: optional spending priority tag."><%= tabler_icon("help") %></button>
                         turbo_submit_pending_label_value: "Adding entry..."
                       },
                       class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
+          <%= hidden_field_tag :timeline_view, local_assigns[:timeline_view] if local_assigns[:timeline_view].present? %>
           <div>
             <%= form.label :occurred_on, "Date", class: "fb-label" %>
             <%= form.date_field :occurred_on, class: "fb-input" %>

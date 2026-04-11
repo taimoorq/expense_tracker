@@ -22,8 +22,8 @@ RSpec.describe "Entry wizard", type: :system do
     fill_in "Planned amount", with: "1400", visible: :all
     click_button "Save Entry", visible: :all
 
-    expect(page).to have_content("Entry added.")
-    expect(page).to have_content("Consulting Client")
+    expect(page).to have_current_path(budget_month_tab_path(budget_month, "entries"), ignore_query: false)
+    expect(budget_month.expense_entries.where(payee: "Consulting Client").exists?).to be(true)
   end
 
   it "can save a subscription template alongside the wizard entry" do
@@ -48,8 +48,8 @@ RSpec.describe "Entry wizard", type: :system do
     fill_in "Due Day", with: "8", visible: :all
     click_button "Save Entry", visible: :all
 
-    expect(page).to have_content("Entry and recurring transaction added.")
-    expect(page).to have_content("Netflix")
+    expect(page).to have_current_path(budget_month_tab_path(budget_month, "entries"), ignore_query: false)
+    expect(budget_month.expense_entries.where(payee: "Netflix").exists?).to be(true)
     expect(user.subscriptions.order(:created_at).last.name).to eq("Netflix")
   end
 
@@ -60,23 +60,25 @@ RSpec.describe "Entry wizard", type: :system do
     sign_in_as(user)
     visit budget_month_path(budget_month)
 
-    click_button "Plan and Edit"
+    click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
+    expect(wizard_frame).to have_text("Add Entry with Wizard")
+    expect(wizard_frame).to have_css("select#expense_entry_section", visible: :all)
 
-    within("turbo-frame#entry_wizard_modal") do
-      select "Income", from: "Section"
-      select "Planned", from: "Status"
+    within(wizard_frame) do
+      select "Income", from: "Section", visible: :all
+      select "Planned", from: "Status", visible: :all
       click_button "Next"
 
-      fill_in "Category", with: "Paycheck"
-      fill_in "Payee", with: "Consulting Client"
-      fill_in "Account", with: "Checking"
+      fill_in "Category", with: "Paycheck", visible: :all
+      fill_in "Payee", with: "Consulting Client", visible: :all
+      fill_in "Account", with: "Checking", visible: :all
       click_button "Next"
 
-      fill_in "Date", with: "2026-03-18"
-      fill_in "Planned amount", with: "1400"
+      fill_in "Date", with: "2026-03-18", visible: :all
+      fill_in "Planned amount", with: "1400", visible: :all
       click_button "Next"
     end
 
@@ -89,7 +91,7 @@ RSpec.describe "Entry wizard", type: :system do
       })
     JS
 
-    within("turbo-frame#entry_wizard_modal") do
+    within(wizard_frame) do
       click_button "Save Entry"
     end
 
@@ -109,23 +111,25 @@ RSpec.describe "Entry wizard", type: :system do
     sign_in_as(user)
     visit budget_month_path(budget_month)
 
-    click_button "Plan and Edit"
+    click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
+    expect(wizard_frame).to have_text("Add Entry with Wizard")
+    expect(wizard_frame).to have_css("select#expense_entry_section", visible: :all)
 
-    within("turbo-frame#entry_wizard_modal") do
-      select "Fixed", from: "Section"
-      select "Planned", from: "Status"
+    within(wizard_frame) do
+      select "Fixed", from: "Section", visible: :all
+      select "Planned", from: "Status", visible: :all
       click_button "Next"
 
-      fill_in "Category", with: "Streaming"
-      fill_in "Payee", with: "Movie Box"
-      fill_in "Account", with: "Checking"
+      fill_in "Category", with: "Streaming", visible: :all
+      fill_in "Payee", with: "Movie Box", visible: :all
+      fill_in "Account", with: "Checking", visible: :all
       click_button "Next"
 
-      fill_in "Date", with: "2026-03-18"
-      fill_in "Planned amount", with: "19.99"
+      fill_in "Date", with: "2026-03-18", visible: :all
+      fill_in "Planned amount", with: "19.99", visible: :all
       click_button "Next"
     end
 
@@ -146,14 +150,14 @@ RSpec.describe "Entry wizard", type: :system do
       })
     JS
 
-    within("turbo-frame#entry_wizard_modal") do
+    within(wizard_frame) do
       click_button "Save Entry"
     end
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[aria-busy='true'][disabled]", text: "Saving entry...")
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton'][disabled]", text: "Cancel")
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
     expect(page).to have_content("Choose a valid recurring transaction to link.")
     expect(page).to have_no_css("turbo-frame#entry_wizard_modal button[aria-busy='true']")
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton']:not([disabled])", text: "Cancel")

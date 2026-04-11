@@ -17,6 +17,7 @@
                       turbo_submit_default_label_value: "Update Entry",
                       turbo_submit_pending_label_value: "Saving changes..."
                     } do |form| %>
+        <%= hidden_field_tag :timeline_view, params[:timeline_view] if params[:timeline_view].present? %>
         <% if expense_entry.errors.any? %>
           <div class="sm:col-span-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
             <%= expense_entry.errors.full_messages.join(", ") %>
