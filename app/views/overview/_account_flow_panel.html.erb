@@ -1,0 +1,89 @@
+<%= turbo_frame_tag "overview_account_flow", class: "block" do %>
+  <% account_flow_payload = overview.fetch(:account_flow_payload) %>
+
+  <section class="ta-card ta-surface-shell">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Account Activity</p>
+        <h3 class="mt-2 text-xl font-semibold text-slate-900"><%= overview.account_flow_summary_title %></h3>
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600"><%= overview.account_flow_summary_description %></p>
+      </div>
+
+      <%= form_with url: root_path,
+                    method: :get,
+                    class: "flex flex-wrap items-end justify-end gap-2",
+                    data: {
+                      turbo_frame: "overview_account_flow",
+                      controller: "turbo-submit",
+                      action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
+                      turbo_submit_default_label_value: "Apply",
+                      turbo_submit_pending_label_value: "Updating..."
+                    } do |form| %>
+        <div>
+          <label for="overview-account-flow-months" class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Months included</label>
+          <%= form.select :account_flow_months,
+                          options_for_select(overview.account_flow_month_window_options, overview.account_flow_month_window),
+                          {},
+                          {
+                            id: "overview-account-flow-months",
+                            class: "fb-select mt-2 min-w-[11rem]"
+                          } %>
+        </div>
+
+        <%= form.button type: :submit,
+                        class: "fb-btn-secondary inline-flex items-center gap-2 whitespace-nowrap",
+                        data: { turbo_submit_target: "submitButton" } do %>
+          <span class="hidden h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" data-turbo-submit-target="submitSpinner"></span>
+          <span data-turbo-submit-target="submitLabel">Apply</span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+      <% overview.account_flow_stat_cards.each do |item| %>
+        <%= render "overview/stat_card", item: item %>
+      <% end %>
+    </div>
+
+    <% if overview.account_flow_available? %>
+      <div class="mt-4 h-80 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+        <canvas
+          data-controller="chart"
+          data-chart-type-value="bar"
+          data-chart-title-value="<%= overview.account_flow_chart_title %>"
+          data-chart-labels-value="<%= account_flow_payload[:labels].to_json %>"
+          data-chart-datasets-value="<%= [
+            {
+              label: "Charged",
+              data: account_flow_payload[:charged_values],
+              backgroundColor: "rgba(244, 63, 94, 0.55)"
+            },
+            {
+              label: "Paid To",
+              data: account_flow_payload[:paid_values],
+              backgroundColor: "rgba(16, 185, 129, 0.55)"
+            }
+          ].to_json %>"
+          data-chart-options-value="<%= {
+            indexAxis: "y",
+            scales: { x: { beginAtZero: true } }
+          }.to_json %>"></canvas>
+      </div>
+    <% else %>
+      <div class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-6 text-sm text-slate-600">
+        Create months and link account details on entries to compare charged and paid-to activity here.
+      </div>
+    <% end %>
+
+    <% if overview.account_flow_top_account_summary || overview.account_flow_untracked_entries_summary %>
+      <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+        <% if overview.account_flow_top_account_summary %>
+          <span class="rounded-full bg-sky-50 px-3 py-1 font-medium text-sky-700"><%= overview.account_flow_top_account_summary %></span>
+        <% end %>
+        <% if overview.account_flow_untracked_entries_summary %>
+          <span class="rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-800"><%= overview.account_flow_untracked_entries_summary %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

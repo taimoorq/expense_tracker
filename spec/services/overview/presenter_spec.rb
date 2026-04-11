@@ -46,6 +46,24 @@ RSpec.describe Overview::Presenter do
         linked_entries_count: 2,
         net_worth_total: -75,
         latest_snapshot: nil,
+        account_flow_month_window: "6",
+        account_flow_months_included: 4,
+        account_flow_month_range_label: "January 2026 to April 2026",
+        account_flow_payload: {
+          labels: [ "Checking", "Visa" ],
+          charged_values: [ 800, 250 ],
+          paid_values: [ 2_000, 300 ],
+          charged_total: 1_050,
+          paid_total: 2_300,
+          account_count: 2,
+          tracked_entries_count: 5,
+          untracked_entries_count: 1,
+          top_account: {
+            name: "Checking",
+            charged_total: 800.0,
+            paid_total: 2_000.0
+          }
+        },
         overview_cashflow_year: 2026,
         year_cashflow_payload: {
           links: [ { source: "Income", target: "Bills", value: 100 } ],
@@ -89,6 +107,14 @@ RSpec.describe Overview::Presenter do
     expect(presenter.recurring_breakdown_items.map { |item| item[:label] }).to eq([ "Pay schedules", "Subscriptions", "Monthly bills", "Payment plans" ])
     expect(presenter.net_worth_value_class).to eq("text-rose-700")
     expect(presenter.account_snapshot_cards.map { |item| item[:label] }).to eq([ "Net worth", "Latest snapshot" ])
+    expect(presenter.account_flow_month_window).to eq("6")
+    expect(presenter.account_flow_month_window_options).to include([ "Last 6 months", "6" ])
+    expect(presenter.account_flow_available?).to be(true)
+    expect(presenter.account_flow_summary_description).to eq("4 months included: January 2026 to April 2026.")
+    expect(presenter.account_flow_stat_cards.map { |item| item[:label] }).to eq([ "Charged", "Paid to", "Tracked entries" ])
+    expect(presenter.account_flow_chart_title).to eq("Charged vs Paid To by Account")
+    expect(presenter.account_flow_top_account_summary).to eq("Top activity: Checking")
+    expect(presenter.account_flow_untracked_entries_summary).to eq("1 entry missing account detail")
     expect(presenter.linked_entries_summary).to eq("2 linked month entries in April 2026 (0 paid).")
     expect(presenter.cashflow_available?).to be(true)
     expect(presenter.cashflow_chart_title).to eq("2026 cash flow graph")

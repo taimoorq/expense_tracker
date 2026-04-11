@@ -1,4 +1,6 @@
 <%= turbo_frame_tag "month_summary" do %>
+  <% account_flow_payload = Budgeting::MonthAccountFlowSummary.cached_payload(budget_month: budget_month, expense_entries: expense_entries) %>
+  <% top_account = account_flow_payload[:top_account] %>
   <section class="mb-6">
     <details class="group ta-summary-collapse sm:open">
       <summary class="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 sm:hidden">
@@ -8,7 +10,7 @@
         </span>
         <span class="ml-auto text-xs text-slate-500">Tap to expand/collapse</span>
       </summary>
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="ta-card-tinted ta-summary-income" style="view-transition-name: summary-income-card; view-transition-class: ta-vt-card;">
           <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("cash", classes: "h-4 w-4 text-emerald-600") %> Income</p>
           <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.income_total) %></p>
@@ -20,6 +22,18 @@
         <div class="ta-card-tinted ta-summary-leftover" style="view-transition-name: summary-leftover-card; view-transition-class: ta-vt-card;">
           <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("chart-bar", classes: "h-4 w-4 text-indigo-600") %> Leftover</p>
           <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.calculated_leftover) %></p>
+        </div>
+        <div class="ta-card-tinted ta-summary-accounts">
+          <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("credit-card", classes: "h-4 w-4 text-sky-600") %> Account Flow</p>
+          <p class="mt-1 text-xl font-semibold"><%= pluralize(account_flow_payload[:account_count], "account") %> tracked</p>
+          <p class="mt-2 text-sm text-slate-600">
+            <%= number_to_currency(account_flow_payload[:charged_total]) %> charged
+            <span class="text-slate-400">|</span>
+            <%= number_to_currency(account_flow_payload[:paid_total]) %> paid to
+          </p>
+          <p class="mt-1 text-xs text-slate-500">
+            <%= top_account ? "Top activity: #{top_account[:name]}" : "Link accounts on entries to populate this card." %>
+          </p>
         </div>
       </div>
     </details>

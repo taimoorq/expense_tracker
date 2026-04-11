@@ -1,8 +1,12 @@
 module Overview
   class Presenter
-    def initialize(user:, today: Date.current, data: nil)
+    def initialize(user:, today: Date.current, data: nil, account_flow_month_window: Overview::AccountFlowWindow::DEFAULT_MONTH_WINDOW)
       @today = today
-      @data = data || Overview::PageData.new(user: user, today: today).call
+      @data = data || Overview::PageData.new(
+        user: user,
+        today: today,
+        account_flow_month_window: account_flow_month_window
+      ).call
     end
 
     def onboarding_status
@@ -261,6 +265,61 @@ module Overview
       ]
     end
 
+    def account_flow_month_window
+      data.fetch(:account_flow_month_window)
+    end
+
+    def account_flow_month_window_options
+      Overview::AccountFlowWindow::MONTH_WINDOW_OPTIONS
+    end
+
+    def account_flow_available?
+      account_flow_payload_data[:account_count].positive?
+    end
+
+    def account_flow_summary_title
+      "Charged vs paid to"
+    end
+
+    def account_flow_summary_description
+      return "Select saved months to compare where money is being charged and where payments are landing." if account_flow_months_included_value.zero?
+
+      "#{pluralized_word(account_flow_months_included_value, "month")} included: #{account_flow_month_range_label_value}."
+    end
+
+    def account_flow_stat_cards
+      [
+        {
+          label: "Charged",
+          value: helpers.number_to_currency(account_flow_payload_data[:charged_total]),
+          value_classes: "text-rose-700"
+        },
+        {
+          label: "Paid to",
+          value: helpers.number_to_currency(account_flow_payload_data[:paid_total]),
+          value_classes: "text-emerald-700"
+        },
+        {
+          label: "Tracked entries",
+          value: account_flow_payload_data[:tracked_entries_count],
+          value_classes: "text-slate-900"
+        }
+      ]
+    end
+
+    def account_flow_chart_title
+      "Charged vs Paid To by Account"
+    end
+
+    def account_flow_top_account_summary
+      account_flow_payload_data[:top_account] && "Top activity: #{account_flow_payload_data[:top_account][:name]}"
+    end
+
+    def account_flow_untracked_entries_summary
+      return nil unless account_flow_payload_data[:untracked_entries_count].positive?
+
+      "#{pluralized_word(account_flow_payload_data[:untracked_entries_count], "entry")} missing account detail"
+    end
     def linked_entries_summary
       "#{linked_entries_count_value} linked month #{linked_entries_count_value == 1 ? "entry" : "entries"} in #{current_month_data&.label || "the active month"} (#{linked_paid_entries_count_value} paid)."
     end
@@ -359,6 +418,17 @@ module Overview
       data.fetch(:next_step)
     end
 
+    def account_flow_payload_data
+      data.fetch(:account_flow_payload)
+    end
+
+    def account_flow_months_included_value
+      data.fetch(:account_flow_months_included)
+    end
+
+    def account_flow_month_range_label_value
+      data.fetch(:account_flow_month_range_label)
+    end
     def onboarding_complete?
       step1_done? && step2_done? && step3_done? && step4_done?
     end

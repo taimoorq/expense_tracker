@@ -21,6 +21,10 @@ RSpec.describe Overview::PageData do
     expect(payload[:accounts]).to include(account)
     expect(payload[:template_total]).to eq(1)
     expect(payload[:linked_template_total]).to eq(1)
+    expect(payload[:account_flow_month_window]).to eq("3")
+    expect(payload[:account_flow_months_included]).to eq(1)
+    expect(payload[:account_flow_month_range_label]).to eq(month.label)
+    expect(payload[:account_flow_payload]).to include(:labels, :charged_total, :paid_total)
     expect(payload[:year_cashflow_payload]).to include(:nodes, :links, :income_total, :outflow_total, :leftover_total)
     expect(payload[:next_step]).to include(:title, :primary_label, :primary_path)
   end
