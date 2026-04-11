@@ -63,10 +63,11 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
-    expect(page).to have_select("Section", visible: :all)
+    wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
+    expect(wizard_frame).to have_text("Add Entry with Wizard")
+    expect(wizard_frame).to have_css("select#expense_entry_section", visible: :all)
 
-    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
+    within(wizard_frame) do
       select "Income", from: "Section", visible: :all
       select "Planned", from: "Status", visible: :all
       click_button "Next"
@@ -90,7 +91,7 @@ RSpec.describe "Entry wizard", type: :system do
       })
     JS
 
-    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
+    within(wizard_frame) do
       click_button "Save Entry"
     end
 
@@ -113,10 +114,11 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
-    expect(page).to have_select("Section", visible: :all)
+    wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
+    expect(wizard_frame).to have_text("Add Entry with Wizard")
+    expect(wizard_frame).to have_css("select#expense_entry_section", visible: :all)
 
-    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
+    within(wizard_frame) do
       select "Fixed", from: "Section", visible: :all
       select "Planned", from: "Status", visible: :all
       click_button "Next"
@@ -148,7 +150,7 @@ RSpec.describe "Entry wizard", type: :system do
       })
     JS
 
-    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
+    within(wizard_frame) do
       click_button "Save Entry"
     end
 
