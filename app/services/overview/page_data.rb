@@ -1,8 +1,9 @@
 module Overview
   class PageData
-    def initialize(user:, today: Date.current)
+    def initialize(user:, today: Date.current, account_flow_month_window: Overview::AccountFlowWindow::DEFAULT_MONTH_WINDOW)
       @user = user
       @today = today
+      @account_flow_month_window = account_flow_month_window
     end
 
     def call
@@ -10,6 +11,7 @@ module Overview
       data.merge!(review_summary)
       data.merge!(template_summary)
       data.merge!(account_summary)
+      data.merge!(account_flow_summary)
       data.merge!(cashflow_summary)
       data[:onboarding_visible] = data[:current_month].nil? || data[:accounts].empty? || data[:template_total].zero? || data[:linked_template_total].zero?
       data[:next_step] = NextStepPolicy.new(context: data).call
@@ -18,7 +20,7 @@ module Overview
 
     private
 
-    attr_reader :today, :user
+    attr_reader :account_flow_month_window, :today, :user
 
     def month_context
       @month_context ||= Overview::MonthContext.new(user: user, today: today).call
@@ -46,6 +48,13 @@ module Overview
 
     def account_summary
       @account_summary ||= Accounts::Summary.new(user: user).call
+    end
+
+    def account_flow_summary
+      @account_flow_summary ||= Overview::AccountFlowWindow.new(
+        user: user,
+        month_window: account_flow_month_window
+      ).call
     end
 
     def cashflow_summary

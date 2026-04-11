@@ -7,6 +7,7 @@
   <% entries = expense_entries.to_a %>
   <% outflow_entries = entries.reject(&:income?) %>
   <% sankey_payload = Budgeting::MonthCashflowSankey.cached_payload(budget_month: budget_month, expense_entries: budget_month.expense_entries) %>
+  <% account_flow_payload = Budgeting::MonthAccountFlowSummary.cached_payload(budget_month: budget_month, expense_entries: expense_entries) %>
 
   <% section_totals = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.effective_amount.to_f } }.sort_by { |_k, v| -v } %>
   <% section_labels = section_totals.map { |k, _v| k.humanize } %>
@@ -153,6 +154,81 @@
             <% end %>
           </ul>
         </div>
+      </div>
+
+      <div class="mb-4 rounded-lg border border-sky-100 bg-white/90 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Accounts</p>
+            <h4 class="mt-2 text-lg font-semibold text-slate-900">Charged vs paid to by account</h4>
+            <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Charges come from outflows tied to each account. Payments combine income deposited into an account and credit-card payments sent to a linked card.
+            </p>
+          </div>
+          <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            <%= pluralize(account_flow_payload[:account_count], "tracked account") %>
+          </div>
+        </div>
+
+        <div class="mt-4 grid gap-3 lg:grid-cols-3">
+          <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Charged</p>
+            <p class="mt-2 text-xl font-semibold text-rose-700"><%= number_to_currency(account_flow_payload[:charged_total]) %></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Paid To</p>
+            <p class="mt-2 text-xl font-semibold text-emerald-700"><%= number_to_currency(account_flow_payload[:paid_total]) %></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Tracked Entries</p>
+            <p class="mt-2 text-xl font-semibold text-slate-900"><%= account_flow_payload[:tracked_entries_count] %></p>
+          </div>
+        </div>
+
+        <% if account_flow_payload[:account_count].positive? %>
+          <div class="mt-4 h-80 rounded-xl border border-slate-200 bg-white/70 p-3">
+            <canvas
+              data-controller="chart"
+              data-chart-type-value="bar"
+              data-chart-title-value="Charged vs Paid To by Account"
+              data-chart-labels-value="<%= account_flow_payload[:labels].to_json %>"
+              data-chart-datasets-value="<%= [
+                {
+                  label: 'Charged',
+                  data: account_flow_payload[:charged_values],
+                  backgroundColor: 'rgba(244, 63, 94, 0.55)'
+                },
+                {
+                  label: 'Paid To',
+                  data: account_flow_payload[:paid_values],
+                  backgroundColor: 'rgba(16, 185, 129, 0.55)'
+                }
+              ].to_json %>"
+              data-chart-options-value="<%= {
+                indexAxis: 'y',
+                scales: { x: { beginAtZero: true } }
+              }.to_json %>"></canvas>
+          </div>
+        <% else %>
+          <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-6 text-sm text-slate-600">
+            Add or link accounts on entries to see which accounts are being charged and which ones are receiving payments this month.
+          </div>
+        <% end %>
+
+        <% if account_flow_payload[:top_account].present? || account_flow_payload[:untracked_entries_count].positive? %>
+          <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <% if account_flow_payload[:top_account].present? %>
+              <span class="rounded-full bg-sky-50 px-3 py-1 font-medium text-sky-700">
+                Top activity: <%= account_flow_payload[:top_account][:name] %>
+              </span>
+            <% end %>
+            <% if account_flow_payload[:untracked_entries_count].positive? %>
+              <span class="rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-800">
+                <%= pluralize(account_flow_payload[:untracked_entries_count], "entry") %> missing account detail
+              </span>
+            <% end %>
+          </div>
+        <% end %>
       </div>
 
       <div class="grid gap-4 xl:grid-cols-3">

@@ -275,14 +275,38 @@ RSpec.describe "Budget month management", type: :system do
   it "shows a separate breakdown tab for the visual charts" do
     user = create(:user, email: "breakdown@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
-    create(:expense_entry, budget_month: month, user: user, category: "Groceries", payee: "Market", section: :variable, status: :planned, planned_amount: 120)
+    checking = create(:account, user: user, name: "Checking")
+    create(:expense_entry, budget_month: month, user: user, category: "Groceries", payee: "Market", section: :variable, status: :planned, planned_amount: 120, source_account: checking)
+    create(:expense_entry, budget_month: month, user: user, category: "Paycheck", payee: "Employer", section: :income, status: :planned, planned_amount: 2800, source_account: checking)
 
     sign_in_as(user)
-    visit budget_month_path(month)
+    visit budget_month_tab_path(month, "breakdown")
 
     expect(page).to have_button("Breakdown")
     expect(page).to have_css('[data-panel-name="breakdown"]')
     expect(page).to have_content("Visual Budget Breakdown")
+    expect(page).to have_content("Charged vs paid to by account")
+    expect(page).to have_css('[data-chart-title-value="Charged vs Paid To by Account"]', visible: :all)
+    expect(page).to have_content("1 tracked account")
+  end
+
+  it "surfaces account flow in the month summary cards" do
+    user = create(:user, email: "summaryaccounts@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    checking = create(:account, user: user, name: "Checking")
+    visa = create(:account, user: user, name: "Visa")
+
+    create(:expense_entry, budget_month: month, user: user, section: :income, payee: "Employer", planned_amount: 3200, source_account: checking)
+    create(:expense_entry, budget_month: month, user: user, section: :fixed, payee: "Rent", planned_amount: 1200, source_account: checking)
+    create(:expense_entry, budget_month: month, user: user, section: :variable, payee: "Streaming", planned_amount: 40, source_account: visa)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    expect(page).to have_content("Account Flow")
+    expect(page).to have_content("2 accounts tracked")
+    expect(page).to have_content("$1,240.00 charged")
+    expect(page).to have_content("$3,200.00 paid to")
   end
 
 

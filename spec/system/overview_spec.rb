@@ -33,6 +33,7 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("Attention Queue")
     expect(page).to have_content("Recurring")
     expect(page).to have_content("Accounts Snapshot")
+    expect(page).to have_content("Account Activity")
     expect(page).to have_content("Quick Actions")
     expect(page).to have_content("Set up the month in the right order")
     expect(page).to have_content("#{Date.current.year} money flow")
@@ -60,5 +61,32 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("Set up the month in the right order")
     expect(page).to have_content("No #{Date.current.year} cash flow to chart yet")
     expect(page).to have_content("Next")
+  end
+
+  it "filters account activity by selected saved months", js: true do
+    user = create(:user, email: "overviewaccountflow@example.com")
+    current_month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    previous_month = create(:budget_month, user: user, month_on: Date.current.prev_month.beginning_of_month, label: Date.current.prev_month.strftime("%B %Y"))
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    visa = create(:account, user: user, name: "Visa", kind: :credit_card)
+
+    create(:expense_entry, budget_month: current_month, user: user, section: :income, payee: "Employer", planned_amount: 3_000, source_account: checking)
+    create(:expense_entry, budget_month: previous_month, user: user, section: :variable, payee: "Streaming", planned_amount: 45, source_account: visa)
+
+    sign_in_as(user)
+    visit root_path
+
+    expect(page).to have_content("2 months included")
+    expect(page).to have_content("#{previous_month.label} to #{current_month.label}")
+    expect(page).to have_content("Top activity: Checking")
+
+    within("turbo-frame#overview_account_flow") do
+      select "Last month", from: "overview-account-flow-months"
+      click_button "Apply"
+    end
+
+    expect(page).to have_css("turbo-frame#overview_account_flow", text: "1 month included")
+    expect(page).to have_css("turbo-frame#overview_account_flow", text: current_month.label)
+    expect(page).to have_no_css("turbo-frame#overview_account_flow", text: "#{previous_month.label} to #{current_month.label}")
   end
 end
