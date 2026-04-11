@@ -1,9 +1,19 @@
 class PaymentPlan < ApplicationRecord
+  include PlanningTemplateMetadata
+  include RecurringEntryTemplate
   include TemplateAccountLinkable
 
   belongs_to :user
   belongs_to :linked_account, class_name: "Account", optional: true
   template_account_association :linked_account
+  planning_template_metadata(
+    type_key: :payment_plan,
+    source_file: "payment_plan",
+    param_key: :payment_plan,
+    recurring_source: true,
+    wizard_sections: %w[debt manual],
+    permitted_attributes: [ :name, :total_due, :amount_paid, :monthly_target, :due_day, :linked_account_id, :account, :active, :notes ]
+  )
 
   validates :name, presence: true
   validates :total_due, presence: true
@@ -26,11 +36,7 @@ class PaymentPlan < ApplicationRecord
   end
 
   def matches_entry?(entry, month_on:)
-    return false if entry.blank? || entry.occurred_on.blank?
-    return false unless comparable_text(entry.payee) == comparable_text(name)
-    return false unless entry.occurred_on == due_date_for_month(month_on)
-
-    entry.source_file == "payment_plan" || entry.debt?
+    matches_entry_for_month?(entry, month_on: month_on)
   end
 
   def apply_payment!(amount)
@@ -40,9 +46,31 @@ class PaymentPlan < ApplicationRecord
     update!(active: false) if remaining_balance <= 0
   end
 
+  def recurring_month_occurrences(month_on)
+    return [] if monthly_amount.to_d <= 0
+
+    [ due_date_for_month(month_on) ]
+  end
+
   private
 
-  def comparable_text(value)
-    value.to_s.strip.downcase
+  def generated_entry_amount(month_on:, occurred_on:)
+    monthly_amount
+  end
+
+  def generated_entry_section
+    :debt
+  end
+
+  def generated_entry_category
+    "Payment Plan"
+  end
+
+  def generated_entry_notes(month_on:, occurred_on:)
+    "Remaining: #{remaining_balance.to_f}"
+  end
+
+  def strict_matching_amount?
+    true
   end
 end

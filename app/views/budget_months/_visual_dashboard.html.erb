@@ -6,7 +6,7 @@
   <% compact = local_assigns.fetch(:compact, false) %>
   <% entries = expense_entries.to_a %>
   <% outflow_entries = entries.reject(&:income?) %>
-  <% sankey_payload = MonthCashflowSankey.cached_payload(budget_month: budget_month, expense_entries: budget_month.expense_entries) %>
+  <% sankey_payload = Budgeting::MonthCashflowSankey.cached_payload(budget_month: budget_month, expense_entries: budget_month.expense_entries) %>
 
   <% section_totals = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.effective_amount.to_f } }.sort_by { |_k, v| -v } %>
   <% section_labels = section_totals.map { |k, _v| k.humanize } %>

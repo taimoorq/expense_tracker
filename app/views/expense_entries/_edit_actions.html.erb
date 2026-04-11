@@ -1,10 +1,25 @@
+<% enable_submit_state = local_assigns.fetch(:enable_submit_state, false) %>
+<% cancel_data = { action: cancel_action } %>
+<% cancel_data[:turbo_submit_target] = "cancelButton" if enable_submit_state %>
 <div class="<%= wrapper_class %>">
   <% unless expense_entry.paid? %>
-    <%= button_tag "Mark as Paid", type: :submit, name: "mark_as_paid", value: "1", class: mark_paid_class %>
+    <%= button_tag "Mark as Paid",
+                   type: :submit,
+                   name: "mark_as_paid",
+                   value: "1",
+                   class: mark_paid_class,
+                   data: (enable_submit_state ? { turbo_submit_target: "auxButton" } : {}) %>
   <% end %>
-  <%= form.submit submit_label, class: submit_class %>
+  <% if enable_submit_state %>
+    <%= form.button type: :submit, class: "#{submit_class} inline-flex items-center gap-2", data: { turbo_submit_target: "submitButton" } do %>
+      <span class="hidden inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" data-turbo-submit-target="submitSpinner"></span>
+      <span data-turbo-submit-target="submitLabel"><%= submit_label %></span>
+    <% end %>
+  <% else %>
+    <%= form.submit submit_label, class: submit_class %>
+  <% end %>
   <% if cancel_button %>
-    <button type="button" class="<%= cancel_class %>" data-action="<%= cancel_action %>"><%= cancel_label %></button>
+    <%= button_tag cancel_label, type: :button, class: cancel_class, data: cancel_data %>
   <% else %>
     <%= link_to cancel_label, cancel_path, cancel_options.merge(class: cancel_class) %>
   <% end %>

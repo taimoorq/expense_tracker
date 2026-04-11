@@ -3,10 +3,16 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "step",
+    "stepIndicator",
     "progress",
+    "progressBar",
     "nextButton",
     "backButton",
     "submitButton",
+    "cancelButton",
+    "submitHint",
+    "submitLabel",
+    "submitSpinner",
     "section",
     "status",
     "category",
@@ -50,6 +56,7 @@ export default class extends Controller {
 
   connect() {
     this.index = 0
+    this.submitting = false
     this.supportedTemplateTypesValue = {
       income: ["pay_schedule"],
       fixed: ["subscription", "monthly_bill"],
@@ -66,6 +73,11 @@ export default class extends Controller {
   }
 
   validateSubmit(event) {
+    if (this.submitting) {
+      event.preventDefault()
+      return
+    }
+
     if (this.index !== this.stepTargets.length - 1) {
       event.preventDefault()
       this.fail("Finish the wizard steps before saving.")
@@ -78,17 +90,20 @@ export default class extends Controller {
   }
 
   next() {
+    if (this.submitting) return
     if (!this.validateCurrentStep()) return
     this.index = Math.min(this.index + 1, this.stepTargets.length - 1)
     this.showCurrentStep()
   }
 
   back() {
+    if (this.submitting) return
     this.index = Math.max(this.index - 1, 0)
     this.showCurrentStep()
   }
 
   chooseSection(event) {
+    if (this.submitting) return
     const value = event.currentTarget.dataset.sectionValue
     if (this.hasSectionTarget) this.sectionTarget.value = value
     this.syncTemplateOptions()
@@ -97,6 +112,7 @@ export default class extends Controller {
   }
 
   chooseAccount(event) {
+    if (this.submitting) return
     if (!this.hasAccountTarget) return
 
     this.accountTarget.value = event.currentTarget.dataset.accountValue || ""
@@ -158,20 +174,76 @@ export default class extends Controller {
       this.progressTarget.textContent = `Step ${this.index + 1} of ${this.stepTargets.length}`
     }
 
+    if (this.hasProgressBarTarget) {
+      const completion = ((this.index + 1) / this.stepTargets.length) * 100
+      this.progressBarTarget.style.width = `${completion}%`
+    }
+
+    if (this.hasStepIndicatorTarget) {
+      this.stepIndicatorTargets.forEach((indicator, index) => {
+        const complete = index < this.index
+        const active = index === this.index
+
+        indicator.classList.toggle("border-indigo-400", active)
+        indicator.classList.toggle("bg-indigo-50", active)
+        indicator.classList.toggle("text-indigo-700", active)
+        indicator.classList.toggle("border-emerald-300", complete)
+        indicator.classList.toggle("bg-emerald-50", complete)
+        indicator.classList.toggle("text-emerald-700", complete)
+        indicator.classList.toggle("border-slate-200", !active && !complete)
+        indicator.classList.toggle("bg-white", !active && !complete)
+        indicator.classList.toggle("text-slate-500", !active && !complete)
+      })
+    }
+
     if (this.hasBackButtonTarget) {
-      this.backButtonTarget.classList.toggle("hidden", this.index === 0)
+      this.backButtonTarget.classList.toggle("hidden", this.index === 0 || this.submitting)
+      this.backButtonTarget.disabled = this.submitting
     }
 
     if (this.hasNextButtonTarget) {
       this.nextButtonTarget.classList.toggle("hidden", this.index === this.stepTargets.length - 1)
+      this.nextButtonTarget.disabled = this.submitting
     }
 
     if (this.hasSubmitButtonTarget) {
       this.submitButtonTarget.classList.toggle("hidden", this.index !== this.stepTargets.length - 1)
+      this.submitButtonTarget.disabled = this.submitting
+      this.submitButtonTarget.setAttribute("aria-busy", this.submitting ? "true" : "false")
+    }
+
+    if (this.hasCancelButtonTarget) {
+      this.cancelButtonTarget.disabled = this.submitting
+    }
+
+    if (this.hasSubmitHintTarget) {
+      this.submitHintTarget.classList.toggle("hidden", this.submitting)
+    }
+
+    if (this.hasSubmitLabelTarget) {
+      this.submitLabelTarget.textContent = this.submitting ? "Saving entry..." : "Save Entry"
+    }
+
+    if (this.hasSubmitSpinnerTarget) {
+      this.submitSpinnerTarget.classList.toggle("hidden", !this.submitting)
     }
 
     this.updateSummary()
     this.clearError()
+  }
+
+  submitStart() {
+    this.submitting = true
+    this.showCurrentStep()
+  }
+
+  submitEnd(event) {
+    const successful = event.detail?.success
+
+    if (successful) return
+
+    this.submitting = false
+    this.showCurrentStep()
   }
 
   validateCurrentStep() {

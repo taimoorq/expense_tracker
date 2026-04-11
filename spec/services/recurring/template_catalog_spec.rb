@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe TemplateTypeRegistry do
+RSpec.describe Recurring::TemplateCatalog do
   describe ".recurring_source_files" do
     it "returns the recurring template source_file values" do
       expect(described_class.recurring_source_files).to eq(%w[pay_schedule subscription monthly_bill payment_plan])
@@ -22,6 +22,12 @@ RSpec.describe TemplateTypeRegistry do
       definition = described_class.definition_for(record)
 
       expect(definition.fetch(:source_file)).to eq("subscription")
+    end
+  end
+
+  describe ".wizard_template_types" do
+    it "returns the template types exposed in the wizard" do
+      expect(described_class.wizard_template_types).to eq(%w[pay_schedule subscription monthly_bill payment_plan])
     end
   end
 end

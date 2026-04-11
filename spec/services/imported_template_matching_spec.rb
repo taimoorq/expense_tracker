@@ -88,4 +88,46 @@ RSpec.describe "imported template matching" do
     expect(budget_month.expense_entries.where(source_file: "monthly_bill")).to be_empty
     expect(budget_month.expense_entries.where(source_file: "payment_plan")).to be_empty
   end
+
+  it "still generates entries when an imported row has the right payee and date but the wrong stable amount" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+    create(:subscription, user: user, name: "Netflix", amount: 21.19, due_day: 19, account: "Card")
+    create(:expense_entry,
+           budget_month: budget_month,
+           user: user,
+           source_file: "March 2026 Transactions.csv",
+           occurred_on: Date.new(2026, 3, 19),
+           section: :fixed,
+           category: "Subscription",
+           payee: "Netflix",
+           planned_amount: 42.38,
+           account: "Card",
+           status: :planned)
+
+    expect(GenerateMonthSubscriptions.new(budget_month: budget_month).call).to eq(1)
+    expect(budget_month.expense_entries.where(source_file: "subscription").count).to eq(1)
+  end
+
+  it "still generates entries when an imported row has the right payee and date but the wrong linked account" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+    create(:payment_plan, user: user, name: "Apple Financing", total_due: 1200, amount_paid: 300, monthly_target: 107.41, due_day: 15, account: "Card")
+    create(:expense_entry,
+           budget_month: budget_month,
+           user: user,
+           source_file: "March 2026 Transactions.csv",
+           occurred_on: Date.new(2026, 3, 15),
+           section: :debt,
+           category: "Installment",
+           payee: "Apple Financing",
+           planned_amount: 107.41,
+           account: "Checking",
+           status: :planned)
+
+    expect(GenerateMonthPaymentPlans.new(budget_month: budget_month).call).to eq(1)
+    expect(budget_month.expense_entries.where(source_file: "payment_plan").count).to eq(1)
+  end
 end

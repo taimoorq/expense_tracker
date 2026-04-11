@@ -1,0 +1,25 @@
+<section data-entry-wizard-target="step" class="hidden space-y-4">
+  <div>
+    <h4 class="text-lg font-semibold text-slate-900">3. When and how much?</h4>
+    <p class="ta-muted mt-1">Add the date and at least one amount.</p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div>
+      <%= form.label :occurred_on, "Date", class: "fb-label" %>
+      <%= form.date_field :occurred_on, class: "fb-input", data: { entry_wizard_target: "date", action: "change->entry-wizard#updateSummary" } %>
+    </div>
+    <div>
+      <%= form.label :planned_amount, class: "fb-label" %>
+      <%= form.number_field :planned_amount, step: 0.01, class: "fb-input", placeholder: "0.00", data: { entry_wizard_target: "planned", action: "input->entry-preview#update input->entry-wizard#updateSummary", entry_preview_target: "planned" } %>
+    </div>
+    <div>
+      <%= form.label :actual_amount, class: "fb-label" %>
+      <%= form.number_field :actual_amount, step: 0.01, class: "fb-input", placeholder: "0.00", data: { entry_wizard_target: "actual", action: "input->entry-preview#update input->entry-wizard#updateSummary", entry_preview_target: "actual" } %>
+    </div>
+  </div>
+
+  <div class="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">
+    Effective amount: <span class="ml-1 font-semibold" data-entry-preview-target="effective">$0.00</span>
+  </div>
+</section>

@@ -5,7 +5,7 @@ class ImportsController < ApplicationController
       return
     end
 
-    importer = CsvBudgetImporter.new(file: params[:file], user: current_user)
+    importer = Budgeting::CsvBudgetImporter.new(file: params[:file], user: current_user)
     result = importer.call
 
     if result[:ok]

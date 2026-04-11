@@ -1,0 +1,14 @@
+<div class="flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
+  <div class="flex items-center gap-2">
+    <button type="button" class="fb-btn-secondary hidden" data-entry-wizard-target="backButton" data-action="click->entry-wizard#back">Back</button>
+    <button type="button" class="fb-btn-secondary" data-entry-wizard-target="cancelButton" data-action="click->template-modal#close">Cancel</button>
+  </div>
+  <div class="flex items-center gap-2">
+    <div class="hidden text-xs text-slate-500 sm:block" data-entry-wizard-target="submitHint">Tip: the review step can also save this as recurring.</div>
+    <button type="button" class="fb-btn-secondary" data-entry-wizard-target="nextButton" data-action="click->entry-wizard#next">Next</button>
+    <%= form.button type: :submit, class: "fb-btn-primary hidden inline-flex items-center gap-2", data: { entry_wizard_target: "submitButton" } do %>
+      <span class="hidden inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" data-entry-wizard-target="submitSpinner"></span>
+      <span data-entry-wizard-target="submitLabel">Save Entry</span>
+    <% end %>
+  </div>
+</div>

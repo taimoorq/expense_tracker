@@ -3,13 +3,13 @@ class HelpController < ApplicationController
   end
 
   def releases
-    @releases = ReleaseCatalog.releases
+    @releases = Platform::ReleaseCatalog.releases
     @latest_release = @releases.first
     @latest_unread_release = current_user.latest_unread_release
   end
 
   def acknowledge_release_notes
-    release = ReleaseCatalog.find(params[:version])
+    release = Platform::ReleaseCatalog.find(params[:version])
 
     if release.present? && current_user.update(last_seen_release_version: release.version)
       redirect_back fallback_location: help_releases_path, notice: "#{release.label} marked as read."

@@ -11,7 +11,7 @@ class ExpenseEntriesController < ApplicationController
       status: params[:status].presence || "planned"
     )
 
-    render partial: "expense_entries/entry_wizard_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry }
+    render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }
   end
 
   def show
@@ -31,7 +31,7 @@ class ExpenseEntriesController < ApplicationController
 
   def edit
     if turbo_frame_request?
-      render partial: "expense_entries/entry_editor_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry }
+      render partial: "expense_entries/entry_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }
       return
     end
 
@@ -61,7 +61,7 @@ class ExpenseEntriesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           if turbo_frame_request?
-            render partial: "expense_entries/entry_editor_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
+            render partial: "expense_entries/entry_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
           else
             render turbo_stream: turbo_stream.replace(
               dom_id(@expense_entry),
@@ -77,9 +77,8 @@ class ExpenseEntriesController < ApplicationController
 
   def create
     @expense_entry = @budget_month.expense_entries.new(expense_entry_params)
-    @expense_entry.source_file = "manual" if @expense_entry.source_file.blank?
     assign_selected_recurring_source(@expense_entry)
-    template_creator = EntryWizardTemplateCreator.new(user: current_user, expense_entry: @expense_entry, params: planning_template_params)
+    template_creator = Recurring::EntryWizardTemplateCreator.new(user: current_user, expense_entry: @expense_entry, params: planning_template_params)
     saved_successfully = false
 
     ActiveRecord::Base.transaction do
@@ -117,7 +116,7 @@ class ExpenseEntriesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           if params[:wizard_flow] == "1" && turbo_frame_request?
-            render partial: "expense_entries/entry_wizard_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
+            render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
           else
             flash.now[:alert] = @expense_entry.errors.full_messages.join(", ")
             render turbo_stream: [
@@ -128,7 +127,7 @@ class ExpenseEntriesController < ApplicationController
         end
         format.html do
           if params[:wizard_flow] == "1"
-            render partial: "expense_entries/entry_wizard_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
+            render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
           else
             render "budget_months/show", status: :unprocessable_entity
           end
@@ -166,7 +165,7 @@ class ExpenseEntriesController < ApplicationController
       return
     end
 
-    render partial: "expense_entries/template_editor_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: @template_record }
+    render partial: "expense_entries/template_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: @template_record }
   end
 
   def update_template
@@ -200,7 +199,7 @@ class ExpenseEntriesController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render partial: "expense_entries/template_editor_modal", locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: @template_record }, status: :unprocessable_entity
+          render partial: "expense_entries/template_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: @template_record }, status: :unprocessable_entity
         end
         format.html { redirect_to @budget_month, alert: @template_record.errors.full_messages.join(", ") }
       end
@@ -274,15 +273,7 @@ class ExpenseEntriesController < ApplicationController
   end
 
   def recurring_source_from_token(token)
-    model_name, record_id = token.split(":", 2)
-    return nil if model_name.blank? || record_id.blank?
-
-    definition = TemplateTypeRegistry::TEMPLATE_DEFINITIONS.values.find { |entry| entry[:model_name] == model_name }
-    return nil if definition.blank?
-
-    scope = current_user.public_send(model_name.underscore.pluralize)
-    scope = scope.active_only if scope.respond_to?(:active_only)
-    scope.find_by(id: record_id)
+    Recurring::TemplateCatalog.user_record_from_token(user: current_user, token: token)
   end
 
   def template_record_for_entry(entry)
@@ -291,16 +282,15 @@ class ExpenseEntriesController < ApplicationController
       return linked_template
     end
 
-    definition = TemplateTypeRegistry.definition_for_source_file(entry.source_file)
+    definition = entry.source_definition
     return nil if definition.blank?
 
-    current_user.public_send(definition.fetch(:model_name).underscore.pluralize).find_by(name: entry.payee)
+    current_user.public_send(definition.fetch(:model_class).model_name.route_key).find_by(name: entry.payee)
   end
 
   def template_params_for(record)
-    definition = TemplateTypeRegistry.definition_for(record)
-    return {} if definition.blank?
+    return {} unless record.class.respond_to?(:template_param_key)
 
-    params.require(definition.fetch(:param_key)).permit(*definition.fetch(:permitted_attributes))
+    params.require(record.class.template_param_key).permit(*record.class.template_permitted_attributes)
   end
 end

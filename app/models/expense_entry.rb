@@ -1,5 +1,5 @@
 class ExpenseEntry < ApplicationRecord
-  RECURRING_TEMPLATE_SOURCES = TemplateTypeRegistry.recurring_source_files.freeze
+  RECURRING_TEMPLATE_SOURCES = Recurring::TemplateCatalog.recurring_source_files.freeze
 
   belongs_to :user
   belongs_to :budget_month
@@ -29,7 +29,7 @@ class ExpenseEntry < ApplicationRecord
   validate :source_template_matches_user
 
   before_validation :assign_user_from_budget_month
-  before_validation :assign_source_account
+  before_validation :normalize_provenance
 
   scope :chronological, -> { order(:occurred_on, :created_at) }
   scope :recurring_templates, -> { where(source_file: RECURRING_TEMPLATE_SOURCES) }
@@ -44,11 +44,36 @@ class ExpenseEntry < ApplicationRecord
   end
 
   def auto_completable_recurring?
-    planned? && source_file.in?(RECURRING_TEMPLATE_SOURCES) && occurred_on.present? && occurred_on <= Date.current
+    planned? && generated_from_template? && source_file.in?(RECURRING_TEMPLATE_SOURCES) && occurred_on.present? && occurred_on <= Date.current
   end
 
   def account_name
     source_account&.name.presence || account
+  end
+
+  def source_definition
+    return source_template.template_metadata if source_template.respond_to?(:template_metadata)
+    return nil if source_file.blank?
+
+    Recurring::TemplateCatalog.definition_for_source_file(source_file)
+  end
+
+  def template_source_file
+    return nil if source_template.blank?
+
+    source_template.template_source_file if source_template.respond_to?(:template_source_file)
+  end
+
+  def template_linked?
+    source_template.present?
+  end
+
+  def generated_from_template?
+    template_linked? && template_source_file.present? && source_file == template_source_file
+  end
+
+  def manual_origin?
+    source_file.blank? || source_file == "manual"
   end
 
   private
@@ -64,9 +89,10 @@ class ExpenseEntry < ApplicationRecord
     errors.add(:user, "must match the budget month owner")
   end
 
-  def assign_source_account
+  def normalize_provenance
+    self.source_file = "manual" if source_file.blank?
     self.source_account = resolved_source_account
-    self.account = source_account.name if source_account.present? && account.blank?
+    self.account = source_account.name if source_account.present?
   end
 
   def resolved_source_account
@@ -81,6 +107,7 @@ class ExpenseEntry < ApplicationRecord
 
   def source_template_account
     return nil if source_template.blank?
+    return source_template.entry_account_record if source_template.respond_to?(:entry_account_record)
     return source_template.payment_account if source_template.respond_to?(:payment_account) && source_template.payment_account.present?
     return source_template.linked_account if source_template.respond_to?(:linked_account)
     return source_template.payment_account if source_template.respond_to?(:payment_account)

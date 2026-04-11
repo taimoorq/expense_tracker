@@ -37,11 +37,11 @@ class ApplicationController < ActionController::Base
   end
 
   def available_themes
-    ThemePalette.all
+    Platform::ThemePalette.all
   end
 
   def current_theme
-    @current_theme ||= ThemePalette.fetch(cookies.signed[ThemePalette::COOKIE_KEY])
+    @current_theme ||= Platform::ThemePalette.fetch(cookies.signed[Platform::ThemePalette::COOKIE_KEY])
   end
 
   def current_theme_class
@@ -57,7 +57,7 @@ class ApplicationController < ActionController::Base
   end
 
   def latest_release
-    ReleaseCatalog.latest
+    Platform::ReleaseCatalog.latest
   end
 
   def latest_unread_release
@@ -80,6 +80,6 @@ class ApplicationController < ActionController::Base
   end
 
   def set_current_theme
-    @current_theme = ThemePalette.fetch(cookies.signed[ThemePalette::COOKIE_KEY])
+    @current_theme = Platform::ThemePalette.fetch(cookies.signed[Platform::ThemePalette::COOKIE_KEY])
   end
 end

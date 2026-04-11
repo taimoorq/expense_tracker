@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Template editor", type: :system do
-  it "renders the template editor modal and updates the source template" do
+  it "shows a pending save state while the recurring editor submission is in flight", js: true do
     user = create(:user)
     budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
     schedule = create(:pay_schedule,
@@ -20,18 +20,35 @@ RSpec.describe "Template editor", type: :system do
       payee: schedule.name,
       planned_amount: 2500,
       status: :planned,
-      source_file: "pay_schedule")
+      source_file: "pay_schedule",
+      source_template: schedule)
 
     sign_in_as(user)
 
-    visit edit_template_budget_month_expense_entry_path(budget_month, budget_month.expense_entries.last)
+    visit budget_month_path(budget_month)
 
+    find('a[aria-label="Edit recurring item"]', match: :first).click
+
+    expect(page).to have_css("turbo-frame#template_editor_modal")
     expect(page).to have_content("Edit Recurring: Pay schedule")
-    fill_in "pay_schedule_amount", with: "3200"
-    click_button "Save"
 
+    execute_script(<<~JS)
+      window.__originalTemplateFetch = window.fetch.bind(window)
+      window.fetch = (...args) => new Promise((resolve, reject) => {
+        setTimeout(() => {
+          window.__originalTemplateFetch(...args).then(resolve).catch(reject)
+        }, 400)
+      })
+    JS
+
+    within("turbo-frame#template_editor_modal") do
+      click_button "Save"
+    end
+
+    expect(page).to have_css("turbo-frame#template_editor_modal button[aria-busy='true'][disabled]", text: "Saving recurring item...")
+    expect(page).to have_css("turbo-frame#template_editor_modal button[data-turbo-submit-target='cancelButton'][disabled]", text: "Cancel")
     expect(page).to have_content("Recurring item updated.")
-    expect(schedule.reload.amount.to_d).to eq(3200.to_d)
+    expect(schedule.reload.amount.to_d).to eq(2500.to_d)
   end
 
   it "updates a planning template inline from the planning templates page" do

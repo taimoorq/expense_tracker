@@ -51,7 +51,7 @@ RSpec.describe "Expense entries turbo responses", type: :request do
 
   it "returns turbo stream updates when editing a generated template" do
     schedule = create(:pay_schedule, user: user, name: "Acme Payroll", amount: 2500, cadence: :monthly, first_pay_on: Date.new(2026, 1, 15), day_of_month_one: 15)
-    entry = create(:expense_entry, budget_month: budget_month, user: user, payee: schedule.name, source_file: "pay_schedule", section: :income)
+    entry = create(:expense_entry, budget_month: budget_month, user: user, payee: schedule.name, source_file: "pay_schedule", section: :income, source_template: schedule)
 
     patch update_template_budget_month_expense_entry_path(budget_month, entry),
       params: { pay_schedule: { amount: "3100.00" } },

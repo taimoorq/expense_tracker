@@ -62,7 +62,7 @@ class User < ApplicationRecord
   end
 
   def unread_releases
-    ReleaseCatalog.unread_for(self)
+    Platform::ReleaseCatalog.unread_for(self)
   end
 
   def unread_release_count

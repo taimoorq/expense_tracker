@@ -48,31 +48,31 @@ class BudgetMonthsController < ApplicationController
 
   def generate_paychecks
     budget_month = current_user.budget_months.find(params[:id])
-    created_count = GenerateMonthPaychecks.new(budget_month: budget_month).call
+    created_count = Recurring::GenerateMonthPaychecks.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} paycheck entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def generate_subscriptions
     budget_month = current_user.budget_months.find(params[:id])
-    created_count = GenerateMonthSubscriptions.new(budget_month: budget_month).call
+    created_count = Recurring::GenerateMonthSubscriptions.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} subscription entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def generate_monthly_bills
     budget_month = current_user.budget_months.find(params[:id])
-    created_count = GenerateMonthMonthlyBills.new(budget_month: budget_month).call
+    created_count = Recurring::GenerateMonthMonthlyBills.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} monthly bill entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def generate_payment_plans
     budget_month = current_user.budget_months.find(params[:id])
-    created_count = GenerateMonthPaymentPlans.new(budget_month: budget_month).call
+    created_count = Recurring::GenerateMonthPaymentPlans.new(budget_month: budget_month).call
     handle_month_generation(budget_month, "Generated #{created_count} payment-plan entr#{created_count == 1 ? 'y' : 'ies'}.")
   end
 
   def estimate_credit_cards
     budget_month = current_user.budget_months.find(params[:id])
-    estimator = EstimateMonthCreditCards.new(budget_month: budget_month)
+    estimator = Recurring::EstimateMonthCreditCards.new(budget_month: budget_month)
     created_count = estimator.call
     message = "Estimated #{created_count} credit-card payment entr#{created_count == 1 ? 'y' : 'ies'}."
     handle_month_generation(budget_month, message)
@@ -175,7 +175,7 @@ class BudgetMonthsController < ApplicationController
   def clone_source_entries(source_month, target_month)
     return 0 unless source_month
 
-    source_month.expense_entries.where.not(source_file: TemplateTypeRegistry.source_file_for(:credit_card)).find_each.sum do |entry|
+    source_month.expense_entries.where.not(source_file: CreditCard.template_source_file).find_each.sum do |entry|
       target_month.expense_entries.create!(
         occurred_on: shifted_date(entry.occurred_on, target_month.month_on),
         section: entry.section,

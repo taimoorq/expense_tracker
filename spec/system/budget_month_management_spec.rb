@@ -406,6 +406,9 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_content("Add Entry with Wizard")
     expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_content("This saves directly into #{month.label}")
+    expect(page).to have_content("Step 1")
+    expect(page).to have_content("Review")
   end
 
   it "opens the guided wizard from the calendar view", js: true do
