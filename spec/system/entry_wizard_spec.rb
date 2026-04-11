@@ -63,9 +63,9 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
 
-    within("turbo-frame#entry_wizard_modal") do
+    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
       select "Income", from: "Section"
       select "Planned", from: "Status"
       click_button "Next"
@@ -89,7 +89,7 @@ RSpec.describe "Entry wizard", type: :system do
       })
     JS
 
-    within("turbo-frame#entry_wizard_modal") do
+    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
       click_button "Save Entry"
     end
 
@@ -112,9 +112,9 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
 
-    within("turbo-frame#entry_wizard_modal") do
+    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
       select "Fixed", from: "Section"
       select "Planned", from: "Status"
       click_button "Next"
@@ -146,14 +146,14 @@ RSpec.describe "Entry wizard", type: :system do
       })
     JS
 
-    within("turbo-frame#entry_wizard_modal") do
+    within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
       click_button "Save Entry"
     end
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[aria-busy='true'][disabled]", text: "Saving entry...")
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton'][disabled]", text: "Cancel")
 
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
     expect(page).to have_content("Choose a valid recurring transaction to link.")
     expect(page).to have_no_css("turbo-frame#entry_wizard_modal button[aria-busy='true']")
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton']:not([disabled])", text: "Cancel")

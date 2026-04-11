@@ -505,7 +505,7 @@ RSpec.describe "Budget month management", type: :system do
     click_link "Add Entry with Wizard"
 
     expect(page).to have_content("Add Entry with Wizard")
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
     expect(page).to have_content("This saves directly into #{month.label}")
     expect(page).to have_content("Step 1")
     expect(page).to have_content("Review")
@@ -523,7 +523,7 @@ RSpec.describe "Budget month management", type: :system do
     click_link "Add Entry with Wizard"
 
     expect(page).to have_content("Add Entry with Wizard")
-    expect(page).to have_css("turbo-frame#entry_wizard_modal")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
   end
 
   it "shows payment sections above recurring subscriptions and highlights editable payment rows" do
