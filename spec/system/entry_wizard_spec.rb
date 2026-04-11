@@ -64,19 +64,20 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Open Guided Wizard"
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
+    expect(page).to have_select("Section", visible: :all)
 
     within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
-      select "Income", from: "Section"
-      select "Planned", from: "Status"
+      select "Income", from: "Section", visible: :all
+      select "Planned", from: "Status", visible: :all
       click_button "Next"
 
-      fill_in "Category", with: "Paycheck"
-      fill_in "Payee", with: "Consulting Client"
-      fill_in "Account", with: "Checking"
+      fill_in "Category", with: "Paycheck", visible: :all
+      fill_in "Payee", with: "Consulting Client", visible: :all
+      fill_in "Account", with: "Checking", visible: :all
       click_button "Next"
 
-      fill_in "Date", with: "2026-03-18"
-      fill_in "Planned amount", with: "1400"
+      fill_in "Date", with: "2026-03-18", visible: :all
+      fill_in "Planned amount", with: "1400", visible: :all
       click_button "Next"
     end
 
@@ -113,19 +114,20 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Open Guided Wizard"
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
+    expect(page).to have_select("Section", visible: :all)
 
     within(:css, "turbo-frame#entry_wizard_modal", visible: false) do
-      select "Fixed", from: "Section"
-      select "Planned", from: "Status"
+      select "Fixed", from: "Section", visible: :all
+      select "Planned", from: "Status", visible: :all
       click_button "Next"
 
-      fill_in "Category", with: "Streaming"
-      fill_in "Payee", with: "Movie Box"
-      fill_in "Account", with: "Checking"
+      fill_in "Category", with: "Streaming", visible: :all
+      fill_in "Payee", with: "Movie Box", visible: :all
+      fill_in "Account", with: "Checking", visible: :all
       click_button "Next"
 
-      fill_in "Date", with: "2026-03-18"
-      fill_in "Planned amount", with: "19.99"
+      fill_in "Date", with: "2026-03-18", visible: :all
+      fill_in "Planned amount", with: "19.99", visible: :all
       click_button "Next"
     end
 
