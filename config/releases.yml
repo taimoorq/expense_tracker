@@ -1,4 +1,14 @@
 releases:
+  - version: "0.5.1"
+    released_on: "2026-04-11"
+    title: "Smoother month planning navigation"
+    summary: "Month planning now uses more natural Turbo-driven navigation, preserves view state more reliably, and adds smoother view transitions across tabs and month views."
+    changes:
+      - "Converted the month page tabs and Budget subviews to server-driven Turbo navigation so URLs, history, and tab state stay in sync."
+      - "Preserved the active Budget subview when editing, deleting, marking entries paid, and opening the guided wizard from grouped, full-list, or calendar mode."
+      - "Changed quick-add success flows to return cleanly to Plan and Edit through Turbo redirects instead of blasting the panel in place."
+      - "Removed the less useful planned-versus-actual graphs from Breakdown so the visual dashboard stays focused on the more actionable charts."
+      - "Added view-transition styling around the month shell, tab bars, and active panels to make month-to-month and tab-to-tab changes feel smoother."
   - version: "0.5.0"
     released_on: "2026-04-11"
     title: "Architecture and workflow refresh"
