@@ -320,7 +320,6 @@ module Overview
 
       "#{pluralized_word(account_flow_payload_data[:untracked_entries_count], "entry")} missing account detail"
     end
-
     def linked_entries_summary
       "#{linked_entries_count_value} linked month #{linked_entries_count_value == 1 ? "entry" : "entries"} in #{current_month_data&.label || "the active month"} (#{linked_paid_entries_count_value} paid)."
     end
@@ -430,7 +429,6 @@ module Overview
     def account_flow_month_range_label_value
       data.fetch(:account_flow_month_range_label)
     end
-
     def onboarding_complete?
       step1_done? && step2_done? && step3_done? && step4_done?
     end
