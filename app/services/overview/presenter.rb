@@ -27,12 +27,12 @@ module Overview
           description: "Save the incoming and outgoing items you expect, then link them to accounts where possible.",
           metric: "#{linked_template_total_value} of #{template_total_value} recurring transactions linked",
           state: if step2_done?
-            :done
-          elsif step2_started?
-            :in_progress
-          else
-            :next
-          end
+                   :done
+                 elsif step2_started?
+                   :in_progress
+                 else
+                   :next
+                 end
         ),
         build_step(
           number: 3,
@@ -40,12 +40,12 @@ module Overview
           description: "Create the month, then use Plan and Edit to pull the saved recurring transactions into it.",
           metric: current_month_data ? "#{pluralized_word(current_month_entries_data.count, "entry")} in #{current_month_data.label}" : "No month created yet",
           state: if step3_done?
-            :done
-          elsif step3_started?
-            :in_progress
-          else
-            :next
-          end
+                   :done
+                 elsif step3_started?
+                   :in_progress
+                 else
+                   :next
+                 end
         ),
         build_step(
           number: 4,
@@ -53,12 +53,12 @@ module Overview
           description: "Add one-off items, update amounts, and mark entries paid as you go. Some recurring items may also auto-complete when due.",
           metric: current_month_data ? "#{review_attention_count_value} items still need review" : "Review starts after month setup",
           state: if step4_done?
-            :done
-          elsif step4_started?
-            :in_progress
-          else
-            :next
-          end
+                   :done
+                 elsif step4_started?
+                   :in_progress
+                 else
+                   :next
+                 end
         )
       ]
     end
