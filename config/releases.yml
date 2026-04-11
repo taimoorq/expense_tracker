@@ -1,4 +1,14 @@
 releases:
+  - version: "0.5.0"
+    released_on: "2026-04-11"
+    title: "Architecture and workflow refresh"
+    summary: "This release reorganizes core budgeting services under clearer domain boundaries and refreshes the main Hotwire workflows across overview, month planning, and modal editing."
+    changes:
+      - "Restructured recurring, budgeting, accounts, overview, and backup services into clearer domain-oriented layers so recurring generation, matching, and account linking are easier to maintain."
+      - "Refreshed the overview page with presenter-backed cards, a year cash flow section, and a full-width Account Activity graph that compares charged versus paid-to totals by account."
+      - "Added month-window filtering for Account Activity so you can compare the last month, last 3, 6, or 12 months, or all saved months."
+      - "Improved Turbo and Stimulus workflows for the entry wizard, entry editor, and recurring editor with better partial structure, submit pending states, and inline error recovery."
+      - "Polished navigation and month workflows with previous and next month controls, clearer sidebar icons, and more guided month setup and review flows."
   - version: "0.4.4"
     released_on: "2026-03-31"
     title: "Seed login documentation update"
