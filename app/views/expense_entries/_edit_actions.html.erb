@@ -1,5 +1,7 @@
 <% enable_submit_state = local_assigns.fetch(:enable_submit_state, false) %>
-<% cancel_data = { action: cancel_action } %>
+<% cancel_action = local_assigns[:cancel_action] %>
+<% cancel_data = {} %>
+<% cancel_data[:action] = cancel_action if cancel_action.present? %>
 <% cancel_data[:turbo_submit_target] = "cancelButton" if enable_submit_state %>
 <div class="<%= wrapper_class %>">
   <% unless expense_entry.paid? %>

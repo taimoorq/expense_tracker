@@ -62,7 +62,14 @@ Need/Want: optional spending priority tag."><%= tabler_icon("help") %></button>
           </div>
         <% end %>
 
-        <%= form_with model: [budget_month, expense_entry], data: { controller: "entry-preview" }, class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
+        <%= form_with model: [budget_month, expense_entry],
+                      data: {
+                        controller: "entry-preview turbo-submit",
+                        action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
+                        turbo_submit_default_label_value: "Add Entry",
+                        turbo_submit_pending_label_value: "Adding entry..."
+                      },
+                      class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
           <div>
             <%= form.label :occurred_on, "Date", class: "fb-label" %>
             <%= form.date_field :occurred_on, class: "fb-input" %>
@@ -115,7 +122,17 @@ Need/Want: optional spending priority tag."><%= tabler_icon("help") %></button>
           <div class="flex items-center rounded-md bg-slate-100 px-3 text-sm text-slate-700">
             Effective: <span class="ml-1 font-semibold" data-entry-preview-target="effective">$0.00</span>
           </div>
-          <%= form.submit "Add", class: "fb-btn-primary" %>
+          <div class="flex items-center gap-3 sm:col-span-2 lg:col-span-2">
+            <%= form.button type: :submit,
+                            class: "fb-btn-primary ta-action-btn justify-center",
+                            data: { turbo_submit_target: "submitButton" } do %>
+              <span class="hidden" data-turbo-submit-target="submitSpinner" aria-hidden="true">
+                <%= tabler_icon("loader-2", classes: "h-4 w-4 animate-spin") %>
+              </span>
+              <span data-turbo-submit-target="submitLabel">Add Entry</span>
+            <% end %>
+            <p class="text-xs leading-5 text-slate-500">Saves directly into this month and refreshes the review panels automatically.</p>
+          </div>
         <% end %>
       </div>
     </details>

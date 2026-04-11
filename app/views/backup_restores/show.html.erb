@@ -81,11 +81,35 @@
         </div>
       </div>
 
-      <%= form_with url: preview_backup_restore_path, method: :post, multipart: true, class: "mt-5 space-y-4" do %>
+      <%= form_with url: preview_backup_restore_path,
+                    method: :post,
+                    multipart: true,
+                    class: "mt-5 space-y-4",
+                    data: {
+                      controller: "file-drop turbo-submit",
+                      action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
+                      turbo_submit_default_label_value: "Preview Import",
+                      turbo_submit_pending_label_value: "Previewing import..."
+                    } do %>
         <div>
           <%= label_tag :file, "Backup File", class: "fb-label" %>
-          <%= file_field_tag :file, accept: ".json,application/json", required: true, class: "fb-input" %>
-          <p class="mt-2 text-sm text-slate-500">Choose a previously exported backup file.</p>
+          <div class="ta-upload-dropzone mt-2" data-file-drop-target="dropzone" data-action="click->file-drop#open dragover->file-drop#dragOver dragleave->file-drop#dragLeave drop->file-drop#drop">
+            <%= file_field_tag :file, accept: ".json,application/json", required: true, class: "hidden", data: { file_drop_target: "input", action: "change->file-drop#fileSelected" } %>
+
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+              <%= tabler_icon("file-upload", classes: "ta-panel-icon") %>
+            </div>
+
+            <div class="space-y-1">
+              <p class="text-sm font-semibold text-slate-900">Drop a backup JSON here</p>
+              <p class="text-sm text-slate-500">or click to browse your files</p>
+            </div>
+
+            <div class="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm" data-file-drop-target="fileName">
+              No file selected
+            </div>
+          </div>
+          <p class="mt-2 text-sm text-slate-500">Choose a previously exported backup file before previewing what will be restored.</p>
         </div>
 
         <div>
@@ -119,9 +143,16 @@
           <p class="mt-2 text-xs text-slate-500">This sample is for structure reference. Import it only if you want example records added to the selected sections.</p>
         </div>
 
-        <%= button_tag type: :submit, class: "fb-btn-primary ta-action-btn" do %>
-          <%= tabler_icon("scan", classes: "ta-action-icon") %>
-          <span>Preview Import</span>
+        <%= button_tag type: :submit,
+                       class: "fb-btn-primary ta-action-btn",
+                       data: {
+                         file_drop_target: "submit",
+                         turbo_submit_target: "submitButton"
+                       } do %>
+          <span class="hidden" data-turbo-submit-target="submitSpinner" aria-hidden="true">
+            <%= tabler_icon("loader-2", classes: "ta-action-icon animate-spin") %>
+          </span>
+          <span data-turbo-submit-target="submitLabel">Preview Import</span>
         <% end %>
       <% end %>
     </section>
@@ -182,7 +213,14 @@
       </div>
 
       <div class="mt-5 flex flex-wrap items-center gap-3">
-        <%= form_with url: import_backup_restore_path, method: :post do %>
+        <%= form_with url: import_backup_restore_path,
+                      method: :post,
+                      data: {
+                        controller: "turbo-submit",
+                        action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
+                        turbo_submit_default_label_value: "Restore Selected Data",
+                        turbo_submit_pending_label_value: "Restoring selected data..."
+                      } do %>
           <%= hidden_field_tag :preview_token, @import_preview[:token] %>
           <% if @import_preview[:sample_backup] %>
             <label class="mb-3 flex items-start gap-3 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-700">
@@ -190,9 +228,13 @@
               <span>I understand this is a reference-only sample backup and that restoring it will add example data to the selected sections.</span>
             </label>
           <% end %>
-          <%= button_tag type: :submit, class: "fb-btn-primary ta-action-btn" do %>
-            <%= tabler_icon("upload", classes: "ta-action-icon") %>
-            <span>Restore Selected Data</span>
+          <%= button_tag type: :submit,
+                         class: "fb-btn-primary ta-action-btn",
+                         data: { turbo_submit_target: "submitButton" } do %>
+            <span class="hidden" data-turbo-submit-target="submitSpinner" aria-hidden="true">
+              <%= tabler_icon("loader-2", classes: "ta-action-icon animate-spin") %>
+            </span>
+            <span data-turbo-submit-target="submitLabel">Restore Selected Data</span>
           <% end %>
         <% end %>
 

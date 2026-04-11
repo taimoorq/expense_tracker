@@ -73,7 +73,7 @@ RSpec.describe "Backup & restore", type: :system do
     sign_in_as(user)
     visit backup_restore_path
 
-    attach_file "Backup File", file.path
+    attach_file "Backup File", file.path, make_visible: true
     fill_in "Backup password", with: "very-secret"
     uncheck "Restore Months"
     click_button "Preview Import"
@@ -97,7 +97,7 @@ RSpec.describe "Backup & restore", type: :system do
     sign_in_as(user)
     visit backup_restore_path
 
-    attach_file "Backup File", file.path
+    attach_file "Backup File", file.path, make_visible: true
     uncheck "Restore Months"
     uncheck "Restore Accounts"
     click_button "Preview Import"

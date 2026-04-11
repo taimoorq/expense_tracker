@@ -3,6 +3,10 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["dropzone", "input", "fileName", "submit"]
 
+  connect() {
+    this.updateFileName()
+  }
+
   open(event) {
     if (event.target.closest("button") || event.target.closest("a")) return
     this.inputTarget.click()
@@ -37,5 +41,16 @@ export default class extends Controller {
     if (this.hasFileNameTarget) {
       this.fileNameTarget.textContent = file ? file.name : "No file selected"
     }
+
+    this.syncSubmit(Boolean(file))
+  }
+
+  syncSubmit(enabled) {
+    if (!this.hasSubmitTarget) return
+
+    this.submitTarget.disabled = !enabled
+    this.submitTarget.setAttribute("aria-disabled", String(!enabled))
+    this.submitTarget.classList.toggle("cursor-not-allowed", !enabled)
+    this.submitTarget.classList.toggle("opacity-60", !enabled)
   }
 }
