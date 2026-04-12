@@ -82,59 +82,50 @@ After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL`
 
 ## Screenshots
 
-Current screenshots reflect the latest overview, recurring transactions, money-flow review, accounts, and backup workflow.
+Current screenshots reflect the latest overview, month-budget workflow, money-flow review, account tracking, account activity, and backup workflow.
 
 <table>
 	<tr>
 		<td align="center">
-			<img src="app/assets/images/marketing/overview-desktop.webp" alt="Overview dashboard" width="100%">
+			<img src="app/assets/images/marketing/overview-main.webp" alt="Overview dashboard" width="100%">
 			<br>
 			<strong>Overview Dashboard</strong>
 			<br>
-			Current month, attention items, recurring status, account context, and quick actions from one landing screen.
+			Quick actions, continue guidance, recent months, and review prompts from one landing screen.
 		</td>
 		<td align="center">
-			<img src="app/assets/images/marketing/months-overview-desktop.webp" alt="Months screen" width="100%">
+			<img src="app/assets/images/marketing/month-timeline-desktop.webp" alt="Month budget screen" width="100%">
 			<br>
-			<strong>Months</strong>
+			<strong>Month Budget</strong>
 			<br>
-			Open the month list, create a month, and review recurring coverage before jumping back into a saved month.
+			Grouped budget sections, filters, view toggles, and a focused month workflow in one place.
 		</td>
 	</tr>
 	<tr>
 		<td align="center">
-			<img src="app/assets/images/marketing/planning-templates.webp" alt="Recurring Transactions" width="100%">
-			<br>
-			<strong>Recurring Transactions</strong>
-			<br>
-			Reusable paycheck, subscription, bill, payment-plan, and credit-card definitions for faster month setup.
-		</td>
-		<td align="center">
-			<img src="app/assets/images/marketing/money-flow.webp" alt="Monthly money flow graph" width="100%">
+			<img src="app/assets/images/marketing/overview-money-flow.webp" alt="Overview money flow graph" width="100%">
 			<br>
 			<strong>Money Flow View</strong>
 			<br>
-			See how income fans out into spending buckets and leftover cash for the month.
-		</td>
-	</tr>
-	<tr>
-		<td align="center">
-			<img src="app/assets/images/marketing/add-entry-wizard.webp" alt="Guided entry wizard" width="100%">
-			<br>
-			<strong>Guided Entry Wizard</strong>
-			<br>
-			Multi-step entry flow for adding one-off items and optionally saving supported entries as recurring transactions.
+			See how saved months roll income into spending buckets and leftover cash across the year.
 		</td>
 		<td align="center">
 			<img src="app/assets/images/marketing/accounts-overview-desktop.webp" alt="Accounts and net worth" width="100%">
 			<br>
 			<strong>Accounts &amp; Net Worth</strong>
 			<br>
-			Manual balance tracking, coverage metrics, and net worth trend snapshots.
+			Manual balance tracking, account coverage, and net worth snapshots that stay close to the budgeting workflow.
 		</td>
 	</tr>
 	<tr>
-		<td align="center" colspan="2">
+		<td align="center">
+			<img src="app/assets/images/marketing/overview-paid-vs-actual.webp" alt="Overview account activity chart" width="100%">
+			<br>
+			<strong>Account Activity</strong>
+			<br>
+			Compare charged versus paid-to totals by account without leaving the overview flow.
+		</td>
+		<td align="center">
 			<img src="app/assets/images/marketing/backup-and-restore-desktop.webp" alt="Backup and restore" width="100%">
 			<br>
 			<strong>Backup &amp; Restore</strong>
