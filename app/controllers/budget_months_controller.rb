@@ -103,6 +103,8 @@ class BudgetMonthsController < ApplicationController
       @month_workflow = params[:month_workflow].presence_in(%w[fresh clone]) || (@source_budget_month.present? ? "clone" : "fresh")
       @wizard_step = params[:wizard_step].to_i
     end
+
+    @include_applicable_templates = include_applicable_templates_default
   end
 
   def create_fresh_month
@@ -110,7 +112,8 @@ class BudgetMonthsController < ApplicationController
     normalize_budget_month_label(@budget_month)
 
     if @budget_month.save
-      redirect_to @budget_month, notice: "Budget month created."
+      generation_summary = generate_applicable_templates_for(@budget_month)
+      redirect_to @budget_month, notice: creation_notice("Budget month created.", generation_summary)
     else
       @wizard_step = 1
       render :new, status: :unprocessable_entity
@@ -170,6 +173,33 @@ class BudgetMonthsController < ApplicationController
 
   def clone_workflow?
     @month_workflow == "clone"
+  end
+
+  def include_applicable_templates_default
+    return params[:include_applicable_templates] == "1" if params.key?(:include_applicable_templates)
+    return false if clone_workflow?
+
+    true
+  end
+
+  def generate_applicable_templates_for(budget_month)
+    return { requested: false, total: 0 } unless params[:include_applicable_templates] == "1"
+
+    total_created = 0
+    total_created += Recurring::GenerateMonthPaychecks.new(budget_month: budget_month).call
+    total_created += Recurring::GenerateMonthSubscriptions.new(budget_month: budget_month).call
+    total_created += Recurring::GenerateMonthMonthlyBills.new(budget_month: budget_month).call
+    total_created += Recurring::GenerateMonthPaymentPlans.new(budget_month: budget_month).call
+    total_created += Recurring::EstimateMonthCreditCards.new(budget_month: budget_month).call
+
+    { requested: true, total: total_created }
+  end
+
+  def creation_notice(base_message, generation_summary)
+    return base_message unless generation_summary[:requested]
+    return "#{base_message} No planning templates were imported." if generation_summary[:total].zero?
+
+    "#{base_message} Imported #{generation_summary[:total]} planning template#{generation_summary[:total] == 1 ? '' : 's'} for this month."
   end
 
   def clone_source_entries(source_month, target_month)

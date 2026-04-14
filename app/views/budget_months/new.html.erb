@@ -139,6 +139,19 @@
       <!-- Removed planned_income and actual_income fields -->
     </div>
 
+    <div class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+      <%= hidden_field_tag :include_applicable_templates, "0" %>
+      <div class="flex items-start gap-3">
+        <%= check_box_tag :include_applicable_templates, "1", @include_applicable_templates, class: "mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" %>
+        <div>
+          <label for="include_applicable_templates" class="text-sm font-semibold text-slate-900">Import planning templates for this month</label>
+          <p class="ta-muted mt-1 text-sm">
+            Add matching paychecks, subscriptions, monthly bills, payment plans, and card payment estimates for the selected month.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div>
       <%= form.label :notes, class: "fb-label" %>
       <%= form.text_area :notes, rows: 3, class: "fb-textarea" %>

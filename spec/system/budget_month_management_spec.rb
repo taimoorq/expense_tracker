@@ -23,6 +23,25 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("May 2026")
   end
 
+  it "defaults the planning template import option on for fresh months and imports matching templates" do
+    user = create(:user, email: "planner-templates@example.com")
+    create(:pay_schedule, user: user, name: "Employer", cadence: :monthly, day_of_month_one: 15, first_pay_on: Date.new(2026, 1, 15), amount: 3000)
+    create(:subscription, user: user, name: "Netflix", due_day: 8, amount: 21.99)
+
+    sign_in_as(user)
+    visit new_budget_month_path
+
+    expect(page).to have_checked_field("Import planning templates for this month")
+
+    fill_in "Month", with: "2026-05-01"
+    fill_in "Label", with: "May 2026"
+    click_button "Create"
+
+    expect(page).to have_content("Budget month created. Imported 2 planning templates for this month.")
+    expect(page).to have_content("Employer")
+    expect(page).to have_content("Netflix")
+  end
+
   it "shows the wizard choices on the new month page" do
     user = create(:user, email: "wizard@example.com")
 
