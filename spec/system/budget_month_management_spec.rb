@@ -324,7 +324,9 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     click_link "Plan and Edit"
-    click_link "Open Recurring"
+    within("#plan-step-1") do
+      click_link "Open Recurring"
+    end
 
     expect(page).to have_current_path(planning_templates_path)
     expect(page).to have_content("Recurring Transactions")
