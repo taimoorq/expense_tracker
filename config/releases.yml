@@ -1,4 +1,10 @@
 releases:
+  - version: "0.5.2"
+    released_on: "2026-04-13"
+    title: "Adding option to import planning templates into a fresh month"
+    summary: "dding option to import planning templates into a fresh month"
+    changes:
+      - "When creating a new fresh month instead of closing there is now an option to import planning templates into that month. This is the default behavior now so it is checked by default"
   - version: "0.5.1"
     released_on: "2026-04-11"
     title: "Smoother month planning navigation"
