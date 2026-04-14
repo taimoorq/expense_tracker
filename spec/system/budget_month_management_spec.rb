@@ -248,13 +248,53 @@ RSpec.describe "Budget month management", type: :system do
     click_link "Plan and Edit"
 
     expect(page).to have_button("Add Monthly Bills")
-    expect(page).to have_text(/1 of 2 templates represented/i)
+    expect(page).to have_text(/1 of 2 monthly bill transactions already in this month/i)
+    expect(page).to have_text(/Missing and ready to add/i)
+    expect(page).to have_content("Electric")
+    expect(page).to have_content("Mar 18")
+    expect(page).to have_content("$140.00")
 
     click_button "Add Monthly Bills"
 
     expect(page).to have_content("Generated 1 monthly bill entry.")
-    expect(page).to have_text(/2 of 2 templates represented/i)
+    expect(page).to have_text(/2 of 2 monthly bill transactions already in this month/i)
     expect(page).not_to have_button("Add Monthly Bills")
+  end
+
+  it "keeps paycheck generation available when a recurring schedule still has missing month occurrences" do
+    user = create(:user, email: "semimonthly@example.com")
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(:pay_schedule,
+      user: user,
+      name: "Main Job",
+      cadence: :semimonthly,
+      amount: 2500,
+      first_pay_on: Date.new(2026, 1, 1),
+      day_of_month_one: 1,
+      day_of_month_two: 15)
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      source_file: "manual_import.csv",
+      occurred_on: Date.new(2026, 3, 1),
+      section: :income,
+      category: "Paycheck",
+      payee: "Main Job",
+      planned_amount: 2500,
+      actual_amount: 2500,
+      account: "Checking",
+      status: :paid)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    click_link "Plan and Edit"
+
+    expect(page).to have_button("Add Paychecks")
+    expect(page).to have_text(/1 of 2 paycheck transactions already in this month/i)
+    expect(page).to have_content("Main Job")
+    expect(page).to have_content("Mar 15")
+    expect(page).to have_content("$2,500.00")
   end
 
   it "opens recurring transactions from the plan and edit panel", js: true do
@@ -625,12 +665,15 @@ RSpec.describe "Budget month management", type: :system do
         visit budget_month_path(month)
         click_link "Plan and Edit"
 
-        expect(page).to have_content("Paycheck entries are already in this month.")
+        expect(page).to have_text(/1 of 2 paycheck transactions already in this month/i)
+        expect(page).to have_text(/Missing and ready to add/i)
+        expect(page).to have_content("Employer")
+        expect(page).to have_content("Mar 22")
         expect(page).to have_content("Subscription entries are already in this month.")
         expect(page).to have_content("Monthly bill entries are already in this month.")
         expect(page).to have_content("Payment-plan entries are already in this month.")
         expect(page).to have_button("Re-estimate Card Payments")
-        expect(page).not_to have_button("Add Paychecks")
+        expect(page).to have_button("Add Paychecks")
         expect(page).not_to have_button("Add Subscriptions")
         expect(page).not_to have_button("Add Monthly Bills")
         expect(page).not_to have_button("Add Payment Plans")

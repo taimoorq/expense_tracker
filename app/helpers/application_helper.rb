@@ -360,7 +360,69 @@ module ApplicationHelper
     }
   end
 
+  def recurring_generation_preview_for_type(budget_month, template_type, entries = budget_month.expense_entries.to_a)
+    month_entries = Array(entries)
+    previews = templates_for_type(budget_month, template_type).flat_map do |template|
+      Array(template.recurring_month_occurrences(budget_month.month_on)).filter_map do |occurred_on|
+        next if month_entries.any? do |entry|
+          entry.occurred_on == occurred_on && template_matches_entry?(template, entry, budget_month.month_on)
+        end
+
+        attributes = template.build_generated_entry_attributes(month_on: budget_month.month_on, occurred_on: occurred_on)
+        {
+          payee: attributes[:payee],
+          occurred_on: occurred_on,
+          planned_amount: attributes[:planned_amount],
+          account: attributes[:account],
+          category: attributes[:category]
+        }
+      end
+    end
+
+    sorted_previews = previews.sort_by { |preview| [ preview[:occurred_on] || Date.new(9999, 12, 31), preview[:payee].to_s.downcase ] }
+    total_occurrences = month_entries_for_generation(budget_month, template_type)
+
+    {
+      total: total_occurrences,
+      matched: [ total_occurrences - sorted_previews.size, 0 ].max,
+      remaining: sorted_previews.size,
+      complete: total_occurrences.positive? && sorted_previews.empty?,
+      previews: sorted_previews
+    }
+  end
+
+  def credit_card_estimate_preview(budget_month, entries = budget_month.expense_entries.to_a)
+    month_entries = Array(entries)
+    cards = templates_for_type(budget_month, :credit_cards)
+    previews = cards.filter_map do |card|
+      next if month_entries.any? { |entry| card.matches_entry_for_month?(entry, month_on: budget_month.month_on) }
+
+      {
+        payee: card.name,
+        occurred_on: budget_month.month_on.change(day: [ card.due_day.to_i, budget_month.month_on.end_of_month.day ].min),
+        planned_amount: card.minimum_payment,
+        account: card.account_name,
+        category: "Credit Card",
+        amount_label: "minimum #{number_to_currency(card.minimum_payment)}"
+      }
+    end
+
+    {
+      total: cards.size,
+      matched: [ cards.size - previews.size, 0 ].max,
+      remaining: previews.size,
+      complete: cards.any? && previews.empty?,
+      previews: previews
+    }
+  end
+
   private
+
+  def month_entries_for_generation(budget_month, template_type)
+    templates_for_type(budget_month, template_type).sum do |template|
+      Array(template.recurring_month_occurrences(budget_month.month_on)).size
+    end
+  end
 
   def admin_auth_scope?
     respond_to?(:resource_name) && resource_name.to_sym == :admin_user

@@ -1,19 +1,14 @@
 <%= turbo_frame_tag "plan_and_edit_panel" do %>
-  <% paycheck_coverage = template_coverage_for_type(budget_month, :pay_schedules, expense_entries) %>
-  <% subscription_coverage = template_coverage_for_type(budget_month, :subscriptions, expense_entries) %>
-  <% monthly_bill_coverage = template_coverage_for_type(budget_month, :monthly_bills, expense_entries) %>
-  <% payment_plan_coverage = template_coverage_for_type(budget_month, :payment_plans, expense_entries) %>
-  <% matching_credit_card_entries = matching_template_entries(budget_month, :credit_cards, expense_entries) %>
-  <% has_generated_paychecks = paycheck_coverage[:complete] %>
-  <% has_generated_subscriptions = subscription_coverage[:complete] %>
-  <% has_generated_monthly_bills = monthly_bill_coverage[:complete] %>
-  <% has_generated_payment_plans = payment_plan_coverage[:complete] %>
-  <% has_estimated_credit_cards = matching_credit_card_entries.any? %>
-  <% paycheck_entry_count = paycheck_coverage[:matched] %>
-  <% subscription_entry_count = subscription_coverage[:matched] %>
-  <% monthly_bill_entry_count = monthly_bill_coverage[:matched] %>
-  <% payment_plan_entry_count = payment_plan_coverage[:matched] %>
-  <% credit_card_estimate_count = matching_credit_card_entries.count %>
+  <% paycheck_generation_preview = recurring_generation_preview_for_type(budget_month, :pay_schedules, expense_entries) %>
+  <% subscription_generation_preview = recurring_generation_preview_for_type(budget_month, :subscriptions, expense_entries) %>
+  <% monthly_bill_generation_preview = recurring_generation_preview_for_type(budget_month, :monthly_bills, expense_entries) %>
+  <% payment_plan_generation_preview = recurring_generation_preview_for_type(budget_month, :payment_plans, expense_entries) %>
+  <% credit_card_generation_preview = credit_card_estimate_preview(budget_month, expense_entries) %>
+  <% has_generated_paychecks = paycheck_generation_preview[:complete] %>
+  <% has_generated_subscriptions = subscription_generation_preview[:complete] %>
+  <% has_generated_monthly_bills = monthly_bill_generation_preview[:complete] %>
+  <% has_generated_payment_plans = payment_plan_generation_preview[:complete] %>
+  <% has_estimated_credit_cards = credit_card_generation_preview[:complete] %>
   <% generation_actions_hidden = budget_month.complete_for_generation? %>
   <% template_actions_completed = [has_generated_paychecks, has_generated_subscriptions, has_generated_monthly_bills, has_generated_payment_plans, has_estimated_credit_cards].count(true) %>
   <% manual_entries_count = expense_entries.count { |entry| entry.source_file.blank? } %>
@@ -171,13 +166,30 @@
               <p class="text-sm font-semibold text-slate-900">Add Paychecks</p>
               <p class="mt-1 text-xs leading-5 text-slate-600">Recommended first so income is visible before the rest of the month is planned.</p>
               <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= paycheck_coverage[:total].positive? ? "#{paycheck_entry_count} of #{paycheck_coverage[:total]} templates represented" : "No templates saved yet" %>
+                <%= if paycheck_generation_preview[:total].positive?
+                      "#{paycheck_generation_preview[:matched]} of #{paycheck_generation_preview[:total]} paycheck transactions already in this month"
+                    else
+                      "No templates saved yet"
+                    end %>
               </p>
             </div>
             <% if has_generated_paychecks %>
               <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
             <% end %>
           </div>
+          <% if paycheck_generation_preview[:remaining].positive? %>
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
+              <ul class="mt-2 space-y-2 text-xs text-slate-700">
+                <% paycheck_generation_preview[:previews].first(4).each do |preview| %>
+                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
+                <% end %>
+              </ul>
+              <% if paycheck_generation_preview[:remaining] > 4 %>
+                <p class="mt-2 text-xs text-slate-500">+ <%= paycheck_generation_preview[:remaining] - 4 %> more paycheck transaction<%= paycheck_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
+              <% end %>
+            </div>
+          <% end %>
           <div class="mt-4">
             <% if has_generated_paychecks %>
               <p class="text-sm text-slate-600">Paycheck entries are already in this month.</p>
@@ -196,13 +208,30 @@
               <p class="text-sm font-semibold text-slate-900">Add Subscriptions</p>
               <p class="mt-1 text-xs leading-5 text-slate-600">Bring in recurring subscriptions and services after income is in place.</p>
               <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= subscription_coverage[:total].positive? ? "#{subscription_entry_count} of #{subscription_coverage[:total]} templates represented" : "No templates saved yet" %>
+                <%= if subscription_generation_preview[:total].positive?
+                      "#{subscription_generation_preview[:matched]} of #{subscription_generation_preview[:total]} subscription transactions already in this month"
+                    else
+                      "No templates saved yet"
+                    end %>
               </p>
             </div>
             <% if has_generated_subscriptions %>
               <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
             <% end %>
           </div>
+          <% if subscription_generation_preview[:remaining].positive? %>
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
+              <ul class="mt-2 space-y-2 text-xs text-slate-700">
+                <% subscription_generation_preview[:previews].first(4).each do |preview| %>
+                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
+                <% end %>
+              </ul>
+              <% if subscription_generation_preview[:remaining] > 4 %>
+                <p class="mt-2 text-xs text-slate-500">+ <%= subscription_generation_preview[:remaining] - 4 %> more subscription transaction<%= subscription_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
+              <% end %>
+            </div>
+          <% end %>
           <div class="mt-4">
             <% if has_generated_subscriptions %>
               <p class="text-sm text-slate-600">Subscription entries are already in this month.</p>
@@ -221,13 +250,30 @@
               <p class="text-sm font-semibold text-slate-900">Add Monthly Bills</p>
               <p class="mt-1 text-xs leading-5 text-slate-600">Pull in regular household bills so fixed outflows are not missed.</p>
               <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= monthly_bill_coverage[:total].positive? ? "#{monthly_bill_entry_count} of #{monthly_bill_coverage[:total]} templates represented" : "No templates saved yet" %>
+                <%= if monthly_bill_generation_preview[:total].positive?
+                      "#{monthly_bill_generation_preview[:matched]} of #{monthly_bill_generation_preview[:total]} monthly bill transactions already in this month"
+                    else
+                      "No templates saved yet"
+                    end %>
               </p>
             </div>
             <% if has_generated_monthly_bills %>
               <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
             <% end %>
           </div>
+          <% if monthly_bill_generation_preview[:remaining].positive? %>
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
+              <ul class="mt-2 space-y-2 text-xs text-slate-700">
+                <% monthly_bill_generation_preview[:previews].first(4).each do |preview| %>
+                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
+                <% end %>
+              </ul>
+              <% if monthly_bill_generation_preview[:remaining] > 4 %>
+                <p class="mt-2 text-xs text-slate-500">+ <%= monthly_bill_generation_preview[:remaining] - 4 %> more monthly bill transaction<%= monthly_bill_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
+              <% end %>
+            </div>
+          <% end %>
           <div class="mt-4">
             <% if has_generated_monthly_bills %>
               <p class="text-sm text-slate-600">Monthly bill entries are already in this month.</p>
@@ -246,13 +292,30 @@
               <p class="text-sm font-semibold text-slate-900">Add Payment Plans</p>
               <p class="mt-1 text-xs leading-5 text-slate-600">Add installment or debt-plan items so payoff work stays visible in the month.</p>
               <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= payment_plan_coverage[:total].positive? ? "#{payment_plan_entry_count} of #{payment_plan_coverage[:total]} templates represented" : "No templates saved yet" %>
+                <%= if payment_plan_generation_preview[:total].positive?
+                      "#{payment_plan_generation_preview[:matched]} of #{payment_plan_generation_preview[:total]} payment-plan transactions already in this month"
+                    else
+                      "No templates saved yet"
+                    end %>
               </p>
             </div>
             <% if has_generated_payment_plans %>
               <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
             <% end %>
           </div>
+          <% if payment_plan_generation_preview[:remaining].positive? %>
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
+              <ul class="mt-2 space-y-2 text-xs text-slate-700">
+                <% payment_plan_generation_preview[:previews].first(4).each do |preview| %>
+                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
+                <% end %>
+              </ul>
+              <% if payment_plan_generation_preview[:remaining] > 4 %>
+                <p class="mt-2 text-xs text-slate-500">+ <%= payment_plan_generation_preview[:remaining] - 4 %> more payment-plan transaction<%= payment_plan_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
+              <% end %>
+            </div>
+          <% end %>
           <div class="mt-4">
             <% if has_generated_payment_plans %>
               <p class="text-sm text-slate-600">Payment-plan entries are already in this month.</p>
@@ -271,13 +334,30 @@
               <p class="text-sm font-semibold text-slate-900">Estimate Card Payments</p>
               <p class="mt-1 text-xs leading-5 text-slate-600">Run this after income and bills are in place so every active card gets a minimum payment entry and any extra leftover cash can be spread across them.</p>
               <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= pluralize(credit_card_estimate_count, "entry") %> already in this month
+                <%= if credit_card_generation_preview[:total].positive?
+                      "#{credit_card_generation_preview[:matched]} of #{credit_card_generation_preview[:total]} card payments already estimated"
+                    else
+                      "No credit cards saved yet"
+                    end %>
               </p>
             </div>
             <% if has_estimated_credit_cards %>
               <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Estimated</span>
             <% end %>
           </div>
+          <% if credit_card_generation_preview[:remaining].positive? %>
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing cards to estimate</p>
+              <ul class="mt-2 space-y-2 text-xs text-slate-700">
+                <% credit_card_generation_preview[:previews].first(4).each do |preview| %>
+                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= preview[:amount_label] %></li>
+                <% end %>
+              </ul>
+              <% if credit_card_generation_preview[:remaining] > 4 %>
+                <p class="mt-2 text-xs text-slate-500">+ <%= credit_card_generation_preview[:remaining] - 4 %> more card payment estimate<%= credit_card_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
+              <% end %>
+            </div>
+          <% end %>
           <div class="mt-4">
             <%= button_to estimate_credit_cards_budget_month_path(budget_month), method: :post, class: "fb-btn-secondary ta-action-btn w-full justify-center" do %>
               <%= tabler_icon("chart-bar", classes: "ta-action-icon text-indigo-600") %>
