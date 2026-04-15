@@ -116,6 +116,8 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
+    expect(page).to have_css("turbo-frame#entry_wizard_modal h3", text: "Add Entry with Wizard")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal select#expense_entry_section", visible: :all)
     wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
     expect(wizard_frame).to have_text("Add Entry with Wizard")
     expect(wizard_frame).to have_css("select#expense_entry_section", visible: :all)
