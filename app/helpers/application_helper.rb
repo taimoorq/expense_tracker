@@ -138,6 +138,12 @@ module ApplicationHelper
     admin_auth_scope? ? new_admin_user_session_path : root_path
   end
 
+  def authentication_back_path
+    return profile_path if user_signed_in? && controller_name == "registrations" && action_name == "edit" && !admin_auth_scope?
+
+    authentication_brand_path
+  end
+
   def authentication_brand_subtitle
     admin_auth_scope? ? "Restricted admin access" : "Private monthly budgeting"
   end
@@ -154,6 +160,18 @@ module ApplicationHelper
     available_themes.map { |theme| [ theme.name, theme.key ] }
   end
 
+  def theme_picker_payload
+    available_themes.each_with_object({}) do |theme, payload|
+      payload[theme.key] = {
+        css_class: theme.css_class,
+        css_variables: theme.css_variables,
+        colors: theme.colors,
+        name: theme.name,
+        meta_color: theme.meta_color
+      }
+    end
+  end
+
   def current_theme_colors
     current_theme.colors
   end
@@ -168,6 +186,10 @@ module ApplicationHelper
     ]
   end
 
+  def landing_page_label(value)
+    landing_page_options.to_h.invert.fetch(value, value.to_s.humanize)
+  end
+
   def preferred_month_view_options
     [
       [ "Budget", "timeline" ],
@@ -175,6 +197,10 @@ module ApplicationHelper
       [ "Calendar", "calendar" ],
       [ "Plan and Edit", "entries" ]
     ]
+  end
+
+  def preferred_month_view_label(value)
+    preferred_month_view_options.to_h.invert.fetch(value, value.to_s.humanize)
   end
 
   def active_account_names(user = current_user)

@@ -706,7 +706,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit root_path
 
-    first("button[aria-label='Open account menu']").click
+    first("button[aria-label='Open profile menu']").click
     click_button "Sign out", match: :first
 
     expect(page).to have_content("Signed out successfully")

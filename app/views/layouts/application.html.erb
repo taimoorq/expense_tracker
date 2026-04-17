@@ -102,6 +102,10 @@
               <%= tabler_icon("adjustments", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Settings</span>
             <% end %>
+
+            <div class="mt-2">
+              <%= render "shared/user_menu" %>
+            </div>
           </div>
         </div>
       <% end %>
@@ -118,10 +122,6 @@
                 <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="expandIcon"><%= tabler_icon("layout-sidebar-left-expand", classes: "ta-action-icon-lg") %></span>
                 <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="collapseIcon"><%= tabler_icon("layout-sidebar-left-collapse", classes: "ta-action-icon-lg") %></span>
               </button>
-
-              <div class="ta-topbar-user-actions">
-                <%= render "shared/user_menu" %>
-              </div>
             </div>
           <% end %>
 
@@ -156,10 +156,6 @@
           <% if user_signed_in? %>
             <div class="w-full sm:order-none sm:w-auto sm:flex-none lg:mx-4">
               <%= render "shared/month_jump" %>
-            </div>
-
-            <div class="hidden sm:flex ta-topbar-user-actions">
-              <%= render "shared/user_menu" %>
             </div>
           <% else %>
             <div class="flex items-center gap-2">

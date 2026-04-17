@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     registrations: "users/registrations",
     passwords: "users/passwords"
   }
+  resource :profile, only: :show
   resource :theme, only: :update
   resource :settings, only: [ :show, :update ]
 

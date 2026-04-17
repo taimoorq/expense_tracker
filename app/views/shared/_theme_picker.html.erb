@@ -1,4 +1,11 @@
-<%= form_with url: theme_path, method: :patch, class: "ta-theme-picker", data: { turbo: false } do |form| %>
+<%= form_with url: theme_path,
+              method: :patch,
+              class: "ta-theme-picker",
+              data: {
+                turbo: false,
+                controller: "theme-picker",
+                theme_picker_themes_value: theme_picker_payload.to_json
+              } do |form| %>
   <label for="theme-picker-select" class="sr-only">Color scheme</label>
   <div class="ta-theme-picker-shell">
     <div class="ta-theme-picker-field">
@@ -9,11 +16,17 @@
                       {
                         id: "theme-picker-select",
                         class: "fb-select ta-theme-picker-select",
-                        onchange: "this.form.requestSubmit()"
+                        data: {
+                          action: "change->theme-picker#change",
+                          theme_picker_target: "select"
+                        }
                       } %>
     </div>
 
-    <div class="ta-theme-swatches" aria-label="<%= "#{current_theme.name} palette" %>">
+    <div class="ta-theme-swatches"
+         aria-label="<%= "#{current_theme.name} palette" %>"
+         data-theme-picker-target="swatches"
+         data-theme-picker-name="<%= current_theme.name %>">
       <% current_theme_colors.each_with_index do |color, index| %>
         <span class="ta-theme-swatch" style="background-color: <%= color %>" title="<%= "#{current_theme.name} color #{index + 1}: #{color}" %>"></span>
       <% end %>

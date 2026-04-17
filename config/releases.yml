@@ -1,4 +1,13 @@
 releases:
+  - version: "0.5.3"
+    released_on: "2026-04-17"
+    title: "Profile hub and live theme polish"
+    summary: "This release adds a dedicated profile page, moves profile access into the left navigation, and makes color-scheme changes apply immediately across the app shell."
+    changes:
+      - "Added a dedicated Profile page that summarizes the signed-in user account, current app preferences, and links to edit profile details or settings."
+      - "Moved profile access into the left navigation under Settings and updated the sidebar flyout so profile actions stay visible and usable near the bottom of the screen."
+      - "Updated the account-settings back navigation so signed-in users return to their profile instead of being dropped back at the app home."
+      - "Made the theme picker apply layout colors, swatches, and browser theme metadata immediately when a new color scheme is selected, while still persisting the choice."
   - version: "0.5.2"
     released_on: "2026-04-13"
     title: "Adding option to import planning templates into a fresh month"
