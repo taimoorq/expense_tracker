@@ -1,4 +1,6 @@
 class ExpenseEntry < ApplicationRecord
+  include ExpenseEntryProvenance
+
   RECURRING_TEMPLATE_SOURCES = Recurring::TemplateCatalog.recurring_source_files.freeze
 
   belongs_to :user
@@ -29,8 +31,6 @@ class ExpenseEntry < ApplicationRecord
   validate :source_template_matches_user
 
   before_validation :assign_user_from_budget_month
-  before_validation :normalize_provenance
-
   scope :chronological, -> { order(:occurred_on, :created_at) }
   scope :recurring_templates, -> { where(source_file: RECURRING_TEMPLATE_SOURCES) }
   scope :due_on_or_before, ->(date) { where(occurred_on: ..date) }
@@ -87,32 +87,6 @@ class ExpenseEntry < ApplicationRecord
     return if user_id == budget_month.user_id
 
     errors.add(:user, "must match the budget month owner")
-  end
-
-  def normalize_provenance
-    self.source_file = "manual" if source_file.blank?
-    self.source_account = resolved_source_account
-    self.account = source_account.name if source_account.present?
-  end
-
-  def resolved_source_account
-    return source_account if source_account.present?
-
-    linked_template_account = source_template_account
-    return linked_template_account if linked_template_account.present?
-    return nil if user.blank? || account.blank?
-
-    user.accounts.find_by(name: account)
-  end
-
-  def source_template_account
-    return nil if source_template.blank?
-    return source_template.entry_account_record if source_template.respond_to?(:entry_account_record)
-    return source_template.payment_account if source_template.respond_to?(:payment_account) && source_template.payment_account.present?
-    return source_template.linked_account if source_template.respond_to?(:linked_account)
-    return source_template.payment_account if source_template.respond_to?(:payment_account)
-
-    nil
   end
 
   def source_account_belongs_to_user

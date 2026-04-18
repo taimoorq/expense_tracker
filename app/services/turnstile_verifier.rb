@@ -45,15 +45,7 @@ class TurnstileVerifier
   def verification_response
     # Turnstile tokens are validated on the current auth request and are not reusable,
     # so async processing or caching would weaken the verification step.
-    Net::HTTP.start(
-      VERIFY_URI.hostname,
-      VERIFY_URI.port,
-      use_ssl: true,
-      open_timeout: HTTP_TIMEOUT_SECONDS,
-      read_timeout: HTTP_TIMEOUT_SECONDS
-    ) do |http|
-      http.request(verification_request)
-    end
+    http_client.request(verification_request)
   end
 
   def verification_request
@@ -63,6 +55,14 @@ class TurnstileVerifier
         "response" => token,
         "remoteip" => remote_ip
       )
+    end
+  end
+
+  def http_client
+    Net::HTTP.new(VERIFY_URI.hostname, VERIFY_URI.port).tap do |http|
+      http.use_ssl = true
+      http.open_timeout = HTTP_TIMEOUT_SECONDS
+      http.read_timeout = HTTP_TIMEOUT_SECONDS
     end
   end
 end

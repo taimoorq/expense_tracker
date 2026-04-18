@@ -1,4 +1,13 @@
 releases:
+  - version: "0.5.5"
+    released_on: "2026-04-17"
+    title: "RailsForge cleanup and stronger extraction coverage"
+    summary: "This release finishes the RailsForge cleanup pass, trims remaining method-count pressure with focused concerns, and adds direct specs for the new service and presenter extraction points."
+    changes:
+      - "Extracted shared controller and model setup behavior into smaller concerns so account setup, month workflow handling, entry parameter loading, and entry provenance logic are easier to maintain."
+      - "Brought the app to a 100 out of 100 RailsForge doctor score by addressing the remaining actionable low-severity cleanup items."
+      - "Added direct specs for month form state, month creation, entry creation, timeline presentation, and visual dashboard presentation so the new extraction boundaries have focused regression coverage."
+      - "Added a request-level regression for account creation without an initial snapshot so both snapshot and no-snapshot flows are now covered."
   - version: "0.5.4"
     released_on: "2026-04-17"
     title: "Faster month screens and cleaner budgeting flows"

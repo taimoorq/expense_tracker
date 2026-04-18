@@ -1,5 +1,7 @@
 module Budgeting
   class TimelinePresenter
+    include ActionView::RecordIdentifier
+
     TEMPLATE_SOURCES = %w[pay_schedule subscription monthly_bill payment_plan credit_card_estimate].freeze
 
     def initialize(budget_month:, expense_entries:, default_timeline_view:)
@@ -43,6 +45,20 @@ module Budgeting
       end
     end
 
+    def groups_for_view
+      @groups_for_view ||= grouped_entries.each_with_index.map do |(group_name, entries), index|
+        {
+          name: group_name,
+          id: group_name.parameterize,
+          open: index.zero?,
+          total: entries.sum(&:cashflow_amount),
+          count: entries.count,
+          show_reason_column: group_name == "Other",
+          rows: entries.map { |entry| row_for(entry, show_reason_column: group_name == "Other") }
+        }
+      end
+    end
+
     def generated_from_template?(entry)
       TEMPLATE_SOURCES.include?(entry.source_file.to_s)
     end
@@ -70,6 +86,39 @@ module Budgeting
       end
 
       entries
+    end
+
+    def row_for(entry, show_reason_column:)
+      impact = entry.cashflow_amount
+      variable_payment_entry = variable_payment_entry?(entry)
+      {
+        dom_id: dom_id(entry),
+        date: entry.occurred_on || "—",
+        date_iso8601: entry.occurred_on&.iso8601,
+        payee: entry.payee.presence || "—",
+        account_name: entry.account_name.presence || "—",
+        reason: reason_for_entry(entry),
+        status: entry.status,
+        status_label: entry.status.humanize,
+        impact: impact,
+        generated_from_template: generated_from_template?(entry),
+        variable_payment_entry: variable_payment_entry,
+        planned_amount: entry.planned_amount || 0,
+        actual_amount: entry.actual_amount,
+        mark_as_paid_path: Rails.application.routes.url_helpers.budget_month_expense_entry_path(entry.budget_month, entry),
+        edit_path: Rails.application.routes.url_helpers.edit_budget_month_expense_entry_path(entry.budget_month, entry, timeline_view: default_timeline_view),
+        delete_path: Rails.application.routes.url_helpers.budget_month_expense_entry_path(entry.budget_month, entry),
+        template_edit_path: Rails.application.routes.url_helpers.edit_template_budget_month_expense_entry_path(entry.budget_month, entry),
+        mark_as_paid_params: {
+          mark_as_paid: "1",
+          timeline_view: default_timeline_view,
+          expense_entry: {
+            actual_amount: entry.actual_amount.presence || entry.planned_amount
+          }
+        },
+        delete_params: { timeline_view: default_timeline_view },
+        show_reason_column: show_reason_column
+      }
     end
 
     def group_rules

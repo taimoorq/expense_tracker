@@ -33,6 +33,34 @@ RSpec.describe "Accounts CRUD", type: :request do
     expect(account.account_snapshots.first.balance.to_d).to eq(8500.25.to_d)
   end
 
+  it "creates an account without an initial snapshot when snapshot fields are blank" do
+    expect do
+      post accounts_path, params: {
+        account: {
+          name: "Travel Savings",
+          institution_name: "Ally",
+          kind: "savings",
+          include_in_net_worth: "1",
+          include_in_cash: "0",
+          active: "1",
+          notes: "Vacations",
+          initial_snapshot: {
+            recorded_on: "",
+            balance: "",
+            available_balance: "",
+            notes: ""
+          }
+        }
+      }
+    end.to change(Account, :count).by(1)
+      .and change(AccountSnapshot, :count).by(0)
+
+    account = user.accounts.find_by!(name: "Travel Savings")
+
+    expect(response).to redirect_to(account_path(account))
+    expect(flash[:notice]).to eq("Account created. Add a balance snapshot to start tracking it.")
+  end
+
   it "updates an owned account" do
     account = create(:account, user: user, name: "Checking")
 

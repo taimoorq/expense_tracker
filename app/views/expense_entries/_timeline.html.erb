@@ -43,21 +43,19 @@
         <span>Collapse all</span>
       </button>
     </div>
-    <% if timeline.grouped_entries.any? %>
+    <% if timeline.groups_for_view.any? %>
       <div class="space-y-4">
-        <% timeline.grouped_entries.each_with_index do |(group_name, entries), index| %>
-          <% group_total = entries.sum(&:cashflow_amount) %>
-          <% show_reason_column = (group_name == "Other") %>
-          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-expense-entries-filter-target="group" data-group-id="<%= group_name.parameterize %>" style="view-transition-name: timeline-group-<%= group_name.parameterize %>; view-transition-class: ta-vt-card;" <%= "open" if index.zero? %>>
+        <% timeline.groups_for_view.each do |group| %>
+          <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-expense-entries-filter-target="group" data-group-id="<%= group[:id] %>" style="view-transition-name: timeline-group-<%= group[:id] %>; view-transition-class: ta-vt-card;" <%= "open" if group[:open] %>>
             <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 bg-slate-50 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
               <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <%= tabler_icon("list") %>
-                <%= group_name %>
+                <%= group[:name] %>
               </span>
               <div class="flex items-center gap-3 text-xs sm:text-sm">
-                <span class="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-600" data-expense-entries-filter-target="groupCount"><%= pluralize(entries.count, "item") %></span>
-                <span class="font-semibold <%= group_total >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
-                  Net: <%= group_total >= 0 ? "+" : "" %><%= number_to_currency(group_total) %>
+                <span class="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-600" data-expense-entries-filter-target="groupCount"><%= pluralize(group[:count], "item") %></span>
+                <span class="font-semibold <%= group[:total] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
+                  Net: <%= group[:total] >= 0 ? "+" : "" %><%= number_to_currency(group[:total]) %>
                 </span>
                 <span class="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
                   Toggle
@@ -72,7 +70,7 @@
                     <th class="ta-th">Date</th>
                     <th class="ta-th">Payee</th>
                     <th class="ta-th hidden lg:table-cell">Account</th>
-                    <% if show_reason_column %>
+                    <% if group[:show_reason_column] %>
                       <th class="ta-th">Reason</th>
                     <% end %>
                     <th class="ta-th">Status</th>
@@ -81,40 +79,37 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <% entries.each do |entry| %>
-                    <% impact = entry.cashflow_amount %>
-                    <% generated_from_template = timeline.generated_from_template?(entry) %>
-                    <% variable_payment_entry = timeline.variable_payment_entry?(entry) %>
+                  <% group[:rows].each do |row| %>
                     <tr
                       data-expense-entries-filter-target="row"
-                      data-date="<%= entry.occurred_on&.iso8601 %>"
-                      data-payee="<%= entry.payee.to_s %>"
-                      data-reason="<%= timeline.reason_for_entry(entry).to_s %>"
-                      data-value="<%= timeline.reason_for_entry(entry).to_s.downcase %>"
-                      data-status="<%= entry.status %>"
-                      style="view-transition-name: timeline-entry-<%= dom_id(entry) %>; view-transition-class: ta-vt-row;">
-                      <td class="px-3 py-2"><%= entry.occurred_on || "—" %></td>
+                      data-date="<%= row[:date_iso8601] %>"
+                      data-payee="<%= row[:payee].to_s %>"
+                      data-reason="<%= row[:reason].to_s %>"
+                      data-value="<%= row[:reason].to_s.downcase %>"
+                      data-status="<%= row[:status] %>"
+                      style="view-transition-name: timeline-entry-<%= row[:dom_id] %>; view-transition-class: ta-vt-row;">
+                      <td class="px-3 py-2"><%= row[:date] %></td>
                       <td class="px-3 py-2">
                         <div>
-                          <div><%= entry.payee.presence || "—" %></div>
-                          <% if variable_payment_entry %>
+                          <div><%= row[:payee] %></div>
+                          <% if row[:variable_payment_entry] %>
                             <p class="mt-1 text-xs text-slate-500">Amount/date may change month to month.</p>
                           <% end %>
                         </div>
                       </td>
-                      <td class="px-3 py-2 hidden lg:table-cell"><%= entry.account_name.presence || "—" %></td>
-                      <% if show_reason_column %>
-                        <td class="px-3 py-2"><%= timeline.reason_for_entry(entry) %></td>
+                      <td class="px-3 py-2 hidden lg:table-cell"><%= row[:account_name] %></td>
+                      <% if group[:show_reason_column] %>
+                        <td class="px-3 py-2"><%= row[:reason] %></td>
                       <% end %>
-                      <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
-                      <td class="px-3 py-2 text-right <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
+                      <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= row[:status_label] %></span></td>
+                      <td class="px-3 py-2 text-right <%= row[:impact] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">
                         <div>
-                          <div><%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %></div>
-                          <% if variable_payment_entry %>
+                          <div><%= row[:impact] >= 0 ? "+" : "" %><%= number_to_currency(row[:impact]) %></div>
+                          <% if row[:variable_payment_entry] %>
                             <p class="mt-1 text-xs font-medium text-slate-500">
-                              Planned <%= number_to_currency(entry.planned_amount || 0) %>
-                              <% if entry.actual_amount.present? %>
-                                · Actual <%= number_to_currency(entry.actual_amount) %>
+                              Planned <%= number_to_currency(row[:planned_amount]) %>
+                              <% if row[:actual_amount].present? %>
+                                · Actual <%= number_to_currency(row[:actual_amount]) %>
                               <% else %>
                                 · Actual not set
                               <% end %>
@@ -124,16 +119,10 @@
                       </td>
                       <td class="px-3 py-2">
                         <div class="flex justify-end gap-2">
-                          <% unless entry.paid? %>
-                            <%= button_to budget_month_expense_entry_path(entry.budget_month, entry),
+                          <% unless row[:status] == "paid" %>
+                            <%= button_to row[:mark_as_paid_path],
                                           method: :patch,
-                                          params: {
-                                            mark_as_paid: "1",
-                                            timeline_view: default_timeline_view,
-                                            expense_entry: {
-                                              actual_amount: entry.actual_amount.presence || entry.planned_amount
-                                            }
-                                          },
+                                          params: row[:mark_as_paid_params],
                                           class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
                                           title: "Mark as paid",
                                           aria: { label: "Mark as paid" } do %>
@@ -141,20 +130,20 @@
                             <% end %>
                           <% end %>
 
-                          <%= link_to edit_budget_month_expense_entry_path(entry.budget_month, entry, timeline_view: default_timeline_view),
+                          <%= link_to row[:edit_path],
                                       class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
                                       title: "Edit entry",
                                       aria: { label: "Edit entry" },
                                       data: { turbo_frame: "entry_editor_modal" } do %>
                             <%= tabler_icon("pencil", classes: "h-4 w-4 text-indigo-600") %>
-                            <% if variable_payment_entry %>
+                            <% if row[:variable_payment_entry] %>
                               <span>Edit</span>
                             <% end %>
                           <% end %>
 
-                          <%= button_to budget_month_expense_entry_path(entry.budget_month, entry),
+                          <%= button_to row[:delete_path],
                                         method: :delete,
-                                        params: { timeline_view: default_timeline_view },
+                                        params: row[:delete_params],
                                         class: "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs",
                                         title: "Delete entry",
                                         aria: { label: "Delete entry" },
@@ -162,8 +151,8 @@
                             <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
                           <% end %>
 
-                          <% if generated_from_template %>
-                            <%= link_to edit_template_budget_month_expense_entry_path(entry.budget_month, entry),
+                          <% if row[:generated_from_template] %>
+                            <%= link_to row[:template_edit_path],
                                         class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
                                         title: "Edit recurring item",
                                         aria: { label: "Edit recurring item" },
