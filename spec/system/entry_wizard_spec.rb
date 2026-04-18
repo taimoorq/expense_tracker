@@ -61,6 +61,8 @@ RSpec.describe "Entry wizard", type: :system do
     visit budget_month_path(budget_month)
 
     click_link "Plan and Edit"
+    expect(page).to have_content("Plan and Edit This Month")
+    expect(page).to have_link("Open Guided Wizard")
     click_link "Open Guided Wizard"
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal h3", text: "Add Entry with Wizard")
@@ -114,6 +116,8 @@ RSpec.describe "Entry wizard", type: :system do
     visit budget_month_path(budget_month)
 
     click_link "Plan and Edit"
+    expect(page).to have_content("Plan and Edit This Month")
+    expect(page).to have_link("Open Guided Wizard")
     click_link "Open Guided Wizard"
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal h3", text: "Add Entry with Wizard")
