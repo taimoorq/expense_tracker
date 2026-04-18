@@ -4,7 +4,7 @@ module Budgeting
 
     def initialize(budget_month:, expense_entries:, default_timeline_view:)
       @budget_month = budget_month
-      @expense_entries = Array(expense_entries)
+      @expense_entries = preload_entries(Array(expense_entries))
       @default_timeline_view = default_timeline_view.presence_in(%w[sections full-list calendar]) || "sections"
     end
 
@@ -59,6 +59,17 @@ module Budgeting
 
     def ordered_entries
       @ordered_entries ||= expense_entries.sort_by { |entry| [ entry.occurred_on || Date.new(9999, 12, 31), entry.created_at ] }
+    end
+
+    def preload_entries(entries)
+      ActiveRecord::Associations::Preloader.new(records: entries, associations: [ :budget_month, :source_account, :source_template ]).call
+
+      credit_card_templates = entries.filter_map { |entry| entry.source_template if entry.source_template.is_a?(CreditCard) }
+      if credit_card_templates.any?
+        ActiveRecord::Associations::Preloader.new(records: credit_card_templates, associations: [ :linked_account, :payment_account ]).call
+      end
+
+      entries
     end
 
     def group_rules
