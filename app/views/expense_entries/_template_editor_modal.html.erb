@@ -24,7 +24,7 @@
       <% if template_record.is_a?(PaySchedule) %>
         <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2", data: submit_state_data do |form| %>
           <%= form.text_field :name, placeholder: "Employer/Source", required: true, class: "fb-input" %>
-          <%= form.select :cadence, PaySchedule.cadences.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+          <%= form.select :cadence, pay_schedule_cadence_options, {}, class: "fb-select" %>
           <%= form.number_field :amount, step: 0.01, required: true, class: "fb-input" %>
           <%= form.date_field :first_pay_on, required: true, class: "fb-input" %>
           <%= form.number_field :day_of_month_one, class: "fb-input", placeholder: "Day #1" %>
@@ -49,7 +49,7 @@
       <% elsif template_record.is_a?(MonthlyBill) %>
         <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2", data: submit_state_data do |form| %>
           <%= form.text_field :name, required: true, class: "fb-input", placeholder: "Bill name" %>
-          <%= form.select :kind, MonthlyBill.kinds.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>
+          <%= form.select :kind, monthly_bill_kind_options, {}, class: "fb-select" %>
           <%= form.number_field :default_amount, step: 0.01, class: "fb-input", placeholder: "Default amount" %>
           <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
           <%= form.select :billing_frequency, billing_frequency_options, {}, class: "fb-select" %>

@@ -1,16 +1,9 @@
 <%= turbo_frame_tag "timeline_section" do %>
-  <% timeline_leftover = local_assigns[:budget_month]&.calculated_leftover || expense_entries.sum(&:cashflow_amount) %>
-  <% default_timeline_view = local_assigns[:default_timeline_view].presence_in(%w[sections full-list calendar]) || "sections" %>
-  <% reason_for_entry = ->(entry) { entry.category.presence || entry.section.humanize } %>
-  <% reason_pills = expense_entries.filter_map { |entry| reason_for_entry.call(entry).to_s.strip.presence }
-                    .tally
-                    .sort_by { |reason, count| [-count, reason.downcase] }
-                    .first(8) %>
-  <% timeline_view_urls = {
-    sections: budget_month_tab_path(budget_month, "timeline"),
-    "full-list": budget_month_tab_path(budget_month, "timeline", view: "full-list"),
-    calendar: budget_month_tab_path(budget_month, "calendar")
-  } %>
+  <% timeline = Budgeting::TimelinePresenter.new(budget_month: budget_month, expense_entries: expense_entries, default_timeline_view: local_assigns[:default_timeline_view]) %>
+  <% timeline_leftover = timeline.timeline_leftover %>
+  <% default_timeline_view = timeline.default_timeline_view %>
+  <% reason_pills = timeline.reason_pills %>
+  <% timeline_view_urls = timeline.timeline_view_urls %>
   <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups expense-entries-filter" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" style="view-transition-name: month-budget-shell; view-transition-class: ta-vt-shell;">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div>
@@ -39,27 +32,6 @@
 
     <%= render "expense_entries/filters", reason_pills: reason_pills, id_prefix: "timeline" %>
 
-    <% ordered_entries = expense_entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
-    <% remaining_entries = ordered_entries.dup %>
-    <% template_sources = %w[pay_schedule subscription monthly_bill payment_plan credit_card_estimate] %>
-
-    <% group_rules = [
-      ["Income & Paychecks", ->(entry) { entry.income? || entry.source_file == "pay_schedule" || entry.category.to_s.downcase.include?("paycheck") }],
-      ["Payment Plans", ->(entry) { entry.source_file == "payment_plan" || entry.category.to_s.downcase.include?("payment plan") }],
-      ["Credit Card Payments", ->(entry) { entry.source_file == "credit_card_estimate" || entry.category.to_s.downcase.include?("credit card") }],
-      ["Recurring Subscriptions", ->(entry) { entry.source_file == "subscription" || entry.category.to_s.downcase.include?("subscription") }],
-      ["Monthly Fixed Bills", ->(entry) { entry.source_file == "monthly_bill" && entry.category.to_s.downcase.include?("monthly payment") }],
-      ["Monthly Variable Bills", ->(entry) { entry.source_file == "monthly_bill" && entry.category.to_s.downcase.include?("variable") }]
-    ] %>
-
-    <% grouped_entries = [] %>
-    <% group_rules.each do |group_name, matcher| %>
-      <% matches, remaining_entries = remaining_entries.partition { |entry| matcher.call(entry) } %>
-      <% grouped_entries << [group_name, matches] if matches.any? %>
-    <% end %>
-
-    <% grouped_entries << ["Other", remaining_entries] if remaining_entries.any? %>
-
     <div data-panel-name="sections" role="tabpanel" class="<%= default_timeline_view == "sections" ? "space-y-4" : "hidden space-y-4" %>" <%= %(style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;") if default_timeline_view == "sections" %>>
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <button type="button" class="fb-btn-secondary ta-action-btn" data-action="click->collapsible-groups#expandAll">
@@ -71,9 +43,9 @@
         <span>Collapse all</span>
       </button>
     </div>
-    <% if grouped_entries.any? %>
+    <% if timeline.grouped_entries.any? %>
       <div class="space-y-4">
-        <% grouped_entries.each_with_index do |(group_name, entries), index| %>
+        <% timeline.grouped_entries.each_with_index do |(group_name, entries), index| %>
           <% group_total = entries.sum(&:cashflow_amount) %>
           <% show_reason_column = (group_name == "Other") %>
           <details class="rounded-lg border border-slate-200 bg-white" data-collapsible-groups-target="group" data-expense-entries-filter-target="group" data-group-id="<%= group_name.parameterize %>" style="view-transition-name: timeline-group-<%= group_name.parameterize %>; view-transition-class: ta-vt-card;" <%= "open" if index.zero? %>>
@@ -111,14 +83,14 @@
                 <tbody class="divide-y divide-slate-100">
                   <% entries.each do |entry| %>
                     <% impact = entry.cashflow_amount %>
-                    <% generated_from_template = template_sources.include?(entry.source_file.to_s) %>
-                    <% variable_payment_entry = entry.source_file.in?(["payment_plan", "credit_card_estimate"]) %>
+                    <% generated_from_template = timeline.generated_from_template?(entry) %>
+                    <% variable_payment_entry = timeline.variable_payment_entry?(entry) %>
                     <tr
                       data-expense-entries-filter-target="row"
                       data-date="<%= entry.occurred_on&.iso8601 %>"
                       data-payee="<%= entry.payee.to_s %>"
-                      data-reason="<%= reason_for_entry.call(entry).to_s %>"
-                      data-value="<%= reason_for_entry.call(entry).to_s.downcase %>"
+                      data-reason="<%= timeline.reason_for_entry(entry).to_s %>"
+                      data-value="<%= timeline.reason_for_entry(entry).to_s.downcase %>"
                       data-status="<%= entry.status %>"
                       style="view-transition-name: timeline-entry-<%= dom_id(entry) %>; view-transition-class: ta-vt-row;">
                       <td class="px-3 py-2"><%= entry.occurred_on || "—" %></td>
@@ -132,7 +104,7 @@
                       </td>
                       <td class="px-3 py-2 hidden lg:table-cell"><%= entry.account_name.presence || "—" %></td>
                       <% if show_reason_column %>
-                        <td class="px-3 py-2"><%= reason_for_entry.call(entry) %></td>
+                        <td class="px-3 py-2"><%= timeline.reason_for_entry(entry) %></td>
                       <% end %>
                       <td class="px-3 py-2"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
                       <td class="px-3 py-2 text-right <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">

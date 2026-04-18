@@ -3,6 +3,7 @@ require "net/http"
 
 class TurnstileVerifier
   VERIFY_URI = URI("https://challenges.cloudflare.com/turnstile/v0/siteverify")
+  HTTP_TIMEOUT_SECONDS = 5
 
   def self.enabled?
     site_key.present? && secret_key.present?
@@ -37,18 +38,31 @@ class TurnstileVerifier
 
   def payload
     @payload ||= begin
-      request = Net::HTTP::Post.new(VERIFY_URI)
+      JSON.parse(verification_response.body)
+    end
+  end
+
+  def verification_response
+    # Turnstile tokens are validated on the current auth request and are not reusable,
+    # so async processing or caching would weaken the verification step.
+    Net::HTTP.start(
+      VERIFY_URI.hostname,
+      VERIFY_URI.port,
+      use_ssl: true,
+      open_timeout: HTTP_TIMEOUT_SECONDS,
+      read_timeout: HTTP_TIMEOUT_SECONDS
+    ) do |http|
+      http.request(verification_request)
+    end
+  end
+
+  def verification_request
+    Net::HTTP::Post.new(VERIFY_URI).tap do |request|
       request.set_form_data(
         "secret" => self.class.secret_key,
         "response" => token,
         "remoteip" => remote_ip
       )
-
-      response = Net::HTTP.start(VERIFY_URI.hostname, VERIFY_URI.port, use_ssl: true, open_timeout: 5, read_timeout: 5) do |http|
-        http.request(request)
-      end
-
-      JSON.parse(response.body)
     end
   end
 end

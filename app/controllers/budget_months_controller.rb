@@ -3,238 +3,66 @@ class BudgetMonthsController < ApplicationController
 
   def index
     auto_complete_due_recurring_entries(current_user.expense_entries)
-    @budget_months = current_user.budget_months.includes(:expense_entries).recent_first.to_a
-    current_year = Date.current.year
-    available_years = @budget_months.map { |month| month.month_on.year }.uniq.sort.reverse
-
-    @selected_year = params[:year].to_i
-    @selected_year = current_year unless @selected_year.positive?
-    @selected_year = current_year unless @selected_year == current_year || available_years.include?(@selected_year)
-    @previous_years = available_years.select { |year| year < current_year }
-    @visible_budget_months = visible_budget_months_for_year(@budget_months, @selected_year)
-
-    @planning_template_counts = {
-      pay_schedules: current_user.pay_schedules.count,
-      subscriptions: current_user.subscriptions.count,
-      monthly_bills: current_user.monthly_bills.count,
-      payment_plans: current_user.payment_plans.count,
-      credit_cards: current_user.credit_cards.count
-    }
+    apply_index_data(Budgeting::MonthIndexLoader.call(user: current_user, year_param: params[:year]))
   end
 
   def show
     @budget_month = current_user.budget_months.find(params[:id])
     auto_complete_due_recurring_entries(@budget_month.expense_entries)
-    @expense_entries = @budget_month.expense_entries.chronological
-    @expense_entry = @budget_month.expense_entries.new
-    @previous_budget_month = current_user.budget_months.where("month_on < ?", @budget_month.month_on).order(month_on: :desc).first
-    @next_budget_month = current_user.budget_months.where("month_on > ?", @budget_month.month_on).order(month_on: :asc).first
+    month_data = Budgeting::MonthShowLoader.call(user: current_user, budget_month: @budget_month, expense_entry_loader: method(:preload_month_expense_entries))
+    @expense_entries = month_data.expense_entries
+    @expense_entry = month_data.expense_entry
+    @previous_budget_month = month_data.previous_budget_month
+    @next_budget_month = month_data.next_budget_month
   end
 
   def new
-    prepare_month_form
-    @budget_month = current_user.budget_months.new(new_month_defaults)
+    form_state = load_month_form_state
+    @budget_month = current_user.budget_months.new(form_state.new_month_defaults)
   end
 
   def create
-    prepare_month_form
+    form_state = load_month_form_state
+    result = Budgeting::MonthCreator.call(
+      user: current_user,
+      budget_month_params: budget_month_params,
+      month_workflow: form_state.month_workflow,
+      source_budget_month: form_state.source_budget_month,
+      include_applicable_templates: form_state.include_applicable_templates
+    )
+    @budget_month = result.budget_month
+    return redirect_to @budget_month, notice: result.notice if result.success?
 
-    if clone_workflow?
-      create_cloned_month
-    else
-      create_fresh_month
-    end
+    @wizard_step = result.wizard_step
+    render :new, status: :unprocessable_entity
   end
 
   def generate_paychecks
-    budget_month = current_user.budget_months.find(params[:id])
-    created_count = Recurring::GenerateMonthPaychecks.new(budget_month: budget_month).call
-    handle_month_generation(budget_month, "Generated #{created_count} paycheck entr#{created_count == 1 ? 'y' : 'ies'}.")
+    run_generation(:paychecks)
   end
 
   def generate_subscriptions
-    budget_month = current_user.budget_months.find(params[:id])
-    created_count = Recurring::GenerateMonthSubscriptions.new(budget_month: budget_month).call
-    handle_month_generation(budget_month, "Generated #{created_count} subscription entr#{created_count == 1 ? 'y' : 'ies'}.")
+    run_generation(:subscriptions)
   end
 
   def generate_monthly_bills
-    budget_month = current_user.budget_months.find(params[:id])
-    created_count = Recurring::GenerateMonthMonthlyBills.new(budget_month: budget_month).call
-    handle_month_generation(budget_month, "Generated #{created_count} monthly bill entr#{created_count == 1 ? 'y' : 'ies'}.")
+    run_generation(:monthly_bills)
   end
 
   def generate_payment_plans
-    budget_month = current_user.budget_months.find(params[:id])
-    created_count = Recurring::GenerateMonthPaymentPlans.new(budget_month: budget_month).call
-    handle_month_generation(budget_month, "Generated #{created_count} payment-plan entr#{created_count == 1 ? 'y' : 'ies'}.")
+    run_generation(:payment_plans)
   end
 
   def estimate_credit_cards
-    budget_month = current_user.budget_months.find(params[:id])
-    estimator = Recurring::EstimateMonthCreditCards.new(budget_month: budget_month)
-    created_count = estimator.call
-    message = "Estimated #{created_count} credit-card payment entr#{created_count == 1 ? 'y' : 'ies'}."
-    handle_month_generation(budget_month, message)
+    run_generation(:credit_cards)
   end
 
   private
 
-  def prepare_month_form
-    @cloneable_budget_months = current_user.budget_months.recent_first
-    @cloneable_month_options = @cloneable_budget_months.map do |month|
-      target_month = next_available_month_after(month.month_on)
-
-      {
-        id: month.id,
-        source_label: month.label,
-        target_label: target_month.strftime("%B %Y"),
-        entry_count: month.expense_entries.count
-      }
-    end
-    @source_budget_month = current_user.budget_months.find_by(id: params[:source_month_id])
-    @clone_preview = @cloneable_month_options.find { |option| option[:id] == @source_budget_month&.id }
-
-    # Default to 'fresh' if no cloneable months exist
-    if @cloneable_budget_months.empty?
-      @month_workflow = "fresh"
-      @wizard_step = 1 # Skip to step 2
-    else
-      @month_workflow = params[:month_workflow].presence_in(%w[fresh clone]) || (@source_budget_month.present? ? "clone" : "fresh")
-      @wizard_step = params[:wizard_step].to_i
-    end
-
-    @include_applicable_templates = include_applicable_templates_default
-  end
-
-  def create_fresh_month
-    @budget_month = current_user.budget_months.new(budget_month_params)
-    normalize_budget_month_label(@budget_month)
-
-    if @budget_month.save
-      generation_summary = generate_applicable_templates_for(@budget_month)
-      redirect_to @budget_month, notice: creation_notice("Budget month created.", generation_summary)
-    else
-      @wizard_step = 1
-      render :new, status: :unprocessable_entity
-    end
-  end
-
-  def create_cloned_month
-    if @source_budget_month.blank?
-      @budget_month = current_user.budget_months.new(new_month_defaults)
-      @budget_month.errors.add(:base, "Choose a month to clone before continuing.")
-      @wizard_step = 0
-      render :new, status: :unprocessable_entity
-      return
-    end
-
-    @budget_month = current_user.budget_months.new(clone_month_attributes(@source_budget_month))
-    normalize_budget_month_label(@budget_month)
-
-    if @budget_month.save
-      cloned_entries = clone_source_entries(@source_budget_month, @budget_month)
-      redirect_to @budget_month, notice: "Budget month created and #{cloned_entries} entries cloned from #{@source_budget_month.label}."
-    else
-      @wizard_step = 0
-      render :new, status: :unprocessable_entity
-    end
-  end
-
-  def new_month_defaults
-    return {} unless @source_budget_month
-
-    clone_month_attributes(@source_budget_month).slice(:month_on, :label)
-  end
-
-  def clone_month_attributes(source_month)
-    target_month = next_available_month_after(source_month.month_on)
-
-    {
-      month_on: target_month,
-      label: target_month.strftime("%B %Y"),
-      notes: source_month.notes
-    }
-  end
-
-  def next_available_month_after(month_on)
-    target_month = month_on.next_month.beginning_of_month
-
-    while current_user.budget_months.exists?(month_on: target_month)
-      target_month = target_month.next_month.beginning_of_month
-    end
-
-    target_month
-  end
-
-  def normalize_budget_month_label(budget_month)
-    budget_month.label = budget_month.month_on.strftime("%B %Y") if budget_month.label.blank? && budget_month.month_on.present?
-  end
-
-  def clone_workflow?
-    @month_workflow == "clone"
-  end
-
-  def include_applicable_templates_default
-    return params[:include_applicable_templates] == "1" if params.key?(:include_applicable_templates)
-    return false if clone_workflow?
-
-    true
-  end
-
-  def generate_applicable_templates_for(budget_month)
-    return { requested: false, total: 0 } unless params[:include_applicable_templates] == "1"
-
-    total_created = 0
-    total_created += Recurring::GenerateMonthPaychecks.new(budget_month: budget_month).call
-    total_created += Recurring::GenerateMonthSubscriptions.new(budget_month: budget_month).call
-    total_created += Recurring::GenerateMonthMonthlyBills.new(budget_month: budget_month).call
-    total_created += Recurring::GenerateMonthPaymentPlans.new(budget_month: budget_month).call
-    total_created += Recurring::EstimateMonthCreditCards.new(budget_month: budget_month).call
-
-    { requested: true, total: total_created }
-  end
-
-  def creation_notice(base_message, generation_summary)
-    return base_message unless generation_summary[:requested]
-    return "#{base_message} No planning templates were imported." if generation_summary[:total].zero?
-
-    "#{base_message} Imported #{generation_summary[:total]} planning template#{generation_summary[:total] == 1 ? '' : 's'} for this month."
-  end
-
-  def clone_source_entries(source_month, target_month)
-    return 0 unless source_month
-
-    source_month.expense_entries.where.not(source_file: CreditCard.template_source_file).find_each.sum do |entry|
-      target_month.expense_entries.create!(
-        occurred_on: shifted_date(entry.occurred_on, target_month.month_on),
-        section: entry.section,
-        category: entry.category,
-        payee: entry.payee,
-        planned_amount: cloned_planned_amount(entry),
-        actual_amount: nil,
-        account: entry.account,
-        status: :planned,
-        need_or_want: entry.need_or_want,
-        notes: entry.notes,
-        source_file: entry.source_file,
-        source_account_id: entry.source_account_id,
-        source_template_type: entry.source_template_type,
-        source_template_id: entry.source_template_id
-      )
-      1
-    end
-  end
-
-  def cloned_planned_amount(entry)
-    entry.actual_amount.presence || entry.planned_amount
-  end
-
-  def shifted_date(date, target_month_on)
-    return nil if date.blank?
-
-    day = [ date.day, target_month_on.end_of_month.day ].min
-    Date.new(target_month_on.year, target_month_on.month, day)
+  def load_month_form_state
+    form_state = Budgeting::MonthFormState.call(user: current_user, params: params)
+    apply_form_state(form_state)
+    form_state
   end
 
   def handle_month_generation(budget_month, message)
@@ -251,13 +79,26 @@ class BudgetMonthsController < ApplicationController
     params.require(:budget_month).permit(:label, :month_on, :leftover, :notes)
   end
 
-  def visible_budget_months_for_year(budget_months, year)
-    months_for_year = budget_months.select { |month| month.month_on.year == year }
-    return months_for_year.sort_by(&:month_on).reverse unless year == Date.current.year
+  def apply_index_data(index_data)
+    @budget_months = index_data.budget_months
+    @selected_year = index_data.selected_year
+    @previous_years = index_data.previous_years
+    @visible_budget_months = index_data.visible_budget_months
+    @planning_template_counts = index_data.planning_template_counts
+  end
 
-    current_month = Date.current.beginning_of_month
-    current_and_past, future = months_for_year.partition { |month| month.month_on <= current_month }
+  def apply_form_state(form_state)
+    @cloneable_budget_months = form_state.cloneable_budget_months
+    @cloneable_month_options = form_state.cloneable_month_options
+    @source_budget_month = form_state.source_budget_month
+    @clone_preview = form_state.clone_preview
+    @month_workflow = form_state.month_workflow
+    @wizard_step = form_state.wizard_step
+    @include_applicable_templates = form_state.include_applicable_templates
+  end
 
-    current_and_past.sort_by(&:month_on).reverse + future.sort_by(&:month_on)
+  def run_generation(action)
+    result = Recurring::MonthGenerationRunner.call(user: current_user, budget_month_id: params[:id], action: action)
+    handle_month_generation(result.budget_month, result.message)
   end
 end

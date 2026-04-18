@@ -19,11 +19,11 @@
   <div class="grid gap-3 sm:grid-cols-3">
     <div>
       <%= form.label :section, class: "fb-label" %>
-      <%= form.select :section, ExpenseEntry.sections.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "section", action: "change->entry-wizard#syncTemplateOptions change->entry-wizard#updateSummary" } %>
+      <%= form.select :section, expense_entry_section_options, {}, class: "fb-select", data: { entry_wizard_target: "section", action: "change->entry-wizard#syncTemplateOptions change->entry-wizard#updateSummary" } %>
     </div>
     <div>
       <%= form.label :status, class: "fb-label" %>
-      <%= form.select :status, ExpenseEntry.statuses.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select", data: { entry_wizard_target: "status", action: "change->entry-wizard#updateSummary" } %>
+      <%= form.select :status, expense_entry_status_options, {}, class: "fb-select", data: { entry_wizard_target: "status", action: "change->entry-wizard#updateSummary" } %>
     </div>
     <div>
       <%= form.label :need_or_want, "Need / Want", class: "fb-label" %>

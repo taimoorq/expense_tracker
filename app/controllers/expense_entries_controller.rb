@@ -1,9 +1,10 @@
 class ExpenseEntriesController < ApplicationController
   include ActionView::RecordIdentifier
   include MonthPageRefresh
+  include ExpenseEntriesResponses
 
   before_action :set_budget_month
-  before_action :set_expense_entry, only: [ :edit, :update, :destroy, :edit_template, :update_template ]
+  before_action :set_expense_entry, only: [ :show, :edit, :update, :destroy, :edit_template, :update_template ]
 
   def new_wizard
     @expense_entry = @budget_month.expense_entries.new(
@@ -15,40 +16,15 @@ class ExpenseEntriesController < ApplicationController
   end
 
   def show
-    @expense_entry = @budget_month.expense_entries.find(params[:id])
-
-    respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          dom_id(@expense_entry),
-          partial: "expense_entries/row",
-          locals: { budget_month: @budget_month, entry: @expense_entry }
-        )
-      end
-      format.html { redirect_to @budget_month }
-    end
+    render_entry_row(@expense_entry)
   end
 
   def edit
-    if turbo_frame_request?
-      render partial: "expense_entries/entry_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }
-      return
-    end
-
-    respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          dom_id(@expense_entry),
-          partial: "expense_entries/row_form",
-          locals: { budget_month: @budget_month, expense_entry: @expense_entry }
-        )
-      end
-      format.html
-    end
+    render_entry_edit(@expense_entry)
   end
 
   def update
-    if @expense_entry.update(normalized_expense_entry_params)
+    if ExpenseEntries::Updater.call(expense_entry: @expense_entry, params: expense_entry_params, mark_as_paid: params[:mark_as_paid] == "1")
       prepare_month_refresh_state(@budget_month, timeline_view: current_timeline_view)
 
       respond_to do |format|
@@ -58,85 +34,26 @@ class ExpenseEntriesController < ApplicationController
         format.html { redirect_to @budget_month, notice: "Entry updated." }
       end
     else
-      respond_to do |format|
-        format.turbo_stream do
-          if turbo_frame_request?
-            render partial: "expense_entries/entry_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
-          else
-            render turbo_stream: turbo_stream.replace(
-              dom_id(@expense_entry),
-              partial: "expense_entries/row_form",
-              locals: { budget_month: @budget_month, expense_entry: @expense_entry }
-            ), status: :unprocessable_entity
-          end
-        end
-        format.html { render :edit, status: :unprocessable_entity }
-      end
+      render_entry_update_failure(@expense_entry)
     end
   end
 
   def create
-    @expense_entry = @budget_month.expense_entries.new(expense_entry_params)
-    assign_selected_recurring_source(@expense_entry)
-    template_creator = Recurring::EntryWizardTemplateCreator.new(user: current_user, expense_entry: @expense_entry, params: planning_template_params)
-    saved_successfully = false
+    result = ExpenseEntries::Creator.call(
+      user: current_user,
+      budget_month: @budget_month,
+      expense_entry_params: expense_entry_params,
+      planning_template_params: planning_template_params,
+      recurring_link_token: params[:recurring_link]
+    )
+    @expense_entry = result.expense_entry
 
-    ActiveRecord::Base.transaction do
-      if @expense_entry.errors.none? && @expense_entry.save
-        if template_creator.save
-          saved_successfully = true
-        else
-          template_creator.error_messages.each { |message| @expense_entry.errors.add(:base, message) }
-          raise ActiveRecord::Rollback
-        end
-      end
-    end
-
-    if saved_successfully
+    if result.success?
       prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new, timeline_view: current_timeline_view)
-      success_message = template_creator.requested? ? "Entry and recurring transaction added." : "Entry added."
-
-      respond_to do |format|
-        format.turbo_stream do
-          if params[:wizard_flow] == "1"
-            render_month_page_refresh(message: success_message, include_entry_form: true, reset_entry_wizard_modal: true)
-          else
-            redirect_to month_redirect_path(tab: "entries"), notice: success_message, status: :see_other
-          end
-        end
-        format.html { redirect_to month_redirect_path(tab: "entries"), notice: success_message, status: :see_other }
-      end
+      render_entry_create_success(result.message)
     else
-      if @expense_entry.persisted?
-        failed_errors = @expense_entry.errors.dup
-        @expense_entry = @budget_month.expense_entries.new(expense_entry_params)
-        failed_errors.each do |error|
-          @expense_entry.errors.add(error.attribute, error.message)
-        end
-      end
-
-      @expense_entries = @budget_month.expense_entries.chronological
-
-      respond_to do |format|
-        format.turbo_stream do
-          if params[:wizard_flow] == "1" && turbo_frame_request?
-            render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
-          else
-            flash.now[:alert] = @expense_entry.errors.full_messages.join(", ")
-            render turbo_stream: [
-              turbo_stream.replace("flash", partial: "shared/flash"),
-              turbo_stream.replace("entry_form", partial: "expense_entries/form", locals: { budget_month: @budget_month, expense_entry: @expense_entry })
-            ], status: :unprocessable_entity
-          end
-        end
-        format.html do
-          if params[:wizard_flow] == "1"
-            render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }, status: :unprocessable_entity
-          else
-            render "budget_months/show", status: :unprocessable_entity
-          end
-        end
-      end
+      @expense_entries = preload_month_expense_entries(@budget_month.expense_entries.chronological)
+      render_entry_create_failure(@expense_entry)
     end
   end
 
@@ -153,61 +70,18 @@ class ExpenseEntriesController < ApplicationController
   end
 
   def edit_template
-    @template_record = template_record_for_entry(@expense_entry)
-
-    if @template_record.nil?
-      respond_to do |format|
-        format.turbo_stream do
-          flash.now[:alert] = "Recurring source for this entry could not be found."
-          render turbo_stream: [
-            turbo_stream.replace("flash", partial: "shared/flash"),
-            turbo_stream.replace("template_editor_modal", partial: "expense_entries/template_editor_empty")
-          ], status: :not_found
-        end
-        format.html { redirect_to @budget_month, alert: "Recurring source for this entry could not be found." }
-      end
-      return
-    end
+    @template_record = ExpenseEntries::TemplateLookup.call(user: current_user, entry: @expense_entry)
+    return render_missing_template_response if @template_record.nil?
 
     render partial: "expense_entries/template_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: @template_record }
   end
 
   def update_template
-    @template_record = template_record_for_entry(@expense_entry)
+    result = ExpenseEntries::TemplateUpdater.call(user: current_user, entry: @expense_entry, params: params)
+    return render_missing_template_response if result.missing?
 
-    if @template_record.nil?
-      respond_to do |format|
-        format.turbo_stream do
-          flash.now[:alert] = "Recurring source for this entry could not be found."
-          render turbo_stream: [
-            turbo_stream.replace("flash", partial: "shared/flash"),
-            turbo_stream.replace("template_editor_modal", partial: "expense_entries/template_editor_empty")
-          ], status: :not_found
-        end
-        format.html { redirect_to @budget_month, alert: "Recurring source for this entry could not be found." }
-      end
-      return
-    end
-
-    if @template_record.update(template_params_for(@template_record))
-      respond_to do |format|
-        format.turbo_stream do
-          flash.now[:notice] = "Recurring item updated."
-          render turbo_stream: [
-            turbo_stream.replace("flash", partial: "shared/flash"),
-            turbo_stream.replace("template_editor_modal", partial: "expense_entries/template_editor_empty")
-          ]
-        end
-        format.html { redirect_to @budget_month, notice: "Recurring item updated." }
-      end
-    else
-      respond_to do |format|
-        format.turbo_stream do
-          render partial: "expense_entries/template_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: @template_record }, status: :unprocessable_entity
-        end
-        format.html { redirect_to @budget_month, alert: @template_record.errors.full_messages.join(", ") }
-      end
-    end
+    @template_record = result.template_record
+    result.success? ? render_template_update_success : render_template_update_failure(@template_record)
   end
 
   private
@@ -236,15 +110,6 @@ class ExpenseEntriesController < ApplicationController
     )
   end
 
-  def normalized_expense_entry_params
-    permitted = expense_entry_params.to_h.symbolize_keys
-    return permitted unless params[:mark_as_paid] == "1"
-
-    permitted[:status] = "paid"
-    permitted[:actual_amount] = permitted[:planned_amount].presence || @expense_entry.planned_amount if permitted[:actual_amount].blank?
-    permitted
-  end
-
   def planning_template_params
     return ActionController::Parameters.new.permit! unless params[:planning_template].present?
 
@@ -262,55 +127,5 @@ class ExpenseEntriesController < ApplicationController
       :amount_paid,
       billing_months: []
     )
-  end
-
-  def assign_selected_recurring_source(expense_entry)
-    token = params[:recurring_link].to_s
-    return if token.blank?
-
-    recurring_source = recurring_source_from_token(token)
-    if recurring_source.present?
-      expense_entry.source_template = recurring_source
-    else
-      expense_entry.errors.add(:base, "Choose a valid recurring transaction to link.")
-    end
-  end
-
-  def recurring_source_from_token(token)
-    Recurring::TemplateCatalog.user_record_from_token(user: current_user, token: token)
-  end
-
-  def template_record_for_entry(entry)
-    linked_template = entry.source_template
-    if linked_template.present? && linked_template.respond_to?(:user_id) && linked_template.user_id == current_user.id
-      return linked_template
-    end
-
-    definition = entry.source_definition
-    return nil if definition.blank?
-
-    current_user.public_send(definition.fetch(:model_class).model_name.route_key).find_by(name: entry.payee)
-  end
-
-  def template_params_for(record)
-    return {} unless record.class.respond_to?(:template_param_key)
-
-    params.require(record.class.template_param_key).permit(*record.class.template_permitted_attributes)
-  end
-
-  def current_timeline_view
-    return "calendar" if params[:tab] == "calendar"
-
-    params[:timeline_view].presence_in(%w[sections full-list calendar])
-  end
-
-  def month_redirect_path(tab:)
-    if tab == "timeline" && current_timeline_view == "calendar"
-      budget_month_tab_path(@budget_month, "calendar")
-    elsif tab == "timeline"
-      budget_month_tab_path(@budget_month, "timeline", view: current_timeline_view.presence_in(%w[full-list]))
-    else
-      budget_month_tab_path(@budget_month, tab)
-    end
   end
 end

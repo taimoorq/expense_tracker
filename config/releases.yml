@@ -1,4 +1,13 @@
 releases:
+  - version: "0.5.4"
+    released_on: "2026-04-17"
+    title: "Faster month screens and cleaner budgeting flows"
+    summary: "This release speeds up the main month views, trims down heavy controller logic into focused services and presenters, and clarifies synchronous Turnstile verification in the auth flow."
+    changes:
+      - "Improved performance across the month dashboard, grouped timeline, and month list by reusing loaded entry data more consistently and reducing repeated query work."
+      - "Moved month setup, month loading, entry creation and updates, recurring-template lookups, and chart or timeline view composition into smaller service and presenter objects."
+      - "Kept Cloudflare Turnstile verification synchronous in the sign-in and sign-up flow, with clearer code around the external verification request and timeout handling."
+      - "Added database indexes for auth timestamp fields used by Devise-related flows so account and admin authentication metadata is better supported."
   - version: "0.5.3"
     released_on: "2026-04-17"
     title: "Profile hub and live theme polish"

@@ -3,50 +3,23 @@
 <% end %>
 
 <%= turbo_frame_tag "visual_dashboard" do %>
+  <% dashboard = Budgeting::VisualDashboardPresenter.new(budget_month: budget_month, expense_entries: expense_entries) %>
   <% compact = local_assigns.fetch(:compact, false) %>
-  <% entries = expense_entries.to_a %>
-  <% outflow_entries = entries.reject(&:income?) %>
-  <% sankey_payload = Budgeting::MonthCashflowSankey.cached_payload(budget_month: budget_month, expense_entries: budget_month.expense_entries) %>
-  <% account_flow_payload = Budgeting::MonthAccountFlowSummary.cached_payload(budget_month: budget_month, expense_entries: expense_entries) %>
-
-  <% section_totals = outflow_entries.group_by(&:section).transform_values { |items| items.sum { |item| item.effective_amount.to_f } }.sort_by { |_k, v| -v } %>
-  <% section_labels = section_totals.map { |k, _v| k.humanize } %>
-  <% section_values = section_totals.map { |_k, v| v.round(2) } %>
-
-  <% running = 0.0 %>
-  <% ordered_entries = entries.sort_by { |entry| [entry.occurred_on || Date.new(9999, 12, 31), entry.created_at] } %>
-  <% line_labels = [] %>
-  <% line_values = [] %>
-  <% ordered_entries.each do |entry| %>
-    <% running += entry.cashflow_amount.to_f %>
-    <% line_labels << (entry.occurred_on&.strftime("%b %-d") || "No Date") %>
-    <% line_values << running.round(2) %>
-  <% end %>
-
-  <% spending_entries = outflow_entries.select { |entry| entry.occurred_on.present? } %>
-
-  <% running_outflow = 0.0 %>
-  <% cumulative_outflow_labels = [] %>
-  <% cumulative_outflow_values = [] %>
-  <% spending_entries.sort_by { |entry| [entry.occurred_on, entry.created_at] }.each do |entry| %>
-    <% running_outflow += entry.effective_amount.to_f %>
-    <% cumulative_outflow_labels << entry.occurred_on.strftime("%b %-d") %>
-    <% cumulative_outflow_values << running_outflow.round(2) %>
-  <% end %>
-
-  <% category_totals = outflow_entries.group_by { |entry| entry.category.presence || "Uncategorized" }.map do |category, items| %>
-    <% planned_total = items.sum { |item| item.planned_amount.to_f } %>
-    <% actual_total = items.sum { |item| item.actual_amount.to_f } %>
-    <% [category, planned_total.round(2), actual_total.round(2), (actual_total - planned_total).round(2)] %>
-  <% end %>
-  <% over_budget_categories = category_totals.select { |_category, _planned, _actual, variance| variance.positive? }.sort_by { |_category, _planned, _actual, variance| -variance }.first(8) %>
-  <% over_budget_labels = over_budget_categories.map(&:first) %>
-  <% over_budget_values = over_budget_categories.map(&:last) %>
-
-  <% income = budget_month.income_total.to_f %>
-  <% leftover = budget_month.calculated_leftover.to_f %>
-  <% savings_pct = income.positive? ? ((leftover / income) * 100).round(1) : 0 %>
-  <% top_category = section_totals.first %>
+  <% sankey_payload = dashboard.sankey_payload %>
+  <% account_flow_payload = dashboard.account_flow_payload %>
+  <% section_totals = dashboard.section_totals %>
+  <% section_labels = dashboard.section_labels %>
+  <% section_values = dashboard.section_values %>
+  <% line_labels = dashboard.line_labels %>
+  <% line_values = dashboard.line_values %>
+  <% cumulative_outflow_labels = dashboard.cumulative_outflow_labels %>
+  <% cumulative_outflow_values = dashboard.cumulative_outflow_values %>
+  <% over_budget_labels = dashboard.over_budget_labels %>
+  <% over_budget_values = dashboard.over_budget_values %>
+  <% income = dashboard.income %>
+  <% leftover = dashboard.leftover %>
+  <% savings_pct = dashboard.savings_pct %>
+  <% top_category = dashboard.top_category %>
 
   <section class="ta-card ta-surface-breakdown">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">

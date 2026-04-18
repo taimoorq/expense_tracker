@@ -262,6 +262,22 @@ module ApplicationHelper
     ]
   end
 
+  def expense_entry_section_options
+    ExpenseEntry.sections.keys.map { |key| [ key.humanize, key ] }
+  end
+
+  def expense_entry_status_options
+    ExpenseEntry.statuses.keys.map { |key| [ key.humanize, key ] }
+  end
+
+  def pay_schedule_cadence_options
+    PaySchedule.cadences.keys.map { |key| [ key.humanize, key ] }
+  end
+
+  def monthly_bill_kind_options
+    MonthlyBill.kinds.keys.map { |key| [ key.humanize, key ] }
+  end
+
   def recurring_link_options(user = current_user)
     return [] if user.blank?
 

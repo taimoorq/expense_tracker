@@ -6,7 +6,7 @@ module MonthPageRefresh
   def prepare_month_refresh_state(budget_month, expense_entry: nil, auto_complete_recurring: false, timeline_view: nil)
     @budget_month = budget_month
     auto_complete_due_recurring_entries(@budget_month.expense_entries) if auto_complete_recurring
-    @expense_entries = @budget_month.expense_entries.chronological
+    @expense_entries = preload_month_expense_entries(@budget_month.expense_entries.chronological)
     @expense_entry = expense_entry if expense_entry
     @timeline_view = timeline_view if timeline_view.present?
   end
@@ -57,5 +57,17 @@ module MonthPageRefresh
 
   def auto_complete_due_recurring_entries(entries)
     Budgeting::AutoCompleteRecurringEntries.new(entries: entries, as_of: Date.current).call
+  end
+
+  def preload_month_expense_entries(entries)
+    loaded_entries = entries.to_a
+    ActiveRecord::Associations::Preloader.new(records: loaded_entries, associations: [ :source_account, :source_template ]).call
+
+    credit_card_templates = loaded_entries.filter_map { |entry| entry.source_template if entry.source_template.is_a?(CreditCard) }
+    if credit_card_templates.any?
+      ActiveRecord::Associations::Preloader.new(records: credit_card_templates, associations: [ :linked_account, :payment_account ]).call
+    end
+
+    loaded_entries
   end
 end
