@@ -1,4 +1,12 @@
 releases:
+  - version: "0.5.9"
+    released_on: "2026-05-03"
+    title: "Collapsed sidebar hover labels"
+    summary: "This release adds polished hover labels to the collapsed sidebar so icon-only navigation is easier to understand."
+    changes:
+      - "Shows each collapsed sidebar link label in a floating tooltip on hover or keyboard focus."
+      - "Replaced native sidebar title tooltips with aria labels so the custom tooltip is the only visible label."
+      - "Added a browser-level regression check for collapsed sidebar tooltip visibility and placement."
   - version: "0.5.8"
     released_on: "2026-05-03"
     title: "More visible GitHub update notices"

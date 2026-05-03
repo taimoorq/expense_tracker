@@ -349,17 +349,50 @@
 		@apply px-3;
 	}
 
+	.ta-shell-collapsed .ta-sidebar {
+		@apply lg:z-40;
+	}
+
+	.ta-shell-collapsed .ta-sidebar-nav,
+	.ta-shell-collapsed .ta-sidebar-footer {
+		@apply lg:overflow-visible;
+	}
+
 	.ta-shell-collapsed .ta-sidebar-link {
-		@apply lg:justify-center lg:px-2;
+		@apply lg:relative lg:justify-center lg:px-2;
 	}
 
 	.ta-shell-collapsed .ta-sidebar-sublinks {
 		@apply lg:hidden;
 	}
 
-	.ta-shell-collapsed .ta-sidebar-label,
 	.ta-shell-collapsed .ta-sidebar-brand-text {
 		@apply lg:hidden;
+	}
+
+	@media (min-width: 1024px) {
+		.ta-shell-collapsed .ta-sidebar-label {
+			@apply pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-[60] block max-w-[18rem] whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-semibold opacity-0 shadow-xl transition;
+			color: var(--ta-text);
+			border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
+			background-color: var(--ta-surface);
+			transform: translate(0.25rem, -50%);
+			box-shadow: 0 14px 30px rgb(var(--ta-shadow-rgb) / 0.16);
+		}
+
+		.ta-shell-collapsed .ta-sidebar-label::before {
+			@apply absolute top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 border-b border-l;
+			content: "";
+			left: -0.3125rem;
+			border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
+			background-color: var(--ta-surface);
+		}
+
+		.ta-shell-collapsed .ta-sidebar-link:hover .ta-sidebar-label,
+		.ta-shell-collapsed .ta-sidebar-link:focus-visible .ta-sidebar-label {
+			@apply opacity-100;
+			transform: translate(0, -50%);
+		}
 	}
 
 	.ta-sidebar-brand-mini {
