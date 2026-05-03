@@ -67,6 +67,13 @@ RSpec.describe "Entry wizard", type: :system do
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal h3", text: "Add Entry with Wizard")
     expect(page).to have_css("turbo-frame#entry_wizard_modal select#expense_entry_section", visible: :all)
+    modal_parent = page.evaluate_script('document.querySelector("turbo-frame#entry_wizard_modal").parentElement.tagName')
+    modal_z_index = page.evaluate_script('Number(getComputedStyle(document.querySelector("turbo-frame#entry_wizard_modal").firstElementChild).zIndex)')
+    topbar_z_index = page.evaluate_script('Number(getComputedStyle(document.querySelector(".ta-topbar")).zIndex)')
+
+    expect(modal_parent).to eq("BODY")
+    expect(modal_z_index).to be > topbar_z_index
+
     wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
     expect(wizard_frame).to have_text("Add Entry with Wizard")
     expect(wizard_frame).to have_css("select#expense_entry_section", visible: :all)

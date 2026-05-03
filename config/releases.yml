@@ -1,4 +1,12 @@
 releases:
+  - version: "0.5.7"
+    released_on: "2026-05-03"
+    title: "Modal overlays above the sticky header"
+    summary: "This release fixes modal layering so entry and recurring editors open above the sticky app header instead of slipping underneath it."
+    changes:
+      - "Moved shared Turbo modal frame targets into the application layout so overlays render at the body level instead of inside page view-transition stacking contexts."
+      - "Removed duplicate page-level modal frame placeholders from the month and overview views."
+      - "Added a browser-level regression check to confirm the entry wizard modal frame sits under body and has a higher z-index than the sticky topbar."
   - version: "0.5.6"
     released_on: "2026-05-03"
     title: "GitHub update prompts for self-hosted installs"

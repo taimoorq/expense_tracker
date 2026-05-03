@@ -212,6 +212,12 @@
       </section>
     </main>
 
+    <% if user_signed_in? %>
+      <%= render "expense_entries/template_editor_empty" %>
+      <%= render "expense_entries/entry_editor_empty" %>
+      <%= render "expense_entries/entry_wizard_empty" %>
+    <% end %>
+
     <%= render "shared/help_modal" %>
   </body>
 </html>
