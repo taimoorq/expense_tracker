@@ -1,4 +1,12 @@
 releases:
+  - version: "0.5.8"
+    released_on: "2026-05-03"
+    title: "More visible GitHub update notices"
+    summary: "This release makes GitHub update notices easier to see and shortens the release-check cache so self-hosted installs learn about new versions sooner."
+    changes:
+      - "Reduced the GitHub latest-release cache from six hours to 15 minutes and moved the cache namespace forward so upgraded installs do not reuse stale release-check results."
+      - "Added a main-page Update Available banner that links to the README update instructions, so the notice is visible even when the sidebar is collapsed."
+      - "Updated the README update-check documentation and request coverage for the new banner."
   - version: "0.5.7"
     released_on: "2026-05-03"
     title: "Modal overlays above the sticky header"

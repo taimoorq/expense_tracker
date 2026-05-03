@@ -5,7 +5,7 @@ module Platform
   class GitHubUpdateChecker
     DEFAULT_REPOSITORY = "taimoorq/expense_tracker"
     DEFAULT_README_ANCHOR = "updating-a-self-hosted-install"
-    CACHE_EXPIRY = 6.hours
+    CACHE_EXPIRY = 15.minutes
     HTTP_TIMEOUT_SECONDS = 2
     DISABLED_VALUES = %w[false 0 no off].freeze
 
@@ -104,7 +104,7 @@ module Platform
       end
 
       def cache_key
-        "platform/github_update_checker/#{repository}/latest_release/v1"
+        "platform/github_update_checker/#{repository}/latest_release/v2"
       end
 
       def normalized_version(version)

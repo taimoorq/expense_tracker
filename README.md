@@ -469,7 +469,7 @@ Before updating:
 - review `.env.example` and compare it to your existing `.env` for any new required settings
 - keep your current database volume or database server intact so user data is preserved
 
-The app checks the latest GitHub Release for this repository and shows an **Update Available** button near the bottom of the sidebar when the published release tag is newer than the local app version in `config/releases.yml`. The check is cached for six hours and silently disappears if GitHub cannot be reached.
+The app checks the latest GitHub Release for this repository and shows an **Update Available** button near the bottom of the sidebar when the published release tag is newer than the local app version in `config/releases.yml`. It also shows a main-page update banner with a link to these instructions so the notice stays visible even when the sidebar is collapsed. The check is cached for 15 minutes and silently disappears if GitHub cannot be reached.
 
 Optional update-check settings:
 

@@ -72,6 +72,8 @@ RSpec.describe "Help and release notes", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Update Available")
+    expect(response.body).to include("v999.0.0 is available on GitHub")
+    expect(response.body).to include("How to update")
     expect(response.body).to include("https://github.com/taimoorq/expense_tracker#updating-a-self-hosted-install")
   end
 end
