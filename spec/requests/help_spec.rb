@@ -55,4 +55,23 @@ RSpec.describe "Help and release notes", type: :request do
 
     expect(response.body).not_to include("New update available")
   end
+
+  it "links GitHub update notices to the README update instructions" do
+    allow(Platform::GitHubUpdateChecker).to receive(:available_update).and_return(
+      Platform::GitHubUpdateChecker::Release.new(
+        version: "999.0.0",
+        tag_name: "v999.0.0",
+        name: "Future release",
+        html_url: "https://github.com/taimoorq/expense_tracker/releases/tag/v999.0.0"
+      )
+    )
+    allow(Platform::GitHubUpdateChecker).to receive(:readme_update_url)
+      .and_return("https://github.com/taimoorq/expense_tracker#updating-a-self-hosted-install")
+
+    get root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Update Available")
+    expect(response.body).to include("https://github.com/taimoorq/expense_tracker#updating-a-self-hosted-install")
+  end
 end

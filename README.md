@@ -469,6 +469,15 @@ Before updating:
 - review `.env.example` and compare it to your existing `.env` for any new required settings
 - keep your current database volume or database server intact so user data is preserved
 
+The app checks the latest GitHub Release for this repository and shows an **Update Available** button near the bottom of the sidebar when the published release tag is newer than the local app version in `config/releases.yml`. The check is cached for six hours and silently disappears if GitHub cannot be reached.
+
+Optional update-check settings:
+
+- `GITHUB_UPDATE_CHECKS_ENABLED=false` disables the GitHub release check.
+- `GITHUB_UPDATE_REPOSITORY=owner/repo` checks a different GitHub repository.
+- `GITHUB_UPDATE_TOKEN=...` adds a token for private repositories or higher GitHub API rate limits.
+- `GITHUB_UPDATE_README_URL=...` changes where the sidebar update button links.
+
 ### Developer release-note workflow
 
 This app includes an in-product release feed for self-hosted users. Developers should update it whenever a deploy includes user-visible changes worth calling out.

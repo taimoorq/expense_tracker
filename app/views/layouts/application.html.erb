@@ -98,6 +98,13 @@
           </nav>
 
           <div class="ta-sidebar-footer">
+            <% if available_github_update.present? %>
+              <%= link_to github_update_readme_url, class: "ta-sidebar-link ta-sidebar-update-link", title: "Update Available", target: "_blank", rel: "noopener", data: { action: "click->sidebar#closeOnMobile", turbo: false } do %>
+                <%= tabler_icon("download", classes: "ta-sidebar-link-icon") %>
+                <span class="ta-sidebar-label">Update Available</span>
+              <% end %>
+            <% end %>
+
             <%= link_to settings_path, class: ["ta-sidebar-link", (settings_active ? "ta-sidebar-link-active" : nil)], title: "Settings", data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("adjustments", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Settings</span>

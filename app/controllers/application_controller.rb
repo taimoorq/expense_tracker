@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   helper_method :available_themes, :current_theme, :current_theme_class, :current_theme_css_variables, :current_theme_meta_color,
-    :latest_release, :latest_unread_release, :unread_release_count
+    :latest_release, :latest_unread_release, :unread_release_count, :available_github_update, :github_update_readme_url
 
   protected
 
@@ -70,6 +70,17 @@ class ApplicationController < ActionController::Base
     return 0 unless user_signed_in?
 
     current_user.unread_release_count
+  end
+
+  def available_github_update
+    return unless user_signed_in?
+    return @available_github_update if defined?(@available_github_update)
+
+    @available_github_update = Platform::GitHubUpdateChecker.available_update
+  end
+
+  def github_update_readme_url
+    Platform::GitHubUpdateChecker.readme_update_url
   end
 
   def enforce_current_user_access_state

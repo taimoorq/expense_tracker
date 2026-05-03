@@ -1,4 +1,13 @@
 releases:
+  - version: "0.5.6"
+    released_on: "2026-05-03"
+    title: "GitHub update prompts for self-hosted installs"
+    summary: "This release checks GitHub Releases for newer app versions and surfaces update guidance directly in the sidebar for self-hosted users."
+    changes:
+      - "Added a cached GitHub release checker that compares the latest published release tag against the app version shipped in config/releases.yml."
+      - "Shows an Update Available button above Settings in the sidebar when a newer GitHub release exists."
+      - "Links update notices to the README self-hosted update instructions and documents configuration overrides for repository, token, and button destination."
+      - "Added service and request specs for update detection, README linking, and sidebar rendering."
   - version: "0.5.5"
     released_on: "2026-04-17"
     title: "RailsForge cleanup and stronger extraction coverage"
