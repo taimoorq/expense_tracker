@@ -7,7 +7,7 @@ RSpec.describe "Backup & restore", type: :system do
     sign_in_as(user)
     visit root_path
 
-    find("a[title='Backup & Restore']").click
+    find("a[aria-label='Backup & Restore']").click
 
     expect(page).to have_current_path(backup_restore_path, ignore_query: false)
     expect(page).to have_content("Backup & Restore")
