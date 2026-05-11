@@ -483,12 +483,28 @@ For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoor
 To run the production Compose stack from a published image:
 
 1. Set the app image in `.env.production`.
-	- `EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.5.9`
-	- or `EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.5.9`
+
+   ```bash
+   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.5.9
+   ```
+
+   Or use the Docker Hub mirror:
+
+   ```bash
+   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.5.9
+   ```
+
 2. Pull the image.
-	- `docker compose --env-file .env.production -f docker-compose.production.yml pull web`
+
+   ```bash
+   docker compose --env-file .env.production -f docker-compose.production.yml pull web
+   ```
+
 3. Start the stack without rebuilding locally.
-	- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build`
+
+   ```bash
+   docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build
+   ```
 
 If the GHCR package is not anonymously pullable, make the package public in GitHub's package settings or authenticate Docker to `ghcr.io` before pulling. If the Docker Hub repository is private, authenticate Docker to Docker Hub before pulling.
 
