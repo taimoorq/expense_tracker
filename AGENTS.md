@@ -50,7 +50,7 @@ When making product or UX decisions, optimize for clarity, trust, and reducing b
 
 ## Stack
 
-- Ruby `4.0.1` via `.ruby-version`
+- Ruby `4.0.3` via `.ruby-version`
 - Rails `8.1.2`
 - PostgreSQL
 - Devise for authentication
@@ -211,6 +211,5 @@ If you are running locally without Docker, make sure the Ruby version matches `.
 ## Release and Docs Coordination
 
 - Pushing changes to `config/releases.yml` on `main` triggers `.github/workflows/publish_release.yml`
-- The release workflow publishes a GitHub release using the first entry in `config/releases.yml`
+- The release workflow publishes a GitHub release and versioned Docker images using the first entry in `config/releases.yml`
 - The public marketing/docs site should stay aligned with app screenshots, feature names, and setup instructions in this repo's `README.md`
-

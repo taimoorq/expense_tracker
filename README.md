@@ -14,6 +14,7 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 	- [Run Locally](#run-locally)
 - [Authentication](#authentication)
 - [Self-Hosted HTTPS](#self-hosted-https)
+- [Published Docker Images](#published-docker-images)
 - [Updating a Self-Hosted Install](#updating-a-self-hosted-install)
 - [Demo and Sample Data](#demo-and-sample-data)
 	- [Sample User](#sample-user)
@@ -175,7 +176,7 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 
 For developers and contributors, the app is built with:
 
-- Ruby 4.0.1
+- Ruby 4.0.3
 - Rails 8.1.2
 - PostgreSQL
 - Devise
@@ -304,7 +305,7 @@ This setup is mainly for developers and contributors.
 
 #### Prerequisites
 
-- Ruby 4.0.1
+- Ruby 4.0.3
 - Bundler
 - PostgreSQL
 - libpq development headers
@@ -410,6 +411,8 @@ This repository includes a Caddy-based production example:
 5. Start the production stack.
 	- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --build`
 
+The command above builds the Rails image from your local checkout. To use a published release image instead, set `EXPENSE_TRACKER_IMAGE` in `.env.production`, pull the `web` image, and start the stack with `--no-build`.
+
 This setup publishes only Caddy on ports `80` and `443`. Rails stays private on the internal Docker network and receives forwarded HTTPS traffic from Caddy.
 
 Included files for this flow:
@@ -459,6 +462,32 @@ Typical trust flow:
 
 If you rebuild or replace the `caddy_data` volume, Caddy may generate a new internal CA and you would need to trust the new root certificate again.
 
+## Published Docker Images
+
+Release images are published to GitHub Container Registry from the same workflow that creates GitHub Releases.
+
+Primary image:
+
+- `ghcr.io/taimoorq/expense_tracker:vX.Y.Z`
+- `ghcr.io/taimoorq/expense_tracker:X.Y.Z`
+- `ghcr.io/taimoorq/expense_tracker:latest`
+- `ghcr.io/taimoorq/expense_tracker:sha-<commit>`
+
+For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.5.9` instead of `latest`.
+
+To run the production Compose stack from a published image:
+
+1. Set the app image in `.env.production`.
+	- `EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.5.9`
+2. Pull the image.
+	- `docker compose --env-file .env.production -f docker-compose.production.yml pull web`
+3. Start the stack without rebuilding locally.
+	- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build`
+
+If the GHCR package is not anonymously pullable, make the package public in GitHub's package settings or authenticate Docker to `ghcr.io` before pulling.
+
+The release workflow can also mirror the same tags to Docker Hub. Add repository secrets named `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, and the workflow will publish `docker.io/<username>/expense-tracker` alongside the GHCR image.
+
 ## Updating a Self-Hosted Install
 
 Most self-hosted users should update by pulling the latest code and then restarting the app in a way that reruns `db:prepare`.
@@ -488,14 +517,14 @@ For each new release:
 2. Use a new version string, release date, short title, one-sentence summary, and a few plain-language change bullets.
 3. Keep the newest release first so it becomes the current in-app version.
 4. Ship that file change in the same commit or release branch as the product changes it describes.
-5. After that change lands on `main`, GitHub Actions automatically creates the matching git tag and publishes the GitHub Release if that version does not already exist yet.
+5. After that change lands on `main`, GitHub Actions automatically creates the matching git tag, publishes the GitHub Release if that version does not already exist yet, and publishes Docker images for that version.
 
 How it works:
 
 - the latest entry in `config/releases.yml` is treated as the current app release
 - signed-in users see a banner and Help badge until they mark that release as read
 - old entries remain visible in Help as release history, so do not delete them during normal updates
-- `.github/workflows/publish_release.yml` reads the top release entry on pushes to `main` and publishes `vX.Y.Z` automatically
+- `.github/workflows/publish_release.yml` reads the top release entry on pushes to `main`, publishes `vX.Y.Z`, and pushes Docker image tags `vX.Y.Z`, `X.Y.Z`, `latest`, and `sha-<commit>`
 
 ### Docker update flow
 
@@ -517,6 +546,11 @@ What not to do during a normal update:
 
 - do not run `docker compose down -v` unless you intentionally want to delete the database volume
 - do not run `db:seed` unless you explicitly want demo/sample data
+
+If you are running the production stack from a published image, update `EXPENSE_TRACKER_IMAGE` to the new version tag, then run:
+
+- `docker compose --env-file .env.production -f docker-compose.production.yml pull web`
+- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build`
 
 ### Local update flow
 

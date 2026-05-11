@@ -15,6 +15,7 @@ services:
       retries: 10
 
   web:
+    image: ${EXPENSE_TRACKER_IMAGE:-ghcr.io/taimoorq/expense_tracker:latest}
     build:
       context: .
       dockerfile: Dockerfile
