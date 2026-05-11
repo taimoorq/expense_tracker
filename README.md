@@ -73,7 +73,7 @@ If the goal is to get the app running as quickly as possible, use Docker:
 	- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
 	- all dev test users: `docker compose exec web env SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
 
-This Docker setup is meant to run from a local git checkout of the repository. That is what makes later updates work with `git pull` followed by `docker compose up -d --build`.
+This quick-start Docker setup builds from a local git checkout of the repository. For production self-hosting from a prebuilt release image, see [Published Docker Images](#published-docker-images).
 
 If you set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` in `.env` before starting Docker, the app will create or update the admin account automatically during startup.
 
@@ -200,7 +200,7 @@ This is the recommended setup for most users.
 
 The repository includes a Docker-based environment that starts the Rails app and PostgreSQL together.
 
-This setup assumes you are running Docker Compose from a local clone of this repository, not from a standalone prebuilt image. Keep that local checkout, because future updates are done by pulling new commits into it and rebuilding the containers.
+For local evaluation and development, run Docker Compose from a local clone and rebuild from source. For production self-hosting, you can either build the image from your checkout or set `EXPENSE_TRACKER_IMAGE` to a published release image from GHCR or Docker Hub.
 
 #### Prerequisites
 
@@ -230,7 +230,7 @@ To override it, set `APP_PORT` in your shell or a local `.env` file before start
 
 For convenience, copy `.env.example` to `.env` and edit the values you want to override.
 
-Because the app is running from your local checkout, later updates are done from this same directory with:
+Because this flow builds from your local checkout, later source-based updates are done from this same directory with:
 
 - `git pull`
 - `docker compose up -d --build`
@@ -491,6 +491,8 @@ To run the production Compose stack from a published image:
 	- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build`
 
 If the GHCR package is not anonymously pullable, make the package public in GitHub's package settings or authenticate Docker to `ghcr.io` before pulling. If the Docker Hub repository is private, authenticate Docker to Docker Hub before pulling.
+
+Replace `<dockerhub-username>` with the Docker Hub namespace configured in the `DOCKERHUB_USERNAME` repository secret.
 
 Docker Hub publishing requires repository secrets named `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
 
