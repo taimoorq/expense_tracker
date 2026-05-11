@@ -464,14 +464,19 @@ If you rebuild or replace the `caddy_data` volume, Caddy may generate a new inte
 
 ## Published Docker Images
 
-Release images are published to GitHub Container Registry from the same workflow that creates GitHub Releases.
+Release images are published from the same workflow that creates GitHub Releases.
 
-Primary image:
+Published image providers:
 
-- `ghcr.io/taimoorq/expense_tracker:vX.Y.Z`
-- `ghcr.io/taimoorq/expense_tracker:X.Y.Z`
-- `ghcr.io/taimoorq/expense_tracker:latest`
-- `ghcr.io/taimoorq/expense_tracker:sha-<commit>`
+- GitHub Container Registry: `ghcr.io/taimoorq/expense_tracker`
+- Docker Hub: `docker.io/<dockerhub-username>/expense-tracker`
+
+Each provider receives the same tag set:
+
+- `vX.Y.Z`
+- `X.Y.Z`
+- `latest`
+- `sha-<commit>`
 
 For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.5.9` instead of `latest`.
 
@@ -479,14 +484,15 @@ To run the production Compose stack from a published image:
 
 1. Set the app image in `.env.production`.
 	- `EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.5.9`
+	- or `EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.5.9`
 2. Pull the image.
 	- `docker compose --env-file .env.production -f docker-compose.production.yml pull web`
 3. Start the stack without rebuilding locally.
 	- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build`
 
-If the GHCR package is not anonymously pullable, make the package public in GitHub's package settings or authenticate Docker to `ghcr.io` before pulling.
+If the GHCR package is not anonymously pullable, make the package public in GitHub's package settings or authenticate Docker to `ghcr.io` before pulling. If the Docker Hub repository is private, authenticate Docker to Docker Hub before pulling.
 
-The release workflow can also mirror the same tags to Docker Hub. Add repository secrets named `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, and the workflow will publish `docker.io/<username>/expense-tracker` alongside the GHCR image.
+Docker Hub publishing requires repository secrets named `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
 
 ## Updating a Self-Hosted Install
 
