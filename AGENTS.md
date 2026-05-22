@@ -50,7 +50,7 @@ When making product or UX decisions, optimize for clarity, trust, and reducing b
 
 ## Stack
 
-- Ruby `4.0.3` via `.ruby-version`
+- Ruby `4.0.5` via `.ruby-version`
 - Rails `8.1.2`
 - PostgreSQL
 - Devise for authentication

@@ -176,7 +176,7 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 
 For developers and contributors, the app is built with:
 
-- Ruby 4.0.3
+- Ruby 4.0.5
 - Rails 8.1.2
 - PostgreSQL
 - Devise
@@ -305,7 +305,7 @@ This setup is mainly for developers and contributors.
 
 #### Prerequisites
 
-- Ruby 4.0.3
+- Ruby 4.0.5
 - Bundler
 - PostgreSQL
 - libpq development headers
