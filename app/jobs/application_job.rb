@@ -1,4 +1,6 @@
 class ApplicationJob < ActiveJob::Base
+  include Bullet::ActiveJob if defined?(Bullet::ActiveJob) && (Rails.env.development? || Rails.env.test?)
+
   # Automatically retry jobs that encountered a deadlock
   # retry_on ActiveRecord::Deadlocked
 

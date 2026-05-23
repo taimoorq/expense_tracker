@@ -11,5 +11,23 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+    def before_setup
+      Bullet.start_request if bullet_enabled?
+      super
+    end
+
+    def after_teardown
+      super
+      return unless bullet_enabled?
+
+      Bullet.perform_out_of_channel_notifications if Bullet.notification?
+      Bullet.end_request
+    end
+
+    private
+
+    def bullet_enabled?
+      defined?(Bullet) && Bullet.enable?
+    end
   end
 end

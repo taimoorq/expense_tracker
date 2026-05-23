@@ -1,4 +1,13 @@
 releases:
+  - version: "0.5.10"
+    released_on: "2026-05-23"
+    title: "Faster page loads and query diagnostics"
+    summary: "This release improves database support for the app's busiest pages, adds Bullet query diagnostics for development, and refreshes image processing dependencies."
+    changes:
+      - "Added Postgres indexes for month timelines, account detail activity, recurring-entry auto-completion, account lists, and Recurring Transactions management screens."
+      - "Documented the page-load index assumptions with focused database coverage so future UI and schema refactors keep those access patterns supported."
+      - "Configured Bullet in development with browser, Rails log, and Bullet log notifications, plus optional strict query checks for local test runs."
+      - "Updated the image_processing dependency to the 2.x line, trimming older MiniMagick and ruby-vips transitive dependencies from the bundle."
   - version: "0.5.9"
     released_on: "2026-05-03"
     title: "Collapsed sidebar hover labels"
