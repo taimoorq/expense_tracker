@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_23_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -41,6 +41,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_accounts_on_active"
     t.index ["kind"], name: "index_accounts_on_kind"
+    t.index ["user_id", "active", "name"], name: "index_accounts_on_user_active_name", order: { active: :desc }
     t.index ["user_id", "name"], name: "index_accounts_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_accounts_on_user_id"
   end
@@ -105,6 +106,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
     t.index ["linked_account_id"], name: "index_credit_cards_on_linked_account_id"
     t.index ["payment_account_id"], name: "index_credit_cards_on_payment_account_id"
     t.index ["priority"], name: "index_credit_cards_on_priority"
+    t.index ["user_id", "priority", "name"], name: "index_credit_cards_on_user_priority_name"
     t.index ["user_id"], name: "index_credit_cards_on_user_id"
   end
 
@@ -127,12 +129,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
+    t.index ["budget_month_id", "occurred_on", "created_at"], name: "index_expense_entries_on_month_chronological"
     t.index ["budget_month_id"], name: "index_expense_entries_on_budget_month_id"
     t.index ["occurred_on"], name: "index_expense_entries_on_occurred_on"
     t.index ["section"], name: "index_expense_entries_on_section"
+    t.index ["source_account_id", "occurred_on", "created_at"], name: "index_expense_entries_on_source_account_recent", order: { occurred_on: :desc, created_at: :desc }, where: "(source_account_id IS NOT NULL)"
     t.index ["source_account_id"], name: "index_expense_entries_on_source_account_id"
     t.index ["source_template_type", "source_template_id"], name: "index_expense_entries_on_source_template"
     t.index ["status"], name: "index_expense_entries_on_status"
+    t.index ["user_id", "status", "occurred_on"], name: "index_expense_entries_on_user_due_recurring", where: "((occurred_on IS NOT NULL) AND ((source_file)::text = ANY ((ARRAY['pay_schedule'::character varying, 'subscription'::character varying, 'monthly_bill'::character varying, 'payment_plan'::character varying])::text[])))"
     t.index ["user_id"], name: "index_expense_entries_on_user_id"
   end
 
@@ -153,6 +158,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
     t.index ["active"], name: "index_monthly_bills_on_active"
     t.index ["kind"], name: "index_monthly_bills_on_kind"
     t.index ["linked_account_id"], name: "index_monthly_bills_on_linked_account_id"
+    t.index ["user_id", "kind", "due_day", "name"], name: "index_monthly_bills_on_user_kind_due_day_name"
     t.index ["user_id"], name: "index_monthly_bills_on_user_id"
   end
 
@@ -173,6 +179,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
     t.index ["active"], name: "index_pay_schedules_on_active"
     t.index ["cadence"], name: "index_pay_schedules_on_cadence"
     t.index ["linked_account_id"], name: "index_pay_schedules_on_linked_account_id"
+    t.index ["user_id", "name"], name: "index_pay_schedules_on_user_name"
     t.index ["user_id"], name: "index_pay_schedules_on_user_id"
   end
 
@@ -191,6 +198,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_payment_plans_on_active"
     t.index ["linked_account_id"], name: "index_payment_plans_on_linked_account_id"
+    t.index ["user_id", "due_day", "name"], name: "index_payment_plans_on_user_due_day_name"
     t.index ["user_id"], name: "index_payment_plans_on_user_id"
   end
 
@@ -207,6 +215,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_143000) do
     t.uuid "user_id", null: false
     t.index ["active"], name: "index_subscriptions_on_active"
     t.index ["linked_account_id"], name: "index_subscriptions_on_linked_account_id"
+    t.index ["user_id", "due_day", "name"], name: "index_subscriptions_on_user_due_day_name"
     t.index ["user_id"], name: "index_subscriptions_on_user_id"
   end
 
