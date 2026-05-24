@@ -84,8 +84,10 @@ export default class extends Controller {
       return
     }
 
-    if (!this.validateCurrentStep()) {
+    const message = this.submitValidationMessage()
+    if (message) {
       event.preventDefault()
+      this.fail(message)
     }
   }
 
@@ -163,6 +165,8 @@ export default class extends Controller {
     if (this.hasSummaryTemplateTarget) {
       this.summaryTemplateTarget.textContent = this.templateSummary()
     }
+
+    this.updateSubmitButtonState()
   }
 
   showCurrentStep() {
@@ -207,9 +211,7 @@ export default class extends Controller {
     }
 
     if (this.hasSubmitButtonTarget) {
-      this.submitButtonTarget.classList.toggle("hidden", this.index !== this.stepTargets.length - 1)
-      this.submitButtonTarget.disabled = this.submitting
-      this.submitButtonTarget.setAttribute("aria-busy", this.submitting ? "true" : "false")
+      this.updateSubmitButtonState()
     }
 
     if (this.hasCancelButtonTarget) {
@@ -247,32 +249,36 @@ export default class extends Controller {
   }
 
   validateCurrentStep() {
+    const message = this.validationMessageForStep(this.index)
+    if (message) return this.fail(message)
+
     this.clearError()
+    return true
+  }
 
-    if (this.index === 0) {
-      if (!this.sectionTarget.value) return this.fail("Choose the kind of entry you are adding.")
-      if (!this.statusTarget.value) return this.fail("Choose a status for this entry.")
+  validationMessageForStep(stepIndex) {
+    if (stepIndex === 0) {
+      if (!this.fieldValue("section")) return "Choose the kind of entry you are adding."
+      if (!this.fieldValue("status")) return "Choose a status for this entry."
     }
 
-    if (this.index === 1) {
-      if (!this.categoryTarget.value.trim()) return this.fail("Add a category so this entry is easier to understand later.")
-      if (!this.payeeTarget.value.trim()) return this.fail("Add who paid you or who you paid.")
+    if (stepIndex === 1) {
+      if (!this.fieldValue("category")) return "Add a category so this entry is easier to understand later."
+      if (!this.fieldValue("payee")) return "Add who paid you or who you paid."
     }
 
-    if (this.index === 2) {
-      const planned = this.plannedTarget.value.trim()
-      const actual = this.actualTarget.value.trim()
-      if (!this.dateTarget.value) return this.fail("Choose the date for this entry.")
-      if (!planned && !actual) return this.fail("Enter at least a planned or actual amount.")
+    if (stepIndex === 2) {
+      const planned = this.fieldValue("planned")
+      const actual = this.fieldValue("actual")
+      if (!this.fieldValue("date")) return "Choose the date for this entry."
+      if (!planned && !actual) return "Enter at least a planned or actual amount."
     }
 
-    if (this.index === this.stepTargets.length - 1 && this.templateEnabled()) {
-      if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) {
-        return this.fail("Choose which recurring transaction type to save.")
-      }
+    if (stepIndex === this.stepTargets.length - 1 && this.templateEnabled()) {
+      if (!this.fieldValue("templateType")) return "Choose which recurring transaction type to save."
 
-      if ((this.usesDueDayTemplateType()) && (!this.hasTemplateDueDayTarget || !this.templateDueDayTarget.value)) {
-        return this.fail("Add a due day for the recurring transaction.")
+      if (this.usesDueDayTemplateType() && !this.fieldValue("templateDueDay")) {
+        return "Add a due day for the recurring transaction."
       }
 
       if (this.templateTypeTarget.value === "monthly_bill") {
@@ -280,26 +286,30 @@ export default class extends Controller {
         const selectedMonths = this.selectedBillingMonths().length
 
         if (selectedMonths !== expectedMonths) {
-          return this.fail(`Choose ${expectedMonths} billing month${expectedMonths === 1 ? "" : "s"} for the monthly bill template.`)
+          return `Choose ${expectedMonths} billing month${expectedMonths === 1 ? "" : "s"} for the monthly bill template.`
         }
       }
 
-      if (this.templateTypeTarget.value === "payment_plan" && (!this.hasTemplateTotalDueTarget || !this.templateTotalDueTarget.value.trim())) {
-        return this.fail("Add the total due for the payment plan recurring transaction.")
+      if (this.templateTypeTarget.value === "payment_plan" && !this.fieldValue("templateTotalDue")) {
+        return "Add the total due for the payment plan recurring transaction."
       }
 
       if (this.templateTypeTarget.value === "pay_schedule" && this.hasTemplateCadenceTarget && this.templateCadenceTarget.value === "semimonthly") {
-        if (!this.hasTemplateDayOneTarget || !this.templateDayOneTarget.value) {
-          return this.fail("Add the first semimonthly pay day.")
-        }
-
-        if (!this.hasTemplateDayTwoTarget || !this.templateDayTwoTarget.value) {
-          return this.fail("Add the second semimonthly pay day.")
-        }
+        if (!this.fieldValue("templateDayOne")) return "Add the first semimonthly pay day."
+        if (!this.fieldValue("templateDayTwo")) return "Add the second semimonthly pay day."
       }
     }
 
-    return true
+    return null
+  }
+
+  submitValidationMessage() {
+    for (let stepIndex = 0; stepIndex < this.stepTargets.length; stepIndex += 1) {
+      const message = this.validationMessageForStep(stepIndex)
+      if (message) return message
+    }
+
+    return null
   }
 
   toggleTemplateFields() {
@@ -367,6 +377,35 @@ export default class extends Controller {
     if (!this.hasErrorTarget) return
     this.errorTarget.textContent = ""
     this.errorTarget.classList.add("hidden")
+  }
+
+  updateSubmitButtonState() {
+    if (!this.hasSubmitButtonTarget) return
+
+    const onReviewStep = this.index === this.stepTargets.length - 1
+    const validationMessage = onReviewStep ? this.submitValidationMessage() : null
+    const disabled = this.submitting || !onReviewStep || Boolean(validationMessage)
+
+    this.submitButtonTarget.classList.toggle("hidden", !onReviewStep)
+    this.submitButtonTarget.disabled = disabled
+    this.submitButtonTarget.setAttribute("aria-busy", this.submitting ? "true" : "false")
+    this.submitButtonTarget.setAttribute("aria-disabled", disabled ? "true" : "false")
+    this.submitButtonTarget.classList.toggle("cursor-not-allowed", disabled && !this.submitting)
+    this.submitButtonTarget.classList.toggle("opacity-60", disabled && !this.submitting)
+
+    if (validationMessage && !this.submitting) {
+      this.submitButtonTarget.title = validationMessage
+    } else {
+      this.submitButtonTarget.removeAttribute("title")
+    }
+  }
+
+  fieldValue(targetName) {
+    const targetAvailable = this[`has${targetName.charAt(0).toUpperCase()}${targetName.slice(1)}Target`]
+    if (!targetAvailable) return ""
+
+    const target = this[`${targetName}Target`]
+    return target.value.trim()
   }
 
   humanize(value) {

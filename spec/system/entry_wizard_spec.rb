@@ -112,6 +112,45 @@ RSpec.describe "Entry wizard", type: :system do
     expect(page).to have_content("Entry added.")
   end
 
+  it "keeps the submit button disabled until review-step requirements are complete", js: true do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+    sign_in_as(user)
+    visit budget_month_path(budget_month)
+
+    click_link "Plan and Edit"
+    click_link "Open Guided Wizard"
+
+    wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
+
+    within(wizard_frame) do
+      select "Fixed", from: "Section", visible: :all
+      select "Planned", from: "Status", visible: :all
+      click_button "Next"
+
+      fill_in "Category", with: "Streaming", visible: :all
+      fill_in "Payee", with: "Movie Box", visible: :all
+      fill_in "Account", with: "Checking", visible: :all
+      click_button "Next"
+
+      fill_in "Date", with: "2026-03-18", visible: :all
+      fill_in "Planned amount", with: "19.99", visible: :all
+      click_button "Next"
+
+      expect(page).to have_css("button[data-entry-wizard-target='submitButton']:not([disabled])", text: "Save Entry")
+
+      check "Save as recurring", visible: :all
+      expect(page).to have_css("button[data-entry-wizard-target='submitButton'][disabled]", text: "Save Entry")
+
+      select "Subscription", from: "Recurring Transaction Type", visible: :all
+      expect(page).to have_css("button[data-entry-wizard-target='submitButton'][disabled]", text: "Save Entry")
+
+      fill_in "Due Day", with: "18", visible: :all
+      expect(page).to have_css("button[data-entry-wizard-target='submitButton']:not([disabled])", text: "Save Entry")
+    end
+  end
+
   it "recovers cleanly when a turbo wizard submission returns validation errors", js: true do
     user = create(:user)
     budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
