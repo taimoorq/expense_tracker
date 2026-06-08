@@ -10,6 +10,7 @@ RSpec.describe "Expense entries turbo responses", type: :request do
   it "returns turbo stream updates when creating an entry" do
     post budget_month_expense_entries_path(budget_month),
       params: {
+        wizard_flow: "1",
         expense_entry: {
           occurred_on: "2026-03-11",
           section: "fixed",
@@ -24,7 +25,7 @@ RSpec.describe "Expense entries turbo responses", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
     expect(response.body).to include('target="flash"')
-    expect(response.body).to include('target="entries_table"')
+    expect(response.body).to include('target="timeline_section"')
     expect(response.body).to include("Entry added.")
   end
 
@@ -44,7 +45,7 @@ RSpec.describe "Expense entries turbo responses", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
     expect(response.body).to include('target="month_summary"')
-    expect(response.body).to include('target="entries_table"')
+    expect(response.body).to include('target="timeline_section"')
     expect(response.body).to include('target="entry_editor_modal"')
     expect(response.body).to include("Entry updated.")
   end

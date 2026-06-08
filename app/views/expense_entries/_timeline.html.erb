@@ -3,6 +3,7 @@
   <% timeline_leftover = timeline.timeline_leftover %>
   <% default_timeline_view = timeline.default_timeline_view %>
   <% reason_pills = timeline.reason_pills %>
+  <% account_pills = timeline.account_pills %>
   <% timeline_view_urls = timeline.timeline_view_urls %>
   <section class="ta-card ta-surface-timeline" data-controller="collapsible-groups expense-entries-filter" data-collapsible-groups-storage-key-value="timeline-groups-<%= budget_month.id %>" style="view-transition-name: month-budget-shell; view-transition-class: ta-vt-shell;">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -30,7 +31,7 @@
       </div>
     </div>
 
-    <%= render "expense_entries/filters", reason_pills: reason_pills, id_prefix: "timeline" %>
+    <%= render "expense_entries/filters", reason_pills: reason_pills, account_pills: account_pills, id_prefix: "timeline" %>
 
     <div data-panel-name="sections" role="tabpanel" class="<%= default_timeline_view == "sections" ? "space-y-4" : "hidden space-y-4" %>" <%= %(style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;") if default_timeline_view == "sections" %>>
     <div class="mb-4 flex flex-wrap items-center gap-2">
@@ -64,17 +65,17 @@
             </summary>
 
             <div class="overflow-x-auto border-t border-slate-200">
-              <table class="ta-table">
+              <table class="ta-table" data-controller="sortable-table">
                 <thead class="bg-white">
                   <tr>
-                    <th class="ta-th">Date</th>
-                    <th class="ta-th">Payee</th>
-                    <th class="ta-th hidden lg:table-cell">Account</th>
+                    <%= sortable_table_header("Date", key: "date", type: "date") %>
+                    <%= sortable_table_header("Payee", key: "payee") %>
+                    <%= sortable_table_header("Account", key: "account", classes: "hidden lg:table-cell") %>
                     <% if group[:show_reason_column] %>
-                      <th class="ta-th">Reason</th>
+                      <%= sortable_table_header("Reason", key: "reason") %>
                     <% end %>
-                    <th class="ta-th">Status</th>
-                    <th class="ta-th text-right">Impact</th>
+                    <%= sortable_table_header("Status", key: "status") %>
+                    <%= sortable_table_header("Impact", key: "impact", type: "number", classes: "text-right") %>
                     <th class="ta-th text-right">Actions</th>
                   </tr>
                 </thead>
@@ -86,7 +87,15 @@
                       data-payee="<%= row[:payee].to_s %>"
                       data-reason="<%= row[:reason].to_s %>"
                       data-value="<%= row[:reason].to_s.downcase %>"
+                      data-account="<%= row[:account_filter_value].to_s %>"
                       data-status="<%= row[:status] %>"
+                      data-sortable-table-target="row"
+                      data-sort-date-value="<%= row[:date_iso8601] %>"
+                      data-sort-payee-value="<%= row[:payee].to_s %>"
+                      data-sort-account-value="<%= row[:account_filter_value].to_s %>"
+                      data-sort-reason-value="<%= row[:reason].to_s %>"
+                      data-sort-status-value="<%= row[:status_label].to_s %>"
+                      data-sort-impact-value="<%= row[:impact] %>"
                       style="view-transition-name: timeline-entry-<%= row[:dom_id] %>; view-transition-class: ta-vt-row;">
                       <td class="px-3 py-2"><%= row[:date] %></td>
                       <td class="px-3 py-2">

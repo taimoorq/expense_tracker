@@ -1,6 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 const STORAGE_KEY = "expense-tracker.entries-filter"
+const MISSING_ACCOUNT_VALUE = "__missing_account__"
 
 export default class extends Controller {
   static targets = [
@@ -13,7 +14,8 @@ export default class extends Controller {
     "payee",
     "reason",
     "status",
-    "category"
+    "category",
+    "account"
   ]
 
   connect() {
@@ -37,6 +39,7 @@ export default class extends Controller {
     if (this.hasReasonTarget) this.reasonTarget.value = ""
     if (this.hasStatusTarget) this.statusTarget.value = ""
     if (this.hasCategoryTarget) this.categoryTarget.value = ""
+    if (this.hasAccountTarget) this.accountTarget.value = ""
 
     this.saveToStorage()
     this.refresh()
@@ -45,24 +48,27 @@ export default class extends Controller {
   refresh() {
     const categoryValue = this.hasCategoryTarget ? this.categoryTarget.value.trim().toLowerCase() : ""
     const noCategoryFilter = categoryValue === ""
+    const accountValue = this.hasAccountTarget ? this.accountTarget.value.trim().toLowerCase() : ""
+    const noAccountFilter = accountValue === ""
     const dateValue = this.hasDateTarget ? this.dateTarget.value.trim() : ""
     const payeeValue = this.hasPayeeTarget ? this.payeeTarget.value.trim().toLowerCase() : ""
     const reasonValue = this.hasReasonTarget ? this.reasonTarget.value.trim().toLowerCase() : ""
     const statusValue = this.hasStatusTarget ? this.statusTarget.value.trim().toLowerCase() : ""
     const filtersActive =
       !noCategoryFilter ||
+      !noAccountFilter ||
       dateValue !== "" ||
       payeeValue !== "" ||
       reasonValue !== "" ||
       statusValue !== ""
 
     if (this.hasRowTarget) {
-      this.filterRows(categoryValue, noCategoryFilter, dateValue, payeeValue, reasonValue, statusValue)
+      this.filterRows(categoryValue, noCategoryFilter, accountValue, noAccountFilter, dateValue, payeeValue, reasonValue, statusValue)
       this.updateGroups()
     }
 
     if (this.hasChipTarget) {
-      this.filterChips(categoryValue, noCategoryFilter, dateValue, payeeValue, reasonValue, statusValue)
+      this.filterChips(categoryValue, noCategoryFilter, accountValue, noAccountFilter, dateValue, payeeValue, reasonValue, statusValue)
       this.updateDays()
     }
 
@@ -78,10 +84,14 @@ export default class extends Controller {
     }
   }
 
-  filterRows(categoryValue, noCategoryFilter, dateValue, payeeValue, reasonValue, statusValue) {
+  filterRows(categoryValue, noCategoryFilter, accountValue, noAccountFilter, dateValue, payeeValue, reasonValue, statusValue) {
     this.rowTargets.forEach((row) => {
       const rowValue = (row.dataset.value || "").toLowerCase()
       const matchesCategory = noCategoryFilter || rowValue === categoryValue
+      const rowAccount = (row.dataset.account || "").toLowerCase()
+      const matchesAccount =
+        noAccountFilter ||
+        (accountValue === MISSING_ACCOUNT_VALUE ? rowAccount === "" : rowAccount === accountValue)
       const rowDate = (row.dataset.date || "").trim()
       const rowPayee = (row.dataset.payee || "").toLowerCase()
       const rowReason = (row.dataset.reason || "").toLowerCase()
@@ -94,15 +104,19 @@ export default class extends Controller {
 
       row.dataset.pillHidden = matchesCategory ? "false" : "true"
       row.dataset.searchHidden =
-        matchesDate && matchesPayee && matchesReason && matchesStatus ? "false" : "true"
+        matchesAccount && matchesDate && matchesPayee && matchesReason && matchesStatus ? "false" : "true"
       row.classList.toggle("hidden", row.dataset.searchHidden === "true" || row.dataset.pillHidden === "true")
     })
   }
 
-  filterChips(categoryValue, noCategoryFilter, dateValue, payeeValue, reasonValue, statusValue) {
+  filterChips(categoryValue, noCategoryFilter, accountValue, noAccountFilter, dateValue, payeeValue, reasonValue, statusValue) {
     this.chipTargets.forEach((chip) => {
       const chipValue = (chip.dataset.value || "").toLowerCase()
       const matchesCategory = noCategoryFilter || chipValue === categoryValue
+      const chipAccount = (chip.dataset.account || "").toLowerCase()
+      const matchesAccount =
+        noAccountFilter ||
+        (accountValue === MISSING_ACCOUNT_VALUE ? chipAccount === "" : chipAccount === accountValue)
       const chipDate = (chip.dataset.date || "").trim()
       const chipPayee = (chip.dataset.payee || "").toLowerCase()
       const chipReason = (chip.dataset.reason || "").toLowerCase()
@@ -113,7 +127,7 @@ export default class extends Controller {
       const matchesReason = reasonValue === "" || chipReason.includes(reasonValue)
       const matchesStatus = statusValue === "" || chipStatus === statusValue
 
-      const visible = matchesCategory && matchesDate && matchesPayee && matchesReason && matchesStatus
+      const visible = matchesCategory && matchesAccount && matchesDate && matchesPayee && matchesReason && matchesStatus
       chip.classList.toggle("hidden", !visible)
     })
   }
@@ -174,7 +188,7 @@ export default class extends Controller {
       if (filtersActive) {
         this.groupTargets.forEach((group) => {
           if (!group.classList.contains("hidden")) {
-            group.open = true
+            collapsibleController.setGroupOpen(group, true, { persist: false })
           }
         })
       } else {
@@ -189,14 +203,29 @@ export default class extends Controller {
       if (!stored) return
 
       const data = JSON.parse(stored)
-      if (this.hasCategoryTarget && data.category) this.categoryTarget.value = data.category
+      if (this.hasCategoryTarget && data.category) this.restoreSelectValue(this.categoryTarget, data.category)
       if (this.hasDateTarget && data.date) this.dateTarget.value = data.date
       if (this.hasPayeeTarget && data.payee) this.payeeTarget.value = data.payee
       if (this.hasReasonTarget && data.reason) this.reasonTarget.value = data.reason
       if (this.hasStatusTarget && data.status) this.statusTarget.value = data.status
+      if (this.hasAccountTarget && data.account) this.restoreSelectValue(this.accountTarget, data.account)
     } catch (_e) {
       // ignore
     }
+  }
+
+  restoreSelectValue(select, value) {
+    if (!Array.from(select.options).some((option) => option.value === value)) {
+      select.add(new Option(this.fallbackOptionLabel(value), value))
+    }
+
+    select.value = value
+  }
+
+  fallbackOptionLabel(value) {
+    if (value === MISSING_ACCOUNT_VALUE) return "No account"
+
+    return value
   }
 
   saveToStorage() {
@@ -206,7 +235,8 @@ export default class extends Controller {
         date: this.hasDateTarget ? this.dateTarget.value : "",
         payee: this.hasPayeeTarget ? this.payeeTarget.value : "",
         reason: this.hasReasonTarget ? this.reasonTarget.value : "",
-        status: this.hasStatusTarget ? this.statusTarget.value : ""
+        status: this.hasStatusTarget ? this.statusTarget.value : "",
+        account: this.hasAccountTarget ? this.accountTarget.value : ""
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     } catch (_e) {

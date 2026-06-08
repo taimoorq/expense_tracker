@@ -209,6 +209,39 @@ module ApplicationHelper
     user.accounts.active_first.pluck(:name)
   end
 
+  def sortable_table_header(label, key:, type: :text, classes: nil, default_direction: :asc)
+    content_tag(
+      :th,
+      scope: "col",
+      class: [ "ta-th", classes ],
+      aria: { sort: "none" },
+      data: {
+        sortable_table_target: "header",
+        sortable_table_key: key,
+        sortable_table_type: type,
+        sortable_table_default_direction: default_direction
+      }
+    ) do
+      button_tag(type: "button", class: "ta-sort-button", title: "Sort by #{label}", data: { action: "click->sortable-table#sort" }) do
+        safe_join([
+          tag.span(label),
+          content_tag(:span, class: "ta-sort-indicator", aria: { hidden: true }) do
+            safe_join([
+              content_tag(:span, class: "ta-sort-icon-neutral") do
+                safe_join([
+                  tabler_icon("chevron-up", classes: "h-2.5 w-2.5"),
+                  tabler_icon("chevron-down", classes: "h-2.5 w-2.5")
+                ])
+              end,
+              tag.span(tabler_icon("chevron-up", classes: "h-3.5 w-3.5"), class: "ta-sort-icon ta-sort-icon-asc"),
+              tag.span(tabler_icon("chevron-down", classes: "h-3.5 w-3.5"), class: "ta-sort-icon ta-sort-icon-desc")
+            ])
+          end
+        ])
+      end
+    end
+  end
+
   def month_jump_options(user = current_user)
     return [] if user.blank?
 

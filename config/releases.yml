@@ -1,4 +1,13 @@
 releases:
+  - version: "0.5.11"
+    released_on: "2026-06-08"
+    title: "Account filters and sortable month tables"
+    summary: "This release adds paid-from account filtering to month views, reusable sortable table columns, and sturdier filter persistence after entry updates."
+    changes:
+      - "Added a Paid From account filter to the Budget views so grouped entries, the full month list, and calendar chips can be narrowed by the account an item is paid from."
+      - "Added reusable sortable table headers and a shared Stimulus controller for sorting text, date, and number columns in month tables."
+      - "Kept selected filters applied after marking entries paid or editing them by refreshing the month timeline once and restoring the active filter selections cleanly."
+      - "Added browser-level regression coverage for account filtering, filter persistence after row refreshes, and full-list table sorting."
   - version: "0.5.10"
     released_on: "2026-05-23"
     title: "Faster page loads and query diagnostics"

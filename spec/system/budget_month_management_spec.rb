@@ -388,6 +388,73 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).not_to have_text("Gas")
   end
 
+  it "filters month views by paid-from account", js: true do
+    user = create(:user, email: "accountfilter@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    checking = create(:account, user: user, name: "Checking")
+    savings = create(:account, user: user, name: "Savings")
+    create(:expense_entry, budget_month: month, user: user, payee: "Rent", category: "Housing", section: :fixed, status: :planned, planned_amount: 1500, source_account: checking, occurred_on: Date.current.beginning_of_month + 1.day)
+    create(:expense_entry, budget_month: month, user: user, payee: "Streaming", category: "Subscriptions", section: :fixed, status: :planned, planned_amount: 20, source_account: savings, occurred_on: Date.current.beginning_of_month + 2.days)
+
+    sign_in_as(user)
+    visit budget_month_path(month)
+
+    expect(page).to have_select("timeline_account_filter", with_options: [ "Checking (1)", "Savings (1)" ])
+    select "Checking (1)", from: "timeline_account_filter"
+
+    expect(page).to have_text("Rent")
+    expect(page).not_to have_text("Streaming")
+
+    click_link "Calendar", match: :first
+
+    expect(page).to have_select("timeline_account_filter", selected: "Checking (1)")
+    expect(page).to have_text("Rent")
+    expect(page).not_to have_text("Streaming")
+  end
+
+  it "keeps the paid-from account filter applied after refreshing table rows", js: true do
+    user = create(:user, email: "accountfilterrefresh@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    checking = create(:account, user: user, name: "Checking")
+    savings = create(:account, user: user, name: "Savings")
+
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      payee: "Rent",
+      category: "Housing",
+      section: :fixed,
+      status: :planned,
+      planned_amount: 1500,
+      source_account: checking,
+      occurred_on: Date.current.beginning_of_month + 1.day)
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      payee: "Streaming",
+      category: "Subscriptions",
+      section: :fixed,
+      status: :planned,
+      planned_amount: 20,
+      source_account: savings,
+      occurred_on: Date.current.beginning_of_month + 2.days)
+
+    sign_in_as(user)
+    visit budget_month_tab_path(month, "timeline", view: "full-list")
+
+    select "Checking (1)", from: "timeline_account_filter"
+
+    expect(page).to have_text("Rent")
+    expect(page).not_to have_text("Streaming")
+
+    click_button "Mark as paid", match: :first
+
+    expect(page).to have_content("Entry updated.")
+    expect(page).to have_select("timeline_account_filter", selected: "Checking (1)")
+    expect(page).to have_text("Rent")
+    expect(page).not_to have_text("Streaming")
+  end
+
   it "filters calendar by category dropdown", js: true do
     user = create(:user, email: "calendarcategoryfilter@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
@@ -516,6 +583,40 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_current_path(budget_month_tab_path(month, "timeline"), ignore_query: false)
     expect(page).to have_content("Budget")
     expect(page).to have_button("Expand all")
+  end
+
+  it "sorts full list table columns", js: true do
+    user = create(:user, email: "tablesort@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry, budget_month: month, user: user, payee: "Zed Market", category: "Groceries", planned_amount: 100, occurred_on: Date.current.beginning_of_month + 1.day)
+    create(:expense_entry, budget_month: month, user: user, payee: "Alpha Power", category: "Utilities", planned_amount: 12, occurred_on: Date.current.beginning_of_month + 2.days)
+    create(:expense_entry, budget_month: month, user: user, payee: "Middle Fuel", category: "Auto", planned_amount: 5, occurred_on: Date.current.beginning_of_month + 3.days)
+
+    sign_in_as(user)
+    visit budget_month_tab_path(month, "timeline", view: "full-list")
+
+    within("[data-panel-name='full-list']") do
+      click_button "Payee"
+      expect(all("tbody tr", visible: :visible).map { |row| row.all("td", visible: :visible)[3].text }).to eq([
+        "Alpha Power",
+        "Middle Fuel",
+        "Zed Market"
+      ])
+
+      click_button "Payee"
+      expect(all("tbody tr", visible: :visible).map { |row| row.all("td", visible: :visible)[3].text }).to eq([
+        "Zed Market",
+        "Middle Fuel",
+        "Alpha Power"
+      ])
+
+      click_button "Planned"
+      expect(all("tbody tr", visible: :visible).map { |row| row.all("td", visible: :visible)[5].text }).to eq([
+        "$5.00",
+        "$12.00",
+        "$100.00"
+      ])
+    end
   end
 
   it "keeps the full list view active after marking an entry as paid", js: true do

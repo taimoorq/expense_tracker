@@ -6,7 +6,17 @@
   data-payee="<%= entry.payee.to_s %>"
   data-reason="<%= reason_for_entry.to_s %>"
   data-value="<%= reason_for_entry.to_s.downcase %>"
+  data-account="<%= entry.account_name.to_s %>"
   data-status="<%= entry.status %>"
+  data-sortable-table-target="row"
+  data-sort-date-value="<%= entry.occurred_on&.iso8601 %>"
+  data-sort-section-value="<%= entry.section.humanize %>"
+  data-sort-category-value="<%= entry.category.to_s %>"
+  data-sort-payee-value="<%= entry.payee.to_s %>"
+  data-sort-account-value="<%= entry.account_name.to_s %>"
+  data-sort-planned-value="<%= entry.planned_amount %>"
+  data-sort-actual-value="<%= entry.actual_amount %>"
+  data-sort-status-value="<%= entry.status.humanize %>"
   style="view-transition-name: table-entry-<%= dom_id(entry) %>; view-transition-class: ta-vt-row;">
   <td class="px-3 py-2"><%= entry.occurred_on %></td>
   <td class="px-3 py-2"><%= entry.section.humanize %></td>

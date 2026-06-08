@@ -1,10 +1,11 @@
 <% id_prefix = local_assigns[:id_prefix] || "expense_entries" %>
+<% account_pills = local_assigns[:account_pills] || [] %>
 <details class="group mb-4 rounded-[22px] border border-slate-200 bg-white/85" data-controller="details-responsive" data-details-responsive-expand-above-value="768">
   <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden group">
     <div class="flex min-w-0 flex-1 items-center justify-between gap-2">
       <div class="min-w-0">
         <p class="text-sm font-semibold text-slate-900">Filters</p>
-        <p class="mt-1 hidden text-sm text-slate-600 md:block">Filter entries by category, date, payee, reason, or status. Applied to grouped, list, and calendar views.</p>
+        <p class="mt-1 hidden text-sm text-slate-600 md:block">Filter entries by category, paid-from account, date, payee, reason, or status. Applied to grouped, list, and calendar views.</p>
       </div>
       <span class="shrink-0 text-slate-400 transition group-open:rotate-180"><%= tabler_icon("chevron-down", classes: "h-5 w-5") %></span>
     </div>
@@ -20,13 +21,22 @@
         <span>Clear filters</span>
       </button>
     </div>
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
       <div>
         <label class="fb-label" for="<%= id_prefix %>_category_filter">Category</label>
         <select id="<%= id_prefix %>_category_filter" class="fb-select" data-expense-entries-filter-target="category" data-action="change->expense-entries-filter#filter">
           <option value="">All categories</option>
           <% reason_pills.each do |reason, count| %>
             <option value="<%= reason.downcase %>"><%= reason %> (<%= count %>)</option>
+          <% end %>
+        </select>
+      </div>
+      <div>
+        <label class="fb-label" for="<%= id_prefix %>_account_filter">Paid From</label>
+        <select id="<%= id_prefix %>_account_filter" class="fb-select" data-expense-entries-filter-target="account" data-action="change->expense-entries-filter#filter">
+          <option value="">All accounts</option>
+          <% account_pills.each do |account_option| %>
+            <option value="<%= account_option[:value] %>"><%= account_option[:label] %> (<%= account_option[:count] %>)</option>
           <% end %>
         </select>
       </div>

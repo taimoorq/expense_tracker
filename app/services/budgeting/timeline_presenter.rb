@@ -3,6 +3,7 @@ module Budgeting
     include ActionView::RecordIdentifier
 
     TEMPLATE_SOURCES = %w[pay_schedule subscription monthly_bill payment_plan credit_card_estimate].freeze
+    MISSING_ACCOUNT_FILTER_VALUE = "__missing_account__"
 
     def initialize(budget_month:, expense_entries:, default_timeline_view:)
       @budget_month = budget_month
@@ -21,6 +22,13 @@ module Budgeting
         .tally
         .sort_by { |reason, count| [ -count, reason.downcase ] }
         .first(8)
+    end
+
+    def account_pills
+      @account_pills ||= expense_entries.map { |entry| account_filter_option(entry) }
+        .tally
+        .map { |option, count| option.merge(count: count) }
+        .sort_by { |option| [ -option[:count], option[:label].downcase ] }
     end
 
     def timeline_view_urls
@@ -71,6 +79,16 @@ module Budgeting
       entry.category.presence || entry.section.humanize
     end
 
+    def account_filter_option(entry)
+      account_name = entry.account_name.to_s.strip
+
+      if account_name.present?
+        { label: account_name, value: account_name.downcase }
+      else
+        { label: "No account", value: MISSING_ACCOUNT_FILTER_VALUE }
+      end
+    end
+
     private
 
     def ordered_entries
@@ -97,6 +115,7 @@ module Budgeting
         date_iso8601: entry.occurred_on&.iso8601,
         payee: entry.payee.presence || "—",
         account_name: entry.account_name.presence || "—",
+        account_filter_value: entry.account_name.to_s,
         reason: reason_for_entry(entry),
         status: entry.status,
         status_label: entry.status.humanize,

@@ -46,6 +46,7 @@
                           date: entry.occurred_on&.iso8601,
                           payee: entry.payee.to_s,
                           reason: reason_for_entry.call(entry).to_s,
+                          account: entry.account_name.to_s,
                           status: entry.status,
                           turbo_frame: "entry_editor_modal"
                         } do %>

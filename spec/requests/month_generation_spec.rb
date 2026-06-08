@@ -29,7 +29,6 @@ RSpec.describe "Month generation actions", type: :request do
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
     expect(response.body).to include('target="month_summary"')
     expect(response.body).to include('target="timeline_section"')
-    expect(response.body).to include('target="entries_table"')
     expect(response.body).to include("Generated 1 paycheck entry.")
   end
 
