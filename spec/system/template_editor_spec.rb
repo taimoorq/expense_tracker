@@ -64,6 +64,10 @@ RSpec.describe "Template editor", type: :system do
     sign_in_as(user)
     visit planning_templates_path
 
+    expect(page).to have_content("Recurring setup")
+    expect(page).to have_content("Build the repeatable part of each month once")
+    expect(page).to have_content("Saved")
+
     find("a[aria-label='Edit schedule']").click
 
     expect(page).to have_current_path(
@@ -90,6 +94,7 @@ RSpec.describe "Template editor", type: :system do
     sign_in_as(user)
     visit planning_templates_path
 
+    expect(page).to have_content("Start small: add one paycheck schedule")
     expect(page).to have_no_field("Employer / Source")
     find("summary", text: "Add Schedule").click
 

@@ -30,7 +30,7 @@ This is not a bank-sync-first app. Manual planning, recurring reuse, account con
 
 ## Core Features
 
-- Overview dashboard with current-month status, recurring progress, account summaries, and quick actions
+- Overview page with current-month status, recurring progress, account summaries, and quick actions
 - Month-by-month budgeting with support for cloning or generating from recurring templates
 - Recurring transaction management for pay schedules, subscriptions, monthly bills, payment plans, and credit cards
 - Guided entry wizard for fast manual entry creation with optional recurring-template creation
@@ -47,11 +47,12 @@ This is not a bank-sync-first app. Manual planning, recurring reuse, account con
 - Users who value recurring planning structure, account context, and month roll-forward workflows
 
 When making product or UX decisions, optimize for clarity, trust, and reducing budgeting friction for returning users.
+Budgeting UX should make money movement explainable: keep history, drilldowns, and plain-language context close to charts, balances, and account totals.
 
 ## Stack
 
 - Ruby `4.0.5` via `.ruby-version`
-- Rails `8.1.2`
+- Rails `8.1.3`
 - PostgreSQL
 - Devise for authentication
 - Solid Queue, Solid Cache, and Solid Cable from Rails
@@ -81,9 +82,10 @@ When making product or UX decisions, optimize for clarity, trust, and reducing b
 - The app now leans on domain-oriented services under areas such as `Budgeting`, `Recurring`, `Accounts`, `Overview`, and `Platform`
 - `ExpenseEntry` is the main month-instance record; recurring template models describe reusable planning definitions
 - Recurring transaction types stay in separate models because their rules differ, but they share common concerns and catalog metadata
-- Overview/dashboard behavior is assembled through `app/services/overview` and exposed to the page through a presenter
+- Overview behavior is assembled through `app/services/overview` and exposed to the page through a presenter
 - Backup/restore logic is service-driven and namespaced under platform services rather than buried in controllers
 - Account-aware linking logic lives in dedicated services and model concerns
+- Account balance work treats snapshots as reconciliation points, paid entries as current activity, planned entries as projections, and source/destination accounts as the canonical money-flow links
 - Release notes are backed by release services and `config/releases.yml`
 - Cloudflare Turnstile support exists in the auth flow through `turnstile` concerns, controllers, and verification services
 
@@ -101,6 +103,8 @@ When making product or UX decisions, optimize for clarity, trust, and reducing b
 
 ## Hotwire, Turbo, and Stimulus Guidance
 
+These conventions include lessons from "Smooth UI animations on server-rendered HTML" by Adrien Siami: keep Rails-rendered HTML as the source of truth, let Turbo morphing and view transitions handle page motion, and use Stimulus as a small state-toggle layer.
+
 - Default to server-rendered HTML and Hotwire flows before reaching for custom JavaScript
 - Use Turbo Frames for scoped updates such as modals, editors, side panels, and in-page workflow surfaces
 - Use Turbo Streams when multiple parts of a page need to update together after a mutation
@@ -111,6 +115,13 @@ When making product or UX decisions, optimize for clarity, trust, and reducing b
 - Treat modal forms as Turbo-first flows with clear pending, success, and validation-error states
 - Reuse shared submit-state behavior where possible so wizard, editor, and template modals stay consistent
 - For UI refactors, look for opportunities to move view setup into presenters/helpers while keeping the rendered HTML easy for Turbo to replace
+- Prefer Turbo morphing for same-page refreshes that should preserve scroll, focus, and local input state; use `turbo_refreshes_with method: :morph, scroll: :preserve` on page surfaces that redirect back to themselves after small mutations
+- Preserve the app's existing `<meta name="turbo-view-transition" content="true">` setup and treat view transitions as progressive enhancement, not as a dependency for correctness
+- For animated server-rendered updates, give stable repeated elements unique `view-transition-name` values based on durable record identity such as `dom_id(record)`, and group related motion with existing `ta-vt-*` transition classes
+- Keep view-transition names unique within a rendered page; duplicate names can cause confusing motion or browser transition failures
+- Prefer browser/Turbo-managed transitions over custom JavaScript animation code, and keep custom CSS short, scoped, and covered by `prefers-reduced-motion`
+- Use Stimulus for small optimistic UI details by toggling one stateful class or ARIA/data attribute, then let Tailwind/CSS express the visual states
+- Do not put financial calculations, permission rules, persistence decisions, or server response assumptions into Stimulus controllers; Stimulus should make already-rendered server state feel responsive
 
 ## Frontend and UI Conventions
 
@@ -120,6 +131,21 @@ When making product or UX decisions, optimize for clarity, trust, and reducing b
 - Prefer extracting repeated card, modal, or summary markup into partials once the repeated structure is clear
 - Icons should come from the existing icon approach already in the app; do not introduce a second icon system casually
 - For charts and dashboards, keep the server-side data contract explicit and make JS initialization resilient to Turbo navigation
+
+### Budgeting UX Patterns
+
+- Use plain-language account movement terms such as "Money leaves / activity account", "Money goes to", "Card being paid down", and "Money leaves account" instead of exposing internal source/destination terminology to everyday users
+- Pair charts and dashboard totals with supporting numbers, captions, and nearby entry lists or drilldowns; avoid chart-only summaries for financial data that users may want to audit
+- Keep onboarding light and progressive: ask for the smallest useful setup step first, then reveal deeper account, recurring, and month workflows after the user has context
+- Make the next useful action obvious on onboarding and dashboard surfaces; avoid leaving new users to infer where to click from a dense financial dashboard
+- Add trust cues near sensitive flows such as sign-up, account setup, backup restore, and balance snapshots so users understand where data lives and how calculations are grounded
+- Favor weekly or daily check-in affordances over heavy notification systems until there is a clear user need for external reminders
+- Account balance screens should make the rollforward understandable by showing the latest snapshot/base, paid activity, planned impact, current balance, projected balance, and month-by-month history
+- Prefer visible drilldown links, detail rows, or expandable sections for financial auditability over hidden chart interactions
+- Keep tables, balance history, and drilldown views scannable on mobile and desktop; use compact rows, responsive tables, or card-like repeated items when needed
+- Consider visual goal or progress patterns for savings targets, debt payoff, and card payoff, but keep motivation secondary to clarity and trust; positive reinforcement should be calm and non-judgmental
+- Let lightweight preferences, such as financial rhythm, tune guidance without fragmenting the core workflow or adding separate data models too early
+- When money-flow terminology changes, update in-app help, release notes, and recurring-template copy so the same concept is named consistently everywhere
 
 ## Testing Notes
 
@@ -153,6 +179,7 @@ When changing behavior, prefer running the narrowest relevant test first, then b
 - Add characterization coverage before large refactors in legacy or controller-heavy code
 - Avoid testing private methods directly; extract a PORO or presenter if the logic deserves direct tests
 - Use factories thoughtfully; keep them lean and prefer explicit setup over dense callback chains
+- For financial dashboards, account balances, and drilldowns, pair service specs for math and payloads with request specs for navigable detail pages and focused system specs for high-risk UI paths
 
 ## Common Commands
 
@@ -195,7 +222,7 @@ If you are running locally without Docker, make sure the Ruby version matches `.
 - Favor editing existing files and extending established patterns before introducing new abstractions
 - Keep month workflow language and product terminology consistent with the README and in-app copy
 - Treat `config/releases.yml` as user-facing product history; new entries should be newest-first
-- When changing product behavior or terminology, check whether the frontend repo at `../financetrackingapp` also needs updates to `index.html`, `docs.html`, or shared messaging
+- When changing product behavior or terminology, check whether the frontend repo at `../financetrackingapp` also needs updates to `index.html`, `docs/`, or shared messaging
 - Favor service objects, presenters, or concerns for non-trivial business rules rather than growing controllers, helpers, or Active Record models
 - Respect the existing Hotwire/importmap setup; do not introduce a Node bundler unless explicitly requested
 - When refactoring view code, preserve the Turbo and Stimulus contract unless the task explicitly includes updating the frontend behavior

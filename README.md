@@ -30,24 +30,27 @@ A budgeting app for building month-by-month spending plans, tracking real activi
 
 Expense Tracker is built for people who budget by month and want one place to plan income, fixed bills, variable spending, debt payments, and carry-over decisions.
 
-It also includes a manual accounts area for tracking balances in checking, savings, brokerage, retirement, and debt accounts without relying on live bank syncing.
+It also includes a manual accounts area for tracking balances in checking, savings, brokerage, retirement, and debt accounts without relying on live bank syncing. Account pages explain balances from snapshots plus paid and planned activity, so users can see both current and projected balances.
 
 Recurring transactions and month entries can optionally link to accounts, so account context carries through month workflows instead of living only in the balances area.
 
 Hosted product overview and screenshots: https://financetracking.app/
 
-Hosted user documentation for current app behavior: https://financetracking.app/docs.html
+Hosted user documentation for current app behavior: https://financetracking.app/docs/
 
 With it, a user can:
 
-- restart from an overview dashboard that highlights the current month, quick actions, recurring status, and account context
+- restart from an Overview page that highlights the current month, quick actions, recurring status, and account context
+- use a weekly check-in card for due items, upcoming plans, missing actuals, and linked account activity
+- choose a lightweight financial rhythm during signup or in Settings so guidance fits steady income, variable income, shared household, or debt payoff workflows
 - build a fresh month or start from a previous month instead of recreating the same structure every time
 - review the same budget in a timeline, calendar, or editable list depending on how they like to think about money
 - add manual adjustments and one-off entries once the recurring structure is in place
 - reuse recurring items so routine planning takes less manual work through dedicated recurring transactions
-- preview and restore versioned JSON backups, including optional encrypted exports and reference sample backup files
+- preview and restore versioned JSON backups, including optional encrypted exports, workflow preferences, and reference sample backup files
 - estimate credit-card payments based on the cash left in the month rather than guessing in isolation
-- record manual account balance snapshots and review a simple net worth trend over time
+- record manual account balance snapshots, review net worth trends, and understand current/projected balances from linked activity
+- trace account movement totals from overview charts back to the month entries behind them
 - keep in-app help available so the intended workflow is documented inside the product
 
 This README focuses on installing, configuring, seeding, and operating the app. User-facing walkthroughs of the current product flow now live in the hosted documentation above.
@@ -83,14 +86,14 @@ After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL`
 
 ## Screenshots
 
-Current screenshots reflect the latest overview, month-budget workflow, money-flow review, account tracking, account activity, and backup workflow.
+Current screenshots reflect the latest overview, month-budget workflow, money-flow review, account tracking, account movement, and backup workflow.
 
 <table>
 	<tr>
 		<td align="center">
-			<img src="app/assets/images/marketing/overview-main.webp" alt="Overview dashboard" width="100%">
+			<img src="app/assets/images/marketing/overview-main.webp" alt="Overview page" width="100%">
 			<br>
-			<strong>Overview Dashboard</strong>
+			<strong>Overview</strong>
 			<br>
 			Quick actions, continue guidance, recent months, and review prompts from one landing screen.
 		</td>
@@ -115,16 +118,16 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 			<br>
 			<strong>Accounts &amp; Net Worth</strong>
 			<br>
-			Manual balance tracking, account coverage, and net worth snapshots that stay close to the budgeting workflow.
+			Manual balance tracking, snapshot history, and projected account context that stay close to the budgeting workflow.
 		</td>
 	</tr>
 	<tr>
 		<td align="center">
-			<img src="app/assets/images/marketing/overview-paid-vs-actual.webp" alt="Overview account activity chart" width="100%">
+			<img src="app/assets/images/marketing/overview-paid-vs-actual.webp" alt="Overview account movement chart" width="100%">
 			<br>
-			<strong>Account Activity</strong>
+			<strong>Account Movement</strong>
 			<br>
-			Compare charged versus paid-to totals by account without leaving the overview flow.
+			Review card additions, card payments, bank movement, and drilldowns without leaving the overview flow.
 		</td>
 		<td align="center">
 			<img src="app/assets/images/marketing/backup-and-restore-desktop.webp" alt="Backup and restore" width="100%">
@@ -140,14 +143,16 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 
 ### Accounts and Context
 
-- Start from an overview dashboard that surfaces the current month, attention items, recurring progress, account summaries, and quick actions
+- Start from an Overview page that surfaces the current month, attention items, recurring progress, account summaries, and quick actions
 - Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
+- Use snapshots as reconciliation points, then see paid activity, planned activity, current balances, projected balances, and month-by-month rollforwards
 - Link recurring transactions and entries to accounts while still allowing a manual account label when needed
-- Show linked account context directly in month review views and account activity
+- Show linked account context directly in month review views, overview movement charts, drilldowns, and credit-card payoff progress
 
 ### Recurring Transactions and Automation
 
 - Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
+- Create credit card accounts and optionally schedule their monthly payments in the same setup flow
 - Save supported wizard-created entries directly as recurring transactions when you want a one-off action to become reusable later
 - Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
 
@@ -156,6 +161,7 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 - Plan each month in one place so income, bills, subscriptions, debt payments, and discretionary spending stay visible together
 - Start a new month quickly by cloning an existing one, which saves time when your budget structure stays mostly the same
 - Keep workflow guidance available inside the app through a dedicated Help area
+- Tune lightweight Overview guidance with a financial rhythm choice during signup or in Settings for steady income, variable income, shared household, or debt payoff workflows
 - Avoid accidental duplicate generation on older completed months with safeguards that hide actions you likely no longer need
 
 ### Entries and Review
@@ -168,7 +174,7 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 
 ### Backup and Privacy
 
-- Export and restore recurring transactions, months, and account data through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items
+- Export and restore recurring transactions, months, account data, and workflow preferences through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items and explicit money-leaves/money-goes-to account links
 - Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
 - Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
@@ -177,7 +183,7 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 For developers and contributors, the app is built with:
 
 - Ruby 4.0.5
-- Rails 8.1.2
+- Rails 8.1.3
 - PostgreSQL
 - Devise
 - Turbo + Stimulus
@@ -478,20 +484,20 @@ Each provider receives the same tag set:
 - `latest`
 - `sha-<commit>`
 
-For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.6.0` instead of `latest`.
+For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.6.1` instead of `latest`.
 
 To run the production Compose stack from a published image:
 
 1. Set the app image in `.env.production`.
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.6.0
+   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.6.1
    ```
 
    Or use the Docker Hub mirror:
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.6.0
+   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.6.1
    ```
 
 2. Pull the image.
@@ -659,7 +665,7 @@ The demo data also:
 
 - attaches all seeded records to the sample user
 - creates starter recurring transactions for pay, subscriptions, bills, plans, and cards
-- links those recurring transactions to seeded accounts where appropriate so account rollups and account activity views have representative data
+- links those recurring transactions to seeded accounts where appropriate so account rollups, movement drilldowns, and payoff progress views have representative data
 - creates manual accounts across checking, savings, brokerage, retirement, cash, asset, credit-card, loan, and other-liability categories with balance snapshots
 - creates generated month entries from those recurring transactions across the previous six months
 - adds realistic manual spending, savings, and investing entries on top of the generated recurring entries
@@ -691,17 +697,18 @@ Expected transaction columns:
 
 Current user-facing documentation lives on the hosted site instead of in this README:
 
-- https://financetracking.app/docs.html
+- https://financetracking.app/docs/
 
 That guide covers:
 
-- the overview dashboard and how to re-enter the workflow quickly
-- Accounts & Net Worth, including linked-account behavior
+- the Overview page and how to re-enter the workflow quickly
+- signup and Settings preferences that tune lightweight Overview guidance
+- Accounts & Net Worth, including snapshot-based balances, linked-account behavior, and credit-card payoff progress
 - creating or cloning months
 - adding entries manually or with the guided wizard
-- recurring transactions and the current account-linkage model
+- recurring transactions and the current source/destination account-linkage model
 - reviewing a month in Budget, Breakdown, Calendar, and Plan and Edit
-- backup and restore behavior, including account-aware exports and restores
+- backup and restore behavior, including account-aware exports, preferences, and restores
 - how the hosted docs and in-app Help page complement each other
 
 ## Open Source Readiness

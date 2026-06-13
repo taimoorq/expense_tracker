@@ -7,11 +7,13 @@ module Overview
 
     def call
       due_planned_count = entries.count { |entry| entry.planned? && entry.occurred_on.present? && entry.occurred_on <= today }
+      due_soon_count = entries.count { |entry| entry.planned? && entry.occurred_on.present? && entry.occurred_on > today && entry.occurred_on <= today + 7.days }
       missing_details_count = entries.count { |entry| entry.occurred_on.blank? || entry.category.blank? || entry.payee.blank? }
       paid_missing_actual_count = entries.count { |entry| entry.paid? && entry.actual_amount.blank? }
 
       {
         due_planned_count: due_planned_count,
+        due_soon_count: due_soon_count,
         missing_details_count: missing_details_count,
         paid_missing_actual_count: paid_missing_actual_count,
         review_attention_count: due_planned_count + missing_details_count + paid_missing_actual_count,

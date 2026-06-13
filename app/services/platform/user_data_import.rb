@@ -12,17 +12,19 @@ module Platform
       return failure("Choose at least one section to import.") if scopes.empty?
 
       data = payload.fetch(:data, {})
-      missing_scope = scopes.find { |scope| !data.key?(scope.to_sym) }
+      missing_scope = scopes.find { |scope| required_scope?(scope) && !data.key?(scope.to_sym) }
       return failure("The backup file does not include #{missing_scope.humanize.downcase}.") if missing_scope
 
       counts = {}
 
       ApplicationRecord.transaction do
+        clear_selected_data
+        counts[:accounts] = import_accounts(data[:accounts]) if scopes.include?("accounts")
         counts[:planning_templates] = import_planning_templates(data[:planning_templates]) if scopes.include?("planning_templates")
         counts[:budget_months] = import_budget_months(data[:budget_months]) if scopes.include?("budget_months")
-        counts[:accounts] = import_accounts(data[:accounts]) if scopes.include?("accounts")
-        Recurring::PlanningTemplateAccountLinking.relink_for(user, planning_template_data: data[:planning_templates]) if scopes.include?("planning_templates")
-        Budgeting::ExpenseEntryProvenanceRepair.relink_for(user) if scopes.include?("budget_months")
+        counts[:preferences] = import_preferences(data[:preferences]) if scopes.include?("preferences") && data.key?(:preferences)
+        Recurring::PlanningTemplateAccountLinking.relink_for(user, planning_template_data: data[:planning_templates]) if scopes.include?("planning_templates") || scopes.include?("accounts")
+        Budgeting::ExpenseEntryProvenanceRepair.relink_for(user) if scopes.include?("budget_months") || scopes.include?("accounts")
       end
 
       { success: true, counts: counts }
@@ -38,13 +40,43 @@ module Platform
       Array(requested_scopes).map(&:to_s) & SCOPES
     end
 
-    def import_planning_templates(data)
+    def required_scope?(scope)
+      scope != "preferences"
+    end
+
+    def clear_selected_data
+      clear_planning_templates if scopes.include?("planning_templates")
+      user.budget_months.destroy_all if scopes.include?("budget_months")
+      unlink_account_references if scopes.include?("accounts")
+      user.accounts.destroy_all if scopes.include?("accounts")
+    end
+
+    def clear_planning_templates
       user.pay_schedules.destroy_all
       user.subscriptions.destroy_all
       user.monthly_bills.destroy_all
       user.payment_plans.destroy_all
       user.credit_cards.destroy_all
+    end
 
+    def unlink_account_references
+      unlink_planning_template_account_references unless scopes.include?("planning_templates")
+      unlink_expense_entry_account_references unless scopes.include?("budget_months")
+    end
+
+    def unlink_planning_template_account_references
+      user.pay_schedules.update_all(linked_account_id: nil)
+      user.subscriptions.update_all(linked_account_id: nil)
+      user.monthly_bills.update_all(linked_account_id: nil)
+      user.payment_plans.update_all(linked_account_id: nil)
+      user.credit_cards.update_all(linked_account_id: nil, payment_account_id: nil)
+    end
+
+    def unlink_expense_entry_account_references
+      user.expense_entries.update_all(source_account_id: nil, destination_account_id: nil)
+    end
+
+    def import_planning_templates(data)
       {
         pay_schedules: Array(data[:pay_schedules]).count do |attributes|
           user.pay_schedules.create!(attributes.slice(:name, :cadence, :amount, :first_pay_on, :day_of_month_one, :day_of_month_two, :weekend_adjustment, :account, :active))
@@ -72,8 +104,6 @@ module Platform
     end
 
     def import_budget_months(data)
-      user.budget_months.destroy_all
-
       month_count = 0
       entry_count = 0
 
@@ -96,7 +126,8 @@ module Platform
               :notes,
               :source_file
             ).merge(
-              destination_account: user.accounts.find_by(name: entry_attributes[:destination_account])
+              source_account: account_named(entry_attributes[:source_account]),
+              destination_account: account_named(entry_attributes[:destination_account])
             )
           )
           Budgeting::ExpenseEntryProvenanceRepair.new(
@@ -112,8 +143,6 @@ module Platform
     end
 
     def import_accounts(data)
-      user.accounts.destroy_all
-
       account_count = 0
       snapshot_count = 0
 
@@ -128,6 +157,24 @@ module Platform
       end
 
       { accounts: account_count, snapshots: snapshot_count }
+    end
+
+    def import_preferences(data)
+      attributes = (data || {}).to_h.slice(:default_landing_page, :preferred_month_view, :financial_rhythm).compact
+      return { preferences: 0 } if attributes.empty?
+
+      user.update!(attributes)
+      { preferences: attributes.size }
+    end
+
+    def account_named(name)
+      return if name.blank?
+
+      account_by_name[name]
+    end
+
+    def account_by_name
+      @account_by_name ||= user.accounts.index_by(&:name)
     end
 
     def failure(message)

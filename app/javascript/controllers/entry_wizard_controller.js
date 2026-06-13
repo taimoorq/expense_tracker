@@ -17,6 +17,8 @@ export default class extends Controller {
     "status",
     "category",
     "payee",
+    "sourceAccount",
+    "destinationAccount",
     "account",
     "date",
     "planned",
@@ -122,6 +124,23 @@ export default class extends Controller {
     this.clearError()
   }
 
+  chooseSourceAccount(event) {
+    if (this.submitting) return
+    if (!this.hasSourceAccountTarget) return
+
+    this.sourceAccountTarget.value = event.currentTarget.dataset.accountIdValue || ""
+    this.syncAccountLabel()
+    this.updateSummary()
+    this.clearError()
+  }
+
+  syncAccountLabel() {
+    if (!this.hasAccountTarget || !this.hasSourceAccountTarget) return
+
+    const selectedName = this.selectedOptionLabel(this.sourceAccountTarget)
+    if (selectedName) this.accountTarget.value = selectedName
+  }
+
   syncTemplateOptions() {
     this.updateTemplateOptions()
     this.updateTemplateFields()
@@ -141,7 +160,15 @@ export default class extends Controller {
       const category = this.hasCategoryTarget ? this.categoryTarget.value.trim() : ""
       const payee = this.hasPayeeTarget ? this.payeeTarget.value.trim() : ""
       const account = this.hasAccountTarget ? this.accountTarget.value.trim() : ""
-      this.summaryWhoTarget.textContent = [category, payee, account && `via ${account}`].filter(Boolean).join(" • ") || "Not set"
+      const sourceAccount = this.hasSourceAccountTarget ? this.selectedOptionLabel(this.sourceAccountTarget) : ""
+      const destinationAccount = this.hasDestinationAccountTarget ? this.selectedOptionLabel(this.destinationAccountTarget) : ""
+      this.summaryWhoTarget.textContent = [
+        category,
+        payee,
+        sourceAccount && `Money leaves ${sourceAccount}`,
+        destinationAccount && `Money goes to ${destinationAccount}`,
+        !sourceAccount && account && `Label: ${account}`
+      ].filter(Boolean).join(" • ") || "Not set"
     }
 
     if (this.hasSummaryWhenTarget) {
@@ -422,6 +449,13 @@ export default class extends Controller {
   humanize(value) {
     if (!value) return ""
     return value.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+
+  selectedOptionLabel(select) {
+    if (!select || !select.value) return ""
+
+    const option = select.selectedOptions[0]
+    return option ? option.textContent.trim() : ""
   }
 
   formatCurrency(value) {

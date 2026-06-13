@@ -1,4 +1,50 @@
-<div class="space-y-[5px]">
+<% recurring_groups = [
+  {
+    label: "Pay schedules",
+    anchor: "pay-schedules",
+    icon: "cash",
+    icon_classes: "text-emerald-600",
+    records: @pay_schedules,
+    description: "Income that should appear in future months."
+  },
+  {
+    label: "Subscriptions",
+    anchor: "subscriptions",
+    icon: "repeat",
+    icon_classes: "text-indigo-600",
+    records: @subscriptions,
+    description: "Recurring services and memberships."
+  },
+  {
+    label: "Monthly bills",
+    anchor: "monthly-bills",
+    icon: "cash",
+    icon_classes: "text-sky-600",
+    records: @monthly_bills,
+    description: "Fixed or variable bills by month."
+  },
+  {
+    label: "Payment plans",
+    anchor: "payment-plans",
+    icon: "chart-bar",
+    icon_classes: "text-rose-600",
+    records: @payment_plans,
+    description: "Balances paid down over time."
+  },
+  {
+    label: "Credit cards",
+    anchor: "credit-cards",
+    icon: "shield-lock",
+    icon_classes: "text-violet-600",
+    records: @credit_cards,
+    description: "Estimated card payments from leftover cash."
+  }
+] %>
+<% recurring_total = recurring_groups.sum { |group| group[:records].size } %>
+<% recurring_active_total = recurring_groups.sum { |group| group[:records].count(&:active?) } %>
+<% recurring_linked_total = recurring_groups.sum { |group| group[:records].count { |record| record.try(:linked_account_id).present? || record.try(:payment_account_id).present? } } %>
+
+<div class="space-y-6">
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center gap-3">
       <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
@@ -8,30 +54,76 @@
     </div>
   <% end %>
 
+  <section class="ta-card ta-surface-shell">
+    <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+      <div class="max-w-3xl">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Recurring setup</p>
+        <h3 class="mt-2 text-xl font-semibold text-slate-900">Build the repeatable part of each month once</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Save paychecks, subscriptions, bills, payment plans, and card payment estimates here. When you create or edit a month, Plan and Edit can pull these into the month as planned entries.</p>
+      </div>
+
+      <div class="grid gap-3 text-sm sm:grid-cols-3 xl:min-w-[34rem]">
+        <div class="rounded-2xl bg-white/80 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Saved</p>
+          <p class="mt-1 text-2xl font-semibold text-slate-900"><%= recurring_total %></p>
+        </div>
+        <div class="rounded-2xl bg-white/80 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Active</p>
+          <p class="mt-1 text-2xl font-semibold text-slate-900"><%= recurring_active_total %></p>
+        </div>
+        <div class="rounded-2xl bg-white/80 px-4 py-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Linked</p>
+          <p class="mt-1 text-2xl font-semibold <%= recurring_linked_total.positive? ? 'text-emerald-700' : 'text-slate-900' %>"><%= recurring_linked_total %></p>
+        </div>
+      </div>
+    </div>
+
+    <% if recurring_total.zero? %>
+      <div class="mt-5 rounded-2xl border border-dashed border-indigo-200 bg-white/80 px-4 py-3 text-sm leading-6 text-slate-600">
+        Start small: add one paycheck schedule and one recurring bill or subscription. You can add the rest after the first month shows what is actually useful.
+      </div>
+    <% end %>
+
+    <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <% recurring_groups.each do |group| %>
+        <a href="#<%= group[:anchor] %>" class="rounded-2xl border border-slate-200 bg-white/85 p-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50">
+          <div class="flex items-center justify-between gap-3">
+            <span class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <%= tabler_icon(group[:icon], classes: "h-4 w-4 #{group[:icon_classes]}") %>
+              <span><%= group[:label] %></span>
+            </span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600"><%= group[:records].size %></span>
+          </div>
+          <p class="mt-2 text-xs leading-5 text-slate-500"><%= group[:description] %></p>
+        </a>
+      <% end %>
+    </div>
+  </section>
+
   <%= render "pay_schedules/section",
              budget_month: nil,
              return_to: planning_templates_path(anchor: "pay-schedules"),
              pay_schedules: @pay_schedules,
              pay_schedule: @pay_schedule %>
-  <br>
+
   <%= render "subscriptions/section",
              budget_month: nil,
              return_to: planning_templates_path(anchor: "subscriptions"),
              subscriptions: @subscriptions,
              subscription: @subscription %>
-  <br>
+
   <%= render "monthly_bills/section",
              budget_month: nil,
              return_to: planning_templates_path(anchor: "monthly-bills"),
              monthly_bills: @monthly_bills,
              monthly_bill: @monthly_bill %>
-  <br>
+
   <%= render "payment_plans/section",
              budget_month: nil,
              return_to: planning_templates_path(anchor: "payment-plans"),
              payment_plans: @payment_plans,
              payment_plan: @payment_plan %>
-  <br>
+
   <%= render "credit_cards/section",
              budget_month: nil,
              return_to: planning_templates_path(anchor: "credit-cards"),

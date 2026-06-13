@@ -91,11 +91,11 @@
           <%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", placeholder: "Due day" %>
           <%= form.number_field :priority, min: 1, required: true, class: "fb-input", placeholder: "Priority" %>
           <div>
-            <%= form.label :linked_account_id, "Card Account", class: "fb-label" %>
+            <%= form.label :linked_account_id, "Card being paid down", class: "fb-label" %>
             <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select card account (optional)" }, class: "fb-select" %>
           </div>
           <div>
-            <%= form.label :payment_account_id, "Paid From Account", class: "fb-label" %>
+            <%= form.label :payment_account_id, "Money leaves account", class: "fb-label" %>
             <%= form.collection_select :payment_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select payment account (optional)" }, class: "fb-select" %>
           </div>
           <%= form.text_field :account, class: "fb-input", placeholder: "Manual account label (optional)" %>

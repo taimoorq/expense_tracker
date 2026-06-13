@@ -42,6 +42,7 @@ Rails.application.routes.draw do
 
   get "budget_months/year/:year", to: "budget_months#index", as: :budget_months_year, constraints: { year: /\d{4}/ }
   get "budget_months/new/from/:source_month_id", to: "budget_months#new", as: :new_budget_month_from
+  get "budget_months/:budget_month_id/account_movement", to: "account_movements#show", as: :budget_month_account_movement
   get "budget_months/:id/:tab", to: "budget_months#show", as: :budget_month_tab, constraints: { tab: /timeline|breakdown|calendar|entries/ }
   resources :budget_months, only: [ :index, :show, :new, :create ] do
     post :generate_paychecks, on: :member

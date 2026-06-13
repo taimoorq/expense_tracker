@@ -1,6 +1,6 @@
 module Platform
   class UserDataExport
-    SCOPES = %w[planning_templates budget_months accounts].freeze
+    SCOPES = %w[planning_templates budget_months accounts preferences].freeze
     FORMAT_NAME = "expense_tracker_backup".freeze
     FORMAT_VERSION = 1
 
@@ -47,7 +47,16 @@ module Platform
         data[:planning_templates] = serialize_planning_templates if scopes.include?("planning_templates")
         data[:budget_months] = serialize_budget_months if scopes.include?("budget_months")
         data[:accounts] = serialize_accounts if scopes.include?("accounts")
+        data[:preferences] = serialize_preferences if scopes.include?("preferences")
       end
+    end
+
+    def serialize_preferences
+      {
+        default_landing_page: user.default_landing_page,
+        preferred_month_view: user.preferred_month_view,
+        financial_rhythm: user.financial_rhythm
+      }
     end
 
     def serialize_planning_templates

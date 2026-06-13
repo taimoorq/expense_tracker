@@ -8,7 +8,8 @@ module Platform
       {
         "planning_templates" => planning_template_scope,
         "budget_months" => budget_month_scope,
-        "accounts" => account_scope
+        "accounts" => account_scope,
+        "preferences" => preference_scope
       }
     end
 
@@ -46,6 +47,15 @@ module Platform
         description: "Accounts, balances, notes, and recorded snapshots.",
         count: user.accounts.count,
         detail: "#{user.account_snapshots.count} snapshots across #{user.accounts.count} accounts"
+      }
+    end
+
+    def preference_scope
+      {
+        title: "Preferences",
+        description: "Workflow settings such as landing page, month view, and financial rhythm.",
+        count: 3,
+        detail: "Overview landing, preferred month view, and financial rhythm"
       }
     end
 

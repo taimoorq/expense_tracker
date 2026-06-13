@@ -6,12 +6,24 @@
           <%= tabler_icon("cloud-arrow-up", classes: "h-6 w-6 text-indigo-600") %>
           <span>Backup & Restore</span>
         </h2>
-        <p class="mt-1 text-sm text-slate-600">Export or restore recurring transactions, months, and accounts with a versioned JSON backup, including manual entries linked to recurring items.</p>
+        <p class="mt-1 text-sm text-slate-600">Export or restore recurring transactions, months, accounts, and workflow preferences with a versioned JSON backup, including manual entries linked to recurring items and account movement links.</p>
       </div>
     </div>
   <% end %>
 
-  <section class="grid gap-4 lg:grid-cols-3">
+  <section class="rounded-2xl border border-sky-100 bg-sky-50/80 px-5 py-4 text-sm leading-6 text-sky-900">
+    <div class="flex items-start gap-3">
+      <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-sky-700">
+        <%= tabler_icon("shield-check", classes: "h-5 w-5") %>
+      </span>
+      <div>
+        <p class="font-semibold">Backups are designed to be inspectable and reversible before they change data.</p>
+        <p class="mt-1">Exports are versioned JSON, optional passwords encrypt the payload, and imports must be previewed before restore. Account source and destination links are preserved when the backup includes them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
     <% @scope_cards.each do |scope_key, scope| %>
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-start justify-between gap-3">
@@ -77,7 +89,7 @@
         </span>
         <div>
           <h3 class="text-lg font-semibold text-slate-900">Import Backup</h3>
-          <p class="mt-1 text-sm text-slate-600">Import restores only the sections you select and replaces the existing data in those sections, which avoids duplicate months, recurring items, or accounts.</p>
+          <p class="mt-1 text-sm text-slate-600">Import restores only the sections you select and replaces existing data in those sections. Preferences are updated when the backup includes them.</p>
         </div>
       </div>
 
@@ -131,7 +143,7 @@
         </div>
 
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Import is restore-oriented: preview first, then confirm. Selected sections are fully replaced from the backup file inside one transaction, so partial restores are rolled back if validation fails.
+          Import is restore-oriented: preview first, then confirm. Selected data sections are replaced inside one transaction, preferences are updated in place, and partial restores are rolled back if validation fails.
         </div>
 
         <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
@@ -185,7 +197,7 @@
         </div>
       <% end %>
 
-      <div class="mt-5 grid gap-4 md:grid-cols-3">
+      <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <% if @import_preview[:planning_templates] %>
           <article class="rounded-2xl border border-indigo-100 bg-white p-4">
             <p class="text-sm font-semibold text-slate-900">Recurring Transactions</p>
@@ -208,6 +220,15 @@
             <% account_total = @import_preview[:accounts][:accounts] %>
             <% snapshot_total = @import_preview[:accounts][:snapshots] %>
             <p class="mt-1 text-sm text-slate-600"><%= account_total %> <%= account_total == 1 ? "account" : "accounts" %> and <%= snapshot_total %> <%= snapshot_total == 1 ? "snapshot" : "snapshots" %> will be restored.</p>
+          </article>
+        <% end %>
+
+        <% if @import_preview[:preferences] %>
+          <article class="rounded-2xl border border-indigo-100 bg-white p-4">
+            <p class="text-sm font-semibold text-slate-900">Preferences</p>
+            <% preference_total = @import_preview[:preferences][:preferences] %>
+            <p class="mt-1 text-sm text-slate-600"><%= preference_total %> workflow <%= preference_total == 1 ? "preference" : "preferences" %> will be updated.</p>
+            <p class="mt-3 text-xs text-slate-500"><%= @import_preview[:preferences][:keys].map { |key| key.to_s.humanize.downcase }.join(" • ") %></p>
           </article>
         <% end %>
       </div>

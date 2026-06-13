@@ -11,9 +11,9 @@
       </h3>
       <button type="button" class="ta-icon-btn" aria-label="Credit Cards Help" title="Credit Cards Help" data-action="click->help-modal#open" data-help-title="Credit Cards Help" data-help-body="Used by 'Estimate Cards' in month view.
 
-Card Account: optional account this recurring item represents.
-Paid From Account: optional account used for the estimated payment entry.
-Manual Account Label: optional fallback text if no paid-from account is linked.
+Card being paid down: optional credit card account this recurring item pays.
+Money leaves account: optional account used for the estimated payment entry.
+Manual Account Label: optional fallback text if no money-leaves account is linked.
 Minimum: minimum amount to prioritize first.
 Due Day: day of month the estimated payment should be scheduled.
 Priority: lower number gets allocated first.
@@ -76,15 +76,15 @@ Priority: lower number gets allocated first.
         <p class="mt-1 text-xs text-slate-500">Estimated payments are dated on this day each month.</p>
       </div>
       <div>
-        <%= form.label :linked_account_id, "Card Account", class: "fb-label" %>
-        <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select account (optional)" }, class: "fb-select" %>
+        <%= form.label :linked_account_id, "Card being paid down", class: "fb-label" %>
+        <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select card account (optional)" }, class: "fb-select" %>
       </div>
       <div>
-        <%= form.label :payment_account_id, "Paid From Account", class: "fb-label" %>
+        <%= form.label :payment_account_id, "Money leaves account", class: "fb-label" %>
         <%= form.collection_select :payment_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select payment account (optional)" }, class: "fb-select" %>
       </div>
       <div>
-        <%= form.label :account, "Manual Account Label", class: "fb-label" %>
+        <%= form.label :account, "Manual account label", class: "fb-label" %>
         <%= form.text_field :account, placeholder: "Checking, cash, etc. (optional)", class: "fb-input" %>
       </div>
       <div class="flex items-end gap-2">

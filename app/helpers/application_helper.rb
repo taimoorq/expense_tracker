@@ -43,7 +43,7 @@ module ApplicationHelper
       {
         badge: "New account",
         title: "Create your budget workspace",
-        description: "Start with a clean, private dashboard built for monthly planning and recurring expenses.",
+        description: "Start with a clean, private Overview page built for monthly planning and recurring expenses.",
         gradient: "from-emerald-700 via-teal-700 to-cyan-600",
         panel_tint: "from-emerald-500/20 via-teal-500/10 to-cyan-400/20",
         glow: "bg-emerald-400/30",
@@ -201,6 +201,19 @@ module ApplicationHelper
 
   def preferred_month_view_label(value)
     preferred_month_view_options.to_h.invert.fetch(value, value.to_s.humanize)
+  end
+
+  def financial_rhythm_options
+    [
+      [ "Mostly fixed paycheck", "steady_income" ],
+      [ "Variable income", "variable_income" ],
+      [ "Shared household", "shared_household" ],
+      [ "Debt payoff focus", "debt_payoff" ]
+    ]
+  end
+
+  def financial_rhythm_label(value)
+    financial_rhythm_options.to_h.invert.fetch(value, value.to_s.humanize)
   end
 
   def active_account_names(user = current_user)
@@ -364,7 +377,7 @@ module ApplicationHelper
   end
 
   def hosted_documentation_url
-    "https://financetracking.app/docs.html"
+    "https://financetracking.app/docs/"
   end
 
   def chart_library_tags

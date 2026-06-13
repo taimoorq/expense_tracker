@@ -5,6 +5,7 @@ RSpec.describe "User registration", type: :system do
     visit new_user_registration_path
 
     fill_in "Email", with: "newuser@example.com"
+    select "Debt payoff focus", from: "Financial rhythm"
     fill_in "Password", with: "password123!"
     fill_in "Password confirmation", with: "password123!"
     click_button "Sign up"
@@ -12,5 +13,6 @@ RSpec.describe "User registration", type: :system do
     expect(page).to have_content("Welcome! You have signed up successfully")
     expect(page).to have_content("newuser@example.com")
     expect(page).to have_content("Overview")
+    expect(User.find_by!(email: "newuser@example.com").financial_rhythm).to eq("debt_payoff")
   end
 end

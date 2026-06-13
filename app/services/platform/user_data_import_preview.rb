@@ -11,7 +11,7 @@ module Platform
       return failure("Choose at least one section to import.") if scopes.empty?
 
       data = payload.fetch(:data, {})
-      missing_scope = scopes.find { |scope| !data.key?(scope.to_sym) }
+      missing_scope = scopes.find { |scope| required_scope?(scope) && !data.key?(scope.to_sym) }
       return failure("The backup file does not include #{missing_scope.humanize.downcase}.") if missing_scope
 
       {
@@ -24,7 +24,8 @@ module Platform
           selected_scopes: scopes,
           planning_templates: planning_template_summary(data[:planning_templates]),
           budget_months: budget_month_summary(data[:budget_months]),
-          accounts: account_summary(data[:accounts])
+          accounts: account_summary(data[:accounts]),
+          preferences: preference_summary(data[:preferences])
         }
       }
     end
@@ -32,6 +33,10 @@ module Platform
     private
 
     attr_reader :payload, :scopes
+
+    def required_scope?(scope)
+      scope != "preferences"
+    end
 
     def planning_template_summary(data)
       return nil unless scopes.include?("planning_templates")
@@ -67,6 +72,16 @@ module Platform
       {
         accounts: accounts.size,
         snapshots: accounts.sum { |account| Array(account[:account_snapshots]).size }
+      }
+    end
+
+    def preference_summary(data)
+      return nil unless scopes.include?("preferences") && data.present?
+
+      keys = data.to_h.slice(:default_landing_page, :preferred_month_view, :financial_rhythm).keys
+      {
+        preferences: keys.size,
+        keys: keys
       }
     end
 

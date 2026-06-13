@@ -19,6 +19,16 @@ RSpec.describe Overview::ReviewSummary do
     create(:expense_entry,
       budget_month: month,
       user: user,
+      occurred_on: Date.current + 3.days,
+      section: :fixed,
+      category: "Internet",
+      payee: "Fiber Company",
+      planned_amount: 70,
+      account: nil,
+      status: :planned)
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
       occurred_on: nil,
       section: :manual,
       category: nil,
@@ -41,6 +51,7 @@ RSpec.describe Overview::ReviewSummary do
     summary = described_class.new(entries: month.expense_entries.to_a, today: Date.current).call
 
     expect(summary[:due_planned_count]).to eq(1)
+    expect(summary[:due_soon_count]).to eq(1)
     expect(summary[:missing_details_count]).to eq(1)
     expect(summary[:paid_missing_actual_count]).to eq(1)
     expect(summary[:review_attention_count]).to eq(3)

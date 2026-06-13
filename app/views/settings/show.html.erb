@@ -30,11 +30,11 @@
         <%= tabler_icon("home", classes: "h-5 w-5 text-indigo-600") %>
         <span>Default navigation preferences</span>
       </h3>
-      <p class="mt-2 text-sm leading-6 text-slate-600">Choose where to land after signing in and which month view should open first when you browse a budget month.</p>
+      <p class="mt-2 text-sm leading-6 text-slate-600">Choose where to land after signing in, which month view should open first, and what kind of financial rhythm the Overview guidance should assume.</p>
     </div>
 
     <%= form_with model: current_user, url: settings_path, method: :patch, class: "mt-5 space-y-5" do |form| %>
-      <div class="grid gap-5 lg:grid-cols-2">
+      <div class="grid gap-5 lg:grid-cols-3">
         <div>
           <%= form.label :default_landing_page, "Default landing page", class: "fb-label" %>
           <%= form.select :default_landing_page, options_for_select(landing_page_options, current_user.default_landing_page), {}, class: "fb-select" %>
@@ -45,6 +45,12 @@
           <%= form.label :preferred_month_view, "Preferred month view", class: "fb-label" %>
           <%= form.select :preferred_month_view, options_for_select(preferred_month_view_options, current_user.preferred_month_view), {}, class: "fb-select" %>
           <p class="mt-2 text-sm text-slate-500">This becomes the default tab on month pages unless a specific tab is requested.</p>
+        </div>
+
+        <div>
+          <%= form.label :financial_rhythm, "Financial rhythm", class: "fb-label" %>
+          <%= form.select :financial_rhythm, options_for_select(financial_rhythm_options, current_user.financial_rhythm), {}, class: "fb-select" %>
+          <p class="mt-2 text-sm text-slate-500">Used for lightweight Overview guidance. It does not change your entries, accounts, or calculations.</p>
         </div>
       </div>
 

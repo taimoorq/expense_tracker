@@ -13,6 +13,11 @@ module Platform
         exported_at: Time.current.iso8601,
         scopes: Platform::UserDataExport::SCOPES,
         data: {
+          preferences: {
+            default_landing_page: "overview",
+            preferred_month_view: "entries",
+            financial_rhythm: "debt_payoff"
+          },
           planning_templates: {
             pay_schedules: [
               {
@@ -121,6 +126,7 @@ module Platform
                   actual_amount: nil,
                   account: "Example Checking",
                   source_account: "Example Checking",
+                  destination_account: "Example Visa",
                   status: "planned",
                   need_or_want: "Need",
                   notes: "Manual extra payment linked to the recurring card",

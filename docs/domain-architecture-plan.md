@@ -16,6 +16,7 @@ we want to move toward, and a phased plan for getting there without a rewrite.
   - belongs to `User`
   - belongs to `BudgetMonth`
   - optionally belongs to `source_account`
+  - optionally belongs to `destination_account`
   - optionally belongs to `source_template` polymorphically
 
 ### Recurring templates
@@ -50,7 +51,8 @@ they generate or inform `ExpenseEntry` rows in a month.
   them as one conceptual family through registries and parallel services.
 - Month generation logic was duplicated across multiple services.
 - `ExpenseEntry` stores account provenance in more than one form:
-  `account` string, `source_account_id`, `source_file`, and `source_template`.
+  `account` string, `source_account_id`, `destination_account_id`,
+  `source_file`, and `source_template`.
 - Some support-domain objects live alongside Active Record models even though
   they are not part of the persistence layer.
 
@@ -81,7 +83,7 @@ The target is clearer domain boundaries, not a risky schema rewrite.
 
 - `Account`
 - `AccountSnapshot`
-- account balance and relinking services
+- account balance, movement, payoff progress, and relinking services
 
 ### Platform
 
@@ -138,7 +140,7 @@ Completed in this phase:
 
 ### Phase 3: Normalize provenance and account links
 
-Status: in progress
+Status: completed for the 0.6.1 account-ledger sweep
 
 - Treat `source_template` as the primary origin link when a recurring template
   exists.
@@ -156,6 +158,11 @@ Completed in this phase:
     generated-from-template checks
 - entry provenance repair now lives in a shared service used by imports and
   entry relinking flows
+- credit card payments can store both the account money leaves from and the
+  card account money goes to through explicit account foreign keys
+- account movement drilldowns use source and destination links as the canonical
+  money-flow model while keeping legacy account labels as import/display
+  fallbacks
 
 ### Phase 4: Namespace by domain
 
@@ -180,6 +187,12 @@ Completed in this phase:
   - `Platform::UserDataImportPreview`
   - `Platform::UserDataSampleBackup`
   - `Platform::UserDataBackupCodec`
+- account ledger behavior now has dedicated `Accounts` services:
+  - `Accounts::BalanceHistory`
+  - `Accounts::CreditCardProgress`
+  - `Accounts::DetailPage`
+  - `Accounts::MonthlyMovementSummary`
+  - `Accounts::MovementDrilldown`
 - budgeting analytics services now have canonical `Budgeting` homes:
   - `Budgeting::MonthCashflowSankey`
   - `Budgeting::YearCashflowSankey`

@@ -16,7 +16,8 @@ RSpec.describe "Settings", type: :request do
     patch settings_path, params: {
       user: {
         default_landing_page: "months",
-        preferred_month_view: "calendar"
+        preferred_month_view: "calendar",
+        financial_rhythm: "debt_payoff"
       }
     }
 
@@ -26,6 +27,7 @@ RSpec.describe "Settings", type: :request do
 
     expect(user.default_landing_page).to eq("months")
     expect(user.preferred_month_view).to eq("calendar")
+    expect(user.financial_rhythm).to eq("debt_payoff")
   end
 
   it "uses the preferred month view when no tab is requested" do

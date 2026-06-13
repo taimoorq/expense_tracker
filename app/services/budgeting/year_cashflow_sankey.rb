@@ -176,7 +176,7 @@ module Budgeting
       items = []
       items << "This view combines all saved months in #{year}, so it is best for year-to-date flow patterns instead of exact day-to-day timing."
       items << "Categories are grouped from each entry's current category label, so free-form naming can split similar spending into separate nodes."
-      items << "Transfers and destination-account flows are still simplified because entries only carry one linked account today."
+      items << "Transfers are summarized through entry labels here; use account movement charts and drilldowns to audit Money leaves and Money goes to account links."
       items
     end
   end

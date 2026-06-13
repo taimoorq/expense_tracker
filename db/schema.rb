@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_12_123000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_13_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -229,6 +229,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_123000) do
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.integer "failed_attempts", default: 0, null: false
+    t.string "financial_rhythm", default: "steady_income", null: false
     t.string "last_seen_release_version"
     t.datetime "locked_at"
     t.string "preferred_month_view", default: "timeline", null: false

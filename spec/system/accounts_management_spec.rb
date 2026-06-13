@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Accounts management", type: :system do
+  include ActiveSupport::Testing::TimeHelpers
+
   it "lets a signed in user create an account with an initial balance snapshot" do
     user = create(:user)
 
@@ -57,7 +59,7 @@ RSpec.describe "Accounts management", type: :system do
     fill_in "Institution", with: "Chase"
     select "Credit card", from: "Account type"
     check "Schedule monthly payment"
-    select "Checking", from: "Paid from account"
+    select "Checking", from: "Money leaves account"
     fill_in "Monthly payment amount", with: "85.00"
     fill_in "Due day", with: "18"
     fill_in "Priority", with: "2"
@@ -151,9 +153,52 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("Account activity and connections")
     expect(page).to have_button("Activity")
     expect(page).to have_button("Connected Templates")
+    expect(page).to have_content("How balance is calculated")
+    expect(page).to have_content("Apply paid linked entries")
     expect(page).to have_content("Acme Payroll")
     expect(page).to have_content("Net impact")
     expect(page).to have_link("Edit Account", href: edit_account_path(account))
     expect(page).to have_no_link("Back to Accounts")
+  end
+
+  it "shows credit card payoff progress on credit card account pages" do
+    travel_to Time.zone.local(2026, 6, 15, 12, 0, 0) do
+      user = create(:user)
+      checking = create(:account, user: user, name: "Checking", kind: :checking)
+      card = create(:account, user: user, name: "Rewards Visa", kind: :credit_card)
+      month = create(:budget_month, user: user, month_on: Date.new(2026, 6, 1), label: "June 2026")
+      create(:account_snapshot, account: card, recorded_on: Date.new(2026, 6, 1), balance: -1_000)
+
+      create(:expense_entry,
+        budget_month: month,
+        user: user,
+        source_account: card,
+        occurred_on: Date.new(2026, 6, 4),
+        section: :variable,
+        status: :paid,
+        actual_amount: 125)
+
+      create(:expense_entry,
+        budget_month: month,
+        user: user,
+        source_account: checking,
+        destination_account: card,
+        occurred_on: Date.new(2026, 6, 10),
+        section: :debt,
+        status: :paid,
+        actual_amount: 325)
+
+      sign_in_as(user)
+      visit account_path(card)
+
+      expect(page).to have_content("Credit card payoff progress")
+      expect(page).to have_content("Paid down this month")
+      expect(page).to have_content("$325.00")
+      expect(page).to have_content("Added this month")
+      expect(page).to have_content("$125.00")
+      expect(page).to have_content("Progress toward payoff")
+      expect(page).to have_content("20%")
+      expect(page).to have_content("$800.00 remains")
+    end
   end
 end

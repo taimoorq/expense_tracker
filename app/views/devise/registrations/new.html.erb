@@ -2,7 +2,7 @@
 
 <div class="space-y-6">
   <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm leading-6 text-emerald-900">
-    Create a private workspace for your monthly budgets, recurring transactions, and imports. You can start with fresh data or use the seeded demo patterns as a guide.
+    Create a private workspace for monthly budgets, recurring transactions, account snapshots, and imports. Start with one account and one recurring item; the rest can grow as your month becomes clearer.
   </div>
 
   <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "space-y-5" }) do |form| %>
@@ -14,6 +14,12 @@
         <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"><%= tabler_icon("mail", classes: "h-4 w-4") %></span>
         <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "ta-auth-input pl-11", placeholder: "you@example.com" %>
       </div>
+    </div>
+
+    <div>
+      <%= form.label :financial_rhythm, "Financial rhythm", class: "fb-label" %>
+      <%= form.select :financial_rhythm, options_for_select(financial_rhythm_options, resource.financial_rhythm || "steady_income"), {}, class: "ta-auth-input" %>
+      <p class="mt-2 text-sm leading-6 text-slate-500">This only shapes the first Overview guidance. You can change it later in Settings.</p>
     </div>
 
     <div class="grid gap-5 sm:grid-cols-2">

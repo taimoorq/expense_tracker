@@ -23,6 +23,8 @@ module Overview
           title: "Add accounts",
           description: "Create checking, savings, card, or debt accounts first, and optionally add opening balance snapshots.",
           metric: "#{pluralized_word(accounts_data.count, "account")} set up",
+          action_label: step1_done? ? "Review Accounts" : "Add First Account",
+          action_path: step1_done? ? routes.accounts_path : routes.new_account_path,
           state: step1_done? ? :done : :next
         ),
         build_step(
@@ -30,6 +32,8 @@ module Overview
           title: "Set up recurring transactions",
           description: "Save the incoming and outgoing items you expect, then link them to accounts where possible.",
           metric: "#{linked_template_total_value} of #{template_total_value} recurring transactions linked",
+          action_label: step2_done? ? "Review Recurring" : "Set Up Recurring",
+          action_path: routes.planning_templates_path,
           state: if step2_done?
                    :done
                  elsif step2_started?
@@ -43,6 +47,8 @@ module Overview
           title: "Create a month and import recurring",
           description: "Create the month, then use Plan and Edit to pull the saved recurring transactions into it.",
           metric: current_month_data ? "#{pluralized_word(current_month_entries_data.count, "entry")} in #{current_month_data.label}" : "No month created yet",
+          action_label: step3_started? ? "Open Plan and Edit" : "Create Month",
+          action_path: step3_started? ? routes.budget_month_tab_path(current_month_data, "entries") : routes.new_budget_month_path,
           state: if step3_done?
                    :done
                  elsif step3_started?
@@ -56,6 +62,8 @@ module Overview
           title: "Adjust as the month unfolds",
           description: "Add one-off items, update amounts, and mark entries paid as you go. Some recurring items may also auto-complete when due.",
           metric: current_month_data ? "#{review_attention_count_value} items still need review" : "Review starts after month setup",
+          action_label: current_month_data ? "Review Month" : "Create Month",
+          action_path: current_month_data ? routes.budget_month_tab_path(current_month_data, "entries") : routes.new_budget_month_path,
           state: if step4_done?
                    :done
                  elsif step4_started?
@@ -65,6 +73,95 @@ module Overview
                  end
         )
       ]
+    end
+
+    def check_in_badge
+      current_month_data ? "Weekly check-in" : "First useful step"
+    end
+
+    def check_in_title
+      if current_month_data
+        "Keep #{current_month_data.label} easy to trust"
+      else
+        "Start small, then build from there"
+      end
+    end
+
+    def check_in_description
+      if current_month_data && review_attention_count_value.zero?
+        "No urgent review items are waiting. Use this card as a quick scan before you move on."
+      elsif current_month_data
+        "A short pass through these items keeps the month current without turning budgeting into a long session."
+      else
+        "You do not need to model everything today. Add one account, one balance, and one recurring item to make the app useful."
+      end
+    end
+
+    def check_in_status
+      if current_month_data.nil?
+        status_payload(label: "Set up", classes: "bg-slate-100 text-slate-700")
+      elsif review_attention_count_value.zero?
+        status_payload(label: "On track", classes: "bg-emerald-100 text-emerald-800")
+      else
+        status_payload(label: "Review", classes: "bg-amber-100 text-amber-800")
+      end
+    end
+
+    def check_in_win
+      return nil unless current_month_data && review_attention_count_value.zero?
+
+      {
+        title: "Small win",
+        description: "Your attention queue is clear for now. A quick glance at upcoming plans is enough before you move on."
+      }
+    end
+
+    def check_in_items
+      return setup_check_in_items unless current_month_data
+
+      [
+        check_in_item(
+          label: "Due now",
+          value: due_planned_count_value,
+          description: "Planned entries dated today or earlier.",
+          tone: due_planned_count_value.positive? ? :attention : :clear,
+          path: routes.budget_month_tab_path(current_month_data, "entries")
+        ),
+        check_in_item(
+          label: "Due next 7 days",
+          value: due_soon_count_value,
+          description: "Upcoming planned entries to keep on your radar.",
+          tone: due_soon_count_value.positive? ? :info : :neutral,
+          path: routes.budget_month_tab_path(current_month_data, "calendar")
+        ),
+        check_in_item(
+          label: "Missing actuals",
+          value: paid_missing_actual_count_value,
+          description: "Paid entries that still need the real amount.",
+          tone: paid_missing_actual_count_value.positive? ? :attention : :clear,
+          path: routes.budget_month_tab_path(current_month_data, "entries")
+        ),
+        check_in_item(
+          label: "Linked activity",
+          value: linked_entries_count_value,
+          description: "Entries connected to accounts for balances and movement.",
+          tone: linked_entries_count_value.positive? ? :clear : :neutral,
+          path: routes.budget_month_tab_path(current_month_data, "timeline")
+        )
+      ]
+    end
+
+    def financial_rhythm_label
+      helpers.financial_rhythm_label(financial_rhythm_value)
+    end
+
+    def financial_rhythm_guidance
+      {
+        "steady_income" => "Keep recurring paychecks and fixed bills current, then use weekly check-ins to catch exceptions.",
+        "variable_income" => "Review income and leftover cash more often so the month can adjust before spending decisions pile up.",
+        "shared_household" => "Use clear account links and notes so shared bills, transfers, and one-off entries stay understandable later.",
+        "debt_payoff" => "Watch credit card additions, paid down totals, and payoff progress before deciding how much extra to send."
+      }.fetch(financial_rhythm_value)
     end
 
     def continue_title
@@ -117,7 +214,7 @@ module Overview
         {
           label: "Needs review",
           value: current_month_review_total,
-          value_classes: "text-slate-900"
+          value_classes: current_month_review_total.zero? ? "text-emerald-700" : "text-slate-900"
         }
       ]
     end
@@ -185,6 +282,8 @@ module Overview
 
     def attention_queue_description
       if current_month_data
+        return "#{current_month_data.label} has no urgent cleanup items right now." if review_attention_count_value.zero?
+
         "Counts are based on #{current_month_data.label}."
       else
         "Create a month to start surfacing review items here."
@@ -193,6 +292,13 @@ module Overview
 
     def attention_queue_total
       current_month_data ? review_attention_count_value : 0
+    end
+
+    def attention_queue_badge
+      return status_payload(label: "0", classes: "bg-slate-100 text-slate-600") unless current_month_data
+      return status_payload(label: "Clear", classes: "bg-emerald-100 text-emerald-800") if review_attention_count_value.zero?
+
+      status_payload(label: attention_queue_total, classes: "bg-amber-100 text-amber-800")
     end
 
     def attention_items
@@ -278,11 +384,11 @@ module Overview
     end
 
     def account_flow_summary_title
-      "Charged vs paid to"
+      "Linked account activity"
     end
 
     def account_flow_summary_description
-      return "Select saved months to compare where money is being charged and where payments are landing." if account_flow_months_included_value.zero?
+      return "Select saved months to compare where entries happen and where payments or deposits land." if account_flow_months_included_value.zero?
 
       "#{pluralized_word(account_flow_months_included_value, "month")} included: #{account_flow_month_range_label_value}."
     end
@@ -308,7 +414,7 @@ module Overview
     end
 
     def account_flow_chart_title
-      "Charged vs Paid To by Account"
+      "Linked Activity by Account"
     end
 
     def account_flow_top_account_summary
@@ -398,12 +504,20 @@ module Overview
       data.fetch(:paid_missing_actual_count)
     end
 
+    def due_soon_count_value
+      data.fetch(:due_soon_count, 0)
+    end
+
     def net_worth_total_value
       data.fetch(:net_worth_total)
     end
 
     def latest_snapshot_data
       data[:latest_snapshot]
+    end
+
+    def financial_rhythm_value
+      data.fetch(:financial_rhythm, "steady_income")
     end
 
     def linked_entries_count_value
@@ -465,16 +579,80 @@ module Overview
       current_month_entries_data.any?
     end
 
-    def build_step(number:, title:, description:, metric:, state:)
+    def build_step(number:, title:, description:, metric:, action_label:, action_path:, state:)
       {
         number: number,
         title: title,
         description: description,
         metric: metric,
+        action_label: action_label,
+        action_path: action_path,
         card_classes: step_card_classes(state),
         badge_label: step_badge_label(state),
         badge_classes: step_badge_classes(state)
       }
+    end
+
+    def setup_check_in_items
+      [
+        check_in_item(
+          label: "Accounts",
+          value: accounts_data.count,
+          description: "Add one real account so future entries have context.",
+          tone: accounts_data.any? ? :clear : :neutral,
+          path: accounts_data.any? ? routes.accounts_path : routes.new_account_path
+        ),
+        check_in_item(
+          label: "Snapshots",
+          value: latest_snapshot_data.present? ? 1 : 0,
+          description: "A first snapshot gives balances a trusted starting point.",
+          tone: latest_snapshot_data.present? ? :clear : :neutral,
+          path: accounts_data.any? ? routes.accounts_path : routes.new_account_path
+        ),
+        check_in_item(
+          label: "Recurring",
+          value: template_total_value,
+          description: "Save one repeated paycheck, bill, subscription, or payment.",
+          tone: template_total_value.positive? ? :clear : :neutral,
+          path: routes.planning_templates_path
+        ),
+        check_in_item(
+          label: "First month",
+          value: current_month_data ? 1 : 0,
+          description: "Create a month when the first few building blocks are ready.",
+          tone: current_month_data ? :clear : :neutral,
+          path: current_month_data ? routes.budget_month_path(current_month_data) : routes.new_budget_month_path
+        )
+      ]
+    end
+
+    def check_in_item(label:, value:, description:, tone:, path:)
+      {
+        label: label,
+        value: value,
+        description: description,
+        path: path,
+        card_classes: check_in_card_classes(tone),
+        value_classes: check_in_value_classes(tone)
+      }
+    end
+
+    def check_in_card_classes(tone)
+      {
+        attention: "border-amber-200 bg-amber-50/80",
+        clear: "border-emerald-200 bg-emerald-50/70",
+        info: "border-sky-200 bg-sky-50/70",
+        neutral: "border-slate-200 bg-white/85"
+      }.fetch(tone)
+    end
+
+    def check_in_value_classes(tone)
+      {
+        attention: "text-amber-800",
+        clear: "text-emerald-700",
+        info: "text-sky-700",
+        neutral: "text-slate-900"
+      }.fetch(tone)
     end
 
     def status_payload(label:, classes:)

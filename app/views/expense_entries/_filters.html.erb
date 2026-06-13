@@ -5,7 +5,7 @@
     <div class="flex min-w-0 flex-1 items-center justify-between gap-2">
       <div class="min-w-0">
         <p class="text-sm font-semibold text-slate-900">Filters</p>
-        <p class="mt-1 hidden text-sm text-slate-600 md:block">Filter entries by category, paid-from account, date, payee, reason, or status. Applied to grouped, list, and calendar views.</p>
+        <p class="mt-1 hidden text-sm text-slate-600 md:block">Filter entries by category, the Money leaves account, date, payee, reason, or status. Applied to grouped, list, and calendar views.</p>
       </div>
       <span class="shrink-0 text-slate-400 transition group-open:rotate-180"><%= tabler_icon("chevron-down", classes: "h-5 w-5") %></span>
     </div>
@@ -32,7 +32,7 @@
         </select>
       </div>
       <div>
-        <label class="fb-label" for="<%= id_prefix %>_account_filter">Paid From</label>
+        <label class="fb-label" for="<%= id_prefix %>_account_filter">Money leaves</label>
         <select id="<%= id_prefix %>_account_filter" class="fb-select" data-expense-entries-filter-target="account" data-action="change->expense-entries-filter#filter">
           <option value="">All accounts</option>
           <% account_pills.each do |account_option| %>

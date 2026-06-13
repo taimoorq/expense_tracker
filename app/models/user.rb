@@ -19,6 +19,13 @@ class User < ApplicationRecord
     entries: "entries"
   }, default: :timeline, prefix: true
 
+  enum :financial_rhythm, {
+    steady_income: "steady_income",
+    variable_income: "variable_income",
+    shared_household: "shared_household",
+    debt_payoff: "debt_payoff"
+  }, default: :steady_income, prefix: true
+
   has_many :accounts, dependent: :destroy
   has_many :budget_months, dependent: :destroy
   has_many :account_snapshots, through: :accounts
@@ -36,6 +43,7 @@ class User < ApplicationRecord
 
   validates :default_landing_page, inclusion: { in: default_landing_pages.keys }
   validates :preferred_month_view, inclusion: { in: preferred_month_views.keys }
+  validates :financial_rhythm, inclusion: { in: financial_rhythms.keys }
   validates :last_seen_release_version, length: { maximum: 50 }, allow_blank: true
 
   def active_for_authentication?

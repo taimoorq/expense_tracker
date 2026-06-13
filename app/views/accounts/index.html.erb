@@ -36,6 +36,18 @@
       </article>
     </div>
 
+    <section class="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4 text-sm leading-6 text-emerald-900">
+      <div class="flex items-start gap-3">
+        <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-700">
+          <%= tabler_icon("shield-lock", classes: "h-5 w-5") %>
+        </span>
+        <div>
+          <p class="font-semibold">Manual account tracking stays under your control.</p>
+          <p class="mt-1">The app does not need bank credentials. Balances start from snapshots you record, then linked paid and planned entries explain how each account moves from there.</p>
+        </div>
+      </div>
+    </section>
+
     <div class="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_300px]">
       <section class="ta-card min-w-0">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -229,7 +241,7 @@
 
       <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
         <p>Create one account per real-world account or balance bucket.</p>
-        <p>Record a new snapshot whenever you want the latest value reflected in your totals.</p>
+        <p>Record a new snapshot whenever you want a fresh trusted starting point for current and projected balances.</p>
         <p>Use negative balances for debts like loans and credit cards.</p>
       </div>
     </section>

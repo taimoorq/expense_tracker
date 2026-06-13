@@ -5,7 +5,7 @@
   <section class="ta-card ta-surface-shell">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Account Activity</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Account Movement</p>
         <h3 class="mt-2 text-xl font-semibold text-slate-900"><%= overview.account_flow_summary_title %></h3>
         <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600"><%= overview.account_flow_summary_description %></p>
       </div>
@@ -72,7 +72,7 @@
       </div>
     <% else %>
       <div class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-6 text-sm text-slate-600">
-        Create months and link account details on entries to compare charged and paid-to activity here.
+        Create months and link account details on entries to compare activity accounts, payments, and deposits here.
       </div>
     <% end %>
 
@@ -126,6 +126,21 @@
                 scales: { x: { stacked: false }, y: { beginAtZero: true } }
               }.to_json %>"></canvas>
           </div>
+          <details class="mt-4 rounded-xl border border-slate-200 bg-white">
+            <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review card movement entries</summary>
+            <div class="border-t border-slate-100 px-4 py-3">
+              <div class="space-y-2">
+                <% account_movement_payload[:credit_card][:drilldowns].each do |item| %>
+                  <%= link_to budget_month_account_movement_path(item.fetch(:budget_month_id), account_id: item.fetch(:account_id), movement_type: item.fetch(:movement_type)),
+                              data: { turbo_frame: "_top" },
+                              class: "flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm transition hover:border-indigo-200 hover:bg-indigo-50" do %>
+                    <span class="font-medium text-slate-900"><%= item.fetch(:month_label) %> · <%= item.fetch(:account_name) %> · <%= item.fetch(:movement_label) %></span>
+                    <span class="text-slate-600"><%= pluralize(item.fetch(:entry_count), "entry") %> · <%= number_to_currency(item.fetch(:amount)) %></span>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </details>
         <% else %>
           <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-white/80 px-4 py-6 text-sm text-slate-600">
             Link credit card charges and card payments to accounts to see monthly card movement.
@@ -171,9 +186,24 @@
                 scales: { x: { stacked: false }, y: { beginAtZero: true } }
               }.to_json %>"></canvas>
           </div>
+          <details class="mt-4 rounded-xl border border-slate-200 bg-white">
+            <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review bank movement entries</summary>
+            <div class="border-t border-slate-100 px-4 py-3">
+              <div class="space-y-2">
+                <% account_movement_payload[:bank_accounts][:drilldowns].each do |item| %>
+                  <%= link_to budget_month_account_movement_path(item.fetch(:budget_month_id), account_id: item.fetch(:account_id), movement_type: item.fetch(:movement_type)),
+                              data: { turbo_frame: "_top" },
+                              class: "flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm transition hover:border-indigo-200 hover:bg-indigo-50" do %>
+                    <span class="font-medium text-slate-900"><%= item.fetch(:month_label) %> · <%= item.fetch(:account_name) %> · <%= item.fetch(:movement_label) %></span>
+                    <span class="text-slate-600"><%= pluralize(item.fetch(:entry_count), "entry") %> · <%= number_to_currency(item.fetch(:amount)) %></span>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </details>
         <% else %>
           <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-white/80 px-4 py-6 text-sm text-slate-600">
-            Mark income and outflows paid from linked bank accounts to see monthly bank movement.
+            Set a Money leaves / activity account on income and outflows to see monthly bank movement.
           </div>
         <% end %>
       </section>

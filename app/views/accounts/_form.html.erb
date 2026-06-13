@@ -77,8 +77,9 @@
       <%= fields_for "account[credit_card_payment_schedule]", credit_card_payment_schedule do |schedule_fields| %>
         <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <%= schedule_fields.label :payment_account_id, "Paid from account", class: "fb-label" %>
+            <%= schedule_fields.label :payment_account_id, "Money leaves account", class: "fb-label" %>
             <%= schedule_fields.collection_select :payment_account_id, payment_accounts, :id, :name, { include_blank: "Select checking, savings, or cash" }, class: "fb-select", disabled: !schedule_enabled, data: { account_form_target: "scheduleInput" } %>
+            <p class="mt-1 text-xs text-slate-500">Choose the account that will make the monthly card payment.</p>
           </div>
 
           <div>
@@ -114,7 +115,7 @@
     <section class="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
       <div class="mb-4">
         <h3 class="text-base font-semibold text-slate-900">Optional first balance snapshot</h3>
-        <p class="mt-1 text-sm text-slate-500">Leave the balance blank if you only want to create the account for now.</p>
+        <p class="mt-1 text-sm text-slate-500">This is a reconciliation point you control. Leave the balance blank if you only want to create the account for now.</p>
       </div>
 
       <% if initial_snapshot.errors.any? %>

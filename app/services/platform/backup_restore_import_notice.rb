@@ -19,6 +19,13 @@ module Platform
         parts << "#{account_counts[:accounts]} account#{'s' unless account_counts[:accounts] == 1} and #{account_counts[:snapshots]} snapshot#{'s' unless account_counts[:snapshots] == 1}"
       end
 
+      if counts[:preferences]
+        preference_count = counts[:preferences][:preferences]
+        parts << "#{preference_count} workflow preference#{'s' unless preference_count == 1}"
+      end
+
+      return "Import complete: no selected data was changed." if parts.empty?
+
       "Import complete: restored #{parts.join(', ')}."
     end
   end

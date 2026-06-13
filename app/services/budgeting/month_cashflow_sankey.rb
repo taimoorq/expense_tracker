@@ -170,8 +170,8 @@ module Budgeting
     def limitations
       items = []
       items << "Categories are grouped from each entry's current category label, so free-form naming can split similar spending into separate nodes."
-      items << "This view does not yet model transfers from one account into another because entries only carry one linked account today."
-      items << "Savings and debt payoff show as outflow buckets or leftover, not as true destination-account flows, until destination accounts are captured on entries."
+      items << "This graph summarizes transfers through entry labels instead of drawing account-to-account paths."
+      items << "Use account movement charts and drilldowns when you need to audit Money leaves and Money goes to account links."
       items
     end
   end

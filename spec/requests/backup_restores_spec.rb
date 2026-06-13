@@ -44,6 +44,51 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "notes")).to eq("Main rewards card")
   end
 
+  it "exports and imports workflow preferences when the backup includes them" do
+    user.update!(
+      default_landing_page: "accounts",
+      preferred_month_view: "calendar",
+      financial_rhythm: "debt_payoff"
+    )
+
+    post export_backup_restore_path, params: { export_scopes: [ "preferences" ] }
+
+    payload = JSON.parse(response.body)
+    expect(payload.fetch("scopes")).to eq([ "preferences" ])
+    expect(payload.dig("data", "preferences")).to include(
+      "default_landing_page" => "accounts",
+      "preferred_month_view" => "calendar",
+      "financial_rhythm" => "debt_payoff"
+    )
+
+    user.update!(
+      default_landing_page: "overview",
+      preferred_month_view: "timeline",
+      financial_rhythm: "steady_income"
+    )
+
+    file = Tempfile.new([ "expense-tracker-preferences-backup", ".json" ])
+    file.write(JSON.pretty_generate(payload))
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "preferences-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "preferences" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("3 workflow preferences")
+    user.reload
+    expect(user.default_landing_page).to eq("accounts")
+    expect(user.preferred_month_view).to eq("calendar")
+    expect(user.financial_rhythm).to eq("debt_payoff")
+  ensure
+    file&.close
+    file&.unlink
+  end
+
   it "exports budget_months and expense_entries without removed fields" do
     month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
     create(:expense_entry, budget_month: month, user: user, payee: "Rent", category: "Housing", section: :fixed, status: :planned, planned_amount: 1200)
@@ -66,6 +111,7 @@ RSpec.describe "Backup & restore", type: :request do
 
   it "exports expense entry source linkage metadata when present" do
     checking = create(:account, user: user, name: "Checking")
+    visa_account = create(:account, user: user, name: "Visa Account", kind: :credit_card)
     payroll = create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
     month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
     create(
@@ -80,6 +126,7 @@ RSpec.describe "Backup & restore", type: :request do
       source_file: "pay_schedule",
       source_template: payroll,
       source_account: checking,
+      destination_account: visa_account,
       account: "Checking"
     )
 
@@ -88,6 +135,7 @@ RSpec.describe "Backup & restore", type: :request do
     payload = JSON.parse(response.body)
     entry = payload.dig("data", "budget_months", 0, "expense_entries", 0)
     expect(entry["source_account"]).to eq("Checking")
+    expect(entry["destination_account"]).to eq("Visa Account")
     expect(entry["source_template_type"]).to eq("PaySchedule")
     expect(entry["source_template_name"]).to eq("Acme Payroll")
   end
@@ -152,12 +200,47 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.fetch("version")).to eq(1)
     expect(payload.fetch("sample_backup")).to be(true)
     expect(payload.fetch("sample_notice")).to include("Reference-only sample backup")
-    expect(payload.fetch("scopes")).to contain_exactly("planning_templates", "budget_months", "accounts")
+    expect(payload.fetch("scopes")).to contain_exactly("planning_templates", "budget_months", "accounts", "preferences")
+    expect(payload.dig("data", "preferences", "financial_rhythm")).to eq("debt_payoff")
     expect(payload.dig("data", "planning_templates", "pay_schedules")).not_to be_empty
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "payment_account")).to eq("Example Checking")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "linked_account")).to eq("Example Visa")
     expect(payload.dig("data", "budget_months", 0, "expense_entries")).not_to be_empty
+    expect(payload.dig("data", "budget_months", 0, "expense_entries", 2, "destination_account")).to eq("Example Visa")
     expect(payload.dig("data", "accounts", 0, "account_snapshots")).not_to be_empty
+  end
+
+  it "previews older backups when preferences are selected but absent" do
+    file = Tempfile.new([ "expense-tracker-old-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "planning_templates" ],
+        data: {
+          planning_templates: {
+            pay_schedules: [],
+            subscriptions: [],
+            monthly_bills: [],
+            payment_plans: [],
+            credit_cards: []
+          }
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "old-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "planning_templates", "preferences" ] }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Import Preview")
+    expect(response.body).to include("0 recurring transactions")
+    expect(response.body).not_to include("workflow preferences will be updated")
+  ensure
+    file.close
+    file.unlink
   end
 
   it "imports budget_months from backups with legacy planned_income/actual_income (ignored)" do
@@ -620,6 +703,145 @@ RSpec.describe "Backup & restore", type: :request do
     card = user.credit_cards.find_by!(name: "Imported Visa")
     expect(card.linked_account&.name).to eq("Imported Visa")
     expect(card.payment_account&.name).to eq("Imported Checking")
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "restores explicit source and destination account links when accounts and months are imported together" do
+    create(:account, user: user, name: "Old Checking", kind: :checking)
+    create(:budget_month, user: user, month_on: Date.new(2026, 2, 1), label: "Old February 2026")
+
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "budget_months", "accounts" ],
+        data: {
+          budget_months: [
+            {
+              label: "June 2026",
+              month_on: "2026-06-01",
+              leftover: nil,
+              notes: nil,
+              expense_entries: [
+                {
+                  occurred_on: "2026-06-15",
+                  section: "debt",
+                  category: "Credit Card",
+                  payee: "Rewards Visa",
+                  planned_amount: "300.00",
+                  actual_amount: "300.00",
+                  account: "Imported Checking",
+                  source_account: "Imported Checking",
+                  destination_account: "Imported Visa",
+                  status: "paid",
+                  need_or_want: "Need",
+                  notes: "Card payment",
+                  source_file: "manual"
+                }
+              ]
+            }
+          ],
+          accounts: [
+            {
+              name: "Imported Checking",
+              institution_name: "Bank",
+              kind: "checking",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: true,
+              notes: nil,
+              account_snapshots: []
+            },
+            {
+              name: "Imported Visa",
+              institution_name: "Card Bank",
+              kind: "credit_card",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: false,
+              notes: nil,
+              account_snapshots: []
+            }
+          ]
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "entry-account-links-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "budget_months", "accounts" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    imported_entry = user.expense_entries.find_by!(payee: "Rewards Visa")
+    expect(imported_entry.source_account).to eq(user.accounts.find_by!(name: "Imported Checking"))
+    expect(imported_entry.destination_account).to eq(user.accounts.find_by!(name: "Imported Visa"))
+    expect(imported_entry.account).to eq("Imported Checking")
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "relinks existing templates and entries after an accounts-only restore" do
+    old_checking = create(:account, user: user, name: "Checking", kind: :checking, institution_name: "Old Bank")
+    create(:pay_schedule, user: user, name: "Payroll", account: "Checking", linked_account: old_checking)
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 6, 1), label: "June 2026")
+    create(
+      :expense_entry,
+      budget_month: month,
+      user: user,
+      source_account: old_checking,
+      account: "Checking",
+      payee: "Payroll",
+      section: :income,
+      status: :paid,
+      actual_amount: 1_000
+    )
+
+    file = Tempfile.new([ "expense-tracker-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "accounts" ],
+        data: {
+          accounts: [
+            {
+              name: "Checking",
+              institution_name: "New Bank",
+              kind: "checking",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: true,
+              notes: nil,
+              account_snapshots: []
+            }
+          ]
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "accounts-only-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "accounts" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    restored_checking = user.accounts.find_by!(name: "Checking")
+    expect(restored_checking.institution_name).to eq("New Bank")
+    expect(user.pay_schedules.find_by!(name: "Payroll").linked_account).to eq(restored_checking)
+    expect(user.expense_entries.find_by!(payee: "Payroll").source_account).to eq(restored_checking)
   ensure
     file.close
     file.unlink

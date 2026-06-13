@@ -13,6 +13,22 @@ RSpec.describe "Authentication", type: :request do
     expect(response.body).not_to include("data-controller=\"turnstile\"")
   end
 
+  it "saves the financial rhythm selected during sign up" do
+    expect do
+      post user_registration_path, params: {
+        user: {
+          email: "new-user@example.com",
+          password: "password123!",
+          password_confirmation: "password123!",
+          financial_rhythm: "variable_income"
+        }
+      }
+    end.to change(User, :count).by(1)
+
+    expect(response).to redirect_to(root_path)
+    expect(User.order(:created_at).last.financial_rhythm).to eq("variable_income")
+  end
+
   context "when turnstile is enabled" do
     before do
       allow(TurnstileVerifier).to receive(:enabled?).and_return(true)

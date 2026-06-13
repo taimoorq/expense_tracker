@@ -13,7 +13,12 @@ module Overview
       data.merge!(account_summary)
       data.merge!(account_flow_summary)
       data.merge!(cashflow_summary)
-      data[:onboarding_visible] = data[:current_month].nil? || data[:accounts].empty? || data[:template_total].zero? || data[:linked_template_total].zero?
+      data[:financial_rhythm] = user.financial_rhythm
+      data[:onboarding_visible] = data[:current_month].nil? ||
+        data[:current_month_entries].empty? ||
+        data[:accounts].empty? ||
+        data[:template_total].zero? ||
+        data[:linked_template_total].zero?
       data[:next_step] = NextStepPolicy.new(context: data).call
       data
     end

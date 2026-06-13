@@ -13,14 +13,16 @@ module Accounts
           added_total: total_for(card_added),
           paid_total: total_for(card_paid),
           planned_payment_total: total_for(card_planned_payments),
-          account_count: credit_card_account_labels.count
+          account_count: credit_card_account_labels.count,
+          drilldowns: drilldowns_for(%w[credit_card_added credit_card_paid credit_card_planned])
         },
         bank_accounts: {
           datasets: bank_account_datasets,
           money_in_total: total_for(bank_money_in),
           paid_out_total: total_for(bank_paid_out),
           left_to_pay_total: total_for(bank_left_to_pay),
-          account_count: bank_account_labels.count
+          account_count: bank_account_labels.count,
+          drilldowns: drilldowns_for(%w[bank_money_in bank_paid_out bank_left_to_pay])
         }
       }
     end
@@ -86,11 +88,20 @@ module Accounts
     def classify_credit_card_entry(entry, amount, month_index)
       if entry.paid? && entry.source_account&.credit_card? && !entry.income?
         card_added[entry.source_account.name][month_index] += amount
+        add_drilldown("credit_card_added", entry.source_account, month_index, amount)
       end
 
       if entry.destination_account&.credit_card?
-        bucket = entry.paid? ? card_paid : entry.planned? ? card_planned_payments : nil
-        bucket[entry.destination_account.name][month_index] += amount if bucket
+        bucket, movement_type = if entry.paid?
+          [ card_paid, "credit_card_paid" ]
+        elsif entry.planned?
+          [ card_planned_payments, "credit_card_planned" ]
+        end
+
+        if bucket
+          bucket[entry.destination_account.name][month_index] += amount
+          add_drilldown(movement_type, entry.destination_account, month_index, amount)
+        end
       end
     end
 
@@ -99,10 +110,13 @@ module Accounts
 
       if entry.paid? && entry.income?
         bank_money_in[entry.source_account.name][month_index] += amount
+        add_drilldown("bank_money_in", entry.source_account, month_index, amount)
       elsif entry.paid?
         bank_paid_out[entry.source_account.name][month_index] += amount
+        add_drilldown("bank_paid_out", entry.source_account, month_index, amount)
       elsif entry.planned? && !entry.income?
         bank_left_to_pay[entry.source_account.name][month_index] += amount
+        add_drilldown("bank_left_to_pay", entry.source_account, month_index, amount)
       end
     end
 
@@ -160,6 +174,49 @@ module Accounts
     def total_for(bucket)
       classify_entries
       bucket.values.flatten.sum.round(2).to_f
+    end
+
+    def drilldown_bucket
+      @drilldown_bucket ||= Hash.new { |hash, key| hash[key] = { amount: 0.to_d, entry_count: 0 } }
+    end
+
+    def add_drilldown(movement_type, account, month_index, amount)
+      month = budget_months.fetch(month_index)
+      key = [ movement_type, account.id, month.id ]
+      drilldown_bucket[key][:movement_type] = movement_type
+      drilldown_bucket[key][:account_id] = account.id
+      drilldown_bucket[key][:account_name] = account.name
+      drilldown_bucket[key][:budget_month_id] = month.id
+      drilldown_bucket[key][:month_label] = month.label
+      drilldown_bucket[key][:month_on] = month.month_on
+      drilldown_bucket[key][:amount] += amount
+      drilldown_bucket[key][:entry_count] += 1
+    end
+
+    def drilldowns_for(movement_types)
+      classify_entries
+
+      drilldown_bucket.values
+                      .select { |item| movement_types.include?(item.fetch(:movement_type)) }
+                      .sort_by { |item| [ item.fetch(:month_on), item.fetch(:account_name), item.fetch(:movement_type) ] }
+                      .reverse
+                      .map do |item|
+        item.merge(
+          movement_label: movement_label(item.fetch(:movement_type)),
+          amount: item.fetch(:amount).round(2).to_f
+        )
+      end
+    end
+
+    def movement_label(movement_type)
+      {
+        "credit_card_added" => "Added",
+        "credit_card_paid" => "Paid off",
+        "credit_card_planned" => "Planned payment",
+        "bank_money_in" => "Money in",
+        "bank_paid_out" => "Paid out",
+        "bank_left_to_pay" => "Left to pay"
+      }.fetch(movement_type)
     end
   end
 end

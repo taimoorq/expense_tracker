@@ -1,0 +1,93 @@
+<% content_for :title, @movement.fetch(:title) %>
+
+<% content_for :page_header do %>
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @budget_month.label %></p>
+    <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
+      <%= tabler_icon("chart-bar", classes: "h-6 w-6 text-indigo-600") %>
+      <span><%= @movement.fetch(:title) %></span>
+    </h2>
+    <p class="mt-1 text-sm text-slate-600"><%= @account.name %></p>
+  </div>
+<% end %>
+
+<div class="space-y-6">
+  <section class="grid gap-4 md:grid-cols-3">
+    <article class="ta-card">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total</p>
+      <p class="mt-2 text-3xl font-semibold text-slate-900"><%= number_to_currency(@movement.fetch(:total)) %></p>
+    </article>
+    <article class="ta-card">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Entries</p>
+      <p class="mt-2 text-3xl font-semibold text-slate-900"><%= @movement.fetch(:entry_count) %></p>
+    </article>
+    <article class="ta-card">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Account</p>
+      <p class="mt-2 text-3xl font-semibold text-slate-900"><%= @account.name %></p>
+    </article>
+  </section>
+
+  <section class="ta-card">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h3 class="ta-section-title">Entries Behind This Number</h3>
+        <p class="mt-1 text-sm text-slate-500">These are the month entries included in the overview movement total.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to budget_month_tab_path(@budget_month, "entries"), class: "fb-btn-secondary ta-action-btn" do %>
+          <%= tabler_icon("list", classes: "ta-action-icon text-slate-600") %>
+          <span>Open Month List</span>
+        <% end %>
+        <%= link_to account_path(@account), class: "fb-btn-secondary ta-action-btn" do %>
+          <%= tabler_icon("building-library", classes: "ta-action-icon text-slate-600") %>
+          <span>Open Account</span>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @movement.fetch(:entries).any? %>
+      <div class="overflow-x-auto">
+        <table class="ta-table">
+          <thead class="ta-table-head">
+            <tr>
+              <th class="ta-th">Date</th>
+              <th class="ta-th">Payee</th>
+              <th class="ta-th">Category</th>
+              <th class="ta-th">Status</th>
+              <th class="ta-th">Money leaves / activity</th>
+              <th class="ta-th">Money goes to</th>
+              <th class="ta-th text-right">Amount</th>
+              <th class="ta-th text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @movement.fetch(:entries).each do |entry| %>
+              <tr>
+                <td class="ta-td"><%= entry.occurred_on ? l(entry.occurred_on, format: :long) : "-" %></td>
+                <td class="ta-td"><%= entry.payee.presence || "-" %></td>
+                <td class="ta-td"><%= entry.category.presence || entry.section.humanize %></td>
+                <td class="ta-td"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
+                <td class="ta-td"><%= entry.source_account&.name || entry.account.presence || "-" %></td>
+                <td class="ta-td"><%= entry.destination_account&.name || "-" %></td>
+                <td class="ta-td text-right"><%= number_to_currency(entry.effective_amount) %></td>
+                <td class="ta-td text-right">
+                  <%= link_to edit_budget_month_expense_entry_path(@budget_month, entry),
+                              data: { turbo_frame: "entry_editor_modal" },
+                              class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                    <%= tabler_icon("pencil", classes: "ta-action-icon text-indigo-600") %>
+                    <span>Edit</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+        <p class="text-lg font-semibold text-slate-900">No entries found</p>
+        <p class="mt-2 text-sm text-slate-500">This movement total may have changed since the overview was loaded.</p>
+      </div>
+    <% end %>
+  </section>
+</div>

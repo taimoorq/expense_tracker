@@ -12,6 +12,6 @@ class SettingsController < ApplicationController
   private
 
   def settings_params
-    params.require(:user).permit(:default_landing_page, :preferred_month_view)
+    params.require(:user).permit(:default_landing_page, :preferred_month_view, :financial_rhythm)
   end
 end

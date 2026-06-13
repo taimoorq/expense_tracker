@@ -18,7 +18,7 @@
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">New User Onboarding</p>
           <h3 class="mt-2 text-xl font-semibold text-slate-900">Set up the month in the right order</h3>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Start with accounts, then save the recurring transactions you expect, create a month and import them into it, and finally make manual updates as the real month unfolds.</p>
+          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Start small: add one account, record one trusted balance, save one recurring item, then create the first month. You can fill in the rest as the workflow becomes useful.</p>
         </div>
         <span class="rounded-full px-3 py-1 text-xs font-semibold <%= overview.onboarding_status[:classes] %>">
           <%= overview.onboarding_status[:label] %>
@@ -35,6 +35,9 @@
             <h4 class="mt-2 text-sm font-semibold text-slate-900"><%= step[:title] %></h4>
             <p class="mt-1 text-xs leading-5 text-slate-600"><%= step[:description] %></p>
             <p class="mt-3 text-xs font-semibold text-slate-700"><%= step[:metric] %></p>
+            <%= link_to step[:action_path], class: "mt-3 inline-flex text-xs font-semibold text-indigo-700 hover:text-indigo-600" do %>
+              <span><%= step[:action_label] %></span>
+            <% end %>
           </article>
         <% end %>
       </div>
@@ -189,6 +192,42 @@
     </article>
   </section>
 
+  <section class="ta-card ta-surface-plan-soft">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= overview.check_in_badge %></p>
+        <h3 class="mt-2 text-xl font-semibold text-slate-900"><%= overview.check_in_title %></h3>
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600"><%= overview.check_in_description %></p>
+      </div>
+      <span class="rounded-full px-3 py-1 text-xs font-semibold <%= overview.check_in_status[:classes] %>">
+        <%= overview.check_in_status[:label] %>
+      </span>
+    </div>
+
+    <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <% overview.check_in_items.each do |item| %>
+        <%= link_to item[:path], class: "block rounded-2xl border px-4 py-3 transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white #{item[:card_classes]}" do %>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= item[:label] %></p>
+          <p class="mt-2 text-2xl font-semibold <%= item[:value_classes] %>"><%= item[:value] %></p>
+          <p class="mt-1 text-xs leading-5 text-slate-600"><%= item[:description] %></p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if overview.check_in_win %>
+      <div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm leading-6 text-emerald-900">
+        <p class="font-semibold"><%= overview.check_in_win[:title] %></p>
+        <p class="mt-1"><%= overview.check_in_win[:description] %></p>
+      </div>
+    <% end %>
+
+    <div class="mt-4 rounded-2xl border border-white bg-white/80 px-4 py-3 text-sm leading-6 text-slate-600">
+      <span class="font-semibold text-slate-900"><%= overview.financial_rhythm_label %>:</span>
+      <%= overview.financial_rhythm_guidance %>
+      <%= link_to "Adjust in Settings", settings_path, class: "ml-1 font-semibold text-indigo-700 hover:text-indigo-600" %>
+    </div>
+  </section>
+
   <section class="ta-card ta-surface-shell">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
@@ -262,8 +301,15 @@
           </h3>
           <p class="mt-2 text-sm leading-6 text-slate-600"><%= overview.attention_queue_description %></p>
         </div>
-        <div class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"><%= overview.attention_queue_total %></div>
+        <div class="rounded-full px-3 py-1 text-xs font-semibold <%= overview.attention_queue_badge[:classes] %>"><%= overview.attention_queue_badge[:label] %></div>
       </div>
+
+      <% if overview.current_month && overview.attention_queue_total.zero? %>
+        <div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm leading-6 text-emerald-900">
+          <p class="font-semibold">Nothing needs cleanup right now.</p>
+          <p class="mt-1">Keep marking items paid and updating actuals as the month changes.</p>
+        </div>
+      <% end %>
 
       <div class="mt-4 space-y-3">
         <% overview.attention_items.each do |item| %>
@@ -319,7 +365,7 @@
             <%= tabler_icon("cash", classes: "h-5 w-5 text-emerald-600") %>
             <span>Manual balance tracking</span>
           </h3>
-          <p class="mt-2 text-sm leading-6 text-slate-600">Keep balances visible without bank sync, then use the account activity row above to compare where linked month activity is landing.</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600">Keep balances visible without bank sync, then use the account movement row above to review where linked month activity is landing.</p>
         </div>
         <div class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800"><%= overview.accounts_badge_label %></div>
       </div>

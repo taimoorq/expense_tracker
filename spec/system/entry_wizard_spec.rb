@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe "Entry wizard", type: :system do
   it "renders the wizard modal and saves an entry from its form" do
     user = create(:user)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
     budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
 
     sign_in_as(user)
@@ -16,14 +17,42 @@ RSpec.describe "Entry wizard", type: :system do
     select "Need", from: "Need / Want (optional)", visible: :all
     fill_in "Category", with: "Paycheck", visible: :all
     fill_in "Payee", with: "Consulting Client", visible: :all
-    fill_in "Account", with: "Checking", visible: :all
+    select "Checking", from: "Money leaves / activity account", visible: :all
     fill_in "Notes", with: "Wizard flow", visible: :all
     fill_in "Date", with: "2026-03-18", visible: :all
     fill_in "Planned amount", with: "1400", visible: :all
     click_button "Save Entry", visible: :all
 
     expect(page).to have_current_path(budget_month_tab_path(budget_month, "entries"), ignore_query: false)
-    expect(budget_month.expense_entries.where(payee: "Consulting Client").exists?).to be(true)
+    entry = budget_month.expense_entries.find_by!(payee: "Consulting Client")
+    expect(entry.source_account).to eq(checking)
+    expect(entry.account).to eq("Checking")
+  end
+
+  it "saves transfer-style account links from the wizard" do
+    user = create(:user)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    card = create(:account, user: user, name: "Rewards Visa", kind: :credit_card)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+
+    sign_in_as(user)
+
+    visit new_wizard_budget_month_expense_entries_path(budget_month)
+
+    select "Debt or card payment", from: "Section", visible: :all
+    select "Planned", from: "Status", visible: :all
+    select "Need", from: "Need / Want (optional)", visible: :all
+    fill_in "Category", with: "Credit card payment", visible: :all
+    fill_in "Payee", with: "Rewards Visa", visible: :all
+    select "Checking", from: "Money leaves / activity account", visible: :all
+    select "Rewards Visa", from: "Money goes to", visible: :all
+    fill_in "Date", with: "2026-03-18", visible: :all
+    fill_in "Planned amount", with: "250", visible: :all
+    click_button "Save Entry", visible: :all
+
+    entry = budget_month.expense_entries.find_by!(payee: "Rewards Visa")
+    expect(entry.source_account).to eq(checking)
+    expect(entry.destination_account).to eq(card)
   end
 
   it "can save a subscription template alongside the wizard entry" do
@@ -39,7 +68,7 @@ RSpec.describe "Entry wizard", type: :system do
     select "Need", from: "Need / Want (optional)", visible: :all
     fill_in "Category", with: "Streaming", visible: :all
     fill_in "Payee", with: "Netflix", visible: :all
-    fill_in "Account", with: "Checking", visible: :all
+    fill_in "Manual account label", with: "Checking", visible: :all
     fill_in "Notes", with: "Save as template", visible: :all
     fill_in "Date", with: "2026-03-08", visible: :all
     fill_in "Planned amount", with: "19.99", visible: :all
@@ -85,7 +114,7 @@ RSpec.describe "Entry wizard", type: :system do
 
       fill_in "Category", with: "Paycheck", visible: :all
       fill_in "Payee", with: "Consulting Client", visible: :all
-      fill_in "Account", with: "Checking", visible: :all
+      fill_in "Manual account label", with: "Checking", visible: :all
       click_button "Next"
 
       fill_in "Date", with: "2026-03-18", visible: :all
@@ -123,17 +152,22 @@ RSpec.describe "Entry wizard", type: :system do
     click_link "Plan and Edit"
     click_link "Open Guided Wizard"
 
+    expect(page).to have_css("turbo-frame#entry_wizard_modal h3", text: "Add Entry with Wizard")
+    expect(page).to have_css("turbo-frame#entry_wizard_modal select#expense_entry_section", visible: :all)
     wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
 
     within(wizard_frame) do
-      select "Fixed bill", from: "Section", visible: :all
+      click_button "Fixed bill"
       expect(page).to have_css("button[data-section-value='fixed'][aria-pressed='true']", text: "Fixed bill")
       select "Planned", from: "Status", visible: :all
       click_button "Next"
 
+      expect(page).to have_content("Account flow examples")
+      expect(page).to have_content("Money leaves checking. Money goes to the card being paid down.")
+
       fill_in "Category", with: "Streaming", visible: :all
       fill_in "Payee", with: "Movie Box", visible: :all
-      fill_in "Account", with: "Checking", visible: :all
+      fill_in "Manual account label", with: "Checking", visible: :all
       click_button "Next"
 
       fill_in "Date", with: "2026-03-18", visible: :all
@@ -181,7 +215,7 @@ RSpec.describe "Entry wizard", type: :system do
 
       fill_in "Category", with: "Streaming", visible: :all
       fill_in "Payee", with: "Movie Box", visible: :all
-      fill_in "Account", with: "Checking", visible: :all
+      fill_in "Manual account label", with: "Checking", visible: :all
       click_button "Next"
 
       fill_in "Date", with: "2026-03-18", visible: :all
