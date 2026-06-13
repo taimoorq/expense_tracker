@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_23_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_12_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -116,6 +116,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_120000) do
     t.uuid "budget_month_id", null: false
     t.string "category"
     t.datetime "created_at", null: false
+    t.uuid "destination_account_id"
     t.string "need_or_want"
     t.text "notes"
     t.date "occurred_on"
@@ -131,6 +132,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_120000) do
     t.uuid "user_id", null: false
     t.index ["budget_month_id", "occurred_on", "created_at"], name: "index_expense_entries_on_month_chronological"
     t.index ["budget_month_id"], name: "index_expense_entries_on_budget_month_id"
+    t.index ["destination_account_id", "occurred_on", "created_at"], name: "index_expense_entries_on_destination_account_recent", order: { occurred_on: :desc, created_at: :desc }, where: "(destination_account_id IS NOT NULL)"
+    t.index ["destination_account_id"], name: "index_expense_entries_on_destination_account_id"
     t.index ["occurred_on"], name: "index_expense_entries_on_occurred_on"
     t.index ["section"], name: "index_expense_entries_on_section"
     t.index ["source_account_id", "occurred_on", "created_at"], name: "index_expense_entries_on_source_account_recent", order: { occurred_on: :desc, created_at: :desc }, where: "(source_account_id IS NOT NULL)"
@@ -251,6 +254,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_23_120000) do
   add_foreign_key "credit_cards", "accounts", column: "linked_account_id"
   add_foreign_key "credit_cards", "accounts", column: "payment_account_id"
   add_foreign_key "credit_cards", "users"
+  add_foreign_key "expense_entries", "accounts", column: "destination_account_id"
   add_foreign_key "expense_entries", "accounts", column: "source_account_id"
   add_foreign_key "expense_entries", "budget_months"
   add_foreign_key "expense_entries", "users"

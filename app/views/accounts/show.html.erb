@@ -77,7 +77,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100">
                 <% @linked_entries.each do |entry| %>
-                  <% impact = entry.cashflow_amount %>
+                  <% impact = @account.account_delta_for(entry) %>
                   <% source_label = entry.source_template&.class&.name || entry.source_file.presence || "Manual" %>
                   <tr>
                     <td class="ta-td"><%= entry.occurred_on ? l(entry.occurred_on, format: :long) : "—" %></td>

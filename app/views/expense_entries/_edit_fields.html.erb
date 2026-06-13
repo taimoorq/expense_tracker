@@ -39,6 +39,16 @@
 </div>
 
 <div>
+  <%= form.label :destination_account_id, "Destination Account", class: "fb-label" %>
+  <%= form.collection_select :destination_account_id,
+                             current_user.accounts.active_first,
+                             :id,
+                             :name,
+                             { include_blank: "Select destination (optional)" },
+                             class: "fb-select" %>
+</div>
+
+<div>
   <% account_options_list_id = "expense-entry-account-options-#{form.object.id || form.object.object_id}" %>
   <%= form.label :account, "Manual Account Label", class: "fb-label" %>
   <%= form.text_field :account,

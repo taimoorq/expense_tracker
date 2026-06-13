@@ -95,6 +95,8 @@ module Platform
               :need_or_want,
               :notes,
               :source_file
+            ).merge(
+              destination_account: user.accounts.find_by(name: entry_attributes[:destination_account])
             )
           )
           Budgeting::ExpenseEntryProvenanceRepair.new(

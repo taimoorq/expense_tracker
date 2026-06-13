@@ -40,6 +40,35 @@ RSpec.describe Account, type: :model do
     expect(account.display_balance).to eq(1275.to_d)
   end
 
+  it "applies source charges and destination payments to credit card balances after the latest snapshot" do
+    user = create(:user)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    card = create(:account, user: user, name: "Visa", kind: :credit_card)
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 4, 1), label: "April 2026")
+    create(:account_snapshot, account: card, recorded_on: Date.new(2026, 4, 1), balance: -1000)
+
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      source_account: card,
+      occurred_on: Date.new(2026, 4, 5),
+      section: :variable,
+      status: :paid,
+      actual_amount: 125)
+
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      source_account: checking,
+      destination_account: card,
+      occurred_on: Date.new(2026, 4, 20),
+      section: :debt,
+      status: :paid,
+      actual_amount: 300)
+
+    expect(card.current_balance(as_of: Date.new(2026, 4, 30))).to eq(-825.to_d)
+  end
+
   it "identifies liability account kinds" do
     account = build(:account, kind: :credit_card)
 

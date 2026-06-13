@@ -132,6 +132,7 @@ module Platform
               actual_amount: decimal_string(entry.actual_amount),
               account: entry.account,
               source_account: entry.source_account&.name,
+              destination_account: entry.destination_account&.name,
               status: entry.status,
               need_or_want: entry.need_or_want,
               notes: entry.notes,

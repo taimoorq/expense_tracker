@@ -20,11 +20,11 @@ class AccountsController < ApplicationController
     @account = current_user.accounts.includes(:account_snapshots).find(params[:id])
     @account_snapshot = AccountSnapshot.new(account: @account, recorded_on: Date.current)
     @linked_entries = current_user.expense_entries
-                                   .where(source_account_id: @account.id)
-                                   .includes(:budget_month, :source_template)
+                                   .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: @account.id)
+                                   .includes(:budget_month, :source_account, :destination_account, :source_template)
                                    .order(occurred_on: :desc, created_at: :desc)
                                    .limit(150)
-    @linked_entries_net = @linked_entries.sum(&:cashflow_amount)
+    @linked_entries_net = @linked_entries.sum { |entry| @account.account_delta_for(entry) }
     @connected_templates = {
       "Pay Schedules" => current_user.pay_schedules.where(linked_account_id: @account.id).order(active: :desc, name: :asc).to_a,
       "Subscriptions" => current_user.subscriptions.where(linked_account_id: @account.id).order(active: :desc, due_day: :asc, name: :asc).to_a,

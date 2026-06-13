@@ -19,7 +19,8 @@ module Overview
         account_flow_month_window: month_window,
         account_flow_months_included: selected_budget_months.count,
         account_flow_month_range_label: month_range_label,
-        account_flow_payload: Accounts::AccountFlowSummary.new(expense_entries: selected_expense_entries).payload
+        account_flow_payload: Accounts::AccountFlowSummary.new(expense_entries: selected_expense_entries).payload,
+        account_movement_payload: Accounts::MonthlyMovementSummary.new(budget_months: selected_budget_months).payload
       }
     end
 
@@ -36,7 +37,7 @@ module Overview
 
     def selected_budget_months
       @selected_budget_months ||= begin
-        months = user.budget_months.includes(expense_entries: [ :source_account, :source_template ]).recent_first.to_a
+        months = user.budget_months.includes(expense_entries: [ :source_account, :destination_account, :source_template ]).recent_first.to_a
         month_window == "all" ? months : months.first(month_window.to_i)
       end
     end

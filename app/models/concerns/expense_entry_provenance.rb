@@ -10,6 +10,7 @@ module ExpenseEntryProvenance
   def normalize_provenance
     self.source_file = "manual" if source_file.blank?
     self.source_account = resolved_source_account
+    self.destination_account = resolved_destination_account
     self.account = source_account.name if source_account.present?
   end
 
@@ -31,5 +32,12 @@ module ExpenseEntryProvenance
     return source_template.payment_account if source_template.respond_to?(:payment_account)
 
     nil
+  end
+
+  def resolved_destination_account
+    return destination_account if destination_account.present?
+    return nil unless source_template.is_a?(CreditCard)
+
+    source_template.linked_account
   end
 end

@@ -6,6 +6,7 @@ class ExpenseEntry < ApplicationRecord
   belongs_to :user
   belongs_to :budget_month
   belongs_to :source_account, class_name: "Account", optional: true
+  belongs_to :destination_account, class_name: "Account", optional: true
   belongs_to :source_template, polymorphic: true, optional: true
 
   enum :section, {
@@ -28,6 +29,7 @@ class ExpenseEntry < ApplicationRecord
   validates :status, presence: true
   validate :user_matches_budget_month
   validate :source_account_belongs_to_user
+  validate :destination_account_belongs_to_user
   validate :source_template_matches_user
 
   before_validation :assign_user_from_budget_month
@@ -94,6 +96,13 @@ class ExpenseEntry < ApplicationRecord
     return if source_account.user_id == user_id
 
     errors.add(:source_account, "must belong to the same user")
+  end
+
+  def destination_account_belongs_to_user
+    return if destination_account.blank?
+    return if destination_account.user_id == user_id
+
+    errors.add(:destination_account, "must belong to the same user")
   end
 
   def source_template_matches_user

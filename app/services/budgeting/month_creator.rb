@@ -107,6 +107,7 @@ module Budgeting
           notes: entry.notes,
           source_file: entry.source_file,
           source_account_id: entry.source_account_id,
+          destination_account_id: entry.destination_account_id,
           source_template_type: entry.source_template_type,
           source_template_id: entry.source_template_id
         )

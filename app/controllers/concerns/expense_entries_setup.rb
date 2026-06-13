@@ -20,6 +20,7 @@ module ExpenseEntriesSetup
       :planned_amount,
       :actual_amount,
       :source_account_id,
+      :destination_account_id,
       :account,
       :status,
       :need_or_want,

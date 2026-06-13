@@ -48,7 +48,8 @@ class Account < ApplicationRecord
 
   def posted_entries_delta(as_of: Date.current)
     scope = user.expense_entries
-                .where(source_account_id: id, status: ExpenseEntry.statuses[:paid])
+                .where(status: ExpenseEntry.statuses[:paid])
+                .where("source_account_id = :id OR destination_account_id = :id", id: id)
                 .where.not(occurred_on: nil)
                 .where(occurred_on: ..as_of)
 
@@ -56,6 +57,21 @@ class Account < ApplicationRecord
       scope = scope.where("occurred_on > ?", latest_snapshot.recorded_on)
     end
 
-    scope.to_a.sum { |entry| entry.income? ? entry.effective_amount.to_d : -entry.effective_amount.to_d }
+    scope.to_a.sum { |entry| account_delta_for(entry) }
+  end
+
+  def account_delta_for(entry)
+    amount = entry.effective_amount.to_d
+    delta = 0.to_d
+
+    if entry.source_account_id == id
+      delta += entry.income? ? amount : -amount
+    end
+
+    if entry.destination_account_id == id
+      delta += amount
+    end
+
+    delta
   end
 end

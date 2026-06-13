@@ -5,11 +5,12 @@ RSpec.describe EstimateMonthCreditCards do
     user = create(:user)
     budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
     funding_account = create(:account, user: user, name: "Checking")
+    visa_account = create(:account, user: user, name: "Visa Account", kind: :credit_card)
     create(:expense_entry, budget_month: budget_month, user: user, section: :income, payee: "Salary", planned_amount: 1000, source_file: "manual")
     create(:expense_entry, budget_month: budget_month, user: user, section: :fixed, payee: "Rent", planned_amount: 400, source_file: "manual")
     create(:expense_entry, budget_month: budget_month, user: user, section: :debt, payee: "Old Estimate", planned_amount: 25, source_file: "credit_card_estimate")
 
-    first_card = create(:credit_card, user: user, name: "Visa", minimum_payment: 50, due_day: 10, priority: 1, payment_account: funding_account, account: "Checking")
+    first_card = create(:credit_card, user: user, name: "Visa", minimum_payment: 50, due_day: 10, priority: 1, linked_account: visa_account, payment_account: funding_account, account: "Checking")
     second_card = create(:credit_card, user: user, name: "Mastercard", minimum_payment: 25, due_day: 22, priority: 2)
 
     created = described_class.new(budget_month: budget_month).call
@@ -22,6 +23,7 @@ RSpec.describe EstimateMonthCreditCards do
     expect(estimates.find_by(payee: second_card.name).occurred_on).to eq(Date.new(2026, 3, 22))
     expect(estimates.find_by(payee: first_card.name).account).to eq("Checking")
     expect(estimates.find_by(payee: first_card.name).source_account).to eq(funding_account)
+    expect(estimates.find_by(payee: first_card.name).destination_account).to eq(visa_account)
     expect(estimates.pluck(:source_template_type).uniq).to eq([ "CreditCard" ])
     expect(estimates.find_by(payee: first_card.name).source_template_id).to eq(first_card.id)
     expect(estimates.find_by(payee: second_card.name).source_template_id).to eq(second_card.id)
