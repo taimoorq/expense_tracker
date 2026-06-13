@@ -113,7 +113,7 @@ RSpec.describe "Backup & restore", type: :system do
     click_button "Restore Selected Data"
 
     expect(page).to have_content("Import complete")
-    expect(page).to have_content("Import complete: restored 5 recurring transactions.")
+    expect(page).to have_content("Import complete: restored 5 recurring transactions, 3 workflow preferences.")
   ensure
     file.close
     file.unlink
