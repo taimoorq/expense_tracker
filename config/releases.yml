@@ -1,4 +1,13 @@
 releases:
+  - version: "0.5.12"
+    released_on: "2026-06-12"
+    title: "Clearer entry wizard and card payment schedules"
+    summary: "This release simplifies the add-entry wizard, clarifies transaction language, and lets credit card accounts schedule their monthly payment when they are created."
+    changes:
+      - "Removed the extra loading spinner from the add-entry wizard submit button and tightened the wizard copy so transaction types are easier to understand."
+      - "Added an optional monthly card payment section to new credit card accounts, creating the linked CreditCard planning record in the same transaction as the account."
+      - "Exposed both Card Account and Paid From Account when editing generated credit card payment templates from a month row."
+      - "Unified credit card account relinking during backup restores so older data and backups keep resolving both card and payment accounts safely."
   - version: "0.5.11"
     released_on: "2026-06-08"
     title: "Account filters and sortable month tables"

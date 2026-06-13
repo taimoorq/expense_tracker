@@ -21,8 +21,7 @@ module Platform
         counts[:planning_templates] = import_planning_templates(data[:planning_templates]) if scopes.include?("planning_templates")
         counts[:budget_months] = import_budget_months(data[:budget_months]) if scopes.include?("budget_months")
         counts[:accounts] = import_accounts(data[:accounts]) if scopes.include?("accounts")
-        Recurring::PlanningTemplateAccountLinking.relink_for(user) if scopes.include?("planning_templates")
-        relink_credit_card_template_accounts(data[:planning_templates]) if scopes.include?("planning_templates")
+        Recurring::PlanningTemplateAccountLinking.relink_for(user, planning_template_data: data[:planning_templates]) if scopes.include?("planning_templates")
         Budgeting::ExpenseEntryProvenanceRepair.relink_for(user) if scopes.include?("budget_months")
       end
 
@@ -131,18 +130,6 @@ module Platform
 
     def failure(message)
       { success: false, error: message }
-    end
-
-    def relink_credit_card_template_accounts(planning_template_data)
-      Array(planning_template_data[:credit_cards]).each do |attributes|
-        next if attributes[:linked_account].blank?
-
-        card = user.credit_cards.find_by(name: attributes[:name])
-        account = user.accounts.find_by(name: attributes[:linked_account])
-        next if card.blank? || account.blank?
-
-        card.update!(linked_account: account)
-      end
     end
   end
 end

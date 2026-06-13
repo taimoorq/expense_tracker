@@ -64,4 +64,21 @@ RSpec.describe "Expense entries turbo responses", type: :request do
     expect(response.body).to include("Recurring item updated.")
     expect(schedule.reload.amount.to_d).to eq(3100.to_d)
   end
+
+  it "updates the paid-from account when editing a generated credit card template" do
+    card_account = create(:account, user: user, name: "Visa Account", kind: :credit_card)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    savings = create(:account, user: user, name: "Savings", kind: :savings)
+    card = create(:credit_card, user: user, name: "Visa", linked_account: card_account, payment_account: checking, account: "Checking")
+    entry = create(:expense_entry, budget_month: budget_month, user: user, payee: card.name, source_file: "credit_card_estimate", section: :debt, source_template: card, source_account: checking)
+
+    patch update_template_budget_month_expense_entry_path(budget_month, entry),
+      params: { credit_card: { payment_account_id: savings.id } },
+      headers: turbo_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect(response.body).to include("Recurring item updated.")
+    expect(card.reload.payment_account).to eq(savings)
+  end
 end

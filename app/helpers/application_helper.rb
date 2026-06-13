@@ -263,7 +263,7 @@ module ApplicationHelper
   end
 
   def wizard_template_type_options
-    Recurring::TemplateCatalog.wizard_template_types.map { |type| [ type.humanize, type ] }
+    Recurring::TemplateCatalog.wizard_template_types.map { |type| [ recurring_template_type_label(type), type ] }
   end
 
   def entry_wizard_presenter(budget_month:, expense_entry:)
@@ -277,30 +277,60 @@ module ApplicationHelper
 
   def entry_wizard_steps
     [
-      { number: 1, title: "Type", description: "Choose the section and status." },
-      { number: 2, title: "Details", description: "Capture payee, category, account, and notes." },
-      { number: 3, title: "Amounts", description: "Set the date and at least one amount." },
-      { number: 4, title: "Review", description: "Confirm the entry and optionally save it as recurring." }
+      { number: 1, title: "Type", description: "Choose what kind of money movement this is." },
+      { number: 2, title: "Details", description: "Name the category, payee, account, and notes." },
+      { number: 3, title: "Date and Amount", description: "Set when it happens and what you expect." },
+      { number: 4, title: "Review", description: "Save once, or make it repeat later." }
     ]
   end
 
   def entry_wizard_section_options
     [
-      { label: "Income", value: "income", icon: "cash", color_class: "text-emerald-600", description: "Paychecks, side income, reimbursements, and other inflow." },
-      { label: "Recurring Bill", value: "fixed", icon: "repeat", color_class: "text-sky-600", description: "Predictable monthly costs like rent, insurance, or utilities." },
-      { label: "Flexible Spending", value: "variable", icon: "list", color_class: "text-amber-600", description: "Groceries, dining, shopping, and other changing spend." },
-      { label: "Debt Payment", value: "debt", icon: "chart-bar", color_class: "text-rose-600", description: "Cards, loans, and structured payoff entries." },
-      { label: "Manual Adjustment", value: "manual", icon: "adjustments", color_class: "text-violet-600", description: "Catch-up entries, corrections, and one-off bookkeeping." },
-      { label: "Auto / Vehicle", value: "auto", icon: "car", color_class: "text-slate-600", description: "Gas, repairs, registration, and vehicle-specific costs." }
+      { label: expense_entry_section_label("income"), value: "income", icon: "cash", color_class: "text-emerald-600", description: "Paychecks, side income, reimbursements, and other money coming in." },
+      { label: expense_entry_section_label("fixed"), value: "fixed", icon: "repeat", color_class: "text-sky-600", description: "Predictable costs like rent, insurance, utilities, and subscriptions." },
+      { label: expense_entry_section_label("variable"), value: "variable", icon: "list", color_class: "text-amber-600", description: "Groceries, dining, shopping, household items, and other changing spend." },
+      { label: expense_entry_section_label("debt"), value: "debt", icon: "chart-bar", color_class: "text-rose-600", description: "Credit card payments, loans, financing, and payoff plans." },
+      { label: expense_entry_section_label("manual"), value: "manual", icon: "adjustments", color_class: "text-violet-600", description: "Corrections, catch-up entries, transfers, and month-specific adjustments." },
+      { label: expense_entry_section_label("auto"), value: "auto", icon: "car", color_class: "text-slate-600", description: "Gas, repairs, registration, insurance, and vehicle-specific costs." },
+      { label: expense_entry_section_label("other"), value: "other", icon: "plus", color_class: "text-slate-600", description: "Anything that does not fit the common groups yet." }
     ]
   end
 
   def expense_entry_section_options
-    ExpenseEntry.sections.keys.map { |key| [ key.humanize, key ] }
+    ExpenseEntry.sections.keys.map { |key| [ expense_entry_section_label(key), key ] }
   end
 
   def expense_entry_status_options
-    ExpenseEntry.statuses.keys.map { |key| [ key.humanize, key ] }
+    ExpenseEntry.statuses.keys.map { |key| [ expense_entry_status_label(key), key ] }
+  end
+
+  def expense_entry_section_label(section)
+    {
+      "income" => "Income",
+      "fixed" => "Fixed bill",
+      "variable" => "Flexible spending",
+      "debt" => "Debt or card payment",
+      "manual" => "Manual adjustment",
+      "auto" => "Auto / vehicle",
+      "other" => "Other"
+    }.fetch(section.to_s, section.to_s.humanize)
+  end
+
+  def expense_entry_status_label(status)
+    {
+      "planned" => "Planned",
+      "paid" => "Paid",
+      "skipped" => "Skipped"
+    }.fetch(status.to_s, status.to_s.humanize)
+  end
+
+  def recurring_template_type_label(type)
+    {
+      "pay_schedule" => "Pay schedule",
+      "subscription" => "Subscription",
+      "monthly_bill" => "Bill",
+      "payment_plan" => "Payment plan"
+    }.fetch(type.to_s, type.to_s.humanize)
   end
 
   def pay_schedule_cadence_options

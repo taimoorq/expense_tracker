@@ -7,16 +7,14 @@ module AccountSetup
     { include_in_net_worth: true }
   end
 
-  def build_initial_snapshot(account)
-    return nil unless initial_snapshot_requested?
-
-    account.account_snapshots.new(initial_snapshot_params)
-  end
-
-  def initial_snapshot_requested?
-    snapshot_params = initial_snapshot_params.to_h
-
-    snapshot_params["balance"].present? || snapshot_params["available_balance"].present? || snapshot_params["notes"].present?
+  def build_credit_card_payment_schedule_form(account)
+    current_user.credit_cards.new(
+      name: account.name,
+      linked_account: account,
+      due_day: 1,
+      priority: 1,
+      active: true
+    )
   end
 
   def initial_snapshot_params
@@ -27,6 +25,17 @@ module AccountSetup
       snapshot_scope.permit(:recorded_on, :balance, :available_balance, :notes)
     else
       ActionController::Parameters.new(snapshot_scope).permit(:recorded_on, :balance, :available_balance, :notes)
+    end
+  end
+
+  def credit_card_payment_schedule_params
+    account_scope = params.fetch(:account, ActionController::Parameters.new)
+    schedule_scope = account_scope[:credit_card_payment_schedule] || ActionController::Parameters.new
+
+    if schedule_scope.respond_to?(:permit)
+      schedule_scope.permit(:enabled, :payment_account_id, :minimum_payment, :due_day, :priority, :active, :notes)
+    else
+      ActionController::Parameters.new(schedule_scope).permit(:enabled, :payment_account_id, :minimum_payment, :due_day, :priority, :active, :notes)
     end
   end
 end

@@ -12,7 +12,7 @@ export default class extends Controller {
     "cancelButton",
     "submitHint",
     "submitLabel",
-    "submitSpinner",
+    "sectionChoice",
     "section",
     "status",
     "category",
@@ -128,6 +128,8 @@ export default class extends Controller {
   }
 
   updateSummary() {
+    this.updateSectionChoices()
+
     if (this.hasSummarySectionTarget) {
       const section = this.hasSectionTarget ? this.sectionTarget.value : ""
       const status = this.hasStatusTarget ? this.statusTarget.value : ""
@@ -226,10 +228,6 @@ export default class extends Controller {
       this.submitLabelTarget.textContent = this.submitting ? "Saving entry..." : "Save Entry"
     }
 
-    if (this.hasSubmitSpinnerTarget) {
-      this.submitSpinnerTarget.classList.toggle("hidden", !this.submitting)
-    }
-
     this.updateSummary()
     this.clearError()
   }
@@ -275,10 +273,10 @@ export default class extends Controller {
     }
 
     if (stepIndex === this.stepTargets.length - 1 && this.templateEnabled()) {
-      if (!this.fieldValue("templateType")) return "Choose which recurring transaction type to save."
+      if (!this.fieldValue("templateType")) return "Choose what should repeat."
 
       if (this.usesDueDayTemplateType() && !this.fieldValue("templateDueDay")) {
-        return "Add a due day for the recurring transaction."
+        return "Add the day of month for the recurring item."
       }
 
       if (this.templateTypeTarget.value === "monthly_bill") {
@@ -286,17 +284,17 @@ export default class extends Controller {
         const selectedMonths = this.selectedBillingMonths().length
 
         if (selectedMonths !== expectedMonths) {
-          return `Choose ${expectedMonths} billing month${expectedMonths === 1 ? "" : "s"} for the monthly bill template.`
+          return `Choose ${expectedMonths} billing month${expectedMonths === 1 ? "" : "s"} for this bill.`
         }
       }
 
       if (this.templateTypeTarget.value === "payment_plan" && !this.fieldValue("templateTotalDue")) {
-        return "Add the total due for the payment plan recurring transaction."
+        return "Add the total due for the payment plan."
       }
 
       if (this.templateTypeTarget.value === "pay_schedule" && this.hasTemplateCadenceTarget && this.templateCadenceTarget.value === "semimonthly") {
-        if (!this.fieldValue("templateDayOne")) return "Add the first semimonthly pay day."
-        if (!this.fieldValue("templateDayTwo")) return "Add the second semimonthly pay day."
+        if (!this.fieldValue("templateDayOne")) return "Add the first pay day."
+        if (!this.fieldValue("templateDayTwo")) return "Add the second pay day."
       }
     }
 
@@ -400,6 +398,19 @@ export default class extends Controller {
     }
   }
 
+  updateSectionChoices() {
+    if (!this.hasSectionChoiceTarget || !this.hasSectionTarget) return
+
+    const selectedSection = this.sectionTarget.value
+
+    this.sectionChoiceTargets.forEach((choice) => {
+      const active = choice.dataset.sectionValue === selectedSection
+
+      choice.classList.toggle("ta-wizard-choice-active", active)
+      choice.setAttribute("aria-pressed", active ? "true" : "false")
+    })
+  }
+
   fieldValue(targetName) {
     const targetAvailable = this[`has${targetName.charAt(0).toUpperCase()}${targetName.slice(1)}Target`]
     if (!targetAvailable) return ""
@@ -439,9 +450,9 @@ export default class extends Controller {
 
   templateSummary() {
     if (!this.templateEnabled()) return "One-off entry only"
-    if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) return "Save as recurring is on, but the recurring type is not chosen yet"
+    if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) return "Save as recurring is on, but the repeat type is not chosen yet"
 
-    const templateType = this.humanize(this.templateTypeTarget.value)
+    const templateType = this.templateTypeLabel(this.templateTypeTarget.value)
 
     if (this.templateTypeTarget.value === "pay_schedule") {
       const cadence = this.hasTemplateCadenceTarget ? this.humanize(this.templateCadenceTarget.value) : "Monthly"
@@ -496,5 +507,14 @@ export default class extends Controller {
 
   calendarMonthName(month) {
     return new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "long" })
+  }
+
+  templateTypeLabel(value) {
+    return {
+      pay_schedule: "Pay schedule",
+      subscription: "Subscription",
+      monthly_bill: "Bill",
+      payment_plan: "Payment plan"
+    }[value] || this.humanize(value)
   }
 }
