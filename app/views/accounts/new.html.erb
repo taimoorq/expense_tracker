@@ -8,5 +8,9 @@
 <% end %>
 
 <section class="ta-card max-w-4xl">
-  <%= render "form", account: @account, initial_snapshot: @initial_snapshot %>
+  <%= render "form",
+    account: @account,
+    initial_snapshot: @initial_snapshot,
+    credit_card_payment_schedule: @credit_card_payment_schedule,
+    credit_card_payment_schedule_enabled: @credit_card_payment_schedule_enabled %>
 </section>

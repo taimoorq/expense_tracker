@@ -39,23 +39,25 @@ class AccountsController < ApplicationController
   def new
     @account = current_user.accounts.new(default_account_attributes)
     @initial_snapshot = @account.account_snapshots.new(recorded_on: Date.current)
+    @credit_card_payment_schedule = build_credit_card_payment_schedule_form(@account)
+    @credit_card_payment_schedule_enabled = false
   end
 
   def create
-    @account = current_user.accounts.new(account_params)
-    @initial_snapshot = build_initial_snapshot(@account)
+    result = Accounts::Creator.call(
+      user: current_user,
+      account_params: account_params,
+      initial_snapshot_params: initial_snapshot_params,
+      credit_card_payment_schedule_params: credit_card_payment_schedule_params
+    )
 
-    account_valid = @account.valid?
-    snapshot_valid = @initial_snapshot.nil? || @initial_snapshot.valid?
+    @account = result.account
+    @initial_snapshot = result.initial_snapshot || @account.account_snapshots.new(recorded_on: Date.current)
+    @credit_card_payment_schedule = result.credit_card_payment_schedule || build_credit_card_payment_schedule_form(@account)
+    @credit_card_payment_schedule_enabled = @account.credit_card? && ActiveModel::Type::Boolean.new.cast(credit_card_payment_schedule_params[:enabled])
 
-    if account_valid && snapshot_valid
-      Account.transaction do
-        @account.save!
-        @initial_snapshot&.save!
-      end
-
-      notice = @initial_snapshot.present? ? "Account created and initial balance recorded." : "Account created. Add a balance snapshot to start tracking it."
-      redirect_to @account, notice: notice
+    if result.success?
+      redirect_to @account, notice: result.notice
     else
       render :new, status: :unprocessable_entity
     end

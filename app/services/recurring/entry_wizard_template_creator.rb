@@ -38,13 +38,13 @@ module Recurring
       template_type = @params[:template_type].presence
 
       unless TEMPLATE_TYPES.include?(template_type)
-        @error_messages = [ "Recurring: choose a valid recurring transaction type." ]
+        @error_messages = [ "Recurring: choose what should repeat." ]
         return nil
       end
 
       template_model = Recurring::TemplateCatalog.model_for_template_type(template_type)
       if template_model.blank?
-        @error_messages = [ "Recurring: choose a valid recurring transaction type." ]
+        @error_messages = [ "Recurring: choose what should repeat." ]
         return nil
       end
 

@@ -23,7 +23,7 @@ RSpec.describe "Expense entries", type: :request do
       }
     end.to change(budget_month.expense_entries, :count).by(1)
 
-    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(response).to redirect_to(budget_month_tab_path(budget_month, "entries"))
     expect(budget_month.expense_entries.last.user).to eq(user)
   end
 
@@ -51,7 +51,7 @@ RSpec.describe "Expense entries", type: :request do
     end.to change(budget_month.expense_entries, :count).by(1)
       .and change(user.subscriptions, :count).by(1)
 
-    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(response).to redirect_to(budget_month_tab_path(budget_month, "entries"))
     expect(flash[:notice]).to eq("Entry and recurring transaction added.")
 
     subscription = user.subscriptions.order(:created_at).last
@@ -116,7 +116,7 @@ RSpec.describe "Expense entries", type: :request do
 
     entry = budget_month.expense_entries.order(:created_at).last
 
-    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(response).to redirect_to(budget_month_tab_path(budget_month, "entries"))
     expect(entry.source_template).to eq(credit_card)
     expect(entry.source_file).to eq("manual")
   end

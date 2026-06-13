@@ -46,6 +46,33 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("$8,500.25")
   end
 
+  it "lets a signed in user schedule a monthly payment while creating a credit card account", js: true do
+    user = create(:user)
+    create(:account, user: user, name: "Checking", kind: :checking, include_in_cash: true)
+
+    sign_in_as(user)
+    visit new_account_path
+
+    fill_in "Name", with: "Visa Rewards"
+    fill_in "Institution", with: "Chase"
+    select "Credit card", from: "Account type"
+    check "Schedule monthly payment"
+    select "Checking", from: "Paid from account"
+    fill_in "Monthly payment amount", with: "85.00"
+    fill_in "Due day", with: "18"
+    fill_in "Priority", with: "2"
+    click_button "Create Account"
+
+    expect(page).to have_content("Account created and card payment scheduled.")
+    expect(page).to have_content("Visa Rewards")
+
+    click_button "Connected Templates"
+
+    expect(page).to have_content("Credit Cards")
+    expect(page).to have_content("Visa Rewards")
+    expect(user.credit_cards.find_by!(name: "Visa Rewards").payment_account.name).to eq("Checking")
+  end
+
   it "shows latest balances in the accounts net worth summary" do
     user = create(:user)
     savings = create(:account, user: user, name: "Savings", kind: :savings)

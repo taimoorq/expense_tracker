@@ -67,8 +67,8 @@ module Budgeting
 
     def template_type_options
       [
-        [ "Choose a recurring transaction type", "" ],
-        *Recurring::TemplateCatalog.wizard_template_types.map { |type| [ type.humanize, type ] }
+        [ "Choose what should repeat", "" ],
+        *Recurring::TemplateCatalog.wizard_template_types.map { |type| [ recurring_template_type_label(type), type ] }
       ]
     end
 
@@ -114,6 +114,15 @@ module Budgeting
 
       source_template = expense_entry.source_template
       "#{source_template.class.name}:#{source_template.id}"
+    end
+
+    def recurring_template_type_label(type)
+      {
+        "pay_schedule" => "Pay schedule",
+        "subscription" => "Subscription",
+        "monthly_bill" => "Bill",
+        "payment_plan" => "Payment plan"
+      }.fetch(type.to_s, type.to_s.humanize)
     end
   end
 end

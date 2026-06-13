@@ -13,7 +13,7 @@ RSpec.describe "Entry wizard", type: :system do
 
     select "Income", from: "Section", visible: :all
     select "Planned", from: "Status", visible: :all
-    select "Need", from: "Need / Want", visible: :all
+    select "Need", from: "Need / Want (optional)", visible: :all
     fill_in "Category", with: "Paycheck", visible: :all
     fill_in "Payee", with: "Consulting Client", visible: :all
     fill_in "Account", with: "Checking", visible: :all
@@ -34,9 +34,9 @@ RSpec.describe "Entry wizard", type: :system do
 
     visit new_wizard_budget_month_expense_entries_path(budget_month)
 
-    select "Fixed", from: "Section", visible: :all
+    select "Fixed bill", from: "Section", visible: :all
     select "Planned", from: "Status", visible: :all
-    select "Need", from: "Need / Want", visible: :all
+    select "Need", from: "Need / Want (optional)", visible: :all
     fill_in "Category", with: "Streaming", visible: :all
     fill_in "Payee", with: "Netflix", visible: :all
     fill_in "Account", with: "Checking", visible: :all
@@ -44,8 +44,8 @@ RSpec.describe "Entry wizard", type: :system do
     fill_in "Date", with: "2026-03-08", visible: :all
     fill_in "Planned amount", with: "19.99", visible: :all
     check "Save as recurring", visible: :all
-    select "Subscription", from: "Recurring Transaction Type", visible: :all
-    fill_in "Due Day", with: "8", visible: :all
+    select "Subscription", from: "What should repeat?", visible: :all
+    fill_in "Day of month", with: "8", visible: :all
     click_button "Save Entry", visible: :all
 
     expect(page).to have_current_path(budget_month_tab_path(budget_month, "entries"), ignore_query: false)
@@ -107,6 +107,7 @@ RSpec.describe "Entry wizard", type: :system do
     end
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[aria-busy='true'][disabled]", text: "Saving entry...")
+    expect(page).to have_no_css("turbo-frame#entry_wizard_modal [data-entry-wizard-target='submitSpinner']", visible: :all)
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton'][disabled]", text: "Cancel")
 
     expect(page).to have_content("Entry added.")
@@ -125,7 +126,8 @@ RSpec.describe "Entry wizard", type: :system do
     wizard_frame = find("turbo-frame#entry_wizard_modal", visible: false)
 
     within(wizard_frame) do
-      select "Fixed", from: "Section", visible: :all
+      select "Fixed bill", from: "Section", visible: :all
+      expect(page).to have_css("button[data-section-value='fixed'][aria-pressed='true']", text: "Fixed bill")
       select "Planned", from: "Status", visible: :all
       click_button "Next"
 
@@ -143,10 +145,10 @@ RSpec.describe "Entry wizard", type: :system do
       check "Save as recurring", visible: :all
       expect(page).to have_css("button[data-entry-wizard-target='submitButton'][disabled]", text: "Save Entry")
 
-      select "Subscription", from: "Recurring Transaction Type", visible: :all
+      select "Subscription", from: "What should repeat?", visible: :all
       expect(page).to have_css("button[data-entry-wizard-target='submitButton'][disabled]", text: "Save Entry")
 
-      fill_in "Due Day", with: "18", visible: :all
+      fill_in "Day of month", with: "18", visible: :all
       expect(page).to have_css("button[data-entry-wizard-target='submitButton']:not([disabled])", text: "Save Entry")
     end
   end
@@ -173,7 +175,7 @@ RSpec.describe "Entry wizard", type: :system do
     expect(wizard_frame).to have_css("select#expense_entry_section", visible: :all)
 
     within(wizard_frame) do
-      select "Fixed", from: "Section", visible: :all
+      select "Fixed bill", from: "Section", visible: :all
       select "Planned", from: "Status", visible: :all
       click_button "Next"
 
@@ -209,6 +211,7 @@ RSpec.describe "Entry wizard", type: :system do
     end
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[aria-busy='true'][disabled]", text: "Saving entry...")
+    expect(page).to have_no_css("turbo-frame#entry_wizard_modal [data-entry-wizard-target='submitSpinner']", visible: :all)
     expect(page).to have_css("turbo-frame#entry_wizard_modal button[data-entry-wizard-target='cancelButton'][disabled]", text: "Cancel")
 
     expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
