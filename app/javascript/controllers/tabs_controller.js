@@ -8,7 +8,7 @@ export default class extends Controller {
   }
 
   connect() {
-    const initial = this.defaultTabValue || this.tabTargets[0]?.dataset.tabName
+    const initial = this.tabFromHash() || this.defaultTabValue || this.tabTargets[0]?.dataset.tabName
     if (initial) this.show(initial, { updateLocation: false })
   }
 
@@ -77,5 +77,12 @@ export default class extends Controller {
     } catch (_error) {
       return null
     }
+  }
+
+  tabFromHash() {
+    const hash = window.location.hash.replace(/^#/, "")
+    if (!hash) return null
+
+    return this.tabTargets.some((tab) => tab.dataset.tabName === hash) ? hash : null
   }
 }

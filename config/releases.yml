@@ -1,4 +1,13 @@
 releases:
+  - version: "0.6.2"
+    released_on: "2026-06-13"
+    title: "Recurring payments by type"
+    summary: "This release makes Recurring Transactions easier to scan by grouping recurring payments behind a type chooser and replacing technical page copy with clearer user-facing language."
+    changes:
+      - "Reworked the Recurring Transactions page so pay schedules, subscriptions, monthly bills, payment plans, and credit cards are managed one type at a time."
+      - "Added recurring-type summary cards with saved, active, and linked counts so users can quickly see where setup work remains."
+      - "Updated recurring page language to focus on managing recurring payments by type instead of describing the tabbed interface."
+      - "Kept direct links and edit paths opening the matching recurring payment type, with browser-level coverage for switching between credit cards and subscriptions."
   - version: "0.6.1"
     released_on: "2026-06-13"
     title: "Clearer onboarding, card schedules, and account movement"
