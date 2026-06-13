@@ -64,8 +64,8 @@ RSpec.describe "Template editor", type: :system do
     sign_in_as(user)
     visit planning_templates_path
 
-    expect(page).to have_content("Recurring setup")
-    expect(page).to have_content("Build the repeatable part of each month once")
+    expect(page).to have_content("Recurring payments")
+    expect(page).to have_content("Manage recurring payments by type")
     expect(page).to have_content("Saved")
 
     find("a[aria-label='Edit schedule']").click
@@ -86,6 +86,27 @@ RSpec.describe "Template editor", type: :system do
     expect(page).to have_content("Updated Payroll")
     expect(schedule.reload.name).to eq("Updated Payroll")
     expect(schedule.amount.to_d).to eq(3200.to_d)
+  end
+
+  it "separates recurring transaction types into tabs", js: true do
+    user = create(:user)
+    create(:subscription, user: user, name: "Netflix", amount: 19.99, due_day: 12)
+    create(:credit_card, user: user, name: "Rewards Visa", minimum_payment: 75, due_day: 18, priority: 1)
+
+    sign_in_as(user)
+    visit planning_templates_path(anchor: "credit-cards")
+
+    expect(page).to have_css("[data-panel-name='credit-cards']:not(.hidden)")
+    expect(page).to have_css("button[data-tab-name='credit-cards'][aria-selected='true']", text: "Credit Cards")
+    expect(page).to have_content("Rewards Visa")
+    expect(page).not_to have_content("Use for Netflix")
+
+    find("button[data-tab-name='subscriptions']").click
+
+    expect(page).to have_css("[data-panel-name='subscriptions']:not(.hidden)")
+    expect(page).to have_css("button[data-tab-name='subscriptions'][aria-selected='true']", text: "Subscriptions")
+    expect(page).to have_content("Use for Netflix")
+    expect(page).to have_content("Netflix")
   end
 
   it "shows a newly created planning template in the list immediately" do
