@@ -88,6 +88,7 @@ Budgeting UX should make money movement explainable: keep history, drilldowns, a
 - Account balance work treats snapshots as reconciliation points, paid entries as current activity, planned entries as projections, and source/destination accounts as the canonical money-flow links
 - Release notes are backed by release services and `config/releases.yml`
 - Cloudflare Turnstile support exists in the auth flow through `turnstile` concerns, controllers, and verification services
+- Public Devise entry points are rate limited through `DeviseRateLimited` and Rails controller `rate_limit`; production counters use Solid Cache and email-based keys use an app-secret-backed HMAC rather than raw addresses
 
 ## Code Style and Structure
 
@@ -171,6 +172,7 @@ When changing behavior, prefer running the narrowest relevant test first, then b
 
 - Prefer fast isolated specs for services, models, presenters, and helpers when the logic can be tested without a browser
 - Prefer request specs for controller behavior, Turbo responses, authorization, and multi-model mutations
+- For Devise authentication throttles, keep request specs around the custom Devise controllers and clear the `DeviseRateLimited` test store between examples
 - Use system specs sparingly for high-value Hotwire flows that truly need browser behavior, especially Stimulus or Turbo interaction states
 - For Turbo/Stimulus work, a strong pattern is:
   - isolated spec for Ruby-side composition or rendering

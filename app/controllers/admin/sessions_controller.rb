@@ -1,8 +1,11 @@
 module Admin
   class SessionsController < Devise::SessionsController
+    include DeviseRateLimited
     include TurnstileProtected
 
     layout "authentication"
+    rate_limit_devise_identity to: 5, within: 5.minutes, scope: "devise:admin:sessions", name: "identity", only: :create
+    rate_limit_devise_ip to: 15, within: 5.minutes, scope: "devise:admin:sessions", name: "ip", only: :create
 
     def create
       return render_turnstile_failure unless turnstile_verified?
@@ -41,6 +44,10 @@ module Admin
     end
 
     private
+
+    def rate_limit_resource_params
+      sign_in_params
+    end
 
     def render_turnstile_failure
       self.resource = resource_class.new(sign_in_params)

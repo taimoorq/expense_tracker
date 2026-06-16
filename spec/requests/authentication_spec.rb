@@ -74,4 +74,100 @@ RSpec.describe "Authentication", type: :request do
       expect(response.body).to include("Please complete the verification challenge and try again.")
     end
   end
+
+  describe "Devise rate limiting" do
+    before do
+      allow_any_instance_of(TurnstileVerifier).to receive(:success?).and_return(true)
+    end
+
+    it "rate limits repeated user sign in attempts for the same email and IP" do
+      user = create(:user)
+
+      5.times do
+        post user_session_path, params: {
+          user: {
+            email: user.email,
+            password: "not-the-password"
+          }
+        }
+      end
+
+      post user_session_path, params: {
+        user: {
+          email: user.email,
+          password: "not-the-password"
+        }
+      }
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.body).to include(DeviseRateLimited::RATE_LIMIT_MESSAGE)
+    end
+
+    it "rate limits admin sign in attempts" do
+      admin_user = create(:admin_user)
+
+      5.times do
+        post admin_user_session_path, params: {
+          admin_user: {
+            email: admin_user.email,
+            password: "not-the-password"
+          }
+        }
+      end
+
+      post admin_user_session_path, params: {
+        admin_user: {
+          email: admin_user.email,
+          password: "not-the-password"
+        }
+      }
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.body).to include(DeviseRateLimited::RATE_LIMIT_MESSAGE)
+    end
+
+    it "rate limits user registrations by IP" do
+      5.times do |attempt|
+        post user_registration_path, params: {
+          user: {
+            email: "rate-limited-#{attempt}@example.com",
+            password: "short",
+            password_confirmation: "different"
+          }
+        }
+      end
+
+      post user_registration_path, params: {
+        user: {
+          email: "rate-limited@example.com",
+          password: "password123!",
+          password_confirmation: "password123!"
+        }
+      }
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.body).to include(DeviseRateLimited::RATE_LIMIT_MESSAGE)
+    end
+
+    it "rate limits password reset requests for the same email and IP" do
+      user = create(:user)
+
+      5.times do
+        post user_password_path, params: {
+          user: {
+            email: user.email
+          }
+        }
+      end
+
+      post user_password_path, params: {
+        user: {
+          email: user.email
+        }
+      }
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.body).to include(DeviseRateLimited::RATE_LIMIT_MESSAGE)
+    end
+  end
 end

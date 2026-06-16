@@ -1,4 +1,13 @@
 releases:
+  - version: "0.6.3"
+    released_on: "2026-06-16"
+    title: "Authentication rate limiting"
+    summary: "This release adds cache-backed rate limiting to the public authentication pages so sign in, sign up, password reset, and admin sign in are better protected from repeated automated attempts."
+    changes:
+      - "Added Rails-native rate limits to user sign in, user sign up, password reset requests, and admin sign in."
+      - "Combined email/IP throttles with broader IP throttles for sign-in and password-reset flows while keeping registration throttled by IP."
+      - "Stores email-based throttle keys as app-secret-backed HMAC digests instead of raw email addresses."
+      - "Documented the authentication throttles, limits, cache behavior, and maintainer testing expectations in the repo docs."
   - version: "0.6.2"
     released_on: "2026-06-13"
     title: "Recurring payments by type"
