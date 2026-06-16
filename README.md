@@ -396,6 +396,21 @@ To enable it, set both `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` before bo
 
 The Turnstile widget is rendered explicitly on the shared authentication layout so it can recover cleanly across Turbo visits and cached page restores.
 
+### Authentication rate limiting
+
+The same public Devise entry points are also rate limited with Rails' built-in controller rate limiting before Devise or Turnstile performs expensive work:
+
+- user sign in: 5 attempts per email/IP pair every 5 minutes, plus 25 attempts per IP every 5 minutes
+- admin sign in: 5 attempts per email/IP pair every 5 minutes, plus 15 attempts per IP every 5 minutes
+- user sign up: 5 attempts per IP every hour
+- password reset request: 5 attempts per email/IP pair every 15 minutes, plus 20 attempts per IP every hour
+
+When a request is throttled, the authentication page renders again with `429 Too Many Requests` and a generic "Too many requests" error. The limiter intentionally keys email-based throttles by IP plus an app-secret-backed HMAC of the submitted email, so raw email addresses are not stored in cache keys.
+
+Rate-limit counters use the app cache store. In production this is Solid Cache, so throttles survive app process restarts and work across Rails workers. In test, the rate limiter uses an in-memory cache store that is cleared before each example.
+
+The shared behavior lives in `app/controllers/concerns/devise_rate_limited.rb`. The per-endpoint limits are declared in the custom Devise controllers under `app/controllers/users` and `app/controllers/admin`.
+
 You can still create an admin manually from the Rails console if that fits your deployment workflow better:
 
 - `bin/rails console`
@@ -484,7 +499,7 @@ Each provider receives the same tag set:
 - `latest`
 - `sha-<commit>`
 
-For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.6.2` instead of `latest`.
+For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.6.3` instead of `latest`.
 
 To run the production Compose stack from a published image:
 
