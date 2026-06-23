@@ -499,7 +499,7 @@ Each provider receives the same tag set:
 - `latest`
 - `sha-<commit>`
 
-For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.6.3` instead of `latest`.
+For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.6.4` instead of `latest`.
 
 To run the production Compose stack from a published image:
 

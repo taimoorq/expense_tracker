@@ -1,4 +1,12 @@
 releases:
+  - version: "0.6.4"
+    released_on: "2026-06-17"
+    title: "Month-aware entry date edits"
+    summary: "This release keeps edited budget entries aligned with the month they belong to when their date changes."
+    changes:
+      - "Moves an edited entry into the matching budget month when the new date falls in another month that already exists."
+      - "Blocks an edited entry date outside the current month when that destination month has not been created yet, with a clear message to create the month first or choose an in-month date."
+      - "Redirects moved entries to the destination month's Plan and Edit view so the updated item is shown where users expect it."
   - version: "0.6.3"
     released_on: "2026-06-16"
     title: "Authentication rate limiting"

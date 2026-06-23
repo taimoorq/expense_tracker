@@ -50,6 +50,23 @@ RSpec.describe "Expense entries turbo responses", type: :request do
     expect(response.body).to include("Entry updated.")
   end
 
+  it "redirects to the destination month when an edited date moves the entry" do
+    next_month = create(:budget_month, user: user, month_on: Date.new(2026, 4, 1), label: "April 2026")
+    entry = create(:expense_entry, budget_month: budget_month, user: user, occurred_on: Date.new(2026, 3, 20))
+
+    patch budget_month_expense_entry_path(budget_month, entry),
+      params: {
+        expense_entry: {
+          occurred_on: "2026-04-03"
+        }
+      },
+      headers: turbo_headers
+
+    expect(response).to have_http_status(:see_other)
+    expect(response).to redirect_to(budget_month_tab_path(next_month, "entries"))
+    expect(entry.reload.budget_month).to eq(next_month)
+  end
+
   it "returns turbo stream updates when editing a generated template" do
     schedule = create(:pay_schedule, user: user, name: "Acme Payroll", amount: 2500, cadence: :monthly, first_pay_on: Date.new(2026, 1, 15), day_of_month_one: 15)
     entry = create(:expense_entry, budget_month: budget_month, user: user, payee: schedule.name, source_file: "pay_schedule", section: :income, source_template: schedule)

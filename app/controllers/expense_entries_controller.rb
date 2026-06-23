@@ -26,6 +26,8 @@ class ExpenseEntriesController < ApplicationController
 
   def update
     if ExpenseEntries::Updater.call(expense_entry: @expense_entry, params: expense_entry_params, mark_as_paid: params[:mark_as_paid] == "1")
+      return redirect_to_moved_entry_month if @expense_entry.budget_month_id != @budget_month.id
+
       prepare_month_refresh_state(@budget_month, timeline_view: current_timeline_view)
 
       respond_to do |format|
@@ -86,4 +88,14 @@ class ExpenseEntriesController < ApplicationController
   end
 
   private
+
+  def redirect_to_moved_entry_month
+    moved_budget_month = @expense_entry.budget_month
+    message = "Entry moved to #{moved_budget_month.label}."
+
+    respond_to do |format|
+      format.turbo_stream { redirect_to budget_month_tab_path(moved_budget_month, "entries"), notice: message, status: :see_other }
+      format.html { redirect_to budget_month_tab_path(moved_budget_month, "entries"), notice: message, status: :see_other }
+    end
+  end
 end

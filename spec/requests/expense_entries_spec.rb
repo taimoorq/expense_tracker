@@ -144,7 +144,7 @@ RSpec.describe "Expense entries", type: :request do
     end.not_to change(budget_month.expense_entries, :count)
 
     expect(user.payment_plans.count).to eq(0)
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "updates an entry in the signed in user's month" do
@@ -157,6 +157,39 @@ RSpec.describe "Expense entries", type: :request do
     expect(response).to redirect_to(budget_month_path(budget_month))
     expect(entry.reload.payee).to eq("New Payee")
     expect(entry.status).to eq("paid")
+  end
+
+  it "moves an entry to the budget month matching its edited date" do
+    next_month = create(:budget_month, user: user, month_on: Date.new(2026, 4, 1), label: "April 2026")
+    entry = create(:expense_entry, budget_month: budget_month, user: user, occurred_on: Date.new(2026, 3, 20), payee: "Power Co")
+
+    expect do
+      patch budget_month_expense_entry_path(budget_month, entry), params: {
+        expense_entry: { occurred_on: "2026-04-03" }
+      }
+    end.to change { budget_month.expense_entries.reload.count }.by(-1)
+      .and change { next_month.expense_entries.reload.count }.by(1)
+
+    expect(response).to redirect_to(budget_month_tab_path(next_month, "entries"))
+    expect(flash[:notice]).to eq("Entry moved to April 2026.")
+    expect(entry.reload.budget_month).to eq(next_month)
+    expect(entry.occurred_on).to eq(Date.new(2026, 4, 3))
+  end
+
+  it "rejects an edited date outside the month when that budget month does not exist" do
+    entry = create(:expense_entry, budget_month: budget_month, user: user, occurred_on: Date.new(2026, 3, 20))
+
+    patch budget_month_expense_entry_path(budget_month, entry),
+      params: {
+        expense_entry: { occurred_on: "2026-04-03" }
+      },
+      headers: { "ACCEPT" => Mime[:turbo_stream].to_s }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect(response.body).to include("Create April 2026 first")
+    expect(entry.reload.budget_month).to eq(budget_month)
+    expect(entry.occurred_on).to eq(Date.new(2026, 3, 20))
   end
 
   it "updates an entry with a linked source account" do
