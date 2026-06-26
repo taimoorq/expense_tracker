@@ -51,6 +51,37 @@ module ExpenseEntriesResponses
     end
   end
 
+  def render_entry_update_success
+    return redirect_to_moved_entry_month if @expense_entry.budget_month_id != @budget_month.id
+
+    prepare_month_refresh_state(@budget_month, timeline_view: current_timeline_view)
+
+    respond_to do |format|
+      format.turbo_stream { render_month_page_refresh(message: "Entry updated.", reset_entry_editor_modal: true) }
+      format.html { redirect_to @budget_month, notice: "Entry updated." }
+    end
+  end
+
+  def create_expense_entry
+    ExpenseEntries::Creator.call(
+      user: current_user,
+      budget_month: @budget_month,
+      expense_entry_params: expense_entry_params,
+      planning_template_params: planning_template_params,
+      recurring_link_token: params[:recurring_link]
+    )
+  end
+
+  def render_expense_entry_create_success(result)
+    prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new, timeline_view: current_timeline_view)
+    render_entry_create_success(result.message)
+  end
+
+  def render_expense_entry_create_failure
+    @expense_entries = preload_month_expense_entries(@budget_month.expense_entries.chronological)
+    render_entry_create_failure(@expense_entry)
+  end
+
   def render_entry_create_success(message)
     respond_to do |format|
       format.turbo_stream do
@@ -119,6 +150,16 @@ module ExpenseEntriesResponses
         render partial: "expense_entries/template_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: template_record }, status: :unprocessable_entity
       end
       format.html { redirect_to @budget_month, alert: template_record.errors.full_messages.join(", ") }
+    end
+  end
+
+  def redirect_to_moved_entry_month
+    moved_budget_month = @expense_entry.budget_month
+    message = "Entry moved to #{moved_budget_month.label}."
+
+    respond_to do |format|
+      format.turbo_stream { redirect_to budget_month_tab_path(moved_budget_month, "entries"), notice: message, status: :see_other }
+      format.html { redirect_to budget_month_tab_path(moved_budget_month, "entries"), notice: message, status: :see_other }
     end
   end
 

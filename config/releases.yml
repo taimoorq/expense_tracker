@@ -1,4 +1,12 @@
 releases:
+  - version: "0.6.5"
+    released_on: "2026-06-26"
+    title: "RailsForge health cleanup"
+    summary: "This release clears the RailsForge doctor findings and tightens a clone-month edge case before check-in."
+    changes:
+      - "Eager-loads recurring template account links so the Recurring Transactions page no longer triggers the flagged N+1 query pattern."
+      - "Splits several long controller and model methods into smaller, named helpers and concerns while preserving the existing page behavior."
+      - "Allows clone-month requests without explicit month fields so the clone workflow can create the next available month cleanly."
   - version: "0.6.4"
     released_on: "2026-06-17"
     title: "Month-aware entry date edits"

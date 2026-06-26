@@ -1,5 +1,6 @@
 class SettingsController < ApplicationController
-  def show; end
+  def show
+  end
 
   def update
     if current_user.update(settings_params)

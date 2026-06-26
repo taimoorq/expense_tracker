@@ -61,6 +61,6 @@ class BudgetMonthsController < ApplicationController
   private
 
   def budget_month_params
-    params.require(:budget_month).permit(:label, :month_on, :leftover, :notes)
+    params.fetch(:budget_month, ActionController::Parameters.new).permit(:label, :month_on, :leftover, :notes)
   end
 end

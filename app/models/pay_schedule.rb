@@ -37,26 +37,7 @@ class PaySchedule < ApplicationRecord
   def pay_dates_for_month(month_on)
     month_start = month_on.beginning_of_month
     month_end = month_on.end_of_month
-
-    dates = case cadence
-    when "monthly"
-      [ safe_month_date(month_start, day_of_month_one || first_pay_on.day) ]
-    when "semimonthly"
-      first_day = day_of_month_one || first_pay_on.day
-      second_day = day_of_month_two || 22
-      [
-        safe_month_date(month_start, first_day),
-        safe_month_date(month_start, second_day)
-      ]
-    when "weekly"
-      recurring_dates(month_start, month_end, 7)
-    when "biweekly"
-      recurring_dates(month_start, month_end, 14)
-    else
-      []
-    end
-
-    dates.compact.map { |date| adjust_for_weekend(date) }.uniq.sort
+    dates_for_cadence(month_start, month_end).compact.map { |date| adjust_for_weekend(date) }.uniq.sort
   end
 
   def matches_entry?(entry, month_on:)
@@ -68,6 +49,31 @@ class PaySchedule < ApplicationRecord
   end
 
   private
+
+  def dates_for_cadence(month_start, month_end)
+    case cadence
+    when "monthly"
+      [ safe_month_date(month_start, day_of_month_one || first_pay_on.day) ]
+    when "semimonthly"
+      semimonthly_dates(month_start)
+    when "weekly"
+      recurring_dates(month_start, month_end, 7)
+    when "biweekly"
+      recurring_dates(month_start, month_end, 14)
+    else
+      []
+    end
+  end
+
+  def semimonthly_dates(month_start)
+    first_day = day_of_month_one || first_pay_on.day
+    second_day = day_of_month_two || 22
+
+    [
+      safe_month_date(month_start, first_day),
+      safe_month_date(month_start, second_day)
+    ]
+  end
 
   def generated_entry_amount(month_on:, occurred_on:)
     amount

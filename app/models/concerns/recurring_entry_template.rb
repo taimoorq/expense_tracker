@@ -2,7 +2,7 @@ module RecurringEntryTemplate
   extend ActiveSupport::Concern
 
   def recurring_source_file
-    self.class.template_source_file
+    template_source_file
   end
 
   def matches_entry_for_month?(entry, month_on:)
@@ -17,7 +17,7 @@ module RecurringEntryTemplate
   end
 
   def recurring_month_occurrences(_month_on)
-    raise NotImplementedError, "#{self.class.name} must implement #recurring_month_occurrences"
+    raise NotImplementedError, "#{model_name.name} must implement #recurring_month_occurrences"
   end
 
   def generated_entry_exists?(budget_month, occurred_on)
@@ -33,8 +33,7 @@ module RecurringEntryTemplate
       category: generated_entry_category,
       payee: name,
       planned_amount: generated_entry_amount(month_on: month_on, occurred_on: occurred_on),
-      actual_amount: nil,
-      account: account_name,
+      actual_amount: nil, account: account_name,
       status: :planned,
       need_or_want: "Need",
       notes: generated_entry_notes(month_on: month_on, occurred_on: occurred_on),
@@ -46,15 +45,15 @@ module RecurringEntryTemplate
   private
 
   def generated_entry_amount(month_on:, occurred_on:)
-    raise NotImplementedError, "#{self.class.name} must implement #generated_entry_amount"
+    raise NotImplementedError, "#{model_name.name} must implement #generated_entry_amount"
   end
 
   def generated_entry_section
-    raise NotImplementedError, "#{self.class.name} must implement #generated_entry_section"
+    raise NotImplementedError, "#{model_name.name} must implement #generated_entry_section"
   end
 
   def generated_entry_category
-    raise NotImplementedError, "#{self.class.name} must implement #generated_entry_category"
+    raise NotImplementedError, "#{model_name.name} must implement #generated_entry_category"
   end
 
   def generated_entry_notes(month_on:, occurred_on:)

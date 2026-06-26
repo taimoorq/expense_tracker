@@ -37,17 +37,8 @@ class AccountsController < ApplicationController
   end
 
   def create
-    result = Accounts::Creator.call(
-      user: current_user,
-      account_params: account_params,
-      initial_snapshot_params: initial_snapshot_params,
-      credit_card_payment_schedule_params: credit_card_payment_schedule_params
-    )
-
-    @account = result.account
-    @initial_snapshot = result.initial_snapshot || @account.account_snapshots.new(recorded_on: Date.current)
-    @credit_card_payment_schedule = result.credit_card_payment_schedule || build_credit_card_payment_schedule_form(@account)
-    @credit_card_payment_schedule_enabled = @account.credit_card? && ActiveModel::Type::Boolean.new.cast(credit_card_payment_schedule_params[:enabled])
+    result = create_account
+    assign_account_creation_result(result)
 
     if result.success?
       redirect_to @account, notice: result.notice
@@ -71,6 +62,26 @@ class AccountsController < ApplicationController
   end
 
   private
+
+  def create_account
+    Accounts::Creator.call(
+      user: current_user,
+      account_params: account_params,
+      initial_snapshot_params: initial_snapshot_params,
+      credit_card_payment_schedule_params: credit_card_payment_schedule_params
+    )
+  end
+
+  def assign_account_creation_result(result)
+    @account = result.account
+    @initial_snapshot = result.initial_snapshot || @account.account_snapshots.new(recorded_on: Date.current)
+    @credit_card_payment_schedule = result.credit_card_payment_schedule || build_credit_card_payment_schedule_form(@account)
+    @credit_card_payment_schedule_enabled = credit_card_payment_schedule_enabled?
+  end
+
+  def credit_card_payment_schedule_enabled?
+    @account.credit_card? && ActiveModel::Type::Boolean.new.cast(credit_card_payment_schedule_params[:enabled])
+  end
 
   def account_params
     params.require(:account).permit(:name, :institution_name, :kind, :active, :include_in_net_worth, :include_in_cash, :notes)

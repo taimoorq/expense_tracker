@@ -30,30 +30,35 @@ module Admin
       previous_state = @user.access_state
 
       if previous_state == to.to_s
-        set_admin_audit_context(
-          action: audit_action,
-          target_user: @user,
-          metadata: transition_audit_metadata(previous_state: previous_state, current_state: @user.access_state)
-        )
-
-        redirect_to admin_user_path(@user), notice: notice
+        audit_user_access_transition(audit_action, previous_state)
+        redirect_to_user_access_transition(notice)
         return
       end
 
       @user.access_state = to
+      save_user_access_transition(audit_action, previous_state, notice)
+    end
 
+    def save_user_access_transition(audit_action, previous_state, notice)
       if @user.save
-        set_admin_audit_context(
-          action: audit_action,
-          target_user: @user,
-          metadata: transition_audit_metadata(previous_state: previous_state, current_state: @user.access_state)
-        )
-
-        redirect_to admin_user_path(@user), notice: notice
+        audit_user_access_transition(audit_action, previous_state)
+        redirect_to_user_access_transition(notice)
       else
         set_admin_audit_context(action: "#{audit_action}.failed", target_user: @user)
         render :show, status: :unprocessable_entity
       end
+    end
+
+    def audit_user_access_transition(audit_action, previous_state)
+      set_admin_audit_context(
+        action: audit_action,
+        target_user: @user,
+        metadata: transition_audit_metadata(previous_state: previous_state, current_state: @user.access_state)
+      )
+    end
+
+    def redirect_to_user_access_transition(notice)
+      redirect_to admin_user_path(@user), notice: notice
     end
 
     def transition_audit_metadata(previous_state:, current_state:)

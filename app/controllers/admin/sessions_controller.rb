@@ -10,40 +10,35 @@ module Admin
     def create
       return render_turnstile_failure unless turnstile_verified?
 
-      super do |admin_user|
-        AdminAuditLog.create!(
-          admin_user: admin_user,
-          action: "admin.session.sign_in",
-          metadata: {
-            request_method: request.request_method,
-            path: request.fullpath
-          },
-          ip_address: request.remote_ip,
-          user_agent: request.user_agent
-        )
-      end
+      super { |admin_user| audit_admin_session(admin_user, "admin.session.sign_in") }
     end
 
     def destroy
-      admin_user = current_admin_user
-
-      if admin_user
-        AdminAuditLog.create!(
-          admin_user: admin_user,
-          action: "admin.session.sign_out",
-          metadata: {
-            request_method: request.request_method,
-            path: request.fullpath
-          },
-          ip_address: request.remote_ip,
-          user_agent: request.user_agent
-        )
-      end
+      audit_admin_session(current_admin_user, "admin.session.sign_out")
 
       super
     end
 
     private
+
+    def audit_admin_session(admin_user, action)
+      return if admin_user.blank?
+
+      AdminAuditLog.create!(
+        admin_user: admin_user,
+        action: action,
+        metadata: audit_request_metadata,
+        ip_address: request.remote_ip,
+        user_agent: request.user_agent
+      )
+    end
+
+    def audit_request_metadata
+      {
+        request_method: request.request_method,
+        path: request.fullpath
+      }
+    end
 
     def rate_limit_resource_params
       sign_in_params
