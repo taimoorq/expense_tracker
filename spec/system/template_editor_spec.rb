@@ -122,6 +122,7 @@ RSpec.describe "Template editor", type: :system do
     fill_in "Employer / Source", with: "Acme Payroll"
     fill_in "pay_schedule_amount", with: "2500"
     fill_in "First Pay On", with: "2026-01-15"
+    fill_in "pay_schedule_ends_on", with: "2026-12-31"
     fill_in "Day #1", with: "15"
 
     expect do
@@ -132,6 +133,9 @@ RSpec.describe "Template editor", type: :system do
     within("turbo-frame#pay_schedules_section") do
       expect(page).to have_content("Acme Payroll")
       expect(page).to have_content("$2,500.00")
+      expect(page).to have_content("Ends Dec 31, 2026")
     end
+
+    expect(user.pay_schedules.find_by!(name: "Acme Payroll").ends_on).to eq(Date.new(2026, 12, 31))
   end
 end

@@ -51,7 +51,7 @@ module Accounts
     end
 
     def linked_entries_net
-      @linked_entries_net ||= linked_entries.sum { |entry| account.account_delta_for(entry) }
+      @linked_entries_net ||= linked_entries.sum { |entry| Accounts::EntryImpact.new(account: account, entry: entry).delta }
     end
 
     def connected_templates

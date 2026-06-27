@@ -147,6 +147,86 @@ RSpec.describe "Expense entries", type: :request do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
+  it "rejects wizard recurring template types that are not exposed by the server contract" do
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        expense_entry: {
+          occurred_on: "2026-03-21",
+          section: "fixed",
+          category: "Credit Card",
+          payee: "Rewards Visa",
+          planned_amount: "125.00",
+          account: "Checking",
+          status: "planned"
+        },
+        planning_template: {
+          enabled: "1",
+          template_type: "credit_card",
+          due_day: "21"
+        }
+      }
+    end.not_to change { budget_month.expense_entries.reload.count }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Recurring: choose what should repeat.")
+  end
+
+  it "rejects wizard recurring template types that are unsupported for the entry section" do
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        expense_entry: {
+          occurred_on: "2026-03-15",
+          section: "income",
+          category: "Paycheck",
+          payee: "Acme Payroll",
+          planned_amount: "3000.00",
+          account: "Checking",
+          status: "planned"
+        },
+        planning_template: {
+          enabled: "1",
+          template_type: "subscription",
+          due_day: "15"
+        }
+      }
+    end.not_to change { budget_month.expense_entries.reload.count }
+
+    expect(user.subscriptions.reload.count).to eq(0)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Recurring: Subscription is not available for income entries.")
+  end
+
+  it "rejects wizard monthly bill billing months that do not match the selected frequency" do
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        expense_entry: {
+          occurred_on: "2026-03-12",
+          section: "fixed",
+          category: "Utilities",
+          payee: "Water District",
+          planned_amount: "80.00",
+          account: "Checking",
+          status: "planned"
+        },
+        planning_template: {
+          enabled: "1",
+          template_type: "monthly_bill",
+          due_day: "12",
+          kind: "fixed_payment",
+          billing_frequency: "quarterly",
+          billing_months: [ "1", "7" ]
+        }
+      }
+    end.not_to change { budget_month.expense_entries.reload.count }
+
+    expect(user.monthly_bills.reload.count).to eq(0)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Recurring: Billing months must include 4 months for quarterly")
+  end
+
   it "updates an entry in the signed in user's month" do
     entry = create(:expense_entry, budget_month: budget_month, user: user, payee: "Old Payee")
 

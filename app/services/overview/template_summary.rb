@@ -77,7 +77,7 @@ module Overview
     def templates_for_type(template_type)
       case template_type
       when :pay_schedules
-        user.pay_schedules.active_only.to_a
+        user.pay_schedules.active_during_month(current_month.month_on).to_a
       when :subscriptions
         user.subscriptions.active_only.to_a
       when :monthly_bills

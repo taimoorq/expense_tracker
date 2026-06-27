@@ -27,4 +27,23 @@ RSpec.describe "CSV imports", type: :request do
     file.close
     file.unlink
   end
+
+  it "surfaces import warnings in the completion flash" do
+    file = Tempfile.new([ "budget-import-warning", ".csv" ])
+    file.write(<<~CSV)
+      Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Account,Status,Need or Want,Notes
+      2026-03,not-a-date,fixed,Utilities,Pepco,91.22,,Checking,planned,Need,Imported row
+    CSV
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "text/csv", original_filename: "import.csv")
+
+    post import_csv_path, params: { file: upload }
+
+    expect(response).to redirect_to(budget_months_path)
+    expect(flash[:notice]).to include("1 import warning")
+  ensure
+    file.close
+    file.unlink
+  end
 end

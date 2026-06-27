@@ -350,19 +350,58 @@ module ApplicationHelper
     PaySchedule.cadences.keys.map { |key| [ key.humanize, key ] }
   end
 
+  def pay_schedule_status_label(schedule)
+    case schedule.lifecycle_status
+    when :disabled
+      "Disabled"
+    when :upcoming
+      "Starts #{pay_schedule_date_label(schedule.first_pay_on)}"
+    when :ended
+      "Ended #{pay_schedule_date_label(schedule.ends_on)}"
+    when :ending
+      "Ends #{pay_schedule_date_label(schedule.ends_on)}"
+    else
+      "Current"
+    end
+  end
+
+  def pay_schedule_status_classes(schedule)
+    case schedule.lifecycle_status
+    when :current
+      "bg-emerald-100 text-emerald-800"
+    when :ending
+      "bg-amber-100 text-amber-800"
+    when :upcoming
+      "bg-sky-100 text-sky-800"
+    when :ended
+      "bg-slate-100 text-slate-600"
+    else
+      "bg-rose-100 text-rose-700"
+    end
+  end
+
+  def pay_schedule_timeline_label(schedule)
+    [
+      "Starts #{pay_schedule_date_label(schedule.first_pay_on)}",
+      schedule.ends_on.present? ? "Ends #{pay_schedule_date_label(schedule.ends_on)}" : "No end date"
+    ].join(" / ")
+  end
+
   def monthly_bill_kind_options
     MonthlyBill.kinds.keys.map { |key| [ key.humanize, key ] }
   end
 
-  def recurring_link_options(user = current_user)
+  def recurring_link_options(user = current_user, month_on: nil)
     return [] if user.blank?
+
+    pay_schedules = month_on.present? ? user.pay_schedules.active_during_month(month_on) : user.pay_schedules.active_only
 
     [
       [ "Credit Cards", user.credit_cards.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
       [ "Monthly Bills", user.monthly_bills.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
       [ "Payment Plans", user.payment_plans.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
       [ "Subscriptions", user.subscriptions.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ],
-      [ "Pay Schedules", user.pay_schedules.active_only.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ]
+      [ "Pay Schedules", pay_schedules.map { |record| [ recurring_link_label(record), recurring_link_value(record) ] } ]
     ].reject { |_group, options| options.empty? }
   end
 
@@ -551,7 +590,7 @@ module ApplicationHelper
   def templates_for_type(budget_month, template_type)
     case template_type
     when :pay_schedules
-      budget_month.user.pay_schedules.active_only.to_a
+      budget_month.user.pay_schedules.active_during_month(budget_month.month_on).to_a
     when :subscriptions
       budget_month.user.subscriptions.active_only.to_a
     when :monthly_bills
@@ -567,6 +606,10 @@ module ApplicationHelper
 
   def template_matches_entry?(template, entry, month_on)
     template.matches_entry_for_month?(entry, month_on: month_on)
+  end
+
+  def pay_schedule_date_label(date)
+    date&.strftime("%b %-d, %Y") || "not set"
   end
 
   def app_icon_partial_path(name)

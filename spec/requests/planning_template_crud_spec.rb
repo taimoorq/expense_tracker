@@ -76,6 +76,7 @@ RSpec.describe "Planning template CRUD", type: :request do
         cadence: "monthly",
         amount: "2500.00",
         first_pay_on: "2026-01-15",
+        ends_on: "2026-12-31",
         day_of_month_one: 15,
         linked_account_id: create(:account, user: user, name: "Checking").id,
         account: "Checking",
@@ -87,6 +88,7 @@ RSpec.describe "Planning template CRUD", type: :request do
         name: "Updated Payroll",
         linked_account_id: create(:account, user: user, name: "Savings").id,
         account: "Savings",
+        ends_on: "2027-12-31",
         day_of_month_two: 25
       }
     },

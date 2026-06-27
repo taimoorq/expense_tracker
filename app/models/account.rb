@@ -61,17 +61,6 @@ class Account < ApplicationRecord
   end
 
   def account_delta_for(entry)
-    amount = entry.effective_amount.to_d
-    delta = 0.to_d
-
-    if entry.source_account_id == id
-      delta += entry.income? ? amount : -amount
-    end
-
-    if entry.destination_account_id == id
-      delta += amount
-    end
-
-    delta
+    Accounts::EntryImpact.new(account: self, entry: entry).delta
   end
 end

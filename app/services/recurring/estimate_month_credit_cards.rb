@@ -14,40 +14,42 @@ module Recurring
     def call
       return 0 if @cards.empty?
 
-      remove_existing_estimates
-      @available_cash = calculated_available_cash
-      allocations = allocate(@available_cash)
-      @created_count = 0
+      @budget_month.with_lock do
+        remove_existing_estimates
+        @available_cash = calculated_available_cash
+        allocations = allocate(@available_cash)
+        @created_count = 0
 
-      allocations.each do |card, amount|
-        next if amount <= 0
+        allocations.each do |card, amount|
+          next if amount <= 0
 
-        @budget_month.expense_entries.create!(
-          occurred_on: estimated_due_date_for(card),
-          section: :debt,
-          category: "Credit Card",
-          payee: card.name,
-          planned_amount: amount.round(2),
-          actual_amount: nil,
-          account: card.account_name,
-          status: :planned,
-          need_or_want: "Need",
-          notes: "Estimated from leftover cash",
-          source_file: CreditCard.template_source_file,
-          source_template: card
-        )
-        @created_count += 1
+          @budget_month.expense_entries.create!(
+            occurred_on: estimated_due_date_for(card),
+            section: :debt,
+            category: "Credit Card",
+            payee: card.name,
+            planned_amount: amount.round(2),
+            actual_amount: nil,
+            account: card.account_name,
+            status: :planned,
+            need_or_want: "Need",
+            notes: "Estimated from leftover cash",
+            source_file: CreditCard.template_source_file,
+            source_template: card
+          )
+          @created_count += 1
+        end
+
+        @skipped_count = @cards.count - @created_count
+        @created_count
       end
-
-      @skipped_count = @cards.count - @created_count
-      @created_count
     end
 
     private
 
     def calculated_available_cash
       non_card_outflow = @budget_month.expense_entries.reject do |entry|
-        entry.section == "income" || entry.source_file == "credit_card_estimate"
+        entry.section == "income" || replaceable_estimate?(entry)
       end.sum(&:effective_amount)
 
       [ @budget_month.income_total - non_card_outflow, 0 ].max
@@ -70,7 +72,14 @@ module Recurring
     end
 
     def remove_existing_estimates
-      @budget_month.expense_entries.where(source_file: CreditCard.template_source_file).delete_all
+      @budget_month.expense_entries.where(
+        source_file: CreditCard.template_source_file,
+        status: ExpenseEntry.statuses[:planned]
+      ).delete_all
+    end
+
+    def replaceable_estimate?(entry)
+      entry.source_file == CreditCard.template_source_file && entry.planned?
     end
 
     def estimated_due_date_for(card)

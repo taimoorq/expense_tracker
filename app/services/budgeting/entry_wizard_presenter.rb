@@ -26,6 +26,10 @@ module Budgeting
       @template_params[:day_of_month_one].presence || expense_entry.occurred_on&.day
     end
 
+    def selected_ends_on
+      @template_params[:ends_on]
+    end
+
     def selected_day_of_month_two
       @template_params[:day_of_month_two]
     end
@@ -70,6 +74,24 @@ module Budgeting
         [ "Choose what should repeat", "" ],
         *Recurring::TemplateCatalog.wizard_template_types.map { |type| [ recurring_template_type_label(type), type ] }
       ]
+    end
+
+    def supported_template_types_by_section
+      @supported_template_types_by_section ||= begin
+        supported = ExpenseEntry.sections.keys.index_with { [] }
+
+        Recurring::TemplateCatalog.wizard_models.each do |model|
+          model.template_wizard_sections.each do |section|
+            supported[section] << model.template_type_key.to_s
+          end
+        end
+
+        supported
+      end
+    end
+
+    def billing_month_counts_by_frequency
+      MonthlyBill::BILLING_MONTHS_BY_FREQUENCY.transform_values(&:count)
     end
 
     def cadence_options

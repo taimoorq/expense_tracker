@@ -1,6 +1,8 @@
 module RecurringEntryTemplate
   extend ActiveSupport::Concern
 
+  GENERATED_ENTRY_KEY_VERSION = "recurring:v1".freeze
+
   def recurring_source_file
     template_source_file
   end
@@ -21,13 +23,29 @@ module RecurringEntryTemplate
   end
 
   def generated_entry_exists?(budget_month, occurred_on)
+    key = generated_entry_key(month_on: budget_month.month_on, occurred_on: occurred_on)
+    return true if key.present? && budget_month.expense_entries.exists?(generated_entry_key: key)
+
     budget_month.expense_entries.any? do |entry|
       matches_entry_for_month?(entry, month_on: budget_month.month_on) && entry.occurred_on == occurred_on
     end
   end
 
+  def generated_entry_key(month_on:, occurred_on:)
+    return nil if id.blank? || month_on.blank? || occurred_on.blank?
+
+    [
+      GENERATED_ENTRY_KEY_VERSION,
+      self.class.name,
+      id,
+      month_on.to_date.beginning_of_month.iso8601,
+      occurred_on.to_date.iso8601
+    ].join(":")
+  end
+
   def build_generated_entry_attributes(month_on:, occurred_on:)
     {
+      generated_entry_key: generated_entry_key(month_on: month_on, occurred_on: occurred_on),
       occurred_on: occurred_on,
       section: generated_entry_section,
       category: generated_entry_category,

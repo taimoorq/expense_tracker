@@ -5,6 +5,7 @@ FactoryBot.define do
     cadence { :monthly }
     amount { 2500 }
     first_pay_on { Date.new(2026, 3, 1) }
+    ends_on { nil }
     day_of_month_one { 15 }
     weekend_adjustment { :no_adjustment }
     account { "Checking" }

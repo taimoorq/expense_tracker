@@ -8,7 +8,7 @@ RSpec.describe "Backup & restore", type: :request do
   it "exports the selected scopes as versioned JSON" do
     checking = create(:account, user: user, name: "Checking")
     visa_account = create(:account, user: user, name: "Visa Account", kind: :credit_card)
-    create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
+    create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking", ends_on: Date.new(2026, 12, 31))
     create(:subscription, user: user, name: "Netflix", linked_account: checking, account: "Legacy Card")
     create(:monthly_bill, user: user, name: "Power", linked_account: checking, account: "Legacy Card", notes: "Electric utility", billing_frequency: :semiannual, billing_months: [ 1, 7 ])
     create(:payment_plan, user: user, name: "Tax Plan", linked_account: checking, account: "Legacy Card", notes: "IRS installment")
@@ -31,6 +31,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.fetch("data")).to have_key("accounts")
     expect(payload.fetch("data")).not_to have_key("budget_months")
     expect(payload.dig("data", "planning_templates", "pay_schedules", 0, "account")).to eq("Checking")
+    expect(payload.dig("data", "planning_templates", "pay_schedules", 0, "ends_on")).to eq("2026-12-31")
     expect(payload.dig("data", "planning_templates", "subscriptions", 0, "account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "account")).to eq("Checking")
     expect(payload.dig("data", "planning_templates", "payment_plans", 0, "account")).to eq("Checking")

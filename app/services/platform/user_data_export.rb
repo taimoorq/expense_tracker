@@ -67,6 +67,7 @@ module Platform
             cadence: record.cadence,
             amount: decimal_string(record.amount),
             first_pay_on: record.first_pay_on&.to_s,
+            ends_on: record.ends_on&.to_s,
             day_of_month_one: record.day_of_month_one,
             day_of_month_two: record.day_of_month_two,
             weekend_adjustment: record.weekend_adjustment,

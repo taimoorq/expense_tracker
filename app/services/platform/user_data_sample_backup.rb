@@ -25,6 +25,7 @@ module Platform
                 cadence: "biweekly",
                 amount: "2450.00",
                 first_pay_on: "2026-01-09",
+                ends_on: nil,
                 day_of_month_one: 9,
                 day_of_month_two: 23,
                 weekend_adjustment: "previous_friday",

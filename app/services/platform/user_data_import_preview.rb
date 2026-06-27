@@ -3,86 +3,32 @@ module Platform
     SCOPES = Platform::UserDataExport::SCOPES
 
     def initialize(payload:, scopes:)
-      @payload = payload.deep_symbolize_keys
+      @payload = payload.to_h.deep_symbolize_keys
       @scopes = Array(scopes).map(&:to_s) & SCOPES
     end
 
     def call
-      return failure("Choose at least one section to import.") if scopes.empty?
+      adapter = adapter_for_payload
+      return adapter if adapter.is_a?(Hash)
 
-      data = payload.fetch(:data, {})
-      missing_scope = scopes.find { |scope| required_scope?(scope) && !data.key?(scope.to_sym) }
-      return failure("The backup file does not include #{missing_scope.humanize.downcase}.") if missing_scope
-
-      {
-        success: true,
-        summary: {
-          sample_backup: payload[:sample_backup] == true,
-          sample_notice: payload[:sample_notice],
-          exported_at: payload[:exported_at],
-          file_scopes: Array(payload[:scopes]),
-          selected_scopes: scopes,
-          planning_templates: planning_template_summary(data[:planning_templates]),
-          budget_months: budget_month_summary(data[:budget_months]),
-          accounts: account_summary(data[:accounts]),
-          preferences: preference_summary(data[:preferences])
-        }
-      }
+      adapter.call
     end
 
     private
 
     attr_reader :payload, :scopes
 
-    def required_scope?(scope)
-      scope != "preferences"
-    end
+    def adapter_for_payload
+      unless payload[:format] == Platform::UserDataExport::FORMAT_NAME
+        return failure("This file is not a supported Expense Tracker backup.")
+      end
 
-    def planning_template_summary(data)
-      return nil unless scopes.include?("planning_templates")
-
-      template_counts = {
-        pay_schedules: Array(data[:pay_schedules]).size,
-        subscriptions: Array(data[:subscriptions]).size,
-        monthly_bills: Array(data[:monthly_bills]).size,
-        payment_plans: Array(data[:payment_plans]).size,
-        credit_cards: Array(data[:credit_cards]).size
-      }
-
-      {
-        total: template_counts.values.sum,
-        counts: template_counts
-      }
-    end
-
-    def budget_month_summary(data)
-      return nil unless scopes.include?("budget_months")
-
-      months = Array(data)
-      {
-        months: months.size,
-        entries: months.sum { |month| Array(month[:expense_entries]).size }
-      }
-    end
-
-    def account_summary(data)
-      return nil unless scopes.include?("accounts")
-
-      accounts = Array(data)
-      {
-        accounts: accounts.size,
-        snapshots: accounts.sum { |account| Array(account[:account_snapshots]).size }
-      }
-    end
-
-    def preference_summary(data)
-      return nil unless scopes.include?("preferences") && data.present?
-
-      keys = data.to_h.slice(:default_landing_page, :preferred_month_view, :financial_rhythm).keys
-      {
-        preferences: keys.size,
-        keys: keys
-      }
+      case payload[:version].to_i
+      when 1
+        Platform::Backup::V1::Preview.new(payload: payload, scopes: scopes)
+      else
+        failure("This backup version is not supported.")
+      end
     end
 
     def failure(message)

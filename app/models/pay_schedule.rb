@@ -12,7 +12,7 @@ class PaySchedule < ApplicationRecord
     param_key: :pay_schedule,
     recurring_source: true,
     wizard_sections: %w[income],
-    permitted_attributes: [ :name, :cadence, :amount, :first_pay_on, :day_of_month_one, :day_of_month_two, :weekend_adjustment, :linked_account_id, :account, :active ]
+    permitted_attributes: [ :name, :cadence, :amount, :first_pay_on, :ends_on, :day_of_month_one, :day_of_month_two, :weekend_adjustment, :linked_account_id, :account, :active ]
   )
 
   enum :cadence, {
@@ -31,13 +31,27 @@ class PaySchedule < ApplicationRecord
   validates :name, presence: true
   validates :amount, presence: true
   validates :first_pay_on, presence: true
+  validate :ends_on_not_before_first_pay_on
 
-  scope :active_only, -> { where(active: true) }
+  scope :active_only, -> { where(active: true).order(:name) }
+  scope :active_during_month, ->(month_on) {
+    month_start = month_on.to_date.beginning_of_month
+    month_end = month_on.to_date.end_of_month
+
+    active_only
+      .where("first_pay_on <= ?", month_end)
+      .where("ends_on IS NULL OR ends_on >= ?", month_start)
+  }
 
   def pay_dates_for_month(month_on)
     month_start = month_on.beginning_of_month
     month_end = month_on.end_of_month
-    dates_for_cadence(month_start, month_end).compact.map { |date| adjust_for_weekend(date) }.uniq.sort
+    dates_for_cadence(month_start, month_end)
+      .compact
+      .map { |date| adjust_for_weekend(date) }
+      .uniq
+      .select { |date| active_on?(date) }
+      .sort
   end
 
   def matches_entry?(entry, month_on:)
@@ -46,6 +60,25 @@ class PaySchedule < ApplicationRecord
 
   def recurring_month_occurrences(month_on)
     pay_dates_for_month(month_on)
+  end
+
+  def active_on?(date)
+    date = date.to_date
+    return false unless active?
+    return false if first_pay_on.present? && date < first_pay_on
+    return false if ends_on.present? && date > ends_on
+
+    true
+  end
+
+  def lifecycle_status(on: Date.current)
+    date = on.to_date
+    return :disabled unless active?
+    return :upcoming if first_pay_on.present? && first_pay_on > date
+    return :ended if ends_on.present? && ends_on < date
+    return :ending if ends_on.present?
+
+    :current
   end
 
   private
@@ -121,5 +154,12 @@ class PaySchedule < ApplicationRecord
     return date + 1 if date.sunday? && weekend_adjustment == "next_monday"
 
     date
+  end
+
+  def ends_on_not_before_first_pay_on
+    return if ends_on.blank? || first_pay_on.blank?
+    return if ends_on >= first_pay_on
+
+    errors.add(:ends_on, "must be on or after the first pay date")
   end
 end

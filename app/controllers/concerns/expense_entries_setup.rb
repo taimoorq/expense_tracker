@@ -36,6 +36,7 @@ module ExpenseEntriesSetup
       :template_type,
       :due_day,
       :cadence,
+      :ends_on,
       :day_of_month_one,
       :day_of_month_two,
       :weekend_adjustment,

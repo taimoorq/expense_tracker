@@ -17,6 +17,7 @@ class PaySchedulesController < ApplicationController
       :cadence,
       :amount,
       :first_pay_on,
+      :ends_on,
       :day_of_month_one,
       :day_of_month_two,
       :weekend_adjustment,

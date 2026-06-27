@@ -58,4 +58,39 @@ RSpec.describe Budgeting::EntryWizardPresenter do
       expect(presenter.selected_day_of_month_one).to eq(18)
     end
   end
+
+  describe "#supported_template_types_by_section" do
+    it "derives the client template compatibility map from recurring metadata" do
+      presenter = described_class.new(
+        budget_month: build_stubbed(:budget_month),
+        expense_entry: build_stubbed(:expense_entry),
+        params: {},
+        wizard_steps: []
+      )
+
+      expect(presenter.supported_template_types_by_section).to include(
+        "income" => [ "pay_schedule" ],
+        "debt" => [ "payment_plan" ],
+        "fixed" => contain_exactly("subscription", "monthly_bill")
+      )
+    end
+  end
+
+  describe "#billing_month_counts_by_frequency" do
+    it "derives billing month counts from monthly bill frequency rules" do
+      presenter = described_class.new(
+        budget_month: build_stubbed(:budget_month),
+        expense_entry: build_stubbed(:expense_entry),
+        params: {},
+        wizard_steps: []
+      )
+
+      expect(presenter.billing_month_counts_by_frequency).to include(
+        "monthly" => 12,
+        "quarterly" => 4,
+        "semiannual" => 2,
+        "annual" => 1
+      )
+    end
+  end
 end

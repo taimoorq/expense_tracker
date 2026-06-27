@@ -40,6 +40,7 @@ export default class extends Controller {
     "templateDueDay",
     "templateCadence",
     "templateWeekendAdjustment",
+    "templateEndsOn",
     "templateDayOne",
     "templateDayTwo",
     "templateKind",
@@ -53,21 +54,13 @@ export default class extends Controller {
   ]
 
   static values = {
-    supportedTemplateTypes: Object
+    supportedTemplateTypes: Object,
+    billingMonthCounts: Object
   }
 
   connect() {
     this.index = 0
     this.submitting = false
-    this.supportedTemplateTypesValue = {
-      income: ["pay_schedule"],
-      fixed: ["subscription", "monthly_bill"],
-      variable: ["subscription", "monthly_bill"],
-      debt: ["payment_plan"],
-      manual: ["subscription", "monthly_bill", "payment_plan"],
-      auto: ["subscription", "monthly_bill"],
-      other: ["subscription", "monthly_bill"]
-    }
     this.updateTemplateOptions()
     this.updateTemplateFields()
     this.showCurrentStep()
@@ -492,7 +485,8 @@ export default class extends Controller {
       const cadence = this.hasTemplateCadenceTarget ? this.humanize(this.templateCadenceTarget.value) : "Monthly"
       const dayOne = this.hasTemplateDayOneTarget && this.templateDayOneTarget.value ? `Day ${this.templateDayOneTarget.value}` : "first pay date"
       const dayTwo = this.hasTemplateDayTwoTarget && this.templateDayTwoTarget.value ? ` and day ${this.templateDayTwoTarget.value}` : ""
-      return `${templateType} • ${cadence} • ${dayOne}${dayTwo}`
+      const endsOn = this.hasTemplateEndsOnTarget && this.templateEndsOnTarget.value ? `Ends ${this.formatDate(this.templateEndsOnTarget.value)}` : "No end date"
+      return `${templateType} • ${cadence} • ${dayOne}${dayTwo} • ${endsOn}`
     }
 
     if (this.templateTypeTarget.value === "monthly_bill") {
@@ -531,16 +525,24 @@ export default class extends Controller {
   expectedBillingMonthCount() {
     if (!this.hasTemplateBillingFrequencyTarget) return 12
 
-    return {
-      monthly: 12,
-      quarterly: 4,
-      semiannual: 2,
-      annual: 1
-    }[this.templateBillingFrequencyTarget.value] || 12
+    return this.billingMonthCountsValue[this.templateBillingFrequencyTarget.value] || 12
   }
 
   calendarMonthName(month) {
     return new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "long" })
+  }
+
+  formatDate(value) {
+    if (!value) return ""
+
+    const [year, month, day] = value.split("-").map((part) => Number(part))
+    if (!year || !month || !day) return value
+
+    return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    })
   }
 
   templateTypeLabel(value) {

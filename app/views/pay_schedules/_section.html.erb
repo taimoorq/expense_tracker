@@ -13,6 +13,7 @@
 
 Cadence: weekly, biweekly, semimonthly, or monthly.
 First Pay On: anchor date for recurrence.
+Last Pay On: optional final payday.
     Day #1 and Day #2: used for semimonthly schedules.
     Weekend adjustment: move pay date when it falls on weekend."><%= tabler_icon("help", classes: "ta-action-icon") %></button>
     </div>
@@ -73,6 +74,11 @@ First Pay On: anchor date for recurrence.
         <p class="mt-1 text-xs text-slate-500">Use the first known payday to anchor the schedule.</p>
       </div>
       <div>
+        <%= form.label :ends_on, "Last Pay On", class: "fb-label" %>
+        <%= form.date_field :ends_on, class: "fb-input" %>
+        <p class="mt-1 text-xs text-slate-500">Optional final payday. Leave blank if ongoing.</p>
+      </div>
+      <div>
         <%= form.label :day_of_month_one, "Day #1", class: "fb-label" %>
         <%= form.number_field :day_of_month_one, min: 1, max: 31, placeholder: "15", class: "fb-input" %>
         <p class="mt-1 text-xs text-slate-500">Used for semimonthly schedules.</p>
@@ -96,7 +102,7 @@ First Pay On: anchor date for recurrence.
         <%= form.text_field :account, placeholder: "Checking (optional)", class: "fb-input" %>
       </div>
       <div class="flex items-end">
-        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: true, class: "fb-checkbox" %> Active</label>
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :active, checked: pay_schedule.new_record? ? true : pay_schedule.active?, class: "fb-checkbox" %> Active</label>
       </div>
       <div class="flex items-end">
         <% if budget_month %>
@@ -126,11 +132,15 @@ First Pay On: anchor date for recurrence.
             <div>
               <p class="text-sm font-semibold text-slate-900"><%= schedule.name %></p>
               <p class="mt-1 text-xs text-slate-500"><%= schedule.cadence.humanize %> · <%= schedule.weekend_adjustment.humanize %></p>
+              <p class="mt-1 text-xs text-slate-500"><%= pay_schedule_timeline_label(schedule) %></p>
               <% if schedule.account_name.present? %>
                 <p class="mt-1 text-xs text-slate-500">Deposits to <%= schedule.account_name %></p>
               <% end %>
             </div>
-            <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600"><%= number_to_currency(schedule.amount) %></span>
+            <div class="flex flex-col items-end gap-2">
+              <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600"><%= number_to_currency(schedule.amount) %></span>
+              <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold <%= pay_schedule_status_classes(schedule) %>"><%= pay_schedule_status_label(schedule) %></span>
+            </div>
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
             <% if budget_month %>
@@ -160,6 +170,8 @@ First Pay On: anchor date for recurrence.
             <th class="px-3 py-2 text-left font-medium text-slate-600">Name</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Cadence</th>
             <th class="px-3 py-2 text-right font-medium text-slate-600">Amount</th>
+            <th class="px-3 py-2 text-left font-medium text-slate-600">Timeline</th>
+            <th class="px-3 py-2 text-left font-medium text-slate-600">Status</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Weekend Rule</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Account</th>
             <th class="px-3 py-2 text-left font-medium text-slate-600">Action</th>
@@ -171,6 +183,10 @@ First Pay On: anchor date for recurrence.
               <td class="px-3 py-2"><%= schedule.name %></td>
               <td class="px-3 py-2"><%= schedule.cadence.humanize %></td>
               <td class="px-3 py-2 text-right"><%= number_to_currency(schedule.amount) %></td>
+              <td class="px-3 py-2"><%= pay_schedule_timeline_label(schedule) %></td>
+              <td class="px-3 py-2">
+                <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold <%= pay_schedule_status_classes(schedule) %>"><%= pay_schedule_status_label(schedule) %></span>
+              </td>
               <td class="px-3 py-2"><%= schedule.weekend_adjustment.humanize %></td>
               <td class="px-3 py-2"><%= schedule.account_name.presence || "—" %></td>
               <td class="px-3 py-2">

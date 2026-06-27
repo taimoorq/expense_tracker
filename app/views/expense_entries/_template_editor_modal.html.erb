@@ -27,6 +27,7 @@
           <%= form.select :cadence, pay_schedule_cadence_options, {}, class: "fb-select" %>
           <%= form.number_field :amount, step: 0.01, required: true, class: "fb-input" %>
           <%= form.date_field :first_pay_on, required: true, class: "fb-input" %>
+          <%= form.date_field :ends_on, class: "fb-input", placeholder: "Last pay date (optional)" %>
           <%= form.number_field :day_of_month_one, class: "fb-input", placeholder: "Day #1" %>
           <%= form.number_field :day_of_month_two, class: "fb-input", placeholder: "Day #2" %>
           <%= form.select :weekend_adjustment, PaySchedule.weekend_adjustments.keys.map { |key| [key.humanize, key] }, {}, class: "fb-select" %>

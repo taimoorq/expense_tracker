@@ -74,50 +74,33 @@ module Accounts
         month_index = month_index_by_id.fetch(month.id)
 
         entries_by_month_id.fetch(month).each do |entry|
-          amount = entry.effective_amount.to_d
-          next if amount.zero? || entry.skipped?
+          movement_accounts_for(entry).each do |account|
+            impact = Accounts::EntryImpact.new(account: account, entry: entry)
+            movement_type = impact.movement_type
+            next if movement_type.blank?
 
-          classify_credit_card_entry(entry, amount, month_index)
-          classify_bank_entry(entry, amount, month_index)
+            bucket_for(movement_type)[account.name][month_index] += impact.amount
+            add_drilldown(movement_type, account, month_index, impact.amount)
+          end
         end
       end
 
       @classified_entries = true
     end
 
-    def classify_credit_card_entry(entry, amount, month_index)
-      if entry.paid? && entry.source_account&.credit_card? && !entry.income?
-        card_added[entry.source_account.name][month_index] += amount
-        add_drilldown("credit_card_added", entry.source_account, month_index, amount)
-      end
-
-      if entry.destination_account&.credit_card?
-        bucket, movement_type = if entry.paid?
-          [ card_paid, "credit_card_paid" ]
-        elsif entry.planned?
-          [ card_planned_payments, "credit_card_planned" ]
-        end
-
-        if bucket
-          bucket[entry.destination_account.name][month_index] += amount
-          add_drilldown(movement_type, entry.destination_account, month_index, amount)
-        end
-      end
+    def movement_accounts_for(entry)
+      [ entry.source_account, entry.destination_account ].compact.uniq
     end
 
-    def classify_bank_entry(entry, amount, month_index)
-      return unless entry.source_account&.asset?
-
-      if entry.paid? && entry.income?
-        bank_money_in[entry.source_account.name][month_index] += amount
-        add_drilldown("bank_money_in", entry.source_account, month_index, amount)
-      elsif entry.paid?
-        bank_paid_out[entry.source_account.name][month_index] += amount
-        add_drilldown("bank_paid_out", entry.source_account, month_index, amount)
-      elsif entry.planned? && !entry.income?
-        bank_left_to_pay[entry.source_account.name][month_index] += amount
-        add_drilldown("bank_left_to_pay", entry.source_account, month_index, amount)
-      end
+    def bucket_for(movement_type)
+      {
+        "credit_card_added" => card_added,
+        "credit_card_paid" => card_paid,
+        "credit_card_planned" => card_planned_payments,
+        "bank_money_in" => bank_money_in,
+        "bank_paid_out" => bank_paid_out,
+        "bank_left_to_pay" => bank_left_to_pay
+      }.fetch(movement_type)
     end
 
     def credit_card_datasets
@@ -209,14 +192,7 @@ module Accounts
     end
 
     def movement_label(movement_type)
-      {
-        "credit_card_added" => "Added",
-        "credit_card_paid" => "Paid off",
-        "credit_card_planned" => "Planned payment",
-        "bank_money_in" => "Money in",
-        "bank_paid_out" => "Paid out",
-        "bank_left_to_pay" => "Left to pay"
-      }.fetch(movement_type)
+      Accounts::EntryImpact::MOVEMENT_LABELS.fetch(movement_type)
     end
   end
 end

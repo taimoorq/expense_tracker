@@ -24,4 +24,27 @@ RSpec.describe CsvBudgetImporter do
     file.close
     file.unlink
   end
+
+  it "returns row-level warnings for normalized invalid values" do
+    user = create(:user)
+
+    file = Tempfile.new([ "budget-importer-invalid", ".csv" ])
+    file.write(<<~CSV)
+      Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Account,Status,Need or Want,Notes
+      2026-03,not-a-date,fixed,Utilities,Pepco,not-money,,Checking,planned,Need,Importer spec
+    CSV
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "text/csv", original_filename: "budget.csv")
+    result = described_class.new(file: upload, user: user).call
+
+    expect(result).to include(ok: true, months: 1, entries: 1)
+    expect(result[:warnings]).to contain_exactly(
+      "Row 2: Date could not be parsed.",
+      "Row 2: Planned Amount could not be parsed."
+    )
+  ensure
+    file.close
+    file.unlink
+  end
 end

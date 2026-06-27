@@ -1,4 +1,14 @@
 releases:
+  - version: "0.7.0"
+    released_on: "2026-06-27"
+    title: "Robustness audit hardening"
+    summary: "This release strengthens the app's budgeting, recurring-generation, import, backup, and wizard flows so financial data stays easier to trust across repeated use."
+    changes:
+      - "Adds CI coverage for the non-system RSpec suites that protect models, requests, services, and database assumptions."
+      - "Centralizes account movement rules so balances, movement charts, and drilldowns all use the same accounting semantics."
+      - "Adds durable generated-entry identity and database uniqueness for recurring entries, with safer replacement rules for credit card estimates."
+      - "Moves backup import and preview behavior behind versioned adapters so future backup formats can evolve more safely."
+      - "Adds CSV import warnings and server-backed wizard validation coverage for recurring-template edge cases."
   - version: "0.6.5"
     released_on: "2026-06-26"
     title: "RailsForge health cleanup"

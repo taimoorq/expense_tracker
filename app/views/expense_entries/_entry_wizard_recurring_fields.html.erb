@@ -37,6 +37,11 @@
       <label for="planning_template_day_of_month_one" class="fb-label">First pay day</label>
       <%= number_field_tag "planning_template[day_of_month_one]", wizard.selected_day_of_month_one, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_one", data: { entry_wizard_target: "templateDayOne", action: "input->entry-wizard#updateSummary" } %>
     </div>
+    <div>
+      <label for="planning_template_ends_on" class="fb-label">Last pay date</label>
+      <%= date_field_tag "planning_template[ends_on]", wizard.selected_ends_on, class: "fb-input", id: "planning_template_ends_on", data: { entry_wizard_target: "templateEndsOn", action: "input->entry-wizard#updateSummary" } %>
+      <p class="mt-1 text-xs text-slate-500">Optional final payday. Leave blank if ongoing.</p>
+    </div>
     <div class="<%= wizard.selected_cadence == 'semimonthly' ? '' : 'hidden' %>" data-entry-wizard-target="payScheduleSecondDayFields">
       <label for="planning_template_day_of_month_two" class="fb-label">Second pay day</label>
       <%= number_field_tag "planning_template[day_of_month_two]", wizard.selected_day_of_month_two, min: 1, max: 31, class: "fb-input", id: "planning_template_day_of_month_two", data: { entry_wizard_target: "templateDayTwo", action: "input->entry-wizard#updateSummary" } %>

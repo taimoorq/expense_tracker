@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_13_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_213000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -117,6 +117,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_100000) do
     t.string "category"
     t.datetime "created_at", null: false
     t.uuid "destination_account_id"
+    t.string "generated_entry_key"
     t.string "need_or_want"
     t.text "notes"
     t.date "occurred_on"
@@ -134,6 +135,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_100000) do
     t.index ["budget_month_id"], name: "index_expense_entries_on_budget_month_id"
     t.index ["destination_account_id", "occurred_on", "created_at"], name: "index_expense_entries_on_destination_account_recent", order: { occurred_on: :desc, created_at: :desc }, where: "(destination_account_id IS NOT NULL)"
     t.index ["destination_account_id"], name: "index_expense_entries_on_destination_account_id"
+    t.index ["generated_entry_key"], name: "index_expense_entries_on_generated_entry_key_unique", unique: true, where: "(generated_entry_key IS NOT NULL)"
     t.index ["occurred_on"], name: "index_expense_entries_on_occurred_on"
     t.index ["section"], name: "index_expense_entries_on_section"
     t.index ["source_account_id", "occurred_on", "created_at"], name: "index_expense_entries_on_source_account_recent", order: { occurred_on: :desc, created_at: :desc }, where: "(source_account_id IS NOT NULL)"
@@ -173,6 +175,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_100000) do
     t.datetime "created_at", null: false
     t.integer "day_of_month_one"
     t.integer "day_of_month_two"
+    t.date "ends_on"
     t.date "first_pay_on", null: false
     t.uuid "linked_account_id"
     t.string "name", null: false
@@ -182,6 +185,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_100000) do
     t.index ["active"], name: "index_pay_schedules_on_active"
     t.index ["cadence"], name: "index_pay_schedules_on_cadence"
     t.index ["linked_account_id"], name: "index_pay_schedules_on_linked_account_id"
+    t.index ["user_id", "active", "first_pay_on", "ends_on"], name: "index_pay_schedules_on_user_active_date_window"
     t.index ["user_id", "name"], name: "index_pay_schedules_on_user_name"
     t.index ["user_id"], name: "index_pay_schedules_on_user_id"
   end

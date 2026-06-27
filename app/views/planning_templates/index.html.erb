@@ -5,7 +5,7 @@
     icon: "cash",
     icon_classes: "text-emerald-600",
     records: @pay_schedules,
-    active_count: @pay_schedules.filter(&:active?).size,
+    active_count: @pay_schedules.filter { |record| record.active_on?(Date.current) }.size,
     linked_count: @pay_schedules.filter { |record| record.try(:linked_account_id).present? || record.try(:payment_account_id).present? }.size,
     description: "Income that should appear in future months.",
     empty_hint: "Start here if paychecks are predictable."

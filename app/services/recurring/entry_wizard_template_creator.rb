@@ -71,6 +71,7 @@ module Recurring
         cadence: @params[:cadence].presence || "monthly",
         amount: effective_amount,
         first_pay_on: @expense_entry.occurred_on,
+        ends_on: @params[:ends_on].presence,
         day_of_month_one: @params[:day_of_month_one].presence || @expense_entry.occurred_on&.day,
         day_of_month_two: @params[:day_of_month_two].presence,
         weekend_adjustment: @params[:weekend_adjustment].presence || "no_adjustment",

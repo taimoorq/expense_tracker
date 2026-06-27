@@ -27,6 +27,14 @@ RSpec.describe "page load indexes" do
     expect(index.where).to include("pay_schedule")
   end
 
+  it "enforces durable generated recurring entry identity" do
+    index = index_by_name(:expense_entries, "index_expense_entries_on_generated_entry_key_unique")
+
+    expect(index.columns).to eq(%w[generated_entry_key])
+    expect(index.unique).to be(true)
+    expect(index.where).to include("generated_entry_key IS NOT NULL")
+  end
+
   it "supports account and recurring-template list ordering" do
     expect(index_by_name(:accounts, "index_accounts_on_user_active_name").columns).to eq(%w[user_id active name])
     expect(index_by_name(:pay_schedules, "index_pay_schedules_on_user_name").columns).to eq(%w[user_id name])

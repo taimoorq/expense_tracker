@@ -60,4 +60,22 @@ RSpec.describe EstimateMonthCreditCards do
     expect(estimates.pluck(:payee)).to eq([ "Mastercard", "Visa" ])
     expect(estimates.sum(:planned_amount).to_d).to eq(175.to_d)
   end
+
+  it "does not delete paid estimate history when recalculating planned estimates" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(:expense_entry, budget_month: budget_month, user: user, section: :income, payee: "Salary", planned_amount: 1_000, source_file: "manual")
+    paid_estimate = create(:expense_entry, budget_month: budget_month, user: user, section: :debt, payee: "Old Visa", actual_amount: 200, status: :paid, source_file: "credit_card_estimate")
+    planned_estimate = create(:expense_entry, budget_month: budget_month, user: user, section: :debt, payee: "Old Planned Visa", planned_amount: 50, status: :planned, source_file: "credit_card_estimate")
+    card = create(:credit_card, user: user, name: "Visa", minimum_payment: 100, due_day: 10, priority: 1)
+
+    estimator = described_class.new(budget_month: budget_month)
+    created = estimator.call
+
+    expect(created).to eq(1)
+    expect(ExpenseEntry.exists?(paid_estimate.id)).to be(true)
+    expect(ExpenseEntry.exists?(planned_estimate.id)).to be(false)
+    expect(estimator.available_cash).to eq(800.to_d)
+    expect(budget_month.expense_entries.where(source_file: "credit_card_estimate", status: :planned).pluck(:payee)).to eq([ card.name ])
+  end
 end
