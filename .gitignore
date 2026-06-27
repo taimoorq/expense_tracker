@@ -60,6 +60,9 @@
 # Ignore local Docker and deployment runtime state
 .kamal/
 
+# Ignore local planning and audit notes that are not part of public docs
+/docs/local-plans/
+
 # Ignore test and coverage artifacts
 /coverage/
 /capybara-*.html

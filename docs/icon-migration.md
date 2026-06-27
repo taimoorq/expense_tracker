@@ -1,4 +1,4 @@
-# Open-source icon migration guide
+# Open-source icon guide
 
 This project currently renders icons through the `app_icon()` helper in [app/helpers/application_helper.rb](../app/helpers/application_helper.rb).
 
@@ -13,7 +13,7 @@ This project currently renders icons through the `app_icon()` helper in [app/hel
 
 ## Why this structure
 
-This allows the icon system to be migrated in phases without breaking the application:
+This keeps icon replacement incremental without breaking the application:
 
 1. Add open-source local SVG partials one icon at a time.
 2. Keep existing views unchanged while icons are replaced.
@@ -63,9 +63,9 @@ Reason:
 - works well in navigation, auth, and dashboard surfaces
 - available as simple SVGs that are easy to inline locally
 
-## Recommended migration order
+## Suggested icon groups
 
-### Phase 1: highest-visibility shell
+### Shell and navigation
 
 - `home`
 - `template`
@@ -80,7 +80,7 @@ Reason:
 
 These are used most visibly in [app/views/layouts/application.html.erb](../app/views/layouts/application.html.erb) and [app/views/layouts/authentication.html.erb](../app/views/layouts/authentication.html.erb).
 
-### Phase 2: primary budget workflow
+### Primary budget workflow
 
 - `copy`
 - `cash`
@@ -95,7 +95,7 @@ These are used most visibly in [app/views/layouts/application.html.erb](../app/v
 
 These drive the main budget month and dashboard screens.
 
-### Phase 3: editing and management actions
+### Editing and management actions
 
 - `pencil`
 - `file-pencil`
@@ -105,7 +105,7 @@ These drive the main budget month and dashboard screens.
 
 These appear in entries, modals, and template management.
 
-### Phase 4: auth and supporting surfaces
+### Auth and supporting surfaces
 
 - `mail`
 - `lock`
