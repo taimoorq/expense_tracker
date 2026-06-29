@@ -15,27 +15,41 @@
 <div class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
   <section class="space-y-6">
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <article class="ta-card">
+      <article class="ta-card min-w-0">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current Balance</p>
-        <p class="mt-2 text-3xl font-semibold <%= @balance_summary[:current_balance] >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@balance_summary[:current_balance]) %></p>
+        <p class="mt-2 break-words text-2xl font-semibold leading-tight sm:text-3xl <%= @balance_summary[:current_balance] >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@balance_summary[:current_balance]) %></p>
         <p class="mt-1 text-xs text-slate-500">Includes paid linked entries since the latest snapshot.</p>
       </article>
-      <article class="ta-card">
+      <article class="ta-card min-w-0">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Latest Snapshot</p>
-        <p class="mt-2 text-3xl font-semibold text-slate-900"><%= @balance_summary[:snapshot] ? l(@balance_summary[:snapshot].recorded_on, format: :long) : "-" %></p>
+        <p class="mt-2 break-words text-2xl font-semibold leading-tight text-slate-900"><%= @balance_summary[:snapshot] ? l(@balance_summary[:snapshot].recorded_on, format: :long) : "-" %></p>
         <p class="mt-1 text-xs text-slate-500">Starting balance: <%= number_to_currency(@balance_summary[:base_balance]) %></p>
       </article>
-      <article class="ta-card">
+      <article class="ta-card min-w-0">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Projected Balance</p>
-        <p class="mt-2 text-3xl font-semibold <%= @balance_summary[:projected_balance] >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@balance_summary[:projected_balance]) %></p>
+        <p class="mt-2 break-words text-2xl font-semibold leading-tight sm:text-3xl <%= @balance_summary[:projected_balance] >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@balance_summary[:projected_balance]) %></p>
         <p class="mt-1 text-xs text-slate-500">Adds <%= pluralize(@balance_summary[:planned_entries_count], "planned entry") %> still scheduled.</p>
       </article>
-      <article class="ta-card">
+      <article class="ta-card min-w-0">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Activity Since Snapshot</p>
-        <p class="mt-2 text-3xl font-semibold <%= @balance_summary[:paid_delta] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= @balance_summary[:paid_delta] >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:paid_delta]) %></p>
+        <p class="mt-2 break-words text-2xl font-semibold leading-tight sm:text-3xl <%= @balance_summary[:paid_delta] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= @balance_summary[:paid_delta] >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:paid_delta]) %></p>
         <p class="mt-1 text-xs text-slate-500">Planned impact: <%= @balance_summary[:planned_delta] >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:planned_delta]) %></p>
       </article>
     </div>
+
+    <section class="rounded-2xl border border-sky-100 bg-sky-50/70 px-5 py-4 text-sm leading-6 text-sky-950">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p class="font-semibold text-slate-900">Balance math at a glance</p>
+          <p class="mt-1">Latest snapshot + paid linked activity = current balance. Current balance + remaining planned linked activity = projected balance.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold text-sky-900">
+          <span class="rounded-full bg-white/80 px-3 py-1">Snapshot <%= number_to_currency(@balance_summary[:base_balance]) %></span>
+          <span class="rounded-full bg-white/80 px-3 py-1">Paid <%= @balance_summary[:paid_delta] >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:paid_delta]) %></span>
+          <span class="rounded-full bg-white/80 px-3 py-1">Planned <%= @balance_summary[:planned_delta] >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:planned_delta]) %></span>
+        </div>
+      </div>
+    </section>
 
     <% if @credit_card_progress.present? %>
       <%= render "credit_card_progress", credit_card_progress: @credit_card_progress %>

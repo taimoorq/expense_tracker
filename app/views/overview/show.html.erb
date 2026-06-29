@@ -67,13 +67,14 @@
   <% end %>
 
   <section>
-    <details class="ta-card group">
+    <details class="ta-card group" open>
       <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
         <div>
           <h3 class="inline-flex items-center gap-2 text-base font-semibold text-slate-900">
             <%= tabler_icon("sparkles", classes: "h-4 w-4 text-indigo-600") %>
             <span>Quick Actions</span>
           </h3>
+          <p class="mt-1 text-sm text-slate-500">Common shortcuts for creating the next month, adding entries, importing activity, and checking accounts.</p>
         </div>
         <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition group-open:rotate-180">
           <%= tabler_icon("chevron-down", classes: "ta-action-icon") %>
