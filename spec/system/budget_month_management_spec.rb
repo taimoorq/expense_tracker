@@ -498,6 +498,7 @@ RSpec.describe "Budget month management", type: :system do
 
     sign_in_as(user)
     visit budget_month_path(month)
+    click_link "Grouped"
 
     open_state = -> { page.evaluate_script("document.querySelector(\"details[data-group-id='recurring-subscriptions']\")?.open") }
 
@@ -555,7 +556,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_css("[data-collapsible-groups-storage-key-value='timeline-groups-#{month.id}']")
   end
 
-  it "can switch the timeline between section view and full list view", js: true do
+  it "defaults the budget view to full list and orders the view toggles", js: true do
     user = create(:user, email: "timelineviewtoggle@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     create(:expense_entry, budget_month: month, user: user, payee: "Phone", category: "Utilities", planned_amount: 45.10, actual_amount: nil, status: :planned)
@@ -563,26 +564,38 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_link("Grouped")
-    expect(page).to have_link("Full List")
-    expect(page).to have_content("Other")
-    expect(page).to have_button("Expand all")
-    expect(page).to have_button("Collapse all")
+    within("[role='tablist'][aria-label='Budget view mode']") do
+      expect(all("a").map { |link| link["aria-label"] }).to eq([ "Full List", "Calendar", "Grouped" ])
+      expect(find("a[aria-label='Full List']")["aria-selected"]).to eq("true")
+    end
 
-    click_link "Full List"
-
-    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "full-list"), ignore_query: false)
-    expect(page).to have_content("Phone")
-    expect(page).to have_content("Utilities")
-    expect(page).to have_text(/actual/i)
+    within("[data-panel-name='full-list']") do
+      expect(page).to have_content("Phone")
+      expect(page).to have_content("Utilities")
+      expect(page).to have_text(/actual/i)
+    end
     expect(page).not_to have_button("Expand all")
     expect(page).not_to have_button("Collapse all")
 
-    click_link "Grouped"
+    click_link "Calendar", match: :first
 
-    expect(page).to have_current_path(budget_month_tab_path(month, "timeline"), ignore_query: false)
-    expect(page).to have_content("Budget")
-    expect(page).to have_button("Expand all")
+    expect(page).to have_current_path(budget_month_tab_path(month, "calendar"), ignore_query: false)
+    within("[role='tablist'][aria-label='Budget view mode']") do
+      expect(find("a[aria-label='Calendar']")["aria-selected"]).to eq("true")
+    end
+
+    within("[role='tablist'][aria-label='Budget view mode']") do
+      click_link "Grouped"
+    end
+
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "sections"), ignore_query: false)
+    within("[role='tablist'][aria-label='Budget view mode']") do
+      expect(find("a[aria-label='Grouped']")["aria-selected"]).to eq("true")
+    end
+    within("[data-panel-name='sections']") do
+      expect(page).to have_content("Other")
+      expect(page).to have_button("Expand all")
+    end
   end
 
   it "sorts full list table columns", js: true do
@@ -625,13 +638,13 @@ RSpec.describe "Budget month management", type: :system do
     entry = create(:expense_entry, budget_month: month, user: user, payee: "Phone", category: "Utilities", planned_amount: 45.10, actual_amount: nil, status: :planned)
 
     sign_in_as(user)
-    visit budget_month_tab_path(month, "timeline", view: "full-list")
+    visit budget_month_tab_path(month, "timeline")
 
-    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "full-list"), ignore_query: false)
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline"), ignore_query: false)
     click_button "Mark as paid", match: :first
 
     expect(page).to have_content("Entry updated.")
-    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "full-list"), ignore_query: false)
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline"), ignore_query: false)
     expect(page).to have_content("Phone")
     expect(page).not_to have_button("Expand all")
     expect(entry.reload.status).to eq("paid")

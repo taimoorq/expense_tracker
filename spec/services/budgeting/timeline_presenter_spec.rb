@@ -1,6 +1,19 @@
 require "rails_helper"
 
 RSpec.describe Budgeting::TimelinePresenter do
+  it "defaults to the full list view when no valid timeline view is provided" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user)
+
+    presenter = described_class.new(
+      budget_month: budget_month,
+      expense_entries: [],
+      default_timeline_view: nil
+    )
+
+    expect(presenter.default_timeline_view).to eq("full-list")
+  end
+
   describe "#groups_for_view" do
     it "builds grouped rows with the expected actions and reason pills" do
       user = create(:user)

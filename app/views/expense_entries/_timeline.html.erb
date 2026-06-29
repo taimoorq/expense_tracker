@@ -9,18 +9,18 @@
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("timeline") %> Budget</h3>
-        <p class="mt-1 text-sm text-slate-500">Switch between grouped entries, a flat month list, or calendar view.</p>
+        <p class="mt-1 text-sm text-slate-500">Switch between a flat month list, calendar view, or grouped entries.</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <div class="ta-tab-list" role="tablist" aria-label="Budget view mode" style="view-transition-name: month-budget-tabs; view-transition-class: ta-vt-nav;">
-          <%= link_to timeline_view_urls[:sections], class: ["ta-tab", ("ta-tab-active" if default_timeline_view == "sections")], role: "tab", "aria-selected": (default_timeline_view == "sections").to_s, "aria-label": "Grouped", data: { turbo_frame: "_top" } do %>
-            <span class="inline-flex items-center gap-2"><%= tabler_icon("rectangle-group", classes: "ta-tab-icon") %><span class="hidden sm:inline">Grouped</span></span>
-          <% end %>
           <%= link_to timeline_view_urls[:"full-list"], class: ["ta-tab", ("ta-tab-active" if default_timeline_view == "full-list")], role: "tab", "aria-selected": (default_timeline_view == "full-list").to_s, "aria-label": "Full List", data: { turbo_frame: "_top" } do %>
             <span class="inline-flex items-center gap-2"><%= tabler_icon("list-bullet", classes: "ta-tab-icon") %><span class="hidden sm:inline">Full List</span></span>
           <% end %>
           <%= link_to timeline_view_urls[:calendar], class: ["ta-tab", ("ta-tab-active" if default_timeline_view == "calendar")], role: "tab", "aria-selected": (default_timeline_view == "calendar").to_s, "aria-label": "Calendar", data: { turbo_frame: "_top" } do %>
             <span class="inline-flex items-center gap-2"><%= tabler_icon("calendar-month", classes: "ta-tab-icon") %><span class="hidden sm:inline">Calendar</span></span>
+          <% end %>
+          <%= link_to timeline_view_urls[:sections], class: ["ta-tab", ("ta-tab-active" if default_timeline_view == "sections")], role: "tab", "aria-selected": (default_timeline_view == "sections").to_s, "aria-label": "Grouped", data: { turbo_frame: "_top" } do %>
+            <span class="inline-flex items-center gap-2"><%= tabler_icon("rectangle-group", classes: "ta-tab-icon") %><span class="hidden sm:inline">Grouped</span></span>
           <% end %>
         </div>
 

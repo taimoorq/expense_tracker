@@ -1,4 +1,12 @@
 releases:
+  - version: "0.7.1"
+    released_on: "2026-06-29"
+    title: "Full list month view default"
+    summary: "This release makes the month Budget view open to the flat Full List by default while keeping Calendar and Grouped views one click away."
+    changes:
+      - "Makes Full List the default Budget view for month pages with existing entries."
+      - "Orders the Budget view controls as Full List, Calendar, and Grouped."
+      - "Keeps direct links and entry-action redirects aligned with the new default so Grouped remains available through an explicit view selection."
   - version: "0.7.0"
     released_on: "2026-06-27"
     title: "Robustness audit hardening"

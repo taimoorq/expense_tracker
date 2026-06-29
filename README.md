@@ -499,20 +499,20 @@ Each provider receives the same tag set:
 - `latest`
 - `sha-<commit>`
 
-For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.6.4` instead of `latest`.
+For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.7.1` instead of `latest`.
 
 To run the production Compose stack from a published image:
 
 1. Set the app image in `.env.production`.
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.6.2
+   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.7.1
    ```
 
    Or use the Docker Hub mirror:
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.6.2
+   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.7.1
    ```
 
 2. Pull the image.

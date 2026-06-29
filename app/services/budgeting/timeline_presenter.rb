@@ -8,7 +8,7 @@ module Budgeting
     def initialize(budget_month:, expense_entries:, default_timeline_view:)
       @budget_month = budget_month
       @expense_entries = preload_entries(Array(expense_entries))
-      @default_timeline_view = default_timeline_view.presence_in(%w[sections full-list calendar]) || "sections"
+      @default_timeline_view = default_timeline_view.presence_in(%w[sections full-list calendar]) || "full-list"
     end
 
     attr_reader :budget_month, :expense_entries, :default_timeline_view
@@ -33,8 +33,8 @@ module Budgeting
 
     def timeline_view_urls
       {
-        sections: Rails.application.routes.url_helpers.budget_month_tab_path(budget_month, "timeline"),
-        "full-list": Rails.application.routes.url_helpers.budget_month_tab_path(budget_month, "timeline", view: "full-list"),
+        sections: Rails.application.routes.url_helpers.budget_month_tab_path(budget_month, "timeline", view: "sections"),
+        "full-list": Rails.application.routes.url_helpers.budget_month_tab_path(budget_month, "timeline"),
         calendar: Rails.application.routes.url_helpers.budget_month_tab_path(budget_month, "calendar")
       }
     end

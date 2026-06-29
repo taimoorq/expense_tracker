@@ -17,10 +17,10 @@
   <% default_timeline_view = if requested_tab == "calendar" || (requested_tab.blank? && preferred_tab == "calendar")
                                "calendar"
                              else
-                               requested_timeline_view || "sections"
+                               requested_timeline_view || "full-list"
                              end %>
   <% active_navigation_tab = requested_tab == "calendar" ? "calendar" : default_tab %>
-  <% timeline_query = default_timeline_view == "full-list" ? { view: "full-list" } : {} %>
+  <% timeline_query = default_timeline_view == "sections" ? { view: "sections" } : {} %>
   <% current_month_tab_urls = {
     timeline: budget_month_tab_path(@budget_month, "timeline", timeline_query),
     breakdown: budget_month_tab_path(@budget_month, "breakdown"),

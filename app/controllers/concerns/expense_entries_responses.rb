@@ -173,7 +173,8 @@ module ExpenseEntriesResponses
     if tab == "timeline" && current_timeline_view == "calendar"
       budget_month_tab_path(@budget_month, "calendar")
     elsif tab == "timeline"
-      budget_month_tab_path(@budget_month, "timeline", view: current_timeline_view.presence_in(%w[full-list]))
+      timeline_query = current_timeline_view == "sections" ? { view: "sections" } : {}
+      budget_month_tab_path(@budget_month, "timeline", timeline_query)
     else
       budget_month_tab_path(@budget_month, tab)
     end
