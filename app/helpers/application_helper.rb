@@ -492,120 +492,12 @@ module ApplicationHelper
     end
   end
 
-  def matching_template_entries(budget_month, template_type, entries = budget_month.expense_entries.to_a)
-    Array(entries).select do |entry|
-      templates_for_type(budget_month, template_type).any? do |template|
-        template_matches_entry?(template, entry, budget_month.month_on)
-      end
-    end
-  end
-
-  def template_coverage_for_type(budget_month, template_type, entries = budget_month.expense_entries.to_a)
-    templates = templates_for_type(budget_month, template_type)
-    month_entries = Array(entries)
-    matched = templates.count do |template|
-      month_entries.any? do |entry|
-        template_matches_entry?(template, entry, budget_month.month_on)
-      end
-    end
-
-    {
-      total: templates.size,
-      matched: matched,
-      remaining: [ templates.size - matched, 0 ].max,
-      complete: templates.any? && matched == templates.size
-    }
-  end
-
-  def recurring_generation_preview_for_type(budget_month, template_type, entries = budget_month.expense_entries.to_a)
-    month_entries = Array(entries)
-    previews = templates_for_type(budget_month, template_type).flat_map do |template|
-      Array(template.recurring_month_occurrences(budget_month.month_on)).filter_map do |occurred_on|
-        next if month_entries.any? do |entry|
-          entry.occurred_on == occurred_on && template_matches_entry?(template, entry, budget_month.month_on)
-        end
-
-        attributes = template.build_generated_entry_attributes(month_on: budget_month.month_on, occurred_on: occurred_on)
-        {
-          payee: attributes[:payee],
-          occurred_on: occurred_on,
-          planned_amount: attributes[:planned_amount],
-          account: attributes[:account],
-          category: attributes[:category]
-        }
-      end
-    end
-
-    sorted_previews = previews.sort_by { |preview| [ preview[:occurred_on] || Date.new(9999, 12, 31), preview[:payee].to_s.downcase ] }
-    total_occurrences = month_entries_for_generation(budget_month, template_type)
-
-    {
-      total: total_occurrences,
-      matched: [ total_occurrences - sorted_previews.size, 0 ].max,
-      remaining: sorted_previews.size,
-      complete: total_occurrences.positive? && sorted_previews.empty?,
-      previews: sorted_previews
-    }
-  end
-
-  def credit_card_estimate_preview(budget_month, entries = budget_month.expense_entries.to_a)
-    month_entries = Array(entries)
-    cards = templates_for_type(budget_month, :credit_cards)
-    previews = cards.filter_map do |card|
-      next if month_entries.any? { |entry| card.matches_entry_for_month?(entry, month_on: budget_month.month_on) }
-
-      {
-        payee: card.name,
-        occurred_on: budget_month.month_on.change(day: [ card.due_day.to_i, budget_month.month_on.end_of_month.day ].min),
-        planned_amount: card.minimum_payment,
-        account: card.account_name,
-        category: "Credit Card",
-        amount_label: "minimum #{number_to_currency(card.minimum_payment)}"
-      }
-    end
-
-    {
-      total: cards.size,
-      matched: [ cards.size - previews.size, 0 ].max,
-      remaining: previews.size,
-      complete: cards.any? && previews.empty?,
-      previews: previews
-    }
-  end
-
   private
-
-  def month_entries_for_generation(budget_month, template_type)
-    templates_for_type(budget_month, template_type).sum do |template|
-      Array(template.recurring_month_occurrences(budget_month.month_on)).size
-    end
-  end
 
   def admin_auth_scope?
     respond_to?(:resource_name) && resource_name.to_sym == :admin_user
   rescue NoMethodError
     false
-  end
-
-  def templates_for_type(budget_month, template_type)
-    case template_type
-    when :pay_schedules
-      budget_month.user.pay_schedules.active_during_month(budget_month.month_on).to_a
-    when :subscriptions
-      budget_month.user.subscriptions.active_only.to_a
-    when :monthly_bills
-      budget_month.user.monthly_bills.active_only.select { |bill| bill.scheduled_for_month?(budget_month.month_on) }
-    when :payment_plans
-      budget_month.user.payment_plans.active_only.to_a
-    when :credit_cards
-      budget_month.user.credit_cards.active_only.to_a
-    else
-      []
-    end
-  end
-
-  def template_matches_entry?(template, entry, month_on)
-    template.matches_entry_for_month?(entry, month_on: month_on)
   end
 
   def pay_schedule_date_label(date)

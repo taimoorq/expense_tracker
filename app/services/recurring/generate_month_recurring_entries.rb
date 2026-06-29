@@ -10,11 +10,8 @@ module Recurring
         created = 0
 
         each_template do |template|
-          template.recurring_month_occurrences(@budget_month.month_on).each do |occurred_on|
-            next if template.generated_entry_exists?(@budget_month, occurred_on)
-
-            attributes = template.build_generated_entry_attributes(month_on: @budget_month.month_on, occurred_on: occurred_on)
-            created += 1 if create_generated_entry(attributes)
+          coverage_for(template).missing_rows.each do |row|
+            created += 1 if create_generated_entry(row.attributes)
           end
         end
 
@@ -40,6 +37,14 @@ module Recurring
         generated_entry.assign_attributes(attributes.except(:generated_entry_key))
       end
       entry.previously_new_record?
+    end
+
+    def coverage_for(template)
+      Recurring::MonthTemplateCoverage.new(
+        template: template,
+        budget_month: @budget_month,
+        entries: @budget_month.expense_entries.to_a
+      )
     end
   end
 end

@@ -2,6 +2,9 @@ class CreditCard < ApplicationRecord
   include PlanningTemplateMetadata
   include TemplateAccountLinkable
 
+  ESTIMATE_ENTRY_KEY_VERSION = "credit-card-estimate:v1".freeze
+  ESTIMATE_NOTES = "Estimated from leftover cash".freeze
+
   belongs_to :user
   belongs_to :linked_account, class_name: "Account", optional: true
   belongs_to :payment_account, class_name: "Account", optional: true
@@ -18,6 +21,7 @@ class CreditCard < ApplicationRecord
 
   validates :name, presence: true
   validates :minimum_payment, presence: true
+  validates :minimum_payment, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :priority, presence: true
   validates :due_day, presence: true, inclusion: { in: 1..31 }
   validate :payment_account_belongs_to_user
@@ -34,6 +38,37 @@ class CreditCard < ApplicationRecord
     return false unless matching_account?(entry)
 
     entry.source_file == "credit_card_estimate" || (entry.debt? && comparable_text(entry.category).include?("credit card"))
+  end
+
+  def estimated_entry_key(month_on:)
+    return nil if id.blank? || month_on.blank?
+
+    [
+      ESTIMATE_ENTRY_KEY_VERSION,
+      self.class.name,
+      id,
+      month_on.to_date.beginning_of_month.iso8601
+    ].join(":")
+  end
+
+  def build_estimated_entry_attributes(month_on:, amount:)
+    month_start = month_on.to_date.beginning_of_month
+
+    {
+      generated_entry_key: estimated_entry_key(month_on: month_start),
+      occurred_on: month_start.change(day: [ due_day.to_i, month_start.end_of_month.day ].min),
+      section: :debt,
+      category: "Credit Card",
+      payee: name,
+      planned_amount: amount.round(2),
+      actual_amount: nil,
+      account: account_name,
+      status: :planned,
+      need_or_want: "Need",
+      notes: ESTIMATE_NOTES,
+      source_file: CreditCard.template_source_file,
+      source_template: self
+    }
   end
 
   private

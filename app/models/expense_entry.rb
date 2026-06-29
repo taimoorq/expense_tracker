@@ -27,6 +27,7 @@ class ExpenseEntry < ApplicationRecord
 
   validates :section, presence: true
   validates :status, presence: true
+  validates :planned_amount, :actual_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validate :user_matches_budget_month
   validate :source_account_belongs_to_user
   validate :destination_account_belongs_to_user
@@ -36,6 +37,7 @@ class ExpenseEntry < ApplicationRecord
   scope :chronological, -> { order(:occurred_on, :created_at) }
   scope :recurring_templates, -> { where(source_file: RECURRING_TEMPLATE_SOURCES) }
   scope :due_on_or_before, ->(date) { where(occurred_on: ..date) }
+  scope :auto_completed, -> { where.not(auto_completed_at: nil) }
 
   def effective_amount
     actual_amount.presence || planned_amount.presence || 0
@@ -76,6 +78,10 @@ class ExpenseEntry < ApplicationRecord
 
   def manual_origin?
     source_file.blank? || source_file == "manual"
+  end
+
+  def auto_completed?
+    auto_completed_at.present?
   end
 
   private

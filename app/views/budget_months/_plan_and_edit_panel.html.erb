@@ -1,141 +1,70 @@
-<%= turbo_frame_tag "plan_and_edit_panel" do %>
-  <% paycheck_generation_preview = recurring_generation_preview_for_type(budget_month, :pay_schedules, expense_entries) %>
-  <% subscription_generation_preview = recurring_generation_preview_for_type(budget_month, :subscriptions, expense_entries) %>
-  <% monthly_bill_generation_preview = recurring_generation_preview_for_type(budget_month, :monthly_bills, expense_entries) %>
-  <% payment_plan_generation_preview = recurring_generation_preview_for_type(budget_month, :payment_plans, expense_entries) %>
-  <% credit_card_generation_preview = credit_card_estimate_preview(budget_month, expense_entries) %>
-  <% has_generated_paychecks = paycheck_generation_preview[:complete] %>
-  <% has_generated_subscriptions = subscription_generation_preview[:complete] %>
-  <% has_generated_monthly_bills = monthly_bill_generation_preview[:complete] %>
-  <% has_generated_payment_plans = payment_plan_generation_preview[:complete] %>
-  <% has_estimated_credit_cards = credit_card_generation_preview[:complete] %>
-  <% generation_actions_hidden = budget_month.complete_for_generation? %>
-  <% template_actions_completed = [has_generated_paychecks, has_generated_subscriptions, has_generated_monthly_bills, has_generated_payment_plans, has_estimated_credit_cards].count(true) %>
-  <% manual_entries_count = expense_entries.count { |entry| entry.source_file.blank? } %>
-  <% due_planned_count = expense_entries.count { |entry| entry.planned? && entry.occurred_on.present? && entry.occurred_on <= Date.current } %>
-  <% missing_details_count = expense_entries.count { |entry| entry.occurred_on.blank? || entry.category.blank? || entry.payee.blank? } %>
-  <% paid_missing_actual_count = expense_entries.count { |entry| entry.paid? && entry.actual_amount.blank? } %>
-  <% review_attention_count = due_planned_count + missing_details_count + paid_missing_actual_count %>
-  <% next_recommended_step = if !generation_actions_hidden && template_actions_completed.zero?
-                               1
-                             elsif manual_entries_count.zero?
-                               2
-                             else
-                               3
-                             end %>
+<%= turbo_frame_tag "plan_and_edit_panel", data: { controller: "plan-navigation" } do %>
+  <% plan = Budgeting::PlanAndEditPresenter.new(budget_month: budget_month, expense_entries: expense_entries) %>
+  <% plan_nav_data = { action: "plan-navigation#scroll", turbo: false } %>
 
   <section class="ta-card-tinted ta-surface-plan">
-    <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
       <div class="max-w-3xl">
         <h3 class="text-base font-semibold text-slate-900">Plan and Edit This Month</h3>
-        <p class="mt-1 text-sm leading-6 text-slate-600">
-          Follow the guided path below to build this month with the least guesswork: start with recurring items,
-          add exceptions only when needed, and then review the items that still need attention.
-        </p>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Set up the month, add anything unusual, and clean up items that need a second look.</p>
       </div>
-      <div class="grid gap-3 text-sm text-slate-600 sm:grid-cols-3 xl:min-w-[44rem]">
-        <a href="#plan-step-1" class="rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/90 <%= next_recommended_step == 1 ? "border-emerald-300 bg-white shadow-sm" : "border-emerald-100 bg-white/80" %>">
-          <div class="flex items-center justify-between gap-2">
-            <p class="font-medium text-slate-900">1. Build from recurring</p>
-            <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide <%= next_recommended_step == 1 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600" %>">
-              <%= next_recommended_step == 1 ? "Next recommended" : (generation_actions_hidden || template_actions_completed.positive? ? "Started" : "Optional") %>
-            </span>
-          </div>
-          <p class="mt-2 text-xs leading-5">Add the recurring backbone of the month first.</p>
-          <p class="mt-3 text-xs font-medium text-slate-700"><%= generation_actions_hidden ? "Recurring actions hidden for this completed month" : "#{template_actions_completed} of 5 recurring actions already used" %></p>
-        </a>
-        <a href="#plan-step-2" class="rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/90 <%= next_recommended_step == 2 ? "border-sky-300 bg-white shadow-sm" : "border-sky-100 bg-white/80" %>">
-          <div class="flex items-center justify-between gap-2">
-            <p class="font-medium text-slate-900">2. Add exceptions</p>
-            <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide <%= next_recommended_step == 2 ? "bg-sky-100 text-sky-800" : "bg-slate-100 text-slate-600" %>">
-              <%= next_recommended_step == 2 ? "Next recommended" : (manual_entries_count.positive? ? "Started" : "Only if needed") %>
-            </span>
-          </div>
-          <p class="mt-2 text-xs leading-5">Use the guided wizard for one-off income, spending, or adjustments.</p>
-          <p class="mt-3 text-xs font-medium text-slate-700"><%= manual_entries_count.positive? ? "#{manual_entries_count} manual item#{manual_entries_count == 1 ? "" : "s"} added" : "No one-off items added yet" %></p>
-        </a>
-        <a href="#plan-step-3" class="rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:bg-white/90 <%= next_recommended_step == 3 ? "border-amber-300 bg-white shadow-sm" : "border-amber-100 bg-white/80" %>">
-          <div class="flex items-center justify-between gap-2">
-            <p class="font-medium text-slate-900">3. Review what needs attention</p>
-            <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide <%= review_attention_count.zero? ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800" %>">
-              <%= review_attention_count.zero? ? "All clear" : "#{review_attention_count} attention item#{review_attention_count == 1 ? "" : "s"}" %>
-            </span>
-          </div>
-          <p class="mt-2 text-xs leading-5">Review due items, missing details, and then use the budget's full-list mode for cleanup.</p>
-          <p class="mt-3 text-xs font-medium text-slate-700"><%= expense_entries.any? ? "#{expense_entries.count} total items in this month" : "No month items yet" %></p>
-        </a>
+      <div class="flex flex-wrap items-center gap-2 xl:justify-end">
+        <%= link_to plan.next_recommended_anchor, class: "rounded-full px-3 py-1 text-xs font-semibold #{plan.next_recommended_classes}", data: plan_nav_data do %>
+          Next: <%= plan.next_recommended_label %>
+        <% end %>
+        <%= link_to "Recurring", "#plan-recurring", class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm", data: plan_nav_data %>
+        <%= link_to "One-off", "#plan-one-off", class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm", data: plan_nav_data %>
+        <%= link_to "Review", "#plan-review", class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm", data: plan_nav_data %>
       </div>
     </div>
 
-    <div class="mt-5 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
-      <div class="rounded-[22px] border border-emerald-100 bg-white/80 p-4">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Recommended onboarding path</p>
-        <div class="mb-4">
-          <% progress_percent = if next_recommended_step == 1
-            (template_actions_completed / 5.0 * 33.33).round
-          elsif next_recommended_step == 2
-            manual_entries_count > 0 ? 66 : 33
-          else
-            100
-          end %>
-          <div class="w-full bg-slate-100 rounded-full h-3">
-            <div class="bg-indigo-500 h-3 rounded-full transition-all duration-300" style="width: <%= progress_percent %>%"></div>
-          </div>
-          <% steps_completed = review_attention_count.zero? ? 3 : (next_recommended_step - 1) %>
-          <div class="mt-1 flex justify-between text-xs text-slate-500">
-            <span>Step <%= next_recommended_step %> of 3</span>
-            <span><%= steps_completed %> of 3 steps completed</span>
-          </div>
-        </div>
-        <ol class="mt-3 space-y-3 text-sm text-slate-700">
-          <li class="flex items-start gap-3">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800">1</span>
-            <span>Pull in saved recurring transactions first so the month starts with paychecks, bills, subscriptions, plans, and card estimates.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-800">2</span>
-            <span>Add only the exceptions that templates do not cover, using the guided wizard for most one-off items.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-semibold text-amber-800">3</span>
-            <span>Review the attention buckets, then switch the budget into full-list mode for final edits and status updates.</span>
-          </li>
-        </ol>
+    <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <%= link_to "#plan-recurring", class: "rounded-2xl border border-emerald-100 bg-white/85 p-4 transition hover:-translate-y-0.5 hover:border-emerald-200", data: plan_nav_data do %>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Recurring</p>
+        <p class="mt-1 text-xl font-semibold text-slate-900"><%= plan.generation_actions_hidden? ? "Done" : "#{plan.template_actions_completed} / #{plan.recurring_actions_total}" %></p>
+        <p class="mt-1 text-sm text-slate-600"><%= plan.generation_actions_hidden? ? "Actions hidden for this complete month." : "Paychecks, bills, plans, subscriptions, and cards." %></p>
+      <% end %>
+      <%= link_to "#plan-one-off", class: "rounded-2xl border border-sky-100 bg-white/85 p-4 transition hover:-translate-y-0.5 hover:border-sky-200", data: plan_nav_data do %>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">One-off</p>
+        <p class="mt-1 text-xl font-semibold text-slate-900"><%= plan.manual_entries_count %></p>
+        <p class="mt-1 text-sm text-slate-600">Irregular income, spending, or adjustments.</p>
+      <% end %>
+      <%= link_to "#plan-review", class: "rounded-2xl border border-amber-100 bg-white/85 p-4 transition hover:-translate-y-0.5 hover:border-amber-200", data: plan_nav_data do %>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Needs review</p>
+        <p class="mt-1 text-xl font-semibold text-slate-900"><%= plan.review_attention_count %></p>
+        <p class="mt-1 text-sm text-slate-600">Due, incomplete, or paid without actuals.</p>
+      <% end %>
+      <div class="rounded-2xl border border-slate-200 bg-white/85 p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Month items</p>
+        <p class="mt-1 text-xl font-semibold text-slate-900"><%= plan.month_items_count %></p>
+        <p class="mt-1 text-sm text-slate-600">Everything planned or recorded here.</p>
       </div>
+    </div>
 
-      <div class="rounded-[22px] border border-slate-200 bg-white/80 p-4">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current progress</p>
-        <div class="mt-3 grid gap-3 sm:grid-cols-2">
-          <div class="rounded-2xl bg-slate-50 px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Recurring actions used</p>
-            <p class="mt-1 text-lg font-semibold text-slate-900"><%= generation_actions_hidden ? "Hidden" : "#{template_actions_completed} / 5" %></p>
-          </div>
-          <div class="rounded-2xl bg-slate-50 px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Manual exceptions</p>
-            <p class="mt-1 text-lg font-semibold text-slate-900"><%= manual_entries_count %></p>
-          </div>
-          <div class="rounded-2xl bg-slate-50 px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Needs review</p>
-            <p class="mt-1 text-lg font-semibold text-slate-900"><%= review_attention_count %></p>
-          </div>
-          <div class="rounded-2xl bg-slate-50 px-4 py-3">
-            <p class="text-xs uppercase tracking-wide text-slate-500">All month items</p>
-            <p class="mt-1 text-lg font-semibold text-slate-900"><%= expense_entries.count %></p>
-          </div>
+    <div class="mt-4 rounded-2xl border border-slate-200 bg-white/80 p-4">
+      <div class="grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800">1</span>
+          <span><strong class="text-slate-900">Add recurring</strong><br>Bring in the predictable items first.</span>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-800">2</span>
+          <span><strong class="text-slate-900">Add one-offs</strong><br>Capture what does not repeat.</span>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-semibold text-amber-800">3</span>
+          <span><strong class="text-slate-900">Review cleanup</strong><br>Fix items that need attention.</span>
         </div>
       </div>
     </div>
   </section>
   <br>
 
-  <section id="plan-step-1" class="ta-card-tinted ta-surface-plan-soft scroll-mt-24">
+  <section id="plan-recurring" class="ta-card-tinted ta-surface-plan-soft scroll-mt-24">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div class="max-w-2xl">
-        <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Step 1 · Build the month from recurring</h3>
-        <p class="mt-1 text-sm leading-6 text-slate-600">
-          Start here first. These actions create the recurring backbone of the month so users do not have to remember every paycheck,
-          bill, plan, and card payment manually.
-        </p>
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Add recurring items</h3>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Use saved recurring transactions to fill in the predictable parts of the month.</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 lg:justify-end">
@@ -146,7 +75,7 @@
       </div>
     </div>
 
-    <% if generation_actions_hidden %>
+    <% if plan.generation_actions_hidden? %>
       <div class="mt-4 rounded-[22px] border border-emerald-200 bg-white/85 p-4 text-sm text-slate-700">
         <div class="flex items-start gap-3">
           <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
@@ -160,246 +89,115 @@
       </div>
     <% else %>
       <div class="mt-4 grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
-        <div class="rounded-[22px] border border-slate-200 bg-white/85 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-sm font-semibold text-slate-900">Add Paychecks</p>
-              <p class="mt-1 text-xs leading-5 text-slate-600">Recommended first so income is visible before the rest of the month is planned.</p>
-              <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= if paycheck_generation_preview[:total].positive?
-                      "#{paycheck_generation_preview[:matched]} of #{paycheck_generation_preview[:total]} paycheck transactions already in this month"
-                    else
-                      "No templates saved yet"
-                    end %>
-              </p>
-            </div>
-            <% if has_generated_paychecks %>
-              <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
-            <% end %>
-          </div>
-          <% if paycheck_generation_preview[:remaining].positive? %>
-            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
-              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
-              <ul class="mt-2 space-y-2 text-xs text-slate-700">
-                <% paycheck_generation_preview[:previews].first(4).each do |preview| %>
-                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
-                <% end %>
-              </ul>
-              <% if paycheck_generation_preview[:remaining] > 4 %>
-                <p class="mt-2 text-xs text-slate-500">+ <%= paycheck_generation_preview[:remaining] - 4 %> more paycheck transaction<%= paycheck_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
+        <% plan.recurring_actions.each do |action| %>
+          <div class="rounded-[22px] border border-slate-200 bg-white/85 p-4 <%= "xl:col-span-2 2xl:col-span-1" if action.key == :credit_cards %>">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-slate-900"><%= action.title %></p>
+                <p class="mt-1 text-xs leading-5 text-slate-600"><%= action.description %></p>
+                <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+                  <%= action.status_summary %>
+                </p>
+              </div>
+              <% if action.complete? %>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800"><%= action.status_label %></span>
               <% end %>
             </div>
-          <% end %>
-          <div class="mt-4">
-            <% if has_generated_paychecks %>
-              <p class="text-sm text-slate-600">Paycheck entries are already in this month.</p>
-            <% else %>
-              <%= button_to generate_paychecks_budget_month_path(budget_month), method: :post, class: "fb-btn-primary ta-action-btn w-full justify-center" do %>
-                <%= tabler_icon("cash", classes: "ta-action-icon") %>
-                <span>Add Paychecks</span>
-              <% end %>
-            <% end %>
-          </div>
-        </div>
 
-        <div class="rounded-[22px] border border-slate-200 bg-white/85 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-sm font-semibold text-slate-900">Add Subscriptions</p>
-              <p class="mt-1 text-xs leading-5 text-slate-600">Bring in recurring subscriptions and services after income is in place.</p>
-              <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= if subscription_generation_preview[:total].positive?
-                      "#{subscription_generation_preview[:matched]} of #{subscription_generation_preview[:total]} subscription transactions already in this month"
-                    else
-                      "No templates saved yet"
-                    end %>
-              </p>
-            </div>
-            <% if has_generated_subscriptions %>
-              <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
-            <% end %>
-          </div>
-          <% if subscription_generation_preview[:remaining].positive? %>
-            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
-              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
-              <ul class="mt-2 space-y-2 text-xs text-slate-700">
-                <% subscription_generation_preview[:previews].first(4).each do |preview| %>
-                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
+            <% if action.alternate? %>
+              <div class="mt-4 rounded-2xl border border-sky-200 bg-sky-50/80 p-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-800">Found on different dates</p>
+                <ul class="mt-2 space-y-2 text-xs text-slate-700">
+                  <% action.alternate_items.each do |preview| %>
+                    <li>
+                      <span class="font-medium text-slate-900"><%= preview[:payee] %></span> ·
+                      due <%= preview[:occurred_on]&.strftime("%b %-d") %>,
+                      found <%= preview[:matched_on]&.strftime("%b %-d") %> ·
+                      <%= number_to_currency(preview[:planned_amount]) %>
+                    </li>
+                  <% end %>
+                </ul>
+                <% if action.alternate_more_summary.present? %>
+                  <p class="mt-2 text-xs text-slate-500"><%= action.alternate_more_summary %></p>
                 <% end %>
-              </ul>
-              <% if subscription_generation_preview[:remaining] > 4 %>
-                <p class="mt-2 text-xs text-slate-500">+ <%= subscription_generation_preview[:remaining] - 4 %> more subscription transaction<%= subscription_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
-              <% end %>
-            </div>
-          <% end %>
-          <div class="mt-4">
-            <% if has_generated_subscriptions %>
-              <p class="text-sm text-slate-600">Subscription entries are already in this month.</p>
-            <% else %>
-              <%= button_to generate_subscriptions_budget_month_path(budget_month), method: :post, class: "fb-btn-secondary ta-action-btn w-full justify-center" do %>
-                <%= tabler_icon("repeat", classes: "ta-action-icon text-indigo-600") %>
-                <span>Add Subscriptions</span>
-              <% end %>
+                <p class="mt-2 text-xs text-slate-500">Counted for this month, so these will not be added again.</p>
+              </div>
             <% end %>
-          </div>
-        </div>
 
-        <div class="rounded-[22px] border border-slate-200 bg-white/85 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-sm font-semibold text-slate-900">Add Monthly Bills</p>
-              <p class="mt-1 text-xs leading-5 text-slate-600">Pull in regular household bills so fixed outflows are not missed.</p>
-              <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= if monthly_bill_generation_preview[:total].positive?
-                      "#{monthly_bill_generation_preview[:matched]} of #{monthly_bill_generation_preview[:total]} monthly bill transactions already in this month"
-                    else
-                      "No templates saved yet"
-                    end %>
-              </p>
-            </div>
-            <% if has_generated_monthly_bills %>
-              <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
-            <% end %>
-          </div>
-          <% if monthly_bill_generation_preview[:remaining].positive? %>
-            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
-              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
-              <ul class="mt-2 space-y-2 text-xs text-slate-700">
-                <% monthly_bill_generation_preview[:previews].first(4).each do |preview| %>
-                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
+            <% if action.remaining? %>
+              <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800"><%= action.missing_heading %></p>
+                <ul class="mt-2 space-y-2 text-xs text-slate-700">
+                  <% action.preview_items.each do |preview| %>
+                    <li>
+                      <span class="font-medium text-slate-900"><%= preview[:payee] %></span> ·
+                      <%= preview[:occurred_on]&.strftime("%b %-d") %> ·
+                      <% if preview[:amount_prefix].present? %>
+                        <%= preview[:amount_prefix] %> <%= number_to_currency(preview[:planned_amount]) %>
+                      <% else %>
+                        <%= number_to_currency(preview[:planned_amount]) %>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+                <% if action.more_summary.present? %>
+                  <p class="mt-2 text-xs text-slate-500"><%= action.more_summary %></p>
                 <% end %>
-              </ul>
-              <% if monthly_bill_generation_preview[:remaining] > 4 %>
-                <p class="mt-2 text-xs text-slate-500">+ <%= monthly_bill_generation_preview[:remaining] - 4 %> more monthly bill transaction<%= monthly_bill_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
-              <% end %>
-            </div>
-          <% end %>
-          <div class="mt-4">
-            <% if has_generated_monthly_bills %>
-              <p class="text-sm text-slate-600">Monthly bill entries are already in this month.</p>
-            <% else %>
-              <%= button_to generate_monthly_bills_budget_month_path(budget_month), method: :post, class: "fb-btn-secondary ta-action-btn w-full justify-center" do %>
-                <%= tabler_icon("calendar-plus", classes: "ta-action-icon text-sky-600") %>
-                <span>Add Monthly Bills</span>
-              <% end %>
+              </div>
             <% end %>
-          </div>
-        </div>
 
-        <div class="rounded-[22px] border border-slate-200 bg-white/85 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-sm font-semibold text-slate-900">Add Payment Plans</p>
-              <p class="mt-1 text-xs leading-5 text-slate-600">Add installment or debt-plan items so payoff work stays visible in the month.</p>
-              <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= if payment_plan_generation_preview[:total].positive?
-                      "#{payment_plan_generation_preview[:matched]} of #{payment_plan_generation_preview[:total]} payment-plan transactions already in this month"
-                    else
-                      "No templates saved yet"
-                    end %>
-              </p>
-            </div>
-            <% if has_generated_payment_plans %>
-              <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Added</span>
-            <% end %>
-          </div>
-          <% if payment_plan_generation_preview[:remaining].positive? %>
-            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
-              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing and ready to add</p>
-              <ul class="mt-2 space-y-2 text-xs text-slate-700">
-                <% payment_plan_generation_preview[:previews].first(4).each do |preview| %>
-                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= number_to_currency(preview[:planned_amount]) %></li>
+            <div class="mt-4">
+              <% if action.action_available? %>
+                <%= button_to action.button_path, method: :post, class: action.button_classes do %>
+                  <%= tabler_icon(action.button_icon, classes: action.button_icon_classes) %>
+                  <span><%= action.current_button_label %></span>
                 <% end %>
-              </ul>
-              <% if payment_plan_generation_preview[:remaining] > 4 %>
-                <p class="mt-2 text-xs text-slate-500">+ <%= payment_plan_generation_preview[:remaining] - 4 %> more payment-plan transaction<%= payment_plan_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
+              <% else %>
+                <p class="text-sm text-slate-600"><%= action.complete_message %></p>
               <% end %>
             </div>
-          <% end %>
-          <div class="mt-4">
-            <% if has_generated_payment_plans %>
-              <p class="text-sm text-slate-600">Payment-plan entries are already in this month.</p>
-            <% else %>
-              <%= button_to generate_payment_plans_budget_month_path(budget_month), method: :post, class: "fb-btn-secondary ta-action-btn w-full justify-center" do %>
-                <%= tabler_icon("template", classes: "ta-action-icon text-violet-600") %>
-                <span>Add Payment Plans</span>
-              <% end %>
-            <% end %>
           </div>
-        </div>
-
-        <div class="rounded-[22px] border border-slate-200 bg-white/85 p-4 xl:col-span-2 2xl:col-span-1">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-sm font-semibold text-slate-900">Estimate Card Payments</p>
-              <p class="mt-1 text-xs leading-5 text-slate-600">Run this after income and bills are in place so every active card gets a minimum payment entry and any extra leftover cash can be spread across them.</p>
-              <p class="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                <%= if credit_card_generation_preview[:total].positive?
-                      "#{credit_card_generation_preview[:matched]} of #{credit_card_generation_preview[:total]} card payments already estimated"
-                    else
-                      "No credit cards saved yet"
-                    end %>
-              </p>
-            </div>
-            <% if has_estimated_credit_cards %>
-              <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Estimated</span>
-            <% end %>
-          </div>
-          <% if credit_card_generation_preview[:remaining].positive? %>
-            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-3">
-              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-800">Missing cards to estimate</p>
-              <ul class="mt-2 space-y-2 text-xs text-slate-700">
-                <% credit_card_generation_preview[:previews].first(4).each do |preview| %>
-                  <li><span class="font-medium text-slate-900"><%= preview[:payee] %></span> · <%= preview[:occurred_on]&.strftime("%b %-d") %> · <%= preview[:amount_label] %></li>
-                <% end %>
-              </ul>
-              <% if credit_card_generation_preview[:remaining] > 4 %>
-                <p class="mt-2 text-xs text-slate-500">+ <%= credit_card_generation_preview[:remaining] - 4 %> more card payment estimate<%= credit_card_generation_preview[:remaining] - 4 == 1 ? "" : "s" %></p>
-              <% end %>
-            </div>
-          <% end %>
-          <div class="mt-4">
-            <%= button_to estimate_credit_cards_budget_month_path(budget_month), method: :post, class: "fb-btn-secondary ta-action-btn w-full justify-center" do %>
-              <%= tabler_icon("chart-bar", classes: "ta-action-icon text-indigo-600") %>
-              <span><%= has_estimated_credit_cards ? "Re-estimate Card Payments" : "Estimate Card Payments" %></span>
-            <% end %>
-          </div>
-        </div>
+        <% end %>
       </div>
     <% end %>
   </section>
   <br>
 
-  <section id="plan-step-2" class="ta-card-tinted ta-surface-manual-soft scroll-mt-24">
+  <section id="plan-one-off" class="ta-card-tinted ta-surface-manual-soft scroll-mt-24">
     <div class="mb-2 px-1">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Step 2 · Add one-off items and exceptions</h3>
-      <p class="mt-1 text-sm text-slate-600">For most users, the guided wizard is the easiest path. Keep quick add available for faster typing once the workflow is familiar.</p>
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Add one-off items</h3>
+      <p class="mt-1 text-sm text-slate-600">Use this for anything that does not already live in recurring transactions.</p>
     </div>
     <%= render "expense_entries/form", budget_month: budget_month, expense_entry: expense_entry %>
   </section>
   <br>
 
-  <section id="plan-step-3" class="ta-card-tinted ta-surface-edit-soft scroll-mt-24">
+  <section id="plan-review" class="ta-card-tinted ta-surface-edit-soft scroll-mt-24">
     <div class="mb-2 px-1">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Step 3 · Review what still needs attention</h3>
-      <p class="mt-1 text-sm text-slate-600">Start with the attention buckets below, then switch back to the budget's full-list mode to update amounts, mark items paid, or clean up entries as plans change.</p>
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-700">Review cleanup</h3>
+      <p class="mt-1 text-sm text-slate-600">These counts point to entries worth checking before you call the month current.</p>
     </div>
 
     <div class="mb-4 grid gap-3 lg:grid-cols-3 xl:grid-cols-4">
       <div class="rounded-[22px] border border-amber-200 bg-white/85 p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Still planned and due</p>
-        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= due_planned_count %></p>
+        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= plan.due_planned_count %></p>
         <p class="mt-2 text-sm leading-6 text-slate-600">Items due today or earlier that are still marked planned.</p>
       </div>
       <div class="rounded-[22px] border border-sky-200 bg-white/85 p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Missing key details</p>
-        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= missing_details_count %></p>
+        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= plan.missing_details_count %></p>
         <p class="mt-2 text-sm leading-6 text-slate-600">Items missing a date, category, or payee and likely worth cleaning up.</p>
       </div>
       <div class="rounded-[22px] border border-rose-200 bg-white/85 p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Paid without actual</p>
-        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= paid_missing_actual_count %></p>
+        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= plan.paid_missing_actual_count %></p>
         <p class="mt-2 text-sm leading-6 text-slate-600">Items marked paid that still do not have an actual amount.</p>
+      </div>
+      <div class="rounded-[22px] border border-violet-200 bg-white/85 p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Auto-completed</p>
+        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= plan.auto_completed_count %></p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Recurring items marked paid automatically and ready for a quick check.</p>
       </div>
     </div>
   </section>

@@ -17,6 +17,7 @@ class Subscription < ApplicationRecord
 
   validates :name, presence: true
   validates :amount, presence: true
+  validates :amount, numericality: { greater_than: 0 }, allow_nil: true
   validates :due_day, inclusion: { in: 1..31 }
 
   scope :active_only, -> { where(active: true).order(:due_day, :name) }

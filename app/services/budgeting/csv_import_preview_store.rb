@@ -1,5 +1,5 @@
-module Platform
-  class BackupRestorePreviewStore
+module Budgeting
+  class CsvImportPreviewStore
     DEFAULT_EXPIRATION = 15.minutes
 
     def initialize(user:, store: nil, expires_in: DEFAULT_EXPIRATION)
@@ -8,9 +8,9 @@ module Platform
       @expires_in = expires_in
     end
 
-    def store(payload:, scopes:, encrypted:)
+    def store(preview)
       token = SecureRandom.uuid
-      @store.write(cache_key(token), { payload: payload, scopes: scopes, encrypted: encrypted }, expires_in: @expires_in)
+      @store.write(cache_key(token), preview, expires_in: @expires_in)
       token
     end
 
@@ -31,7 +31,7 @@ module Platform
     attr_reader :user
 
     def cache_key(token)
-      "backup_restore_preview:#{user.id}:#{token}"
+      "csv_import_preview:#{user.id}:#{token}"
     end
 
     def default_store

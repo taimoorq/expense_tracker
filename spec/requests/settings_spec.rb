@@ -47,8 +47,8 @@ RSpec.describe "Settings", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Quick Actions")
-    expect(response.body.index("Quick Actions")).to be < response.body.index("Continue")
-    expect(response.body).to include("<details class=\"ta-card group\">")
+    expect(response.body.index("<span>Quick Actions</span>")).to be < response.body.index(">Continue</p>")
+    expect(response.body).to include("<details class=\"ta-card group\"")
   end
 
   it "uses the saved landing page after a fresh sign in" do

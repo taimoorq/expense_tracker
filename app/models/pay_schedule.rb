@@ -30,6 +30,7 @@ class PaySchedule < ApplicationRecord
 
   validates :name, presence: true
   validates :amount, presence: true
+  validates :amount, numericality: { greater_than: 0 }, allow_nil: true
   validates :first_pay_on, presence: true
   validate :ends_on_not_before_first_pay_on
 

@@ -7,11 +7,13 @@ module Budgeting
 
     def call
       completed = 0
+      completed_at = Time.current
 
       scope.find_each do |entry|
         entry.update!(
           status: :paid,
-          actual_amount: entry.actual_amount.presence || entry.planned_amount
+          actual_amount: entry.actual_amount.presence || entry.planned_amount,
+          auto_completed_at: completed_at
         )
         completed += 1
       end

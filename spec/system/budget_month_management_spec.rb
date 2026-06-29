@@ -184,8 +184,40 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_link("Plan and Edit")
     expect(page).to have_content("Plan and Edit This Month")
-    expect(page).to have_content("Build the month from recurring")
+    expect(page).to have_content("Add recurring items")
     expect(page).to have_button("Estimate Card Payments")
+  end
+
+  it "jumps to plan and edit sections from the section controls", js: true do
+    user = create(:user, email: "plananchors@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      occurred_on: Date.current.beginning_of_month + 2.days,
+      section: :manual,
+      category: "Other",
+      payee: "One-off item",
+      planned_amount: 25,
+      source_file: "manual")
+
+    sign_in_as(user)
+    visit budget_month_tab_path(month, "entries")
+
+    initial_review_top = page.evaluate_script("document.getElementById('plan-review').getBoundingClientRect().top")
+
+    click_link "Next: review cleanup"
+
+    review_top = page.evaluate_script("document.getElementById('plan-review').getBoundingClientRect().top")
+    expect(page.evaluate_script("window.location.hash")).to eq("#plan-review")
+    expect(page.evaluate_script("document.activeElement.id")).to eq("plan-review")
+    expect(review_top).to be < initial_review_top
+
+    page.execute_script("window.scrollTo(0, 0)")
+    find('turbo-frame#plan_and_edit_panel a[href="#plan-recurring"]', text: "Recurring", match: :first).click
+
+    expect(page.evaluate_script("window.location.hash")).to eq("#plan-recurring")
+    expect(page.evaluate_script("document.activeElement.id")).to eq("plan-recurring")
   end
 
   it "shows previous and next month navigation around the month title" do
@@ -324,7 +356,7 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     click_link "Plan and Edit"
-    within("#plan-step-1") do
+    within("#plan-recurring") do
       click_link "Open Recurring"
     end
 
@@ -498,7 +530,10 @@ RSpec.describe "Budget month management", type: :system do
 
     sign_in_as(user)
     visit budget_month_path(month)
-    click_link "Grouped"
+    within("[role='tablist'][aria-label='Budget view mode']") do
+      click_link "Grouped"
+    end
+    expect(page).to have_current_path(budget_month_tab_path(month, "timeline", view: "sections"), ignore_query: false)
 
     open_state = -> { page.evaluate_script("document.querySelector(\"details[data-group-id='recurring-subscriptions']\")?.open") }
 
@@ -507,12 +542,14 @@ RSpec.describe "Budget month management", type: :system do
 
     fill_in "Filter payee", with: "Netflix"
 
-    expect(page).to have_text("Netflix")
-    expect(open_state.call).to be(true)
+    expect(page).to have_css("details[data-group-id='recurring-subscriptions'][open]", visible: :all)
+    within("details[data-group-id='recurring-subscriptions']") do
+      expect(page).to have_text("Netflix")
+    end
 
     fill_in "Filter payee", with: ""
 
-    expect(open_state.call).to be(false)
+    expect(page).to have_css("details[data-group-id='recurring-subscriptions']:not([open])", visible: :all)
   end
 
   it "lets a user mark an entry as paid from the edit page" do

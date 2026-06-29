@@ -5,4 +5,6 @@ class AccountSnapshot < ApplicationRecord
 
   validates :recorded_on, presence: true, uniqueness: { scope: :account_id }
   validates :balance, presence: true
+  validates :balance, numericality: true, allow_nil: true
+  validates :available_balance, numericality: true, allow_nil: true
 end

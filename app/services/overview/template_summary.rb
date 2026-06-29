@@ -51,18 +51,19 @@ module Overview
     end
 
     def template_coverage_for_type(template_type)
-      templates = templates_for_type(template_type)
-      matched = templates.count do |template|
-        current_month_entries.any? do |entry|
-          template_matches_entry?(template, entry)
-        end
+      coverage_summaries = templates_for_type(template_type).map do |template|
+        Recurring::MonthTemplateCoverage
+          .new(template: template, budget_month: current_month, entries: current_month_entries)
+          .summary
       end
+      total = coverage_summaries.sum { |summary| summary.fetch(:total) }
+      matched = coverage_summaries.sum { |summary| summary.fetch(:matched) }
 
       {
-        total: templates.size,
+        total: total,
         matched: matched,
-        remaining: [ templates.size - matched, 0 ].max,
-        complete: templates.any? && matched == templates.size
+        remaining: [ total - matched, 0 ].max,
+        complete: total.positive? && matched == total
       }
     end
 

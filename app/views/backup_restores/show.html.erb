@@ -146,6 +146,10 @@
           Import is restore-oriented: preview first, then confirm. Selected data sections are replaced inside one transaction, preferences are updated in place, and partial restores are rolled back if validation fails.
         </div>
 
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          Before restoring, download a current backup from Export Data. That gives you a safe return point if the selected sections are not what you expected.
+        </div>
+
         <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           Want to inspect the expected file first?
           <%= link_to sample_backup_restore_path, class: "ml-1 inline-flex items-center gap-2 font-semibold text-slate-900 hover:text-indigo-700", data: { turbo: false } do %>
@@ -234,6 +238,10 @@
       </div>
 
       <div class="mt-5 flex flex-wrap items-center gap-3">
+        <div class="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-rose-900">
+          Restore will replace the selected sections. Make sure you have downloaded a current backup before continuing.
+        </div>
+
         <%= form_with url: import_backup_restore_path,
                       method: :post,
                       data: {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_213000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_29_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -113,6 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_213000) do
   create_table "expense_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "account"
     t.decimal "actual_amount", precision: 12, scale: 2
+    t.datetime "auto_completed_at"
     t.uuid "budget_month_id", null: false
     t.string "category"
     t.datetime "created_at", null: false
@@ -131,6 +132,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_213000) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
+    t.index ["auto_completed_at"], name: "index_expense_entries_on_auto_completed_at"
     t.index ["budget_month_id", "occurred_on", "created_at"], name: "index_expense_entries_on_month_chronological"
     t.index ["budget_month_id"], name: "index_expense_entries_on_budget_month_id"
     t.index ["destination_account_id", "occurred_on", "created_at"], name: "index_expense_entries_on_destination_account_recent", order: { occurred_on: :desc, created_at: :desc }, where: "(destination_account_id IS NOT NULL)"

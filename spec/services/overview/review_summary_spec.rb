@@ -47,6 +47,18 @@ RSpec.describe Overview::ReviewSummary do
       actual_amount: nil,
       status: :paid,
       source_account: account)
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      occurred_on: Date.current,
+      section: :fixed,
+      category: "Subscription",
+      payee: "Streaming",
+      planned_amount: 15,
+      actual_amount: 15,
+      account: nil,
+      status: :paid,
+      auto_completed_at: 1.hour.ago)
 
     summary = described_class.new(entries: month.expense_entries.to_a, today: Date.current).call
 
@@ -54,7 +66,9 @@ RSpec.describe Overview::ReviewSummary do
     expect(summary[:due_soon_count]).to eq(1)
     expect(summary[:missing_details_count]).to eq(1)
     expect(summary[:paid_missing_actual_count]).to eq(1)
-    expect(summary[:review_attention_count]).to eq(3)
+    expect(summary[:auto_completed_count]).to eq(1)
+    expect(summary[:review_attention_count]).to eq(4)
+    expect(summary[:manual_entries_count]).to eq(5)
     expect(summary[:linked_entries_count]).to eq(1)
     expect(summary[:linked_paid_entries_count]).to eq(1)
   end

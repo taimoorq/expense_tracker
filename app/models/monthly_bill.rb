@@ -36,6 +36,7 @@ class MonthlyBill < ApplicationRecord
   before_validation :normalize_billing_months
 
   validates :name, presence: true
+  validates :default_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :due_day, inclusion: { in: 1..31 }
   validate :validate_billing_months
 

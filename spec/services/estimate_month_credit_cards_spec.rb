@@ -24,6 +24,7 @@ RSpec.describe EstimateMonthCreditCards do
     expect(estimates.find_by(payee: first_card.name).account).to eq("Checking")
     expect(estimates.find_by(payee: first_card.name).source_account).to eq(funding_account)
     expect(estimates.find_by(payee: first_card.name).destination_account).to eq(visa_account)
+    expect(estimates.find_by(payee: first_card.name).generated_entry_key).to eq(first_card.estimated_entry_key(month_on: budget_month.month_on))
     expect(estimates.pluck(:source_template_type).uniq).to eq([ "CreditCard" ])
     expect(estimates.find_by(payee: first_card.name).source_template_id).to eq(first_card.id)
     expect(estimates.find_by(payee: second_card.name).source_template_id).to eq(second_card.id)
@@ -77,5 +78,34 @@ RSpec.describe EstimateMonthCreditCards do
     expect(ExpenseEntry.exists?(planned_estimate.id)).to be(false)
     expect(estimator.available_cash).to eq(800.to_d)
     expect(budget_month.expense_entries.where(source_file: "credit_card_estimate", status: :planned).pluck(:payee)).to eq([ card.name ])
+  end
+
+  it "preserves user-edited planned estimates when recalculating" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    create(:expense_entry, budget_month: budget_month, user: user, section: :income, payee: "Salary", planned_amount: 1_000, source_file: "manual")
+    card = create(:credit_card, user: user, name: "Visa", minimum_payment: 100, due_day: 10, priority: 1)
+    edited_estimate = create(
+      :expense_entry,
+      budget_month: budget_month,
+      user: user,
+      section: :debt,
+      category: "Credit Card",
+      payee: "Visa",
+      planned_amount: 125,
+      status: :planned,
+      source_file: "credit_card_estimate",
+      source_template: card,
+      generated_entry_key: card.estimated_entry_key(month_on: budget_month.month_on)
+    )
+    edited_estimate.update_columns(planned_amount: 150, updated_at: 5.minutes.from_now)
+
+    estimator = described_class.new(budget_month: budget_month)
+    changed = estimator.call
+
+    expect(changed).to eq(0)
+    expect(ExpenseEntry.exists?(edited_estimate.id)).to be(true)
+    expect(edited_estimate.reload.planned_amount.to_d).to eq(150)
+    expect(budget_month.expense_entries.where(source_file: "credit_card_estimate", status: :planned).count).to eq(1)
   end
 end

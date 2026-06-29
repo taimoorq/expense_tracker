@@ -68,6 +68,7 @@ Rails.application.routes.draw do
   resources :payment_plans, only: [ :create, :update, :destroy ]
   resources :credit_cards, only: [ :create, :update, :destroy ]
 
+  post "imports/csv/preview", to: "imports#preview", as: :preview_import_csv
   post "imports/csv", to: "imports#create", as: :import_csv
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

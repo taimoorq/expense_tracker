@@ -45,4 +45,34 @@ RSpec.describe Overview::TemplateSummary do
     expect(summary[:template_actions_completed]).to eq(2)
     expect(summary[:template_counts]).to include(pay_schedules: 1, subscriptions: 1, credit_cards: 1)
   end
+
+  it "uses recurring occurrence coverage for completed monthly actions" do
+    user = create(:user)
+    month = create(:budget_month, user:, month_on: Date.new(2026, 6, 1), label: "June 2026")
+    create(:pay_schedule,
+      user: user,
+      name: "Quria",
+      cadence: :semimonthly,
+      amount: 2_600,
+      first_pay_on: Date.new(2026, 6, 1),
+      day_of_month_one: 15,
+      day_of_month_two: 30,
+      account: "Checking")
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      occurred_on: Date.new(2026, 6, 23),
+      section: :income,
+      category: "Paycheck",
+      payee: "Quria",
+      planned_amount: 2_600,
+      actual_amount: 2_600,
+      status: :paid,
+      account: "Checking",
+      source_file: "manual")
+
+    summary = described_class.new(user: user, current_month: month, current_month_entries: month.expense_entries.to_a).call
+
+    expect(summary[:template_actions_completed]).to eq(0)
+  end
 end

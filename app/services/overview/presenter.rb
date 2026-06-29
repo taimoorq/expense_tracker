@@ -305,7 +305,8 @@ module Overview
       [
         { label: "Still planned and due", count: due_planned_count_value },
         { label: "Missing key details", count: missing_details_count_value },
-        { label: "Paid without actual", count: paid_missing_actual_count_value }
+        { label: "Paid without actual", count: paid_missing_actual_count_value },
+        { label: "Auto-completed", count: auto_completed_count_value }
       ]
     end
 
@@ -502,6 +503,10 @@ module Overview
 
     def paid_missing_actual_count_value
       data.fetch(:paid_missing_actual_count)
+    end
+
+    def auto_completed_count_value
+      data.fetch(:auto_completed_count, 0)
     end
 
     def due_soon_count_value

@@ -25,6 +25,7 @@ module ExpenseEntries
 
     def normalized_params
       permitted = params.to_h.symbolize_keys
+      permitted[:auto_completed_at] = nil if expense_entry.auto_completed?
       return permitted unless mark_as_paid
 
       permitted[:status] = "paid"

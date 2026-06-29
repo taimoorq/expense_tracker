@@ -205,10 +205,10 @@
           <%= tabler_icon("upload", classes: "ta-action-icon-lg text-indigo-600") %>
           Quick import
         </h2>
-        <p class="ta-muted mt-1">Drag and drop a CSV or click the upload area to import transactions into your months.</p>
+        <p class="ta-muted mt-1">Drag and drop a CSV or click the upload area to preview transactions before importing them.</p>
       </div>
 
-      <%= form_with url: import_csv_path, method: :post, multipart: true, class: "space-y-4" do |form| %>
+      <%= form_with url: preview_import_csv_path, method: :post, multipart: true, class: "space-y-4" do |form| %>
         <div class="ta-upload-dropzone" data-file-drop-target="dropzone" data-action="click->file-drop#open dragover->file-drop#dragOver dragleave->file-drop#dragLeave drop->file-drop#drop">
           <%= form.file_field :file, accept: ".csv", class: "hidden", data: { file_drop_target: "input", action: "change->file-drop#fileSelected" } %>
 
@@ -226,7 +226,7 @@
           </div>
         </div>
 
-        <%= form.submit "Import CSV", class: "fb-btn-primary w-full", data: { file_drop_target: "submit" } %>
+        <%= form.submit "Preview CSV", class: "fb-btn-primary w-full", data: { file_drop_target: "submit" } %>
       <% end %>
 
       <div class="mt-4 space-y-2">
@@ -242,7 +242,7 @@
 
       <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Accepted columns</p>
-        <p class="mt-2 text-sm text-slate-600">Month, Date, Section, Category, Payee, Planned Amount, Actual Amount, Account, Status, Need or Want, Notes.</p>
+        <p class="mt-2 text-sm text-slate-600">Month, Date, Section, Category, Payee, Planned Amount, Actual Amount, Account, Status, Need or Want, Notes. Preview shows row errors before anything is saved.</p>
       </div>
     </section>
   </aside>

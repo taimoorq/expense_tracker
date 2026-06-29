@@ -11,7 +11,18 @@ module RecurringEntryTemplate
     return false if entry.blank? || entry.occurred_on.blank?
     return false unless comparable_match_text(entry.payee) == comparable_match_text(name)
     return false unless recurring_month_occurrences(month_on).include?(entry.occurred_on)
-    return false unless matching_entry_source_files.include?(entry.source_file) || matching_entry_sections.include?(entry.section)
+    return false unless matching_entry_origin?(entry)
+    return false unless matching_account?(entry)
+    return false unless matching_amount?(entry, month_on: month_on)
+
+    true
+  end
+
+  def represents_entry_for_month?(entry, month_on:)
+    return false if entry.blank? || entry.occurred_on.blank?
+    return false unless month_on.to_date.all_month.cover?(entry.occurred_on.to_date)
+    return false unless comparable_match_text(entry.payee) == comparable_match_text(name)
+    return false unless matching_entry_origin?(entry)
     return false unless matching_account?(entry)
     return false unless matching_amount?(entry, month_on: month_on)
 
@@ -23,12 +34,9 @@ module RecurringEntryTemplate
   end
 
   def generated_entry_exists?(budget_month, occurred_on)
-    key = generated_entry_key(month_on: budget_month.month_on, occurred_on: occurred_on)
-    return true if key.present? && budget_month.expense_entries.exists?(generated_entry_key: key)
-
-    budget_month.expense_entries.any? do |entry|
-      matches_entry_for_month?(entry, month_on: budget_month.month_on) && entry.occurred_on == occurred_on
-    end
+    Recurring::MonthTemplateCoverage
+      .new(template: self, budget_month: budget_month, entries: budget_month.expense_entries.to_a)
+      .matched_occurrence?(occurred_on)
   end
 
   def generated_entry_key(month_on:, occurred_on:)
@@ -84,6 +92,20 @@ module RecurringEntryTemplate
 
   def matching_entry_source_files
     [ recurring_source_file ].compact
+  end
+
+  def matching_entry_origin?(entry)
+    matching_entry_template_link?(entry) ||
+      matching_entry_source_files.include?(entry.source_file) ||
+      matching_entry_sections.include?(entry.section) ||
+      comparable_match_text(entry.category) == comparable_match_text(generated_entry_category)
+  end
+
+  def matching_entry_template_link?(entry)
+    return false unless id.present?
+    return false unless entry.respond_to?(:source_template_type) && entry.respond_to?(:source_template_id)
+
+    entry.source_template_type == self.class.name && entry.source_template_id == id
   end
 
   def strict_matching_amount?

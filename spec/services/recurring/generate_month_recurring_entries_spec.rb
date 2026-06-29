@@ -52,4 +52,63 @@ RSpec.describe Recurring::GenerateMonthRecurringEntries do
     expect(created).to eq(0)
     expect(budget_month.expense_entries.where(generated_entry_key: generated_key).count).to eq(1)
   end
+
+  it "does not create a duplicate when the scheduled item is already on another date in the month" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 6, 1), label: "June 2026")
+    bill = create(:monthly_bill,
+                  user: user,
+                  name: "WSSC Water",
+                  kind: :variable_bill,
+                  due_day: 20,
+                  account: "Checking")
+    create(:expense_entry,
+           budget_month: budget_month,
+           user: user,
+           occurred_on: Date.new(2026, 6, 8),
+           section: :manual,
+           category: "Variable Bill",
+           payee: "WSSC Water",
+           planned_amount: 452.71,
+           actual_amount: 452.71,
+           account: "Checking",
+           status: :paid,
+           source_file: "manual")
+
+    created = described_class.new(budget_month: budget_month, templates: [ bill ]).call
+
+    expect(created).to eq(0)
+    expect(budget_month.expense_entries.where(payee: "WSSC Water").count).to eq(1)
+  end
+
+  it "does not let one alternate entry cover every similar occurrence" do
+    user = create(:user)
+    budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 6, 1), label: "June 2026")
+    schedule = create(:pay_schedule,
+                      user: user,
+                      name: "Quria",
+                      cadence: :semimonthly,
+                      amount: 2_600,
+                      first_pay_on: Date.new(2026, 6, 1),
+                      day_of_month_one: 15,
+                      day_of_month_two: 30,
+                      account: "Checking")
+    create(:expense_entry,
+           budget_month: budget_month,
+           user: user,
+           occurred_on: Date.new(2026, 6, 23),
+           section: :income,
+           category: "Paycheck",
+           payee: "Quria",
+           planned_amount: 2_600,
+           actual_amount: 2_600,
+           account: "Checking",
+           status: :paid,
+           source_file: "manual")
+
+    created = described_class.new(budget_month: budget_month, templates: [ schedule ]).call
+
+    expect(created).to eq(1)
+    expect(budget_month.expense_entries.where(payee: "Quria").count).to eq(2)
+  end
 end

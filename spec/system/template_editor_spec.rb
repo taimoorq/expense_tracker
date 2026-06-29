@@ -25,7 +25,7 @@ RSpec.describe "Template editor", type: :system do
 
     sign_in_as(user)
 
-    visit budget_month_path(budget_month)
+    visit budget_month_tab_path(budget_month, "timeline", view: "sections")
 
     find('a[aria-label="Edit recurring item"]', match: :first).click
 

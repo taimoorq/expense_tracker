@@ -18,7 +18,11 @@ class PaymentPlan < ApplicationRecord
   validates :name, presence: true
   validates :total_due, presence: true
   validates :amount_paid, presence: true
+  validates :total_due, numericality: { greater_than: 0 }, allow_nil: true
+  validates :amount_paid, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :monthly_target, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :due_day, inclusion: { in: 1..31 }
+  validate :amount_paid_not_above_total_due
 
   scope :active_only, -> { where(active: true).order(:due_day, :name) }
 
@@ -72,5 +76,12 @@ class PaymentPlan < ApplicationRecord
 
   def strict_matching_amount?
     true
+  end
+
+  def amount_paid_not_above_total_due
+    return if amount_paid.blank? || total_due.blank?
+    return if amount_paid <= total_due
+
+    errors.add(:amount_paid, "must be less than or equal to total due")
   end
 end

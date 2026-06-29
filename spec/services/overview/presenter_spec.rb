@@ -44,6 +44,7 @@ RSpec.describe Overview::Presenter do
         due_soon_count: 3,
         missing_details_count: 1,
         paid_missing_actual_count: 0,
+        auto_completed_count: 0,
         linked_entries_count: 2,
         net_worth_total: -75,
         latest_snapshot: nil,
@@ -104,7 +105,8 @@ RSpec.describe Overview::Presenter do
       [
         { label: "Still planned and due", count: 1 },
         { label: "Missing key details", count: 1 },
-        { label: "Paid without actual", count: 0 }
+        { label: "Paid without actual", count: 0 },
+        { label: "Auto-completed", count: 0 }
       ]
     )
     expect(presenter.check_in_badge).to eq("Weekly check-in")

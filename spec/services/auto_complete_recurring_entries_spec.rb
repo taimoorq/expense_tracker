@@ -40,8 +40,11 @@ RSpec.describe AutoCompleteRecurringEntries, type: :service do
       expect(completed).to eq(1)
       expect(due_subscription.reload).to be_paid
       expect(due_subscription.actual_amount.to_d).to eq(89.50)
+      expect(due_subscription.auto_completed_at).to be_present
       expect(future_subscription.reload).to be_planned
+      expect(future_subscription.auto_completed_at).to be_nil
       expect(manual_entry.reload).to be_planned
+      expect(manual_entry.auto_completed_at).to be_nil
     end
 
     it "preserves an existing actual amount when auto-completing" do
@@ -63,6 +66,7 @@ RSpec.describe AutoCompleteRecurringEntries, type: :service do
 
       expect(paycheck.reload).to be_paid
       expect(paycheck.actual_amount.to_d).to eq(2050)
+      expect(paycheck.auto_completed_at).to be_present
     end
   end
 end
