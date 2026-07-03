@@ -91,7 +91,7 @@ Variable Bill: amounts that vary when due.
         <p class="mt-1 text-xs text-slate-500">Monthly uses all 12 months. Quarterly uses 4, semiannual uses 2, and annual uses 1.</p>
       </div>
       <div>
-        <%= form.label :linked_account_id, "Linked Account", class: "fb-label" %>
+        <%= form.label :linked_account_id, "Money leaves / activity account", class: "fb-label" %>
         <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select account (optional)" }, class: "fb-select" %>
       </div>
       <div>

@@ -168,13 +168,13 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 
 - See your budget in multiple views so you can review the same data as a timeline, a calendar, a breakdown, or a detailed entry list
 - Add transactions the way that fits your workflow, whether that means entering them manually, using the guided wizard, or launching the wizard from month views
-- Upload past transactions to get a month populated faster instead of rebuilding everything by hand
+- Upload past transactions to get a month populated faster, including optional money-leaves and money-goes-to account columns for account movement
 - Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
 - Toggle between grouped timeline sections and a full month list without leaving the same review surface
 
 ### Backup and Privacy
 
-- Export and restore recurring transactions, months, account data, and workflow preferences through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items and explicit money-leaves/money-goes-to account links
+- Export and restore recurring transactions, months, account data, and workflow preferences through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items, explicit money-leaves/money-goes-to account links, generated-entry metadata, and recurring auto-completion markers
 - Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
 - Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
@@ -499,20 +499,20 @@ Each provider receives the same tag set:
 - `latest`
 - `sha-<commit>`
 
-For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.7.2` instead of `latest`.
+For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.7.3` instead of `latest`.
 
 To run the production Compose stack from a published image:
 
 1. Set the app image in `.env.production`.
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.7.2
+   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.7.3
    ```
 
    Or use the Docker Hub mirror:
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.7.2
+   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.7.3
    ```
 
 2. Pull the image.

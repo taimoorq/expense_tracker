@@ -76,6 +76,7 @@ module Recurring
         day_of_month_two: @params[:day_of_month_two].presence,
         weekend_adjustment: @params[:weekend_adjustment].presence || "no_adjustment",
         account: @expense_entry.account,
+        linked_account: @expense_entry.source_account,
         active: true
       )
     end
@@ -86,6 +87,7 @@ module Recurring
         amount: effective_amount,
         due_day: due_day,
         account: @expense_entry.account,
+        linked_account: @expense_entry.source_account,
         active: true,
         notes: @expense_entry.notes
       )
@@ -100,6 +102,7 @@ module Recurring
         billing_frequency: @params[:billing_frequency].presence || "monthly",
         billing_months: billing_months,
         account: @expense_entry.account,
+        linked_account: @expense_entry.source_account,
         active: true,
         notes: @expense_entry.notes
       )
@@ -113,6 +116,7 @@ module Recurring
         monthly_target: effective_amount,
         due_day: due_day,
         account: @expense_entry.account,
+        linked_account: @expense_entry.source_account,
         active: true,
         notes: @expense_entry.notes
       )

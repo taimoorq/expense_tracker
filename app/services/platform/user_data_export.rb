@@ -144,11 +144,15 @@ module Platform
               source_account: entry.source_account&.name,
               destination_account: entry.destination_account&.name,
               status: entry.status,
+              auto_completed_at: entry.auto_completed_at&.iso8601,
               need_or_want: entry.need_or_want,
               notes: entry.notes,
               source_file: entry.source_file,
               source_template_type: entry.source_template_type,
-              source_template_name: entry.source_template&.name
+              source_template_name: entry.source_template&.name,
+              generated_entry_key: entry.generated_entry_key,
+              created_at: entry.created_at&.iso8601,
+              updated_at: entry.updated_at&.iso8601
             }
           end
         }

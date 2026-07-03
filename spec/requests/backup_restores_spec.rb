@@ -115,6 +115,8 @@ RSpec.describe "Backup & restore", type: :request do
     visa_account = create(:account, user: user, name: "Visa Account", kind: :credit_card)
     payroll = create(:pay_schedule, user: user, name: "Acme Payroll", linked_account: checking, account: "Legacy Checking")
     month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+    generated_key = payroll.generated_entry_key(month_on: month.month_on, occurred_on: Date.new(2026, 3, 5))
+    completed_at = Time.zone.parse("2026-03-05 09:15:00")
     create(
       :expense_entry,
       budget_month: month,
@@ -128,7 +130,10 @@ RSpec.describe "Backup & restore", type: :request do
       source_template: payroll,
       source_account: checking,
       destination_account: visa_account,
-      account: "Checking"
+      account: "Checking",
+      occurred_on: Date.new(2026, 3, 5),
+      generated_entry_key: generated_key,
+      auto_completed_at: completed_at
     )
 
     post export_backup_restore_path, params: { export_scopes: [ "budget_months" ] }
@@ -139,6 +144,9 @@ RSpec.describe "Backup & restore", type: :request do
     expect(entry["destination_account"]).to eq("Visa Account")
     expect(entry["source_template_type"]).to eq("PaySchedule")
     expect(entry["source_template_name"]).to eq("Acme Payroll")
+    expect(entry["generated_entry_key"]).to eq(generated_key)
+    expect(entry["auto_completed_at"]).to eq(completed_at.iso8601)
+    expect(entry).to include("created_at", "updated_at")
   end
 
   it "exports manual entries linked to recurring transactions with linkage metadata" do
@@ -206,7 +214,11 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "planning_templates", "pay_schedules")).not_to be_empty
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "payment_account")).to eq("Example Checking")
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "linked_account")).to eq("Example Visa")
+    expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "billing_frequency")).to eq("monthly")
+    expect(payload.dig("data", "planning_templates", "monthly_bills", 0, "billing_months")).to eq((1..12).to_a)
     expect(payload.dig("data", "budget_months", 0, "expense_entries")).not_to be_empty
+    expect(payload.dig("data", "budget_months", 0, "expense_entries", 0, "auto_completed_at")).to be_present
+    expect(payload.dig("data", "budget_months", 0, "expense_entries", 0, "generated_entry_key")).to be_present
     expect(payload.dig("data", "budget_months", 0, "expense_entries", 2, "destination_account")).to eq("Example Visa")
     expect(payload.dig("data", "accounts", 0, "account_snapshots")).not_to be_empty
   end
@@ -489,15 +501,19 @@ RSpec.describe "Backup & restore", type: :request do
                   category: "Utilities",
                   payee: "Pepco",
                   planned_amount: "91.22",
-                  actual_amount: nil,
+                  actual_amount: "91.22",
                   account: "Imported Checking",
                   source_account: "Imported Checking",
-                  status: "planned",
+                  status: "paid",
+                  auto_completed_at: "2026-03-02T09:00:00Z",
                   need_or_want: "Need",
                   notes: "Imported entry",
                   source_file: "pay_schedule",
                   source_template_type: "PaySchedule",
-                  source_template_name: "Imported Payroll"
+                  source_template_name: "Imported Payroll",
+                  generated_entry_key: "recurring:v1:PaySchedule:old-template-id:2026-03-01:2026-03-02",
+                  created_at: "2026-03-01T12:00:00Z",
+                  updated_at: "2026-03-02T09:00:00Z"
                 }
               ]
             }
@@ -544,8 +560,14 @@ RSpec.describe "Backup & restore", type: :request do
     expect(user.pay_schedules.reload.pluck(:name)).to eq([ "Imported Payroll" ])
     expect(user.budget_months.reload.pluck(:label)).to eq([ "March 2026" ])
     imported_entry = user.expense_entries.find_by!(payee: "Pepco")
-    expect(imported_entry.source_template).to eq(user.pay_schedules.find_by!(name: "Imported Payroll"))
+    imported_payroll = user.pay_schedules.find_by!(name: "Imported Payroll")
+    expect(imported_entry.source_template).to eq(imported_payroll)
     expect(imported_entry.source_account).to eq(user.accounts.find_by!(name: "Imported Checking"))
+    expect(imported_entry.auto_completed_at).to eq(Time.zone.parse("2026-03-02T09:00:00Z"))
+    expect(imported_entry.generated_entry_key).to eq(
+      imported_payroll.generated_entry_key(month_on: imported_entry.budget_month.month_on, occurred_on: imported_entry.occurred_on)
+    )
+    expect(imported_entry.updated_at).to eq(Time.zone.parse("2026-03-02T09:00:00Z"))
     expect(user.accounts.reload.pluck(:name)).to eq([ "Imported Checking" ])
     expect(user.account_snapshots.reload.pluck(:notes)).to eq([ "Imported snapshot" ])
   ensure
@@ -790,15 +812,124 @@ RSpec.describe "Backup & restore", type: :request do
     file.unlink
   end
 
+  it "preserves edited credit card estimate metadata after restore" do
+    file = Tempfile.new([ "expense-tracker-card-estimate-backup", ".json" ])
+    file.write(
+      JSON.pretty_generate(
+        format: "expense_tracker_backup",
+        version: 1,
+        exported_at: Time.current.iso8601,
+        scopes: [ "planning_templates", "budget_months", "accounts" ],
+        data: {
+          planning_templates: {
+            pay_schedules: [],
+            subscriptions: [],
+            monthly_bills: [],
+            payment_plans: [],
+            credit_cards: [
+              {
+                name: "Imported Visa",
+                minimum_payment: "75.00",
+                due_day: 20,
+                priority: 1,
+                linked_account: "Imported Visa",
+                payment_account: "Imported Checking",
+                active: true
+              }
+            ]
+          },
+          budget_months: [
+            {
+              label: "June 2026",
+              month_on: "2026-06-01",
+              leftover: nil,
+              notes: nil,
+              expense_entries: [
+                {
+                  occurred_on: "2026-06-20",
+                  section: "debt",
+                  category: "Credit Card",
+                  payee: "Imported Visa",
+                  planned_amount: "150.00",
+                  actual_amount: nil,
+                  account: "Imported Checking",
+                  source_account: "Imported Checking",
+                  destination_account: "Imported Visa",
+                  status: "planned",
+                  need_or_want: "Need",
+                  notes: "Edited after estimate",
+                  source_file: "credit_card_estimate",
+                  source_template_type: "CreditCard",
+                  source_template_name: "Imported Visa",
+                  generated_entry_key: "credit-card-estimate:v1:CreditCard:old-template-id:2026-06-01",
+                  created_at: "2026-06-01T12:00:00Z",
+                  updated_at: "2026-06-01T12:10:00Z"
+                }
+              ]
+            }
+          ],
+          accounts: [
+            {
+              name: "Imported Checking",
+              institution_name: "Bank",
+              kind: "checking",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: true,
+              notes: nil,
+              account_snapshots: []
+            },
+            {
+              name: "Imported Visa",
+              institution_name: "Card Bank",
+              kind: "credit_card",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: false,
+              notes: nil,
+              account_snapshots: []
+            }
+          ]
+        }
+      )
+    )
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "card-estimate-backup.json")
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "planning_templates", "budget_months", "accounts" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    post import_backup_restore_path, params: { preview_token: preview_token }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    card = user.credit_cards.find_by!(name: "Imported Visa")
+    month = user.budget_months.find_by!(label: "June 2026")
+    estimate = month.expense_entries.find_by!(payee: "Imported Visa")
+    expect(estimate.generated_entry_key).to eq(card.estimated_entry_key(month_on: month.month_on))
+    expect(estimate.updated_at).to eq(Time.zone.parse("2026-06-01T12:10:00Z"))
+
+    expect do
+      Recurring::EstimateMonthCreditCards.new(budget_month: month).call
+    end.not_to change { month.expense_entries.reload.count }
+    expect(estimate.reload.planned_amount.to_d).to eq(150.to_d)
+  ensure
+    file.close
+    file.unlink
+  end
+
   it "relinks existing templates and entries after an accounts-only restore" do
     old_checking = create(:account, user: user, name: "Checking", kind: :checking, institution_name: "Old Bank")
+    old_card = create(:account, user: user, name: "Visa", kind: :credit_card, institution_name: "Old Card Bank")
     create(:pay_schedule, user: user, name: "Payroll", account: "Checking", linked_account: old_checking)
+    create(:credit_card, user: user, name: "Rewards Visa", account: "Checking", payment_account: old_checking, linked_account: old_card)
     month = create(:budget_month, user: user, month_on: Date.new(2026, 6, 1), label: "June 2026")
     create(
       :expense_entry,
       budget_month: month,
       user: user,
       source_account: old_checking,
+      destination_account: old_card,
       account: "Checking",
       payee: "Payroll",
       section: :income,
@@ -824,6 +955,16 @@ RSpec.describe "Backup & restore", type: :request do
               include_in_cash: true,
               notes: nil,
               account_snapshots: []
+            },
+            {
+              name: "Visa",
+              institution_name: "New Card Bank",
+              kind: "credit_card",
+              active: true,
+              include_in_net_worth: true,
+              include_in_cash: false,
+              notes: nil,
+              account_snapshots: []
             }
           ]
         }
@@ -840,9 +981,15 @@ RSpec.describe "Backup & restore", type: :request do
 
     expect(response).to have_http_status(:ok)
     restored_checking = user.accounts.find_by!(name: "Checking")
+    restored_card = user.accounts.find_by!(name: "Visa")
     expect(restored_checking.institution_name).to eq("New Bank")
+    expect(restored_card.institution_name).to eq("New Card Bank")
     expect(user.pay_schedules.find_by!(name: "Payroll").linked_account).to eq(restored_checking)
-    expect(user.expense_entries.find_by!(payee: "Payroll").source_account).to eq(restored_checking)
+    expect(user.credit_cards.find_by!(name: "Rewards Visa").payment_account).to eq(restored_checking)
+    expect(user.credit_cards.find_by!(name: "Rewards Visa").linked_account).to eq(restored_card)
+    restored_entry = user.expense_entries.find_by!(payee: "Payroll")
+    expect(restored_entry.source_account).to eq(restored_checking)
+    expect(restored_entry.destination_account).to eq(restored_card)
   ensure
     file.close
     file.unlink

@@ -20,13 +20,14 @@ module Platform
           counts = {}
 
           ApplicationRecord.transaction do
+            capture_account_reference_names if scopes.include?("accounts")
             clear_selected_data
             counts[:accounts] = import_accounts(data[:accounts]) if scopes.include?("accounts")
             counts[:planning_templates] = import_planning_templates(data[:planning_templates]) if scopes.include?("planning_templates")
             counts[:budget_months] = import_budget_months(data[:budget_months]) if scopes.include?("budget_months")
             counts[:preferences] = import_preferences(data[:preferences]) if scopes.include?("preferences") && data.key?(:preferences)
-            Recurring::PlanningTemplateAccountLinking.relink_for(user, planning_template_data: data[:planning_templates]) if scopes.include?("planning_templates") || scopes.include?("accounts")
-            Budgeting::ExpenseEntryProvenanceRepair.relink_for(user) if scopes.include?("budget_months") || scopes.include?("accounts")
+            relink_planning_template_accounts(data)
+            relink_expense_entry_provenance
           end
 
           { success: true, counts: counts }
@@ -47,6 +48,36 @@ module Platform
           user.budget_months.destroy_all if scopes.include?("budget_months")
           unlink_account_references if scopes.include?("accounts")
           user.accounts.destroy_all if scopes.include?("accounts")
+        end
+
+        def capture_account_reference_names
+          @preserved_planning_template_data = {
+            pay_schedules: user.pay_schedules.includes(:linked_account).map { |record| template_account_names(record) },
+            subscriptions: user.subscriptions.includes(:linked_account).map { |record| template_account_names(record) },
+            monthly_bills: user.monthly_bills.includes(:linked_account).map { |record| template_account_names(record) },
+            payment_plans: user.payment_plans.includes(:linked_account).map { |record| template_account_names(record) },
+            credit_cards: user.credit_cards.includes(:linked_account, :payment_account).map do |record|
+              {
+                name: record.name,
+                payment_account: record.payment_account&.name || record.account,
+                linked_account: record.linked_account&.name
+              }
+            end
+          }
+
+          @preserved_entry_account_names = user.expense_entries.includes(:source_account, :destination_account).each_with_object({}) do |entry, lookup|
+            lookup[entry.id] = {
+              source_account: entry.source_account&.name || entry.account,
+              destination_account: entry.destination_account&.name
+            }
+          end
+        end
+
+        def template_account_names(record)
+          {
+            name: record.name,
+            account: record.linked_account&.name || record.account
+          }
         end
 
         def clear_planning_templates
@@ -120,6 +151,7 @@ module Platform
                   :actual_amount,
                   :account,
                   :status,
+                  :auto_completed_at,
                   :need_or_want,
                   :notes,
                   :source_file
@@ -133,6 +165,8 @@ module Platform
                 source_template_type: entry_attributes[:source_template_type],
                 source_template_name: entry_attributes[:source_template_name]
               ).repair!
+              restore_generated_entry_key(entry, entry_attributes)
+              restore_entry_timestamps(entry, entry_attributes)
               entry_count += 1
             end
           end
@@ -163,6 +197,83 @@ module Platform
 
           user.update!(attributes)
           { preferences: attributes.size }
+        end
+
+        def relink_planning_template_accounts(data)
+          return unless scopes.include?("planning_templates") || scopes.include?("accounts")
+
+          Recurring::PlanningTemplateAccountLinking.relink_for(
+            user,
+            planning_template_data: data[:planning_templates].presence || @preserved_planning_template_data
+          )
+        end
+
+        def relink_expense_entry_provenance
+          return unless scopes.include?("budget_months") || scopes.include?("accounts")
+
+          Budgeting::ExpenseEntryProvenanceRepair.relink_for(user)
+          relink_preserved_entry_account_references if scopes.include?("accounts") && !scopes.include?("budget_months")
+        end
+
+        def relink_preserved_entry_account_references
+          return if @preserved_entry_account_names.blank?
+
+          user.expense_entries.find_each do |entry|
+            preserved_names = @preserved_entry_account_names[entry.id]
+            next if preserved_names.blank?
+
+            source_account = account_named(preserved_names[:source_account])
+            destination_account = account_named(preserved_names[:destination_account])
+
+            entry.source_account = source_account if entry.source_account.blank? && source_account.present?
+            entry.destination_account = destination_account if entry.destination_account.blank? && destination_account.present?
+            entry.save! if entry.changed?
+          end
+        end
+
+        def restore_generated_entry_key(entry, entry_attributes)
+          canonical_key = canonical_generated_entry_key(entry)
+          exported_key = entry_attributes[:generated_entry_key].presence
+          restored_key = canonical_key || portable_exported_generated_key(entry, exported_key)
+          return if restored_key.blank?
+
+          entry.update!(generated_entry_key: restored_key)
+        end
+
+        def canonical_generated_entry_key(entry)
+          template = entry.source_template
+          return if template.blank?
+
+          if template.is_a?(CreditCard) && entry.source_file == CreditCard.template_source_file
+            template.estimated_entry_key(month_on: entry.budget_month.month_on)
+          elsif entry.generated_from_template? && template.respond_to?(:generated_entry_key) && entry.occurred_on.present?
+            template.generated_entry_key(month_on: entry.budget_month.month_on, occurred_on: entry.occurred_on)
+          end
+        end
+
+        def portable_exported_generated_key(entry, exported_key)
+          return if exported_key.blank?
+          return if entry.source_file == CreditCard.template_source_file
+
+          exported_key
+        end
+
+        def restore_entry_timestamps(entry, entry_attributes)
+          timestamp_updates = {
+            created_at: parse_time(entry_attributes[:created_at]),
+            updated_at: parse_time(entry_attributes[:updated_at])
+          }.compact
+          return if timestamp_updates.empty?
+
+          entry.update_columns(timestamp_updates)
+        end
+
+        def parse_time(value)
+          return if value.blank?
+
+          Time.zone.parse(value.to_s)
+        rescue ArgumentError
+          nil
         end
 
         def account_named(name)

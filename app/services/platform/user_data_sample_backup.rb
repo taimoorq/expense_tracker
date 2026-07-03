@@ -49,6 +49,8 @@ module Platform
                 kind: "variable_bill",
                 default_amount: "120.00",
                 due_day: 18,
+                billing_frequency: "monthly",
+                billing_months: (1..12).to_a,
                 account: "Checking",
                 notes: "Sample utility bill",
                 active: true
@@ -96,11 +98,15 @@ module Platform
                   account: "Checking",
                   source_account: "Checking",
                   status: "paid",
+                  auto_completed_at: "2026-03-09T09:00:00Z",
                   need_or_want: nil,
                   notes: "Generated from sample pay schedule",
                   source_file: "pay_schedule",
                   source_template_type: "PaySchedule",
-                  source_template_name: "Example Payroll"
+                  source_template_name: "Example Payroll",
+                  generated_entry_key: "recurring:v1:PaySchedule:sample-payroll:2026-03-01:2026-03-09",
+                  created_at: "2026-03-01T12:00:00Z",
+                  updated_at: "2026-03-09T09:00:00Z"
                 },
                 {
                   occurred_on: "2026-03-18",
@@ -112,11 +118,15 @@ module Platform
                   account: "Checking",
                   source_account: "Checking",
                   status: "planned",
+                  auto_completed_at: nil,
                   need_or_want: "Need",
                   notes: "Sample month entry",
                   source_file: "monthly_bill",
                   source_template_type: "MonthlyBill",
-                  source_template_name: "Example Electric"
+                  source_template_name: "Example Electric",
+                  generated_entry_key: "recurring:v1:MonthlyBill:sample-electric:2026-03-01:2026-03-18",
+                  created_at: "2026-03-01T12:05:00Z",
+                  updated_at: "2026-03-01T12:05:00Z"
                 },
                 {
                   occurred_on: "2026-03-24",
@@ -129,11 +139,15 @@ module Platform
                   source_account: "Example Checking",
                   destination_account: "Example Visa",
                   status: "planned",
+                  auto_completed_at: nil,
                   need_or_want: "Need",
                   notes: "Manual extra payment linked to the recurring card",
                   source_file: "manual",
                   source_template_type: "CreditCard",
-                  source_template_name: "Example Visa"
+                  source_template_name: "Example Visa",
+                  generated_entry_key: nil,
+                  created_at: "2026-03-01T12:10:00Z",
+                  updated_at: "2026-03-01T12:10:00Z"
                 }
               ]
             }

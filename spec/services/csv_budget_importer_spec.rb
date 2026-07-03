@@ -75,6 +75,58 @@ RSpec.describe CsvBudgetImporter do
     file.unlink
   end
 
+  it "imports explicit money-leaves and money-goes-to account links" do
+    user = create(:user)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    visa = create(:account, user: user, name: "Rewards Visa", kind: :credit_card)
+
+    file = Tempfile.new([ "budget-importer-account-flow", ".csv" ])
+    file.write(<<~CSV)
+      Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Money Leaves Account,Money Goes To Account,Status,Need or Want,Notes
+      2026-03,2026-03-18,debt,Credit Card,Rewards Visa,250,,Checking,Rewards Visa,planned,Need,Card payment
+    CSV
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "text/csv", original_filename: "budget.csv")
+    result = described_class.new(file: upload, user: user).call
+
+    expect(result).to include(ok: true, months: 1, entries: 1)
+    entry = user.expense_entries.find_by!(payee: "Rewards Visa")
+    expect(entry.source_account).to eq(checking)
+    expect(entry.destination_account).to eq(visa)
+    expect(entry.account).to eq("Checking")
+  ensure
+    file.close
+    file.unlink
+  end
+
+  it "warns when explicit account-link columns do not match saved accounts" do
+    user = create(:user)
+
+    file = Tempfile.new([ "budget-importer-unresolved-account-flow", ".csv" ])
+    file.write(<<~CSV)
+      Month,Date,Section,Category,Payee,Planned Amount,Actual Amount,Money Leaves Account,Money Goes To Account,Status,Need or Want,Notes
+      2026-03,2026-03-18,debt,Credit Card,Rewards Visa,250,,Checking,Rewards Visa,planned,Need,Card payment
+    CSV
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, "text/csv", original_filename: "budget.csv")
+    result = described_class.new(file: upload, user: user).call
+
+    expect(result).to include(ok: true, months: 1, entries: 1)
+    expect(result[:warnings]).to contain_exactly(
+      "Row 2: Money leaves / activity account Checking does not match a saved account and will be kept as a manual account label.",
+      "Row 2: Money goes to Rewards Visa does not match a saved account and will be left unlinked."
+    )
+    entry = user.expense_entries.find_by!(payee: "Rewards Visa")
+    expect(entry.source_account).to be_nil
+    expect(entry.destination_account).to be_nil
+    expect(entry.account).to eq("Checking")
+  ensure
+    file.close
+    file.unlink
+  end
+
   it "previews exact duplicates and skips them during import" do
     user = create(:user)
     month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")

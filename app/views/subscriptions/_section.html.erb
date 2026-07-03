@@ -67,7 +67,7 @@ Due day: day of month this usually charges.
         <p class="mt-1 text-xs text-slate-500">Day of the month this usually charges.</p>
       </div>
       <div>
-        <%= form.label :linked_account_id, "Linked Account", class: "fb-label" %>
+        <%= form.label :linked_account_id, "Money leaves / activity account", class: "fb-label" %>
         <%= form.collection_select :linked_account_id, current_user.accounts.active_first, :id, :name, { include_blank: "Select account (optional)" }, class: "fb-select" %>
       </div>
       <div>

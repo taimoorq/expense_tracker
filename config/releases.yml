@@ -1,4 +1,16 @@
 releases:
+  - version: "0.7.3"
+    released_on: "2026-07-03"
+    title: "Backup and account-flow import updates"
+    summary: "This release brings exports, restores, CSV imports, recurring setup, and user-facing account-flow language up to date with the latest month, recurring transaction, and account-linking behavior."
+    changes:
+      - "Exports and restores generated-entry metadata, recurring auto-completion markers, and entry timestamps so edited generated rows round-trip more faithfully through backups."
+      - "Recomputes restored generated-entry keys against restored recurring templates and credit cards so future generation does not overwrite edited card estimates or create duplicates."
+      - "Preserves recurring template account links and existing entry source and destination account links during account-only restores when matching account names are restored."
+      - "Adds CSV import support for Money Leaves Account and Money Goes To Account columns, including warnings when explicit account names do not match a saved account."
+      - "Keeps duplicate detection account-aware so same-day, same-payee, same-amount rows in different accounts are no longer skipped as duplicates."
+      - "Keeps recurring templates created from the guided entry wizard linked to the selected money-leaves account."
+      - "Refreshes sample backups, CSV templates, in-app help, and public docs to use the latest account-flow terminology."
   - version: "0.7.2"
     released_on: "2026-06-29"
     title: "Plan and Edit and import safety"

@@ -28,6 +28,8 @@ RSpec.describe "Expense entries", type: :request do
   end
 
   it "creates an entry and a recurring transaction from the wizard payload" do
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+
     expect do
       post budget_month_expense_entries_path(budget_month), params: {
         wizard_flow: "1",
@@ -37,6 +39,7 @@ RSpec.describe "Expense entries", type: :request do
           category: "Streaming",
           payee: "Netflix",
           planned_amount: "19.99",
+          source_account_id: checking.id,
           account: "Checking",
           status: "planned",
           need_or_want: "Want",
@@ -58,6 +61,7 @@ RSpec.describe "Expense entries", type: :request do
     expect(subscription.name).to eq("Netflix")
     expect(subscription.amount.to_d).to eq(19.99.to_d)
     expect(subscription.due_day).to eq(8)
+    expect(subscription.linked_account).to eq(checking)
   end
 
   it "creates a monthly bill template with explicit billing months from the wizard payload" do
