@@ -1,0 +1,98 @@
+<% content_for :title, "Import Account Activity" %>
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb @account.name, account_path(@account) %>
+<% breadcrumb "Import Activity" %>
+
+<% content_for :page_header do %>
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.name %></p>
+    <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
+      <%= tabler_icon("upload", classes: "h-6 w-6 text-indigo-600") %>
+      <span>Import Account Activity</span>
+    </h2>
+  </div>
+<% end %>
+
+<div class="mx-auto max-w-4xl space-y-6">
+  <section class="ta-card">
+    <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div>
+        <h3 class="text-lg font-semibold text-slate-900">Upload activity CSV</h3>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Use the activity export from <%= @account.institution_name.presence || @account.name %>. Preview reads the institution file, maps the columns, detects debit and credit direction, checks for duplicate rows, and captures any reported balance before anything is saved.</p>
+      </div>
+      <%= link_to account_path(@account), class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
+        <span>Back to Account</span>
+      <% end %>
+    </div>
+
+    <div class="mb-5 border-y border-slate-200 py-4">
+      <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Import stages</h3>
+      <div class="mt-3 grid gap-4 md:grid-cols-3">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">1. Preview</p>
+          <p class="mt-1 text-sm leading-6 text-slate-600">The CSV is parsed into a temporary preview token. No account activity rows are saved yet.</p>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-slate-900">2. Confirm</p>
+          <p class="mt-1 text-sm leading-6 text-slate-600">You review counts, duplicates, sample rows, and institution balance metadata before importing.</p>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-slate-900">3. Apply</p>
+          <p class="mt-1 text-sm leading-6 text-slate-600">The confirmed rows are saved together; imported account balances become the trusted balance source over snapshots.</p>
+        </div>
+      </div>
+    </div>
+
+    <%= form_with url: preview_account_account_activity_imports_path(@account),
+                  method: :post,
+                  multipart: true,
+                  class: "space-y-4",
+                  data: {
+                    controller: "file-drop turbo-submit",
+                    turbo: false,
+                    action: "submit->turbo-submit#submitStart turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
+                    turbo_submit_default_label_value: "Preview Institution Activity",
+                    turbo_submit_pending_label_value: "Building preview..."
+                  } do |form| %>
+      <div>
+        <%= form.label :file, "Institution CSV export", class: "fb-label" %>
+        <div class="ta-upload-dropzone mt-2" data-file-drop-target="dropzone" data-action="click->file-drop#open dragover->file-drop#dragOver dragleave->file-drop#dragLeave drop->file-drop#drop">
+          <%= form.file_field :file, accept: ".csv", required: true, class: "hidden", data: { file_drop_target: "input", action: "change->file-drop#fileSelected" } %>
+
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+            <%= tabler_icon("upload", classes: "ta-panel-icon") %>
+          </div>
+
+          <div class="space-y-1">
+            <p class="text-sm font-semibold text-slate-900">Institution activity CSV</p>
+            <p class="text-sm text-slate-500">Drop the file here or browse</p>
+          </div>
+
+          <div class="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm" data-file-drop-target="fileName">
+            No file selected
+          </div>
+        </div>
+      </div>
+
+      <div class="hidden rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm leading-6 text-indigo-950" data-turbo-submit-target="status" aria-live="polite" aria-hidden="true">
+        <div class="flex items-start gap-3">
+          <%= tabler_icon("loader-2", classes: "mt-0.5 h-4 w-4 animate-spin text-indigo-700") %>
+          <div>
+            <p class="font-semibold text-slate-900">Preview submitted</p>
+            <p>The server is reading the CSV, detecting columns, normalizing amounts, checking duplicates, and looking for institution balance metadata.</p>
+          </div>
+        </div>
+      </div>
+
+      <%= button_tag type: :submit,
+                     class: "fb-btn-primary ta-action-btn justify-center",
+                     data: { file_drop_target: "submit", turbo_submit_target: "submitButton" } do %>
+        <span class="hidden" data-turbo-submit-target="submitSpinner" aria-hidden="true">
+          <%= tabler_icon("loader-2", classes: "ta-action-icon animate-spin") %>
+        </span>
+        <span data-turbo-submit-target="submitLabel">Preview Institution Activity</span>
+      <% end %>
+    <% end %>
+  </section>
+</div>

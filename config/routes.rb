@@ -38,6 +38,9 @@ Rails.application.routes.draw do
   get "planning_templates/credit-cards/:edit_credit_card_id/edit", to: "planning_templates#index", as: :edit_credit_card_planning_templates
   resources :accounts, except: [ :destroy ] do
     resources :account_snapshots, only: [ :create, :edit, :update, :destroy ]
+    resources :account_activity_imports, only: [ :new, :create ] do
+      post :preview, on: :collection
+    end
   end
 
   get "budget_months/year/:year", to: "budget_months#index", as: :budget_months_year, constraints: { year: /\d{4}/ }

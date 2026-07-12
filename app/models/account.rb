@@ -1,6 +1,8 @@
 class Account < ApplicationRecord
   belongs_to :user
   has_many :account_snapshots, -> { order(recorded_on: :desc, created_at: :desc) }, dependent: :destroy
+  has_many :account_activity_imports, dependent: :destroy
+  has_many :account_activities, dependent: :destroy
 
   enum :kind, {
     checking: 0,
@@ -29,11 +31,6 @@ class Account < ApplicationRecord
     latest_snapshot&.balance
   end
 
-  def current_balance(as_of: Date.current)
-    base_balance = latest_balance.to_d
-    base_balance + posted_entries_delta(as_of: as_of)
-  end
-
   def asset?
     checking? || savings? || brokerage? || retirement? || cash? || other_asset?
   end
@@ -44,6 +41,10 @@ class Account < ApplicationRecord
 
   def display_balance
     current_balance
+  end
+
+  def resolved_balance(as_of: Date.current)
+    Accounts::BalanceResolver.new(account: self, as_of: as_of).call
   end
 
   def posted_entries_delta(as_of: Date.current)
@@ -62,5 +63,29 @@ class Account < ApplicationRecord
 
   def account_delta_for(entry)
     Accounts::EntryImpact.new(account: self, entry: entry).delta
+  end
+
+  def imported_card_balance_source(as_of: Date.current)
+    return nil unless credit_card?
+
+    balance = resolved_balance(as_of: as_of)
+    return nil unless balance.balance_available
+    return nil unless balance.balance_source.in?([ :institution_import, :imported_activity ])
+
+    {
+      type: balance.balance_source,
+      label: balance.balance_source_label,
+      record: balance.balance_source_record,
+      recorded_on: balance.balance_source_recorded_on,
+      base_balance: balance.base_balance,
+      activity_delta: balance.paid_delta,
+      current_balance: balance.current_balance,
+      activity_through_on: balance.activity_through_on,
+      activity_count: balance.paid_entries_count
+    }
+  end
+
+  def current_balance(as_of: Date.current)
+    resolved_balance(as_of: as_of).current_balance
   end
 end

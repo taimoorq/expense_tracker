@@ -19,6 +19,7 @@ RSpec.describe "Accounts management", type: :system do
 
     expect(page).to have_content("Account created and initial balance recorded.")
     expect(page).to have_content("$15,250.75")
+    click_link "Manage"
     expect(page).to have_content("$800.25")
     expect(page).to have_content("Opening balance")
   end
@@ -41,6 +42,7 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("Account created. Add a balance snapshot to start tracking it.")
     expect(page).to have_content("Emergency Savings")
 
+    click_link "Manage"
     fill_in "Balance", with: "8500.25"
     click_button "Record Balance"
 
@@ -68,9 +70,9 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("Account created and card payment scheduled.")
     expect(page).to have_content("Visa Rewards")
 
-    click_button "Connected Templates"
+    click_link "Manage"
 
-    expect(page).to have_content("Credit Cards")
+    expect(page).to have_content("Connected recurring templates")
     expect(page).to have_content("Visa Rewards")
     expect(user.credit_cards.find_by!(name: "Visa Rewards").payment_account.name).to eq("Checking")
   end
@@ -91,8 +93,9 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("$10,000.00")
     expect(page).to have_content("$2,500.00")
     expect(page).to have_content("$7,500.00")
-    expect(page).to have_content("Paid linked entries are included after snapshots.")
+    expect(page).to have_content("Imports and paid linked entries are reflected from their trusted sources.")
     expect(page).to have_content("Latest updated")
+    expect(page).to have_content("Latest trusted source")
     expect(page).to have_content("March 01, 2026")
     expect(page).to have_css("canvas[data-controller='chart']", visible: :all)
   end
@@ -104,6 +107,7 @@ RSpec.describe "Accounts management", type: :system do
 
     sign_in_as(user)
     visit account_path(account)
+    click_link "Manage"
 
     within("tr", text: "Starting point") do
       click_link "Edit"
@@ -122,7 +126,7 @@ RSpec.describe "Accounts management", type: :system do
     end
 
     expect(page).to have_content("Balance snapshot deleted.")
-    expect(page).to have_content("No snapshots yet")
+    expect(page).to have_content("No manual snapshots yet")
     expect { snapshot.reload }.to raise_error(ActiveRecord::RecordNotFound)
   end
 
@@ -150,14 +154,17 @@ RSpec.describe "Accounts management", type: :system do
     sign_in_as(user)
     visit account_path(account)
 
-    expect(page).to have_content("Account activity and connections")
-    expect(page).to have_button("Activity")
-    expect(page).to have_button("Connected Templates")
-    expect(page).to have_content("How balance is calculated")
-    expect(page).to have_content("Apply paid linked entries")
+    expect(page).to have_link("Activity")
+    click_link "Activity"
+    expect(page).to have_content("Budget-linked activity")
     expect(page).to have_content("Acme Payroll")
-    expect(page).to have_content("Net impact")
-    expect(page).to have_link("Edit Account", href: edit_account_path(account))
+    expect(page).to have_content("Net +$3,200.00")
+
+    click_link "Manage"
+    expect(page).to have_content("Connected recurring templates")
+    expect(page).to have_content("How balance is calculated")
+    expect(page).to have_content("Acme Payroll")
+    expect(page).to have_link("Edit account", href: edit_account_path(account))
     expect(page).to have_no_link("Back to Accounts")
   end
 
@@ -199,6 +206,48 @@ RSpec.describe "Accounts management", type: :system do
       expect(page).to have_content("Progress toward payoff")
       expect(page).to have_content("20%")
       expect(page).to have_content("$800.00 remains")
+    end
+  end
+
+  it "follows a credit card charge story from the chart table to exact institution rows" do
+    travel_to Time.zone.local(2026, 6, 15, 12, 0, 0) do
+      user = create(:user)
+      card = create(:account, user: user, name: "Rewards Card", kind: :credit_card)
+      create(:account_snapshot, account: card, recorded_on: Date.new(2026, 6, 1), balance: -500)
+      activity_import = create(:account_activity_import, account: card, started_on: Date.new(2026, 6, 1), ended_on: Date.new(2026, 6, 15))
+      create(:account_activity, account: card, account_activity_import: activity_import, transaction_on: Date.new(2026, 6, 5), description: "CARD PURCHASE", account_delta: -125, amount: 125)
+      create(:account_activity, account: card, account_activity_import: activity_import, transaction_on: Date.new(2026, 6, 10), description: "AUTOPAY PAYMENT", account_delta: 300, amount: 300)
+
+      sign_in_as(user)
+      visit account_path(card)
+
+      expect(page).to have_content("Charges and payments over time")
+      expect(page).to have_content("Payments & credits")
+      expect(page).to have_css("canvas[data-controller='chart']", visible: :all)
+      find("a[aria-label='Review charges for Jun 2026']").click
+
+      expect(page).to have_content("Institution activity")
+      expect(page).to have_content("CARD PURCHASE")
+      expect(page).to have_no_content("AUTOPAY PAYMENT")
+      expect(page).to have_content("Showing outgoing from institution activity")
+    end
+  end
+
+  it "shows checking money in and money out without claiming every inflow is income" do
+    travel_to Time.zone.local(2026, 6, 15, 12, 0, 0) do
+      user = create(:user)
+      checking = create(:account, user: user, name: "Checking", kind: :checking)
+      activity_import = create(:account_activity_import, account: checking, started_on: Date.new(2026, 6, 1), ended_on: Date.new(2026, 6, 15))
+      create(:account_activity, account: checking, account_activity_import: activity_import, transaction_on: Date.new(2026, 6, 3), description: "TRANSFER IN", account_delta: 1_000, amount: 1_000)
+      create(:account_activity, account: checking, account_activity_import: activity_import, transaction_on: Date.new(2026, 6, 8), description: "UTILITY PAYMENT", account_delta: -250, amount: 250)
+
+      sign_in_as(user)
+      visit account_path(checking)
+
+      expect(page).to have_content("Money in and money out over time")
+      expect(page).to have_content("Money in")
+      expect(page).to have_content("Money out")
+      expect(page).to have_no_content("Income over time")
     end
   end
 end

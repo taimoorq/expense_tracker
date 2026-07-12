@@ -187,6 +187,56 @@ module Platform
                 }
               ]
             }
+          ],
+          account_activity: [
+            {
+              account: "Example Visa",
+              original_filename: "sample-account-activity.csv",
+              header_row_number: 1,
+              column_mapping: {
+                transaction_on: "Transaction Date",
+                posted_on: "Post Date",
+                description: "Description",
+                raw_amount: "Amount",
+                category: "Category"
+              },
+              amount_strategy: "charges_are_negative",
+              rows_count: 1,
+              imported_count: 1,
+              duplicate_count: 0,
+              warning_messages: [],
+              started_on: "2026-03-10",
+              ended_on: "2026-03-10",
+              metadata: {
+                headers: [ "Transaction Date", "Post Date", "Description", "Category", "Amount" ]
+              },
+              created_at: "2026-03-10T12:00:00Z",
+              updated_at: "2026-03-10T12:00:00Z",
+              account_activities: [
+                {
+                  transaction_on: "2026-03-10",
+                  posted_on: "2026-03-11",
+                  description: "Sample Merchant 001",
+                  category: "Utilities",
+                  activity_type: "Sale",
+                  memo: nil,
+                  raw_amount: "-48.25",
+                  amount: "48.25",
+                  account_delta: "-48.25",
+                  row_number: 2,
+                  fingerprint: "sample-account-activity-fingerprint-1",
+                  raw_payload: {
+                    "Transaction Date" => "03/10/2026",
+                    "Post Date" => "03/11/2026",
+                    "Description" => "Sample Merchant 001",
+                    "Category" => "Utilities",
+                    "Amount" => "-48.25"
+                  },
+                  created_at: "2026-03-10T12:00:00Z",
+                  updated_at: "2026-03-10T12:00:00Z"
+                }
+              ]
+            }
           ]
         }
       }

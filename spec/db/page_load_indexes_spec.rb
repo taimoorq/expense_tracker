@@ -18,6 +18,15 @@ RSpec.describe "page load indexes" do
     expect(index.where).to include("source_account_id IS NOT NULL")
   end
 
+  it "supports imported account activity history and idempotency" do
+    chronological_index = index_by_name(:account_activities, "index_account_activities_on_account_chronological")
+    fingerprint_index = index_by_name(:account_activities, "index_account_activities_on_account_id_and_fingerprint")
+
+    expect(chronological_index.columns).to eq(%w[account_id transaction_on created_at])
+    expect(fingerprint_index.columns).to eq(%w[account_id fingerprint])
+    expect(fingerprint_index.unique).to be(true)
+  end
+
   it "supports recurring-entry auto completion for a signed-in user" do
     index = index_by_name(:expense_entries, "index_expense_entries_on_user_due_recurring")
 

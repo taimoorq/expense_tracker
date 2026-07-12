@@ -19,6 +19,11 @@ module Platform
         parts << "#{account_counts[:accounts]} account#{'s' unless account_counts[:accounts] == 1} and #{account_counts[:snapshots]} snapshot#{'s' unless account_counts[:snapshots] == 1}"
       end
 
+      if counts[:account_activity]
+        activity_counts = counts[:account_activity]
+        parts << "#{activity_counts[:rows]} imported activity row#{'s' unless activity_counts[:rows] == 1}"
+      end
+
       if counts[:preferences]
         preference_count = counts[:preferences][:preferences]
         parts << "#{preference_count} workflow preference#{'s' unless preference_count == 1}"

@@ -133,6 +133,8 @@ GEM
     factory_bot_rails (6.5.1)
       factory_bot (~> 6.5)
       railties (>= 6.1.0)
+    faker (3.8.0)
+      i18n (>= 1.8.11, < 2)
     fugit (1.12.3)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
@@ -443,6 +445,7 @@ DEPENDENCIES
   devise (~> 5.0)
   dotenv-rails
   factory_bot_rails (~> 6.5)
+  faker
   image_processing (~> 2.0)
   importmap-rails
   jbuilder
@@ -509,6 +512,7 @@ CHECKSUMS
   et-orbi (1.4.0) sha256=6c7e3c90779821f9e3b324c5e96fda9767f72995d6ae435b96678a4f3e2de8bc
   factory_bot (6.6.0) sha256=1fc1b3b5620ec980a6a27aec1b6ec8c250ca82962e970e8a40f93e8d388d4b89
   factory_bot_rails (6.5.1) sha256=d3cc4851eae4dea8a665ec4a4516895045e710554d2b5ac9e68b94d351bc6d68
+  faker (3.8.0) sha256=c147b308df73a90f27a4fc84f18d4c22ef0ad9c2a64b2b61c86fd0ca71753efc
   fugit (1.12.3) sha256=826d77739086482a6ac2805bc32693845395da688f637890cb4ca457dede2ec2
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5

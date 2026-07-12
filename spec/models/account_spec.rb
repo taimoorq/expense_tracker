@@ -69,6 +69,61 @@ RSpec.describe Account, type: :model do
     expect(card.current_balance(as_of: Date.new(2026, 4, 30))).to eq(-825.to_d)
   end
 
+  it "uses an institution-reported credit card balance ahead of manual snapshots and budget entries" do
+    user = create(:user)
+    card = create(:account, user: user, name: "Visa", kind: :credit_card)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 7, 1), label: "July 2026")
+    create(:account_snapshot, account: card, recorded_on: Date.new(2026, 7, 1), balance: -500)
+    import = create(
+      :account_activity_import,
+      account: card,
+      metadata: {
+        institution_balance: "-1000.00",
+        institution_balance_as_of: "2026-07-02"
+      }
+    )
+    create(:account_activity, account_activity_import: import, account: card, transaction_on: Date.new(2026, 7, 3), amount: 25, account_delta: -25)
+    create(:expense_entry, budget_month: month, user: user, source_account: checking, destination_account: card, occurred_on: Date.new(2026, 7, 4), section: :debt, status: :paid, actual_amount: 300)
+
+    source = card.imported_card_balance_source(as_of: Date.new(2026, 7, 5))
+
+    expect(source).to include(type: :institution_import, base_balance: -1000.to_d, activity_delta: -25.to_d)
+    expect(card.current_balance(as_of: Date.new(2026, 7, 5))).to eq(-1025.to_d)
+  end
+
+  it "uses an institution-reported bank balance ahead of manual snapshots" do
+    user = create(:user)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    create(:account_snapshot, account: checking, recorded_on: Date.new(2026, 7, 1), balance: 500)
+    import = create(
+      :account_activity_import,
+      account: checking,
+      metadata: {
+        institution_balance: "1200.00",
+        institution_balance_as_of: "2026-07-02"
+      }
+    )
+    create(:account_activity, account_activity_import: import, account: checking, transaction_on: Date.new(2026, 7, 3), amount: 50, account_delta: -50)
+
+    expect(checking.current_balance(as_of: Date.new(2026, 7, 5))).to eq(1150.to_d)
+  end
+
+  it "rolls credit card snapshots forward with imported institution rows when no reported balance exists" do
+    user = create(:user)
+    card = create(:account, user: user, name: "Visa", kind: :credit_card)
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 7, 1), label: "July 2026")
+    create(:account_snapshot, account: card, recorded_on: Date.new(2026, 7, 1), balance: -500)
+    import = create(:account_activity_import, account: card)
+    create(:account_activity, account_activity_import: import, account: card, transaction_on: Date.new(2026, 7, 3), amount: 25, account_delta: -25)
+    create(:expense_entry, budget_month: month, user: user, source_account: card, occurred_on: Date.new(2026, 7, 4), section: :variable, status: :paid, actual_amount: 300)
+
+    source = card.imported_card_balance_source(as_of: Date.new(2026, 7, 5))
+
+    expect(source).to include(type: :imported_activity, base_balance: -500.to_d, activity_delta: -25.to_d)
+    expect(card.current_balance(as_of: Date.new(2026, 7, 5))).to eq(-525.to_d)
+  end
+
   it "identifies liability account kinds" do
     account = build(:account, kind: :credit_card)
 

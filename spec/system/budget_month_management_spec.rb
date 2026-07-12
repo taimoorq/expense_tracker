@@ -872,6 +872,6 @@ RSpec.describe "Budget month management", type: :system do
 
     click_link "Accounts & Net Worth"
 
-    expect(page).to have_content("Track savings, investment, cash, and debt balances manually alongside your monthly budget.")
+    expect(page).to have_content("Track savings, investment, cash, and debt balances from the latest trusted source")
   end
 end

@@ -134,6 +134,22 @@ module ApplicationHelper
 
   alias_method :tabler_icon, :app_icon
 
+  def breadcrumb(label, path = nil)
+    @breadcrumbs ||= []
+    @breadcrumbs << { label: label.to_s, path: path }
+    nil
+  end
+
+  def breadcrumbs
+    Array(@breadcrumbs)
+  end
+
+  def render_breadcrumbs
+    return if breadcrumbs.blank?
+
+    render "shared/breadcrumbs", breadcrumbs: breadcrumbs
+  end
+
   def authentication_brand_path
     admin_auth_scope? ? new_admin_user_session_path : root_path
   end

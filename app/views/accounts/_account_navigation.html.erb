@@ -1,0 +1,19 @@
+<nav class="mb-6 overflow-x-auto" aria-label="Account information">
+  <div class="ta-tab-list min-w-max">
+    <% {
+      "overview" => ["layout-dashboard", "Overview"],
+      "activity" => ["list-details", "Activity"],
+      "insights" => ["bulb", "Insights"],
+      "manage" => ["settings-2", "Manage"]
+    }.each do |view, (icon, label)| %>
+      <%= link_to account_path(account, view: view, range: range),
+                  class: "ta-tab #{'ta-tab-active' if active_view == view}",
+                  aria: { current: ("page" if active_view == view) } do %>
+        <span class="inline-flex items-center gap-2">
+          <%= tabler_icon(icon, classes: "ta-tab-icon") %>
+          <span><%= label %></span>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+</nav>

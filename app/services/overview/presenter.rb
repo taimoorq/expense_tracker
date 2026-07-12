@@ -347,12 +347,18 @@ module Overview
       net_worth_total_value >= 0 ? "text-slate-900" : "text-rose-700"
     end
 
-    def latest_snapshot_date_label
-      latest_snapshot_data ? I18n.l(latest_snapshot_data.recorded_on, format: :long) : "No snapshots yet"
+    def latest_balance_source_date_label
+      if latest_balance_source_data
+        return I18n.l(latest_balance_source_data.activity_through_on || latest_balance_source_data.balance_source_recorded_on, format: :long)
+      end
+
+      "No balance source yet"
     end
 
-    def latest_snapshot_subtitle
-      latest_snapshot_data ? latest_snapshot_data.account.name : "Add an account balance to start tracking."
+    def latest_balance_source_subtitle
+      return "#{latest_balance_source_data.account.name} · #{latest_balance_source_data.balance_source_label}" if latest_balance_source_data
+
+      "Import activity or add an account balance to start tracking."
     end
 
     def account_snapshot_cards
@@ -363,11 +369,11 @@ module Overview
           value_classes: net_worth_value_class
         },
         {
-          label: "Latest snapshot",
-          value: latest_snapshot_date_label,
+          label: "Latest source",
+          value: latest_balance_source_date_label,
           value_classes: "text-slate-900",
           value_size_classes: "text-sm",
-          subtitle: latest_snapshot_subtitle
+          subtitle: latest_balance_source_subtitle
         }
       ]
     end
@@ -521,6 +527,10 @@ module Overview
       data[:latest_snapshot]
     end
 
+    def latest_balance_source_data
+      data[:latest_balance_source]
+    end
+
     def financial_rhythm_value
       data.fetch(:financial_rhythm, "steady_income")
     end
@@ -608,10 +618,10 @@ module Overview
           path: accounts_data.any? ? routes.accounts_path : routes.new_account_path
         ),
         check_in_item(
-          label: "Snapshots",
-          value: latest_snapshot_data.present? ? 1 : 0,
-          description: "A first snapshot gives balances a trusted starting point.",
-          tone: latest_snapshot_data.present? ? :clear : :neutral,
+          label: "Balance source",
+          value: latest_balance_source_data.present? ? 1 : 0,
+          description: "Imports or snapshots give balances a trusted starting point.",
+          tone: latest_balance_source_data.present? ? :clear : :neutral,
           path: accounts_data.any? ? routes.accounts_path : routes.new_account_path
         ),
         check_in_item(

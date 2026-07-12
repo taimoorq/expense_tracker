@@ -31,7 +31,7 @@
     <% overview_active = controller_name == "overview" %>
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
-    <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" %>
+    <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" || controller_name == "account_activity_imports" %>
     <% backup_restore_active = controller_name == "backup_restores" %>
     <% settings_active = controller_name == "settings" %>
     <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
@@ -142,6 +142,7 @@
             </button>
           <% end %>
           <div class="min-w-0 flex-1">
+            <%= render_breadcrumbs if user_signed_in? %>
             <% if content_for?(:page_header) %>
               <div class="ta-page-header">
                 <%= yield :page_header %>

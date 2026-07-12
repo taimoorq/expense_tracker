@@ -1,4 +1,7 @@
 <% content_for :title, @movement.fetch(:title) %>
+<% breadcrumb "Months", budget_months_path %>
+<% breadcrumb @budget_month.label, budget_month_path(@budget_month) %>
+<% breadcrumb @movement.fetch(:title) %>
 
 <% content_for :page_header do %>
   <div>

@@ -27,6 +27,8 @@ class User < ApplicationRecord
   }, default: :steady_income, prefix: true
 
   has_many :accounts, dependent: :destroy
+  has_many :account_activity_imports, dependent: :destroy
+  has_many :account_activities, dependent: :destroy
   has_many :budget_months, dependent: :destroy
   has_many :account_snapshots, through: :accounts
   has_many :expense_entries, dependent: :destroy

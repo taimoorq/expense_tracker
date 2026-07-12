@@ -1,4 +1,5 @@
 <% content_for :title, "Accounts" %>
+<% breadcrumb "Accounts" %>
 
 <% content_for :head do %>
   <%= chart_library_tags %>
@@ -11,7 +12,7 @@
         <%= tabler_icon("credit-card", classes: "h-6 w-6 text-indigo-600") %>
         <span>Accounts</span>
       </h2>
-      <p class="mt-1 text-sm text-slate-600">Track savings, investment, cash, and debt balances manually alongside your monthly budget.</p>
+      <p class="mt-1 text-sm text-slate-600">Track savings, investment, cash, and debt balances from the latest trusted source: institution imports when available, otherwise manual snapshots.</p>
     </div>
   </div>
 <% end %>
@@ -22,7 +23,7 @@
       <article class="ta-card">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assets</p>
         <p class="mt-2 text-3xl font-semibold text-emerald-700"><%= number_to_currency(@assets_total) %></p>
-        <p class="mt-1 text-sm text-slate-500">Current balances from accounts included in net worth.</p>
+        <p class="mt-1 text-sm text-slate-500">Final current balances from accounts included in net worth.</p>
       </article>
       <article class="ta-card">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Liabilities</p>
@@ -32,7 +33,7 @@
       <article class="ta-card">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Net Worth</p>
         <p class="mt-2 text-3xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p>
-        <p class="mt-1 text-sm text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included. Paid linked entries are included after snapshots.</p>
+        <p class="mt-1 text-sm text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included. Imports and paid linked entries are reflected from their trusted sources.</p>
       </article>
     </div>
 
@@ -42,8 +43,8 @@
           <%= tabler_icon("shield-lock", classes: "h-5 w-5") %>
         </span>
         <div>
-          <p class="font-semibold">Manual account tracking stays under your control.</p>
-          <p class="mt-1">The app does not need bank credentials. Balances start from snapshots you record, then linked paid and planned entries explain how each account moves from there.</p>
+          <p class="font-semibold">Account tracking stays under your control.</p>
+          <p class="mt-1">The app does not need bank credentials. CSV imports can refresh institution-reported balances, and manual snapshots remain the fallback trusted source.</p>
         </div>
       </div>
     </section>
@@ -56,7 +57,7 @@
               <%= tabler_icon("chart-pie", classes: "h-5 w-5 text-indigo-600") %>
               <span>Net worth trend</span>
             </h2>
-            <p class="ta-muted mt-1">Uses the latest available snapshot for each included account on every recorded date.</p>
+            <p class="ta-muted mt-1">Snapshot-based trend for included accounts. Current totals above use imports when available.</p>
           </div>
           <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             <%= pluralize(@trend_labels.count, "point") %>
@@ -86,20 +87,21 @@
             <%= tabler_icon("calendar-month", classes: "ta-action-icon-lg text-indigo-600") %>
             Latest updated
           </h2>
-          <p class="ta-muted mt-1">A quick read on how fresh your manual balance history is.</p>
+          <p class="ta-muted mt-1">A quick read on how fresh your imported or manual balance sources are.</p>
         </div>
 
         <div class="space-y-4">
+          <% latest_balance_source_date = @latest_balance_source&.activity_through_on || @latest_balance_source&.balance_source_recorded_on %>
           <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Most recent snapshot</p>
-            <p class="mt-2 text-xl font-semibold text-slate-900"><%= @latest_snapshot ? l(@latest_snapshot.recorded_on, format: :long) : "No snapshots yet" %></p>
-            <p class="mt-1 text-sm text-slate-500"><%= @latest_snapshot ? @latest_snapshot.account.name : "Add a balance to any account to start tracking updates." %></p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Latest trusted source</p>
+            <p class="mt-2 text-xl font-semibold text-slate-900"><%= latest_balance_source_date ? l(latest_balance_source_date, format: :long) : "No balance source yet" %></p>
+            <p class="mt-1 text-sm text-slate-500"><%= @latest_balance_source ? "#{@latest_balance_source.account.name} · #{@latest_balance_source.balance_source_label}" : "Import activity or add a balance snapshot to start tracking updates." %></p>
           </div>
 
           <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Coverage</p>
-            <p class="mt-2 text-xl font-semibold text-slate-900"><%= @accounts_with_snapshots_count %> of <%= @accounts.count %></p>
-            <p class="mt-1 text-sm text-slate-500"><%= pluralize(@accounts_missing_snapshots_count, "account") %> still missing a balance snapshot.</p>
+            <p class="mt-2 text-xl font-semibold text-slate-900"><%= @accounts_with_balance_sources_count %> of <%= @accounts.count %></p>
+            <p class="mt-1 text-sm text-slate-500"><%= pluralize(@accounts_missing_balance_sources_count, "account") %> still missing a trusted balance source.</p>
           </div>
         </div>
       </section>
@@ -112,7 +114,7 @@
             <%= tabler_icon("building-library", classes: "h-5 w-5 text-indigo-600") %>
             <span>Tracked accounts</span>
           </h2>
-          <p class="ta-muted mt-1">Create accounts once, then record new balances whenever you want an updated view of your cash and net worth.</p>
+          <p class="ta-muted mt-1">Create accounts once, then use CSV imports or manual snapshots whenever you want an updated view of cash, debt, and net worth.</p>
         </div>
         <div class="flex flex-wrap items-center justify-end gap-2">
           <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -127,8 +129,8 @@
 
       <% if @accounts.any? %>
         <div class="space-y-3 md:hidden">
-          <% @accounts.each do |account| %>
-            <% snapshot = account.latest_snapshot %>
+          <% @account_balance_rows.each do |row| %>
+            <% account = row.fetch(:account) %>
             <article id="<%= dom_id(account) %>" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -149,12 +151,25 @@
                   <dd class="mt-1 text-sm font-medium text-slate-900"><%= account.institution_name.presence || "-" %></dd>
                 </div>
                 <div class="rounded-xl bg-slate-50 px-3 py-2.5">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Latest Balance</dt>
-                  <dd class="mt-1 text-sm font-medium text-slate-900"><%= snapshot ? number_to_currency(snapshot.balance) : "-" %></dd>
+                  <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Current Balance</dt>
+                  <dd class="mt-1 text-sm font-medium text-slate-900">
+                    <% if row.fetch(:balance_available) %>
+                      <%= number_to_currency(row.fetch(:current_balance)) %>
+                    <% else %>
+                      Needs source
+                    <% end %>
+                  </dd>
                 </div>
                 <div class="rounded-xl bg-slate-50 px-3 py-2.5 sm:col-span-2">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Last Updated</dt>
-                  <dd class="mt-1 text-sm font-medium text-slate-900"><%= snapshot ? l(snapshot.recorded_on, format: :long) : "Never" %></dd>
+                  <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Balance Source</dt>
+                  <dd class="mt-1 text-sm font-medium text-slate-900">
+                    <%= row.fetch(:source_label) %><%= row.fetch(:source_date) ? " on #{l(row.fetch(:source_date), format: :long)}" : "" %>
+                  </dd>
+                  <% if row.fetch(:activity_through_on).present? %>
+                    <dd class="mt-1 text-xs text-slate-500">Activity through <%= l(row.fetch(:activity_through_on), format: :long) %></dd>
+                  <% elsif !row.fetch(:balance_available) && row.fetch(:imported_activity_count).positive? %>
+                    <dd class="mt-1 text-xs text-slate-500">Imported rows need a balance source before this can be resolved.</dd>
+                  <% end %>
                 </div>
               </dl>
 
@@ -162,6 +177,10 @@
                 <%= link_to account_path(account), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                   <%= tabler_icon("cash", classes: "ta-action-icon text-emerald-600") %>
                   <span>View</span>
+                <% end %>
+                <%= link_to new_account_account_activity_import_path(account), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
+                  <%= tabler_icon("upload", classes: "ta-action-icon text-indigo-600") %>
+                  <span>Import</span>
                 <% end %>
                 <%= link_to edit_account_path(account), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                   <%= tabler_icon("edit", classes: "ta-action-icon text-slate-600") %>
@@ -185,8 +204,8 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <% @accounts.each do |account| %>
-                <% snapshot = account.latest_snapshot %>
+              <% @account_balance_rows.each do |row| %>
+                <% account = row.fetch(:account) %>
                 <tr id="<%= dom_id(account) %>">
                   <td class="ta-td">
                     <div>
@@ -201,13 +220,34 @@
                   </td>
                   <td class="ta-td"><%= account.institution_name.presence || "-" %></td>
                   <td class="ta-td"><%= account.kind.humanize %></td>
-                  <td class="ta-td text-right"><%= snapshot ? number_to_currency(snapshot.balance) : "-" %></td>
-                  <td class="ta-td text-right"><%= snapshot ? l(snapshot.recorded_on, format: :long) : "Never" %></td>
+                  <td class="ta-td text-right">
+                    <% if row.fetch(:balance_available) %>
+                      <div class="font-medium text-slate-900"><%= number_to_currency(row.fetch(:current_balance)) %></div>
+                    <% else %>
+                      <div class="font-medium text-slate-900">Needs source</div>
+                    <% end %>
+                    <% if row.fetch(:balance_available) && row.fetch(:activity_count).positive? %>
+                      <div class="mt-1 text-xs text-slate-500"><%= pluralize(row.fetch(:activity_count), "activity row") %> included</div>
+                    <% elsif !row.fetch(:balance_available) && row.fetch(:imported_activity_count).positive? %>
+                      <div class="mt-1 text-xs text-slate-500">Imported rows need a balance source</div>
+                    <% end %>
+                  </td>
+                  <td class="ta-td text-right">
+                    <div><%= row.fetch(:last_updated_on) ? l(row.fetch(:last_updated_on), format: :long) : "Never" %></div>
+                    <div class="mt-1 text-xs font-semibold text-indigo-700"><%= row.fetch(:source_label) %></div>
+                    <% if row.fetch(:activity_through_on).present? && row.fetch(:source_date).present? && row.fetch(:activity_through_on) != row.fetch(:source_date) %>
+                      <div class="mt-1 text-xs text-slate-500">Source: <%= l(row.fetch(:source_date), format: :long) %></div>
+                    <% end %>
+                  </td>
                   <td class="ta-td">
                     <div class="flex justify-end gap-2">
                       <%= link_to account_path(account), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
                         <%= tabler_icon("cash", classes: "ta-action-icon text-emerald-600") %>
                         <span>View</span>
+                      <% end %>
+                      <%= link_to new_account_account_activity_import_path(account), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                        <%= tabler_icon("upload", classes: "ta-action-icon text-indigo-600") %>
+                        <span>Import</span>
                       <% end %>
                       <%= link_to edit_account_path(account), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
                         <%= tabler_icon("edit", classes: "ta-action-icon text-slate-600") %>
@@ -242,7 +282,7 @@
           <%= tabler_icon("document-text", classes: "ta-action-icon-lg text-indigo-600") %>
           Manual tracking
         </h2>
-        <p class="ta-muted mt-1">No bank connection required. Add the accounts you care about, then update balances whenever you review them.</p>
+        <p class="ta-muted mt-1">No bank connection required. Add the accounts you care about, then refresh balances with institution CSV imports or manual snapshots.</p>
       </div>
 
       <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
@@ -253,7 +293,7 @@
           </li>
           <li class="flex gap-3">
             <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">2</span>
-            <span>Record a snapshot whenever you want a fresh trusted starting point for current and projected balances.</span>
+            <span>Import institution activity or record a snapshot whenever you want a fresh trusted starting point.</span>
           </li>
           <li class="flex gap-3">
             <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-100 text-xs font-semibold text-rose-700">3</span>

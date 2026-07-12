@@ -1,0 +1,140 @@
+<% ledger = @activity_ledger %>
+<% filtered = ledger[:starts_on].present? || ledger[:ends_on].present? || ledger[:source] != "all" || ledger[:direction] != "all" || ledger[:merchant].present? || ledger[:classification].present? %>
+
+<div class="space-y-6">
+  <section class="ta-card min-w-0">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 class="ta-section-title inline-flex items-center gap-2">
+          <%= tabler_icon("list-details", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Account activity</span>
+        </h2>
+        <p class="ta-muted mt-1">Institution records and budget-linked entries stay separate so the same real-world activity is not counted twice.</p>
+      </div>
+      <%= link_to new_account_account_activity_import_path(account), class: "fb-btn-primary ta-action-btn" do %>
+        <%= tabler_icon("upload", classes: "ta-action-icon text-indigo-100") %>
+        <span>Import activity</span>
+      <% end %>
+    </div>
+
+    <% if filtered %>
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
+        <p>
+          Showing <%= ledger[:direction] == "all" ? "all movement" : ledger[:direction] %>
+          from <%= ledger[:source].humanize.downcase %><%= ledger[:starts_on] ? " starting #{l(ledger[:starts_on], format: :long)}" : "" %><%= ledger[:ends_on] ? " through #{l(ledger[:ends_on], format: :long)}" : "" %>.
+          <%= " Merchant: #{ledger[:merchant]}." if ledger[:merchant].present? %>
+          <%= " Classification: #{ledger[:classification].humanize}." if ledger[:classification].present? %>
+        </p>
+        <%= link_to "Clear filters", account_path(account, view: "activity"), class: "font-semibold text-indigo-700 hover:text-indigo-600" %>
+      </div>
+    <% end %>
+  </section>
+
+  <% unless ledger[:source] == "budget_entries" %>
+    <section class="ta-card min-w-0">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="ta-section-title">Institution activity</h2>
+          <p class="ta-muted mt-1">Posted rows from institution CSV imports.</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500"><%= pluralize(ledger[:institution_rows].size, "row") %></p>
+          <p class="mt-1 text-sm font-semibold <%= ledger[:institution_net] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">Net <%= ledger[:institution_net] >= 0 ? "+" : "" %><%= number_to_currency(ledger[:institution_net]) %></p>
+        </div>
+      </div>
+
+      <% if ledger[:institution_rows].any? %>
+        <div class="overflow-x-auto">
+          <table class="ta-table">
+            <thead class="ta-table-head">
+              <tr>
+                <th class="ta-th">Date</th>
+                <th class="ta-th">Description</th>
+                <th class="ta-th">Category</th>
+                <th class="ta-th">Type</th>
+                <th class="ta-th">Import</th>
+                <th class="ta-th text-right">Impact</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% ledger[:institution_rows].each do |row| %>
+                <tr>
+                  <td class="ta-td"><%= l(row.transaction_on, format: :long) %></td>
+                  <td class="ta-td">
+                    <details>
+                      <summary class="cursor-pointer font-medium text-slate-900"><%= row.description %></summary>
+                      <div class="mt-2 text-xs leading-5 text-slate-500">
+                        <p>Original amount: <%= number_to_currency(row.raw_amount) %></p>
+                        <p>CSV row: <%= row.row_number %></p>
+                        <% if row.memo.present? %><p>Memo: <%= row.memo %></p><% end %>
+                      </div>
+                    </details>
+                  </td>
+                  <td class="ta-td"><%= row.category.presence || "—" %></td>
+                  <td class="ta-td"><%= row.activity_type.presence || "—" %></td>
+                  <td class="ta-td"><%= row.account_activity_import.original_filename %></td>
+                  <td class="ta-td text-right font-semibold <%= row.account_delta >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= row.account_delta >= 0 ? "+" : "" %><%= number_to_currency(row.account_delta) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+          <p class="text-lg font-semibold text-slate-900">No institution rows match this view</p>
+          <p class="mt-2 text-sm text-slate-500">Import activity or clear the current filters.</p>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% unless ledger[:source] == "institution_activity" %>
+    <section class="ta-card min-w-0">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="ta-section-title">Budget-linked activity</h2>
+          <p class="ta-muted mt-1">Paid and planned month entries that explicitly link to this account.</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500"><%= pluralize(ledger[:budget_entries].size, "entry") %></p>
+          <p class="mt-1 text-sm font-semibold <%= ledger[:budget_net] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>">Net <%= ledger[:budget_net] >= 0 ? "+" : "" %><%= number_to_currency(ledger[:budget_net]) %></p>
+        </div>
+      </div>
+
+      <% if ledger[:budget_entries].any? %>
+        <div class="overflow-x-auto">
+          <table class="ta-table">
+            <thead class="ta-table-head">
+              <tr>
+                <th class="ta-th">Date</th>
+                <th class="ta-th">Payee</th>
+                <th class="ta-th">Category</th>
+                <th class="ta-th">Status</th>
+                <th class="ta-th">Month</th>
+                <th class="ta-th text-right">Impact</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% ledger[:budget_entries].each do |entry| %>
+                <% impact = account.account_delta_for(entry) %>
+                <tr>
+                  <td class="ta-td"><%= l(entry.occurred_on, format: :long) %></td>
+                  <td class="ta-td"><%= entry.payee.presence || "—" %></td>
+                  <td class="ta-td"><%= entry.category.presence || entry.section.humanize %></td>
+                  <td class="ta-td"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"><%= entry.status.humanize %></span></td>
+                  <td class="ta-td"><%= link_to entry.budget_month.label, budget_month_path(entry.budget_month), class: "font-medium text-indigo-700 hover:text-indigo-600" %></td>
+                  <td class="ta-td text-right font-semibold <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+          <p class="text-lg font-semibold text-slate-900">No budget-linked entries match this view</p>
+          <p class="mt-2 text-sm text-slate-500">Link a month entry to this account or clear the current filters.</p>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

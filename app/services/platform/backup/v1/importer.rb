@@ -25,6 +25,7 @@ module Platform
             counts[:accounts] = import_accounts(data[:accounts]) if scopes.include?("accounts")
             counts[:planning_templates] = import_planning_templates(data[:planning_templates]) if scopes.include?("planning_templates")
             counts[:budget_months] = import_budget_months(data[:budget_months]) if scopes.include?("budget_months")
+            counts[:account_activity] = import_account_activity(data[:account_activity]) if scopes.include?("account_activity") && data.key?(:account_activity)
             counts[:preferences] = import_preferences(data[:preferences]) if scopes.include?("preferences") && data.key?(:preferences)
             relink_planning_template_accounts(data)
             relink_expense_entry_provenance
@@ -40,10 +41,11 @@ module Platform
         attr_reader :payload, :scopes, :user
 
         def required_scope?(scope)
-          scope != "preferences"
+          scope != "preferences" && scope != "account_activity"
         end
 
         def clear_selected_data
+          user.account_activity_imports.destroy_all if scopes.include?("account_activity")
           clear_planning_templates if scopes.include?("planning_templates")
           user.budget_months.destroy_all if scopes.include?("budget_months")
           unlink_account_references if scopes.include?("accounts")
@@ -191,6 +193,59 @@ module Platform
           { accounts: account_count, snapshots: snapshot_count }
         end
 
+        def import_account_activity(data)
+          import_count = 0
+          activity_count = 0
+
+          Array(data).each do |attributes|
+            account = account_named(attributes[:account])
+            if account.blank?
+              user.errors.add(:base, "Account activity references an account that does not exist: #{attributes[:account]}")
+              raise ActiveRecord::RecordInvalid.new(user)
+            end
+
+            import = account.account_activity_imports.create!(
+              user: user,
+              original_filename: attributes[:original_filename],
+              header_row_number: attributes[:header_row_number],
+              column_mapping: attributes[:column_mapping] || {},
+              amount_strategy: attributes[:amount_strategy],
+              rows_count: attributes[:rows_count].to_i,
+              imported_count: attributes[:imported_count].to_i,
+              duplicate_count: attributes[:duplicate_count].to_i,
+              warning_messages: Array(attributes[:warning_messages]),
+              started_on: attributes[:started_on],
+              ended_on: attributes[:ended_on],
+              metadata: attributes[:metadata] || {}
+            )
+            restore_import_timestamps(import, attributes)
+            import_count += 1
+
+            Array(attributes[:account_activities]).each do |activity_attributes|
+              activity = import.account_activities.create!(
+                user: user,
+                account: account,
+                transaction_on: activity_attributes[:transaction_on],
+                posted_on: activity_attributes[:posted_on],
+                description: activity_attributes[:description],
+                category: activity_attributes[:category],
+                activity_type: activity_attributes[:activity_type],
+                memo: activity_attributes[:memo],
+                raw_amount: activity_attributes[:raw_amount],
+                amount: activity_attributes[:amount],
+                account_delta: activity_attributes[:account_delta],
+                row_number: activity_attributes[:row_number],
+                fingerprint: activity_attributes[:fingerprint],
+                raw_payload: activity_attributes[:raw_payload] || {}
+              )
+              restore_entry_timestamps(activity, activity_attributes)
+              activity_count += 1
+            end
+          end
+
+          { imports: import_count, rows: activity_count }
+        end
+
         def import_preferences(data)
           attributes = (data || {}).to_h.slice(:default_landing_page, :preferred_month_view, :financial_rhythm).compact
           return { preferences: 0 } if attributes.empty?
@@ -266,6 +321,16 @@ module Platform
           return if timestamp_updates.empty?
 
           entry.update_columns(timestamp_updates)
+        end
+
+        def restore_import_timestamps(record, attributes)
+          timestamp_updates = {
+            created_at: parse_time(attributes[:created_at]),
+            updated_at: parse_time(attributes[:updated_at])
+          }.compact
+          return if timestamp_updates.empty?
+
+          record.update_columns(timestamp_updates)
         end
 
         def parse_time(value)

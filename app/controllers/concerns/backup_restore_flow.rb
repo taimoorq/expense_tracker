@@ -22,7 +22,8 @@ module BackupRestoreFlow
     parsed = Platform::UserDataBackupCodec.decode(source: params[:file], password: params[:import_password].to_s.presence)
     return redirect_to backup_restore_path, alert: "Import preview failed: #{parsed[:error]}" unless parsed[:success]
 
-    preview = Platform::UserDataImportPreview.new(payload: parsed[:payload], scopes: selected_scopes(:import_scopes)).call
+    import_scopes = dependency_safe_import_scopes(selected_scopes(:import_scopes), payload: parsed[:payload])
+    preview = Platform::UserDataImportPreview.new(payload: parsed[:payload], scopes: import_scopes).call
     return redirect_to backup_restore_path, alert: "Import preview failed: #{preview[:error]}" unless preview[:success]
 
     prepare_backup_restore_page(selected_import_scopes: preview[:summary][:selected_scopes])
@@ -72,6 +73,24 @@ module BackupRestoreFlow
 
   def selected_scopes(param_key)
     Array(params[param_key]).reject(&:blank?)
+  end
+
+  def dependency_safe_import_scopes(scopes, payload:)
+    scopes = Array(scopes)
+    return scopes unless scopes.include?("account_activity")
+    return scopes if scopes.include?("accounts")
+    return scopes if missing_account_activity_accounts(payload).empty?
+
+    scopes - [ "account_activity" ]
+  end
+
+  def missing_account_activity_accounts(payload)
+    payload = payload.with_indifferent_access
+    activity_account_names = Array(payload.dig(:data, :account_activity)).filter_map { |attributes| attributes[:account].presence }.uniq
+    return [] if activity_account_names.empty?
+
+    existing_names = current_user.accounts.where(name: activity_account_names).pluck(:name)
+    activity_account_names - existing_names
   end
 
   def prepare_backup_restore_page(selected_import_scopes: Platform::UserDataExport::SCOPES)

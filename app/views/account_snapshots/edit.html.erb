@@ -1,4 +1,7 @@
 <% content_for :title, "Edit Balance Snapshot" %>
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb @account.name, account_path(@account) %>
+<% breadcrumb "Edit Balance Snapshot" %>
 
 <% content_for :page_header do %>
   <div>

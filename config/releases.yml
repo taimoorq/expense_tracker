@@ -1,4 +1,16 @@
 releases:
+  - version: "0.8.0"
+    released_on: "2026-07-11"
+    title: "Account activity and insights"
+    summary: "This release makes account pages easier to understand with account-specific trends, traceable activity, focused insights, and safer institution-activity imports."
+    changes:
+      - "Adds account-specific Overview, Activity, Insights, and Manage views for checking, savings, credit cards, loans, other liabilities, brokerage, retirement, other assets, and cash accounts."
+      - "Shows charges and payments, money in and money out, deposits and withdrawals, debt reduction, or tracked-value changes with useful time ranges and accessible supporting tables."
+      - "Lets chart totals and insight rollups open the exact institution or budget-linked records behind each number."
+      - "Keeps imported institution activity, paid budget entries, and planned projections visibly separate so account totals are not double counted or overstated."
+      - "Adds institution-activity CSV import, import history, source coverage, and account balance resolution using trusted imported activity or snapshot-based fallbacks."
+      - "Adds merchant, recurring-payment, interest, and fee insights when the imported data provides enough evidence, without presenting tracked asset changes as investment performance."
+      - "Includes account activity and import records in versioned backup, restore, export, preview, and sample-backup workflows."
   - version: "0.7.3"
     released_on: "2026-07-03"
     title: "Backup and account-flow import updates"

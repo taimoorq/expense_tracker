@@ -1,0 +1,8 @@
+<div class="space-y-6">
+  <section class="rounded-2xl border border-indigo-100 bg-indigo-50/70 px-5 py-4 text-sm leading-6 text-indigo-950">
+    <p class="font-semibold text-slate-900"><%= @account_story[:question] %></p>
+    <p class="mt-1">These insights are derived from imported institution rows. Candidate classifications remain suggestions, and every aggregate keeps its supporting rows nearby.</p>
+  </section>
+
+  <%= render "accounts/activity_insights", account: account, insights: @activity_insights %>
+</div>

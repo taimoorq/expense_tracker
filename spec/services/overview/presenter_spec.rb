@@ -120,7 +120,7 @@ RSpec.describe Overview::Presenter do
     expect(presenter.recurring_linked_summary).to eq("1 linked recurring transaction currently connected to accounts.")
     expect(presenter.recurring_breakdown_items.map { |item| item[:label] }).to eq([ "Pay schedules", "Subscriptions", "Monthly bills", "Payment plans" ])
     expect(presenter.net_worth_value_class).to eq("text-rose-700")
-    expect(presenter.account_snapshot_cards.map { |item| item[:label] }).to eq([ "Net worth", "Latest snapshot" ])
+    expect(presenter.account_snapshot_cards.map { |item| item[:label] }).to eq([ "Net worth", "Latest source" ])
     expect(presenter.account_flow_month_window).to eq("6")
     expect(presenter.account_flow_month_window_options).to include([ "Last 6 months", "6" ])
     expect(presenter.account_flow_available?).to be(true)

@@ -1,4 +1,7 @@
 <% content_for :title, "Edit Account" %>
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb @account.name, account_path(@account) %>
+<% breadcrumb "Edit Account" %>
 
 <% content_for :page_header do %>
   <div>

@@ -27,6 +27,7 @@ module Platform
               planning_templates: planning_template_summary(data[:planning_templates]),
               budget_months: budget_month_summary(data[:budget_months]),
               accounts: account_summary(data[:accounts]),
+              account_activity: account_activity_summary(data[:account_activity]),
               preferences: preference_summary(data[:preferences])
             }
           }
@@ -37,7 +38,7 @@ module Platform
         attr_reader :payload, :scopes
 
         def required_scope?(scope)
-          scope != "preferences"
+          scope != "preferences" && scope != "account_activity"
         end
 
         def planning_template_summary(data)
@@ -74,6 +75,16 @@ module Platform
           {
             accounts: accounts.size,
             snapshots: accounts.sum { |account| Array(account[:account_snapshots]).size }
+          }
+        end
+
+        def account_activity_summary(data)
+          return nil unless scopes.include?("account_activity") && data.present?
+
+          imports = Array(data)
+          {
+            imports: imports.size,
+            rows: imports.sum { |import| Array(import[:account_activities]).size }
           }
         end
 

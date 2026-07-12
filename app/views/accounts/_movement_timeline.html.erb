@@ -1,0 +1,142 @@
+<% buckets = timeline[:buckets] %>
+<% has_activity = buckets.any? { |bucket| bucket[:source] != :none } %>
+<% has_balance = buckets.any? { |bucket| bucket[:balance_available] } %>
+<% latest_activity_bucket = buckets.reverse.find { |bucket| bucket[:source] != :none } %>
+<% datasets = [
+  {
+    label: story[:incoming_label],
+    data: buckets.map { |bucket| bucket[:incoming]&.to_f },
+    backgroundColor: story[:incoming_color],
+    borderColor: "rgb(5, 150, 105)",
+    borderWidth: 1
+  },
+  {
+    label: story[:outgoing_label],
+    data: buckets.map { |bucket| bucket[:outgoing]&.to_f },
+    backgroundColor: story[:outgoing_color],
+    borderColor: "rgb(225, 29, 72)",
+    borderWidth: 1
+  }
+] %>
+
+<section class="ta-card min-w-0">
+  <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 class="ta-section-title inline-flex items-center gap-2">
+        <%= tabler_icon("chart-bar", classes: "h-5 w-5 text-indigo-600") %>
+        <span><%= story[:chart_title] %></span>
+      </h2>
+      <p class="ta-muted mt-1"><%= story[:question] %></p>
+    </div>
+    <div class="flex flex-wrap gap-2" aria-label="Movement time range">
+      <% timeline[:range_options].each do |range_key, range_label| %>
+        <%= link_to range_label,
+                    account_path(account, view: "overview", range: range_key),
+                    class: "rounded-full px-3 py-1.5 text-xs font-semibold #{timeline[:range] == range_key ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}",
+                    aria: { current: ("page" if timeline[:range] == range_key) } %>
+      <% end %>
+    </div>
+  </div>
+
+  <% if has_activity %>
+    <div class="h-80 rounded-2xl border border-slate-200 bg-white p-3">
+      <canvas
+        data-controller="chart"
+        data-chart-type-value="bar"
+        data-chart-title-value="<%= story[:chart_title] %>"
+        data-chart-labels-value="<%= buckets.map { |bucket| bucket[:label] }.to_json %>"
+        data-chart-datasets-value="<%= datasets.to_json %>"
+        data-chart-options-value="<%= { scales: { y: { beginAtZero: true } } }.to_json %>"></canvas>
+    </div>
+  <% else %>
+    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+      <p class="text-lg font-semibold text-slate-900">No movement to chart yet</p>
+      <p class="mt-2 text-sm text-slate-500"><%= story[:empty_message] %></p>
+    </div>
+  <% end %>
+
+  <% if latest_activity_bucket %>
+    <div class="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-indigo-950">
+      <p class="font-semibold text-slate-900">What changed in <%= latest_activity_bucket[:label] %>?</p>
+      <p class="mt-1">
+        <%= story[:incoming_label] %> were <%= number_to_currency(latest_activity_bucket[:incoming]) %> and
+        <%= story[:outgoing_label].downcase %> were <%= number_to_currency(latest_activity_bucket[:outgoing]) %>.
+        <%= story[:net_label] %> was <%= latest_activity_bucket[:net] >= 0 ? "+" : "" %><%= number_to_currency(latest_activity_bucket[:net]) %>.
+        <%= "This is a partial period." if latest_activity_bucket[:current_period] || latest_activity_bucket.dig(:coverage, :status) == :partial %>
+      </p>
+    </div>
+  <% end %>
+
+  <% if has_balance %>
+    <div class="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+      <div class="mb-3">
+        <h3 class="text-sm font-semibold text-slate-900"><%= story[:balance_label] %> over time</h3>
+        <p class="mt-1 text-xs text-slate-500">
+          Resolved period-end values from the same source-precedence rules used elsewhere.
+          <%= "This is tracked value, not investment performance." if story[:story_group] == :tracked_asset %>
+        </p>
+      </div>
+      <div class="h-56">
+        <canvas
+          data-controller="chart"
+          data-chart-type-value="line"
+          data-chart-title-value="<%= story[:balance_label] %> over time"
+          data-chart-labels-value="<%= buckets.map { |bucket| bucket[:label] }.to_json %>"
+          data-chart-data-value="<%= buckets.map { |bucket| bucket[:ending_balance]&.to_f }.to_json %>"></canvas>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="mt-5 overflow-x-auto">
+    <table class="ta-table">
+      <caption class="sr-only"><%= story[:chart_title] %> with source, coverage, movement, and balance details.</caption>
+      <thead class="ta-table-head">
+        <tr>
+          <th class="ta-th">Period and source</th>
+          <th class="ta-th text-right"><%= story[:incoming_label] %></th>
+          <th class="ta-th text-right"><%= story[:outgoing_label] %></th>
+          <th class="ta-th text-right"><%= story[:net_label] %></th>
+          <th class="ta-th text-right"><%= story[:balance_label] %></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% buckets.reverse_each do |bucket| %>
+          <tr>
+            <td class="ta-td">
+              <p class="font-medium text-slate-900"><%= bucket[:label] %><%= " · In progress" if bucket[:current_period] %></p>
+              <p class="mt-1 text-xs text-slate-500"><%= bucket[:source_label] %></p>
+              <% if bucket[:source] == :institution_activity %>
+                <p class="mt-1 text-xs text-slate-500"><%= pluralize(bucket[:activity_count], "imported row") %></p>
+              <% elsif bucket[:source] == :budget_entries %>
+                <p class="mt-1 text-xs text-slate-500"><%= pluralize(bucket[:activity_count], "linked entry") %></p>
+              <% end %>
+              <% if bucket.dig(:coverage, :status) == :partial %>
+                <p class="mt-1 text-xs font-semibold text-amber-700">Partial institution coverage</p>
+              <% end %>
+            </td>
+            <% [[:incoming, story[:incoming_label]], [:outgoing, story[:outgoing_label]]].each do |direction, label| %>
+              <td class="ta-td text-right">
+                <% if bucket[direction].nil? %>
+                  <span class="text-slate-400">No source</span>
+                <% else %>
+                  <%= link_to number_to_currency(bucket[direction]),
+                              account_path(account, view: "activity", starts_on: bucket[:drilldown][:starts_on], ends_on: bucket[:drilldown][:ends_on], source: bucket[:drilldown][:source], direction: direction),
+                              class: "font-semibold text-indigo-700 hover:text-indigo-600",
+                              aria: { label: "Review #{label.downcase} for #{bucket[:label]}" } %>
+                <% end %>
+              </td>
+            <% end %>
+            <td class="ta-td text-right">
+              <% if bucket[:net].nil? %>
+                <span class="text-slate-400">—</span>
+              <% else %>
+                <span class="font-semibold <%= bucket[:net] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= bucket[:net] >= 0 ? "+" : "" %><%= number_to_currency(bucket[:net]) %></span>
+              <% end %>
+            </td>
+            <td class="ta-td text-right"><%= bucket[:balance_available] ? number_to_currency(bucket[:ending_balance]) : "Needs source" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

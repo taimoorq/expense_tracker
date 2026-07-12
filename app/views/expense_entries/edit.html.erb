@@ -1,4 +1,8 @@
 <div class="mx-auto max-w-3xl space-y-4">
+  <% breadcrumb "Months", budget_months_path %>
+  <% breadcrumb @budget_month.label, budget_month_path(@budget_month) %>
+  <% breadcrumb "Edit Entry" %>
+
   <% content_for :page_header do %>
     <div class="flex items-center justify-between gap-3">
       <h2 class="text-2xl font-semibold">Edit Entry</h2>

@@ -1,0 +1,161 @@
+<% has_activity = insights[:has_activity] %>
+
+<section class="ta-card min-w-0">
+  <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 class="ta-section-title inline-flex items-center gap-2">
+        <%= tabler_icon("bulb", classes: "h-5 w-5 text-indigo-600") %>
+        <span>Institution activity insights</span>
+      </h2>
+      <p class="ta-muted mt-1">Patterns derived from imported rows, with the supporting activity retained for review.</p>
+    </div>
+    <%= link_to account_path(account, view: "activity", source: "institution_activity"), class: "fb-btn-secondary ta-action-btn" do %>
+      <%= tabler_icon("list-details", classes: "ta-action-icon text-indigo-600") %>
+      <span>Review imported rows</span>
+    <% end %>
+  </div>
+
+  <% if has_activity %>
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Imported rows</p>
+        <p class="mt-2 text-2xl font-semibold text-slate-900"><%= insights[:total_rows] %></p>
+        <p class="mt-1 text-xs text-slate-500"><%= insights[:started_on] && insights[:ended_on] ? "#{l(insights[:started_on], format: :short)} to #{l(insights[:ended_on], format: :short)}" : "No date range" %></p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= @account_story[:outgoing_label] %></p>
+        <p class="mt-2 text-2xl font-semibold text-rose-700"><%= number_to_currency(insights[:charges_total]) %></p>
+        <p class="mt-1 text-xs text-slate-500">Imported rows with negative account impact.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= @account_story[:incoming_label] %></p>
+        <p class="mt-2 text-2xl font-semibold text-emerald-700"><%= number_to_currency(insights[:credits_total]) %></p>
+        <p class="mt-1 text-xs text-slate-500">Imported rows with positive account impact.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= @account_story[:net_label] %></p>
+        <p class="mt-2 text-2xl font-semibold <%= insights[:net_delta].to_d >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= insights[:net_delta].to_d >= 0 ? "+" : "" %><%= number_to_currency(insights[:net_delta]) %></p>
+        <p class="mt-1 text-xs text-slate-500">Signed movement from imported rows.</p>
+      </div>
+    </div>
+
+    <% unless @account_story[:story_group] == :tracked_asset %>
+      <div class="mt-6 grid gap-6 2xl:grid-cols-2">
+        <section class="min-w-0">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-base font-semibold text-slate-900">Largest merchant rollups</h3>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600"><%= @account_story[:outgoing_label] %> only</span>
+          </div>
+          <% if insights[:merchant_rollups].any? %>
+            <div class="overflow-x-auto">
+              <table class="ta-table">
+                <thead class="ta-table-head"><tr><th class="ta-th">Merchant</th><th class="ta-th text-right">Total</th><th class="ta-th text-right">Count</th><th class="ta-th text-right">Last seen</th></tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                  <% insights[:merchant_rollups].each do |rollup| %>
+                    <tr>
+                      <td class="ta-td">
+                        <details>
+                          <summary class="cursor-pointer font-medium text-slate-900"><%= rollup[:merchant] %></summary>
+                          <div class="mt-2 space-y-1 text-xs text-slate-600">
+                            <% rollup[:rows].first(8).each do |activity| %>
+                              <p><%= l(activity.transaction_on, format: :short) %> · <%= activity.description %> · <%= number_to_currency(activity.amount) %></p>
+                            <% end %>
+                          </div>
+                        </details>
+                      </td>
+                      <td class="ta-td text-right font-semibold text-rose-700"><%= link_to number_to_currency(rollup[:total]), account_path(account, view: "activity", source: "institution_activity", direction: "outgoing", merchant: rollup[:merchant]), class: "text-indigo-700 hover:text-indigo-600", aria: { label: "Review rows for #{rollup[:merchant]}" } %></td>
+                      <td class="ta-td text-right"><%= rollup[:count] %></td>
+                      <td class="ta-td text-right"><%= l(rollup[:last_on], format: :short) %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">No merchant movement found.</p>
+          <% end %>
+        </section>
+
+        <section class="min-w-0">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-base font-semibold text-slate-900">Interest and fees</h3>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600"><%= pluralize(insights[:interest_fee_rollups].sum { |rollup| rollup[:count] }, "row") %></span>
+          </div>
+          <% if insights[:interest_fee_rollups].any? %>
+            <div class="overflow-x-auto">
+              <table class="ta-table">
+                <thead class="ta-table-head"><tr><th class="ta-th">Type</th><th class="ta-th">Month</th><th class="ta-th text-right">Total</th><th class="ta-th text-right">Rows</th></tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                  <% insights[:interest_fee_rollups].each do |rollup| %>
+                    <tr>
+                      <td class="ta-td">
+                        <details>
+                          <summary class="cursor-pointer font-medium text-slate-900"><%= rollup[:label] %></summary>
+                          <div class="mt-2 space-y-1 text-xs text-slate-600">
+                            <% rollup[:rows].each do |activity| %>
+                              <p><%= l(activity.transaction_on, format: :short) %> · <%= activity.description %> · <%= number_to_currency(activity.amount) %></p>
+                            <% end %>
+                          </div>
+                        </details>
+                      </td>
+                      <td class="ta-td"><%= rollup[:month_on].strftime("%B %Y") %></td>
+                      <td class="ta-td text-right font-semibold text-rose-700"><%= link_to number_to_currency(rollup[:total]), account_path(account, view: "activity", source: "institution_activity", classification: rollup[:type], starts_on: rollup[:month_on].iso8601, ends_on: rollup[:month_on].end_of_month.iso8601), class: "text-indigo-700 hover:text-indigo-600", aria: { label: "Review #{rollup[:label].downcase} rows for #{rollup[:month_on].strftime('%B %Y')}" } %></td>
+                      <td class="ta-td text-right"><%= rollup[:count] %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">No interest or fee rows detected.</p>
+          <% end %>
+        </section>
+      </div>
+
+      <div class="mt-6 grid gap-6 2xl:grid-cols-2">
+        <% [
+          ["Active recurring candidates", insights[:active_subscription_candidates], "Recent patterns"],
+          ["Past recurring candidates", insights[:past_subscription_candidates], "Previously recurring"]
+        ].each do |title, candidates, badge| %>
+          <section class="min-w-0">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 class="text-base font-semibold text-slate-900"><%= title %></h3><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600"><%= badge %></span></div>
+            <% if candidates.any? %>
+              <div class="space-y-2">
+                <% candidates.each do |candidate| %>
+                  <details class="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <summary class="cursor-pointer list-none">
+                      <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div><p class="font-semibold text-slate-900"><%= candidate[:merchant] %></p><p class="mt-1 text-xs text-slate-500"><%= pluralize(candidate[:months_seen], "month") %>, last seen <%= l(candidate[:last_on], format: :long) %></p></div>
+                        <div class="text-right"><p class="font-semibold text-slate-900"><%= number_to_currency(candidate[:estimated_amount]) %></p><p class="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700"><%= candidate[:confidence].to_s.humanize %></p></div>
+                      </div>
+                    </summary>
+                    <div class="mt-3 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                      <% candidate[:rows].first(8).each do |activity| %><p><%= l(activity.transaction_on, format: :short) %> · <%= activity.description %> · <%= number_to_currency(activity.amount) %></p><% end %>
+                      <p class="pt-2"><%= link_to "Review all matching rows", account_path(account, view: "activity", source: "institution_activity", direction: "outgoing", merchant: candidate[:merchant]), class: "font-semibold text-indigo-700 hover:text-indigo-600" %></p>
+                    </div>
+                  </details>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">No candidates found.</p>
+            <% end %>
+          </section>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="mt-6 rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-sm leading-6 text-sky-950">
+        <p class="font-semibold text-slate-900">Tracked value, not investment performance</p>
+        <p class="mt-1">Imported contributions and withdrawals provide movement context, but the app does not label residual value changes as market return without position and performance data.</p>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+      <p class="text-lg font-semibold text-slate-900">No institution insights yet</p>
+      <p class="mt-2 text-sm text-slate-500">Import this account's CSV export to review movement, merchants, interest, fees, and recurring candidates.</p>
+      <%= link_to new_account_account_activity_import_path(account), class: "mt-4 inline-flex fb-btn-primary ta-action-btn" do %>
+        <%= tabler_icon("upload", classes: "ta-action-icon text-indigo-100") %>
+        <span>Import institution CSV</span>
+      <% end %>
+    </div>
+  <% end %>
+</section>

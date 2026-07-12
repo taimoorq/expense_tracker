@@ -1,0 +1,184 @@
+<% persisted_snapshots = account.account_snapshots.select(&:persisted?).sort_by { |snapshot| [snapshot.recorded_on, snapshot.created_at] }.reverse %>
+<% balance_source = @balance_summary[:balance_source] || :none %>
+<% balance_available = @balance_summary.fetch(:balance_available, balance_source != :none) %>
+
+<div class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
+  <div class="space-y-6">
+    <section class="ta-card min-w-0">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="ta-section-title inline-flex items-center gap-2">
+            <%= tabler_icon("chart-line", classes: "h-5 w-5 text-indigo-600") %>
+            <span>Monthly balance history</span>
+          </h2>
+          <p class="ta-muted mt-1">Institution data is used first for applicable periods; manual snapshots and paid linked entries are the fallback.</p>
+        </div>
+        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"><%= pluralize(@balance_history_rows.size, "period") %></span>
+      </div>
+
+      <% if @balance_history_rows.any? %>
+        <div class="overflow-x-auto">
+          <table class="ta-table">
+            <thead class="ta-table-head">
+              <tr>
+                <th class="ta-th">Month and source</th>
+                <th class="ta-th text-right">Starting</th>
+                <th class="ta-th text-right">Actual activity</th>
+                <th class="ta-th text-right">Current</th>
+                <th class="ta-th text-right">Planned</th>
+                <th class="ta-th text-right">Projected</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @balance_history_rows.reverse_each do |row| %>
+                <% row_available = row.fetch(:balance_available, true) %>
+                <tr>
+                  <td class="ta-td">
+                    <p class="font-medium text-slate-900"><%= row[:month_on].strftime("%B %Y") %></p>
+                    <p class="mt-1 text-xs text-slate-500"><%= row[:balance_source_label] %><%= row[:balance_source_recorded_on] ? " on #{l(row[:balance_source_recorded_on], format: :long)}" : "" %></p>
+                    <% if row[:activity_through_on].present? && row[:activity_through_on] != row[:balance_source_recorded_on] %>
+                      <p class="mt-1 text-xs text-slate-500">Activity through <%= l(row[:activity_through_on], format: :long) %></p>
+                    <% end %>
+                  </td>
+                  <td class="ta-td text-right"><%= row_available ? number_to_currency(row[:starting_balance]) : "Needs source" %></td>
+                  <td class="ta-td text-right <%= row[:paid_delta] >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= row_available ? "#{row[:paid_delta] >= 0 ? '+' : ''}#{number_to_currency(row[:paid_delta])}" : "—" %></td>
+                  <td class="ta-td text-right"><%= row_available ? number_to_currency(row[:current_balance]) : "Needs source" %></td>
+                  <td class="ta-td text-right <%= row[:planned_delta] >= 0 ? 'text-emerald-700' : 'text-amber-700' %>"><%= row_available ? "#{row[:planned_delta] >= 0 ? '+' : ''}#{number_to_currency(row[:planned_delta])}" : "—" %></td>
+                  <td class="ta-td text-right font-semibold"><%= row_available ? number_to_currency(row[:projected_balance]) : "Needs source" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">Add a trusted balance source to begin monthly history.</p>
+      <% end %>
+    </section>
+
+    <section class="ta-card min-w-0">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="ta-section-title">Manual snapshots</h2>
+          <p class="ta-muted mt-1">Snapshots remain the trusted fallback for periods without applicable institution data.</p>
+        </div>
+        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"><%= pluralize(persisted_snapshots.size, "snapshot") %></span>
+      </div>
+
+      <% if persisted_snapshots.any? %>
+        <div class="overflow-x-auto">
+          <table class="ta-table">
+            <thead class="ta-table-head">
+              <tr>
+                <th class="ta-th">Recorded on</th>
+                <th class="ta-th text-right">Balance</th>
+                <th class="ta-th text-right">Available</th>
+                <th class="ta-th">Notes</th>
+                <th class="ta-th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% persisted_snapshots.each do |snapshot| %>
+                <tr>
+                  <td class="ta-td"><%= l(snapshot.recorded_on, format: :long) %></td>
+                  <td class="ta-td text-right"><%= number_to_currency(snapshot.balance) %></td>
+                  <td class="ta-td text-right"><%= snapshot.available_balance.present? ? number_to_currency(snapshot.available_balance) : "—" %></td>
+                  <td class="ta-td"><%= snapshot.notes.presence || "—" %></td>
+                  <td class="ta-td">
+                    <div class="flex justify-end gap-2">
+                      <%= link_to edit_account_account_snapshot_path(account, snapshot), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                        <%= tabler_icon("edit", classes: "ta-action-icon text-slate-600") %>
+                        <span>Edit</span>
+                      <% end %>
+                      <%= button_to account_account_snapshot_path(account, snapshot), method: :delete, class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs", form: { data: { turbo_confirm: "Delete this snapshot?" } } do %>
+                        <%= tabler_icon("trash", classes: "ta-action-icon text-rose-600") %>
+                        <span>Delete</span>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">No manual snapshots yet.</p>
+      <% end %>
+    </section>
+
+    <section class="ta-card min-w-0">
+      <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="ta-section-title">Connected recurring templates</h2>
+          <p class="ta-muted mt-1">Planning connections stay separate from institution activity.</p>
+        </div>
+        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"><%= pluralize(@connected_templates_count, "template") %></span>
+      </div>
+
+      <% if @connected_templates_count.positive? %>
+        <div class="grid gap-3 md:grid-cols-2">
+          <% @connected_templates.each do |group_name, templates| %>
+            <% next if templates.empty? %>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 class="text-sm font-semibold text-slate-900"><%= group_name %></h3>
+              <ul class="mt-3 space-y-2">
+                <% templates.each do |template| %>
+                  <li class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
+                    <span class="text-sm font-medium text-slate-900"><%= template.name %></span>
+                    <span class="rounded-full px-2 py-0.5 text-xs font-semibold <%= template.active? ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600' %>"><%= template.active? ? "Active" : "Inactive" %></span>
+                  </li>
+                <% end %>
+              </ul>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">No recurring templates are connected to this account.</p>
+      <% end %>
+    </section>
+  </div>
+
+  <aside class="space-y-6">
+    <section class="ta-card">
+      <h2 class="ta-section-title">Account details</h2>
+      <dl class="mt-4 space-y-3 text-sm text-slate-600">
+        <div class="flex justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"><dt class="font-semibold text-slate-900">Institution</dt><dd class="text-right"><%= account.institution_name.presence || "Manual account" %></dd></div>
+        <div class="flex justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"><dt class="font-semibold text-slate-900">Net worth</dt><dd><%= account.include_in_net_worth? ? "Included" : "Excluded" %></dd></div>
+        <div class="flex justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"><dt class="font-semibold text-slate-900">Cash totals</dt><dd><%= account.include_in_cash? ? "Included" : "Excluded" %></dd></div>
+      </dl>
+      <%= link_to edit_account_path(account), class: "mt-4 fb-btn-secondary ta-action-btn w-full justify-center" do %>
+        <%= tabler_icon("edit", classes: "ta-action-icon text-slate-600") %>
+        <span>Edit account</span>
+      <% end %>
+    </section>
+
+    <section class="ta-card">
+      <h2 class="ta-section-title">How balance is calculated</h2>
+      <p class="ta-muted mt-1">Institution data is preferred; manual snapshots fill periods where no applicable import exists.</p>
+      <ol class="mt-4 space-y-3 text-sm text-slate-600">
+        <li class="rounded-xl bg-slate-50 px-3 py-2"><strong class="block text-slate-900">1. Choose the source</strong><%= balance_available ? "#{@balance_summary[:balance_source_label]} at #{number_to_currency(@balance_summary[:base_balance])}." : "No trusted source yet." %></li>
+        <li class="rounded-xl bg-slate-50 px-3 py-2"><strong class="block text-slate-900">2. Apply actual activity</strong><%= balance_available ? "Recorded actuals change it by #{@balance_summary[:paid_delta] >= 0 ? '+' : ''}#{number_to_currency(@balance_summary[:paid_delta])}." : "Actual rows wait for a trusted starting balance." %></li>
+        <li class="rounded-xl bg-slate-50 px-3 py-2"><strong class="block text-slate-900">3. Keep plans separate</strong><%= balance_available ? "#{pluralize(@balance_summary[:planned_entries_count], 'planned entry')} affect the projection only." : "Projection starts after the balance is resolved." %></li>
+      </ol>
+    </section>
+
+    <% if @import_history.any? %>
+      <section class="ta-card">
+        <h2 class="ta-section-title">Recent imports</h2>
+        <div class="mt-4 space-y-2">
+          <% @import_history.each do |activity_import| %>
+            <div class="rounded-xl bg-slate-50 px-3 py-2 text-sm">
+              <p class="truncate font-semibold text-slate-900"><%= activity_import.original_filename %></p>
+              <p class="mt-1 text-xs text-slate-500"><%= pluralize(activity_import.imported_count, "row") %> · <%= activity_import.created_at ? l(activity_import.created_at.to_date, format: :short) : "Imported" %></p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+
+    <section class="ta-card xl:sticky xl:top-6">
+      <h2 class="ta-section-title">Record balance</h2>
+      <p class="ta-muted mt-1">Add a manual snapshot whenever you review this account.</p>
+      <div class="mt-4"><%= render "accounts/snapshot_form", account: account, account_snapshot: @account_snapshot %></div>
+    </section>
+  </aside>
+</div>

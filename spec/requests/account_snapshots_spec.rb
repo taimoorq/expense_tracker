@@ -18,7 +18,7 @@ RSpec.describe "Account snapshots", type: :request do
       }
     }
 
-    expect(response).to redirect_to(account_path(account))
+    expect(response).to redirect_to(account_path(account, view: "manage"))
     expect(flash[:notice]).to eq("Balance snapshot updated.")
 
     snapshot.reload
@@ -35,8 +35,21 @@ RSpec.describe "Account snapshots", type: :request do
       delete account_account_snapshot_path(account, snapshot)
     end.to change(AccountSnapshot, :count).by(-1)
 
-    expect(response).to redirect_to(account_path(account))
+    expect(response).to redirect_to(account_path(account, view: "manage"))
     expect(flash[:notice]).to eq("Balance snapshot deleted.")
+  end
+
+  it "renders the manage path with validation errors when a snapshot is invalid" do
+    account = create(:account, user: user)
+
+    post account_account_snapshots_path(account), params: {
+      account_snapshot: { recorded_on: "", balance: "" }
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.body).to include("Fix the snapshot details.")
+    expect(response.body).to include("Monthly balance history")
+    expect(response.body).to include('aria-current="page"')
   end
 
   it "does not allow editing another user's snapshot" do

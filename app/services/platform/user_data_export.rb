@@ -1,6 +1,6 @@
 module Platform
   class UserDataExport
-    SCOPES = %w[planning_templates budget_months accounts preferences].freeze
+    SCOPES = %w[planning_templates budget_months accounts account_activity preferences].freeze
     FORMAT_NAME = "expense_tracker_backup".freeze
     FORMAT_VERSION = 1
 
@@ -47,6 +47,7 @@ module Platform
         data[:planning_templates] = serialize_planning_templates if scopes.include?("planning_templates")
         data[:budget_months] = serialize_budget_months if scopes.include?("budget_months")
         data[:accounts] = serialize_accounts if scopes.include?("accounts")
+        data[:account_activity] = serialize_account_activity if scopes.include?("account_activity")
         data[:preferences] = serialize_preferences if scopes.include?("preferences")
       end
     end
@@ -175,6 +176,45 @@ module Platform
               balance: decimal_string(snapshot.balance),
               available_balance: decimal_string(snapshot.available_balance),
               notes: snapshot.notes
+            }
+          end
+        }
+      end
+    end
+
+    def serialize_account_activity
+      user.account_activity_imports.includes(:account, :account_activities).order(:created_at).map do |import|
+        {
+          account: import.account.name,
+          original_filename: import.original_filename,
+          header_row_number: import.header_row_number,
+          column_mapping: import.column_mapping,
+          amount_strategy: import.amount_strategy,
+          rows_count: import.rows_count,
+          imported_count: import.imported_count,
+          duplicate_count: import.duplicate_count,
+          warning_messages: import.warning_messages,
+          started_on: import.started_on&.to_s,
+          ended_on: import.ended_on&.to_s,
+          metadata: import.metadata,
+          created_at: import.created_at&.iso8601,
+          updated_at: import.updated_at&.iso8601,
+          account_activities: import.account_activities.recent_first.reverse.map do |activity|
+            {
+              transaction_on: activity.transaction_on&.to_s,
+              posted_on: activity.posted_on&.to_s,
+              description: activity.description,
+              category: activity.category,
+              activity_type: activity.activity_type,
+              memo: activity.memo,
+              raw_amount: decimal_string(activity.raw_amount),
+              amount: decimal_string(activity.amount),
+              account_delta: decimal_string(activity.account_delta),
+              row_number: activity.row_number,
+              fingerprint: activity.fingerprint,
+              raw_payload: activity.raw_payload,
+              created_at: activity.created_at&.iso8601,
+              updated_at: activity.updated_at&.iso8601
             }
           end
         }

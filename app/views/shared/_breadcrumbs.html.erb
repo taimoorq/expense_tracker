@@ -1,0 +1,23 @@
+<% if breadcrumbs.any? %>
+  <nav class="mb-2" aria-label="Breadcrumb">
+    <ol class="flex flex-wrap items-center gap-1 text-xs font-semibold text-slate-500">
+      <% breadcrumbs.each_with_index do |crumb, index| %>
+        <% current = index == breadcrumbs.size - 1 %>
+        <li class="inline-flex min-w-0 items-center gap-1">
+          <% if crumb[:path].present? && !current %>
+            <%= link_to truncate(crumb[:label], length: 42), crumb[:path], class: "min-w-0 break-words text-slate-500 transition hover:text-indigo-700" %>
+          <% else %>
+            <span class="min-w-0 break-words <%= current ? 'text-slate-800' : 'text-slate-500' %>" <%= %(aria-current="page") if current %>>
+              <%= truncate(crumb[:label], length: 42) %>
+            </span>
+          <% end %>
+        </li>
+        <% unless current %>
+          <li class="text-slate-300" aria-hidden="true">
+            <%= tabler_icon("chevron-right", classes: "h-3.5 w-3.5") %>
+          </li>
+        <% end %>
+      <% end %>
+    </ol>
+  </nav>
+<% end %>

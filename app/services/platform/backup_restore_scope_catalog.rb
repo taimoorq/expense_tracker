@@ -9,6 +9,7 @@ module Platform
         "planning_templates" => planning_template_scope,
         "budget_months" => budget_month_scope,
         "accounts" => account_scope,
+        "account_activity" => account_activity_scope,
         "preferences" => preference_scope
       }
     end
@@ -47,6 +48,15 @@ module Platform
         description: "Accounts, balances, notes, and recorded snapshots.",
         count: user.accounts.count,
         detail: "#{user.account_snapshots.count} snapshots across #{user.accounts.count} accounts"
+      }
+    end
+
+    def account_activity_scope
+      {
+        title: "Account Activity",
+        description: "Imported account activity batches and normalized rows.",
+        count: user.account_activities.count,
+        detail: "#{user.account_activities.count} rows across #{user.account_activity_imports.count} imports"
       }
     end
 

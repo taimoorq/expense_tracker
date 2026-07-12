@@ -1,57 +1,81 @@
 module Accounts
   class DetailPage
-    LINKED_ENTRY_LIMIT = 150
+    DETAIL_VIEWS = %w[overview activity insights manage].freeze
 
-    def initialize(account:, as_of: Date.current)
+    def initialize(account:, as_of: Date.current, range: Accounts::MovementTimeline::DEFAULT_RANGE, view: "overview")
       @account = account
       @user = account.user
       @as_of = as_of
+      @range = range
+      @view = view.to_s.in?(DETAIL_VIEWS) ? view.to_s : "overview"
     end
 
     def call
-      {
-        balance_summary: balance_summary,
-        balance_history_rows: balance_history.fetch(:rows),
-        credit_card_progress: credit_card_progress,
-        linked_entries: linked_entries,
-        linked_entries_net: linked_entries_net,
-        connected_templates: connected_templates,
-        connected_templates_count: connected_templates_count
-      }
+      common_data.merge(view_data)
     end
 
     private
 
-    attr_reader :account, :as_of, :user
+    attr_reader :account, :as_of, :range, :user, :view
 
-    def balance_history
-      @balance_history ||= Accounts::BalanceHistory.new(account: account, as_of: as_of).call
+    def common_data
+      {
+        balance_summary: balance_summary,
+        account_story: account_story
+      }
+    end
+
+    def view_data
+      case view
+      when "overview"
+        {
+          credit_card_progress: credit_card_progress,
+          movement_timeline: movement_timeline,
+          recent_activity: recent_activity
+        }
+      when "insights"
+        { activity_insights: activity_insights }
+      when "manage"
+        {
+          balance_history_rows: balance_history_rows,
+          connected_templates: connected_templates,
+          connected_templates_count: connected_templates_count,
+          import_history: import_history
+        }
+      else
+        {}
+      end
+    end
+
+    def account_story
+      @account_story ||= Accounts::AccountStoryPresenter.new(account: account).call
+    end
+
+    def movement_timeline
+      @movement_timeline ||= Accounts::MovementTimeline.new(account: account, range: range, as_of: as_of).call
+    end
+
+    def recent_activity
+      @recent_activity ||= Accounts::ActivityLedgerQuery.new(account: account, limit: 5).call
+    end
+
+    def balance_history_rows
+      @balance_history_rows ||= Accounts::BalanceHistory.new(account: account, as_of: as_of).call.fetch(:rows)
     end
 
     def balance_summary
-      @balance_summary ||= balance_history.fetch(:summary)
+      @balance_summary ||= Accounts::BalanceResolver.new(account: account, as_of: as_of).call.to_h
     end
 
     def credit_card_progress
       return nil unless account.credit_card?
+      return nil unless balance_summary.fetch(:balance_available, balance_summary[:balance_source] != :none)
 
       @credit_card_progress ||= Accounts::CreditCardProgress.new(
         account: account,
         balance_summary: balance_summary,
         as_of: as_of
       ).call
-    end
-
-    def linked_entries
-      @linked_entries ||= user.expense_entries
-                             .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
-                             .includes(:budget_month, :source_account, :destination_account, :source_template)
-                             .order(occurred_on: :desc, created_at: :desc)
-                             .limit(LINKED_ENTRY_LIMIT)
-    end
-
-    def linked_entries_net
-      @linked_entries_net ||= linked_entries.sum { |entry| Accounts::EntryImpact.new(account: account, entry: entry).delta }
     end
 
     def connected_templates
@@ -67,6 +91,14 @@ module Accounts
 
     def connected_templates_count
       @connected_templates_count ||= connected_templates.values.sum(&:size)
+    end
+
+    def activity_insights
+      @activity_insights ||= Accounts::ActivityInsights::Report.new(account: account).call
+    end
+
+    def import_history
+      @import_history ||= account.account_activity_imports.order(created_at: :desc).limit(6).to_a
     end
   end
 end

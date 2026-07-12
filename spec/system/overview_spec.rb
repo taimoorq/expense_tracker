@@ -34,7 +34,7 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("How this is chosen")
     expect(page).to have_content("Attention Queue")
     expect(page).to have_content("Recurring")
-    expect(page).to have_content("Accounts Snapshot")
+    expect(page).to have_content("Account Balances")
     expect(page).to have_content("Account Movement")
     expect(page).to have_content("Quick Actions")
     expect(page).to have_content("Set up the month in the right order")

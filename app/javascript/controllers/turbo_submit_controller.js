@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["submitButton", "cancelButton", "auxButton", "submitLabel", "submitSpinner"]
+  static targets = ["submitButton", "cancelButton", "auxButton", "submitLabel", "submitSpinner", "status"]
 
   static values = {
     defaultLabel: String,
@@ -10,6 +10,7 @@ export default class extends Controller {
 
   connect() {
     this.submitting = false
+    this.submitButtonWasDisabled = null
 
     if (!this.hasDefaultLabelValue && this.hasSubmitLabelTarget) {
       this.defaultLabelValue = this.submitLabelTarget.textContent.trim()
@@ -19,6 +20,12 @@ export default class extends Controller {
   }
 
   submitStart() {
+    if (this.submitting) return
+
+    if (this.hasSubmitButtonTarget) {
+      this.submitButtonWasDisabled = this.submitButtonTarget.disabled
+    }
+
     this.submitting = true
     this.sync()
   }
@@ -28,11 +35,17 @@ export default class extends Controller {
 
     this.submitting = false
     this.sync()
+    this.submitButtonWasDisabled = null
   }
 
   sync() {
     if (this.hasSubmitButtonTarget) {
-      this.submitButtonTarget.disabled = this.submitting
+      if (this.submitting) {
+        this.submitButtonTarget.disabled = true
+      } else if (this.submitButtonWasDisabled !== null) {
+        this.submitButtonTarget.disabled = this.submitButtonWasDisabled
+      }
+
       this.submitButtonTarget.setAttribute("aria-busy", this.submitting ? "true" : "false")
     }
 
@@ -51,5 +64,10 @@ export default class extends Controller {
     if (this.hasSubmitSpinnerTarget) {
       this.submitSpinnerTarget.classList.toggle("hidden", !this.submitting)
     }
+
+    this.statusTargets.forEach((status) => {
+      status.classList.toggle("hidden", !this.submitting)
+      status.setAttribute("aria-hidden", this.submitting ? "false" : "true")
+    })
   }
 }

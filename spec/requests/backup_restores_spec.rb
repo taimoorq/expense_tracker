@@ -209,7 +209,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.fetch("version")).to eq(1)
     expect(payload.fetch("sample_backup")).to be(true)
     expect(payload.fetch("sample_notice")).to include("Reference-only sample backup")
-    expect(payload.fetch("scopes")).to contain_exactly("planning_templates", "budget_months", "accounts", "preferences")
+    expect(payload.fetch("scopes")).to contain_exactly("planning_templates", "budget_months", "accounts", "account_activity", "preferences")
     expect(payload.dig("data", "preferences", "financial_rhythm")).to eq("debt_payoff")
     expect(payload.dig("data", "planning_templates", "pay_schedules")).not_to be_empty
     expect(payload.dig("data", "planning_templates", "credit_cards", 0, "payment_account")).to eq("Example Checking")
@@ -221,6 +221,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "budget_months", 0, "expense_entries", 0, "generated_entry_key")).to be_present
     expect(payload.dig("data", "budget_months", 0, "expense_entries", 2, "destination_account")).to eq("Example Visa")
     expect(payload.dig("data", "accounts", 0, "account_snapshots")).not_to be_empty
+    expect(payload.dig("data", "account_activity", 0, "account_activities", 0, "description")).to eq("Sample Merchant 001")
   end
 
   it "previews older backups when preferences are selected but absent" do

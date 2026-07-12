@@ -1,0 +1,117 @@
+<% balance_source = @balance_summary[:balance_source] || :none %>
+<% balance_available = @balance_summary.fetch(:balance_available, balance_source != :none) %>
+<% liability = @account_story[:liability] %>
+<% current_value = liability ? @balance_summary[:current_balance].to_d.abs : @balance_summary[:current_balance].to_d %>
+<% projected_value = liability ? @balance_summary[:projected_balance].to_d.abs : @balance_summary[:projected_balance].to_d %>
+<% freshness_on = @balance_summary[:activity_through_on] || @balance_summary[:balance_source_recorded_on] %>
+
+<div class="space-y-6">
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <article class="ta-card min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= liability ? "Current Debt" : "Current Balance" %></p>
+      <% if balance_available %>
+        <p class="mt-2 break-words text-3xl font-semibold text-slate-900"><%= number_to_currency(current_value) %></p>
+        <p class="mt-1 text-xs text-slate-500"><%= @balance_summary[:balance_source_label] %>.<%= freshness_on ? " Activity through #{l(freshness_on, format: :long)}." : "" %></p>
+      <% else %>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">Needs source</p>
+        <p class="mt-1 text-xs text-slate-500">Import a balance or record a snapshot to resolve this account.</p>
+      <% end %>
+    </article>
+
+    <article class="ta-card min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= liability ? "Projected Debt" : "Projected Balance" %></p>
+      <% if balance_available %>
+        <p class="mt-2 break-words text-3xl font-semibold text-slate-900"><%= number_to_currency(projected_value) %></p>
+        <p class="mt-1 text-xs text-slate-500">Includes <%= pluralize(@balance_summary[:planned_entries_count], "planned entry") %>.</p>
+      <% else %>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">Needs source</p>
+        <p class="mt-1 text-xs text-slate-500">Projection begins after a trusted balance is available.</p>
+      <% end %>
+    </article>
+
+    <article class="ta-card min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Activity Since Source</p>
+      <% if balance_available %>
+        <p class="mt-2 break-words text-3xl font-semibold <%= @balance_summary[:paid_delta].to_d >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= @balance_summary[:paid_delta].to_d >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:paid_delta]) %></p>
+        <p class="mt-1 text-xs text-slate-500">Planned impact: <%= @balance_summary[:planned_delta].to_d >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:planned_delta]) %>.</p>
+      <% else %>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">Pending</p>
+        <p class="mt-1 text-xs text-slate-500">Recorded rows need a trusted starting balance.</p>
+      <% end %>
+    </article>
+
+    <article class="ta-card min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">What This View Answers</p>
+      <p class="mt-2 text-lg font-semibold leading-snug text-slate-900"><%= @account_story[:question] %></p>
+      <p class="mt-2 text-xs text-slate-500">Every movement total links to the records behind it.</p>
+    </article>
+  </div>
+
+  <%= render "accounts/movement_timeline", account: account, story: @account_story, timeline: @movement_timeline %>
+
+  <% if @credit_card_progress.present? %>
+    <%= render "accounts/credit_card_progress", credit_card_progress: @credit_card_progress %>
+  <% end %>
+
+  <section class="ta-card min-w-0">
+    <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 class="ta-section-title">Recent records</h2>
+        <p class="ta-muted mt-1">A short preview of institution records and budget-linked entries, kept as separate sources.</p>
+      </div>
+      <%= link_to account_path(account, view: "activity"), class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("list-details", classes: "ta-action-icon text-indigo-600") %>
+        <span>Review all activity</span>
+      <% end %>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-sm font-semibold text-slate-900">Institution activity</h3>
+        <% if @recent_activity[:institution_rows].any? %>
+          <ul class="mt-3 space-y-2">
+            <% @recent_activity[:institution_rows].each do |row| %>
+              <li class="flex items-start justify-between gap-3 text-sm"><span><%= l(row.transaction_on, format: :short) %> · <%= row.description %></span><span class="shrink-0 font-semibold <%= row.account_delta >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= row.account_delta >= 0 ? "+" : "" %><%= number_to_currency(row.account_delta) %></span></li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-500">No imported institution rows yet.</p>
+        <% end %>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-sm font-semibold text-slate-900">Budget-linked activity</h3>
+        <% if @recent_activity[:budget_entries].any? %>
+          <ul class="mt-3 space-y-2">
+            <% @recent_activity[:budget_entries].each do |entry| %>
+              <% impact = account.account_delta_for(entry) %>
+              <li class="flex items-start justify-between gap-3 text-sm"><span><%= l(entry.occurred_on, format: :short) %> · <%= entry.payee.presence || entry.category.presence || entry.section.humanize %></span><span class="shrink-0 font-semibold <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %></span></li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-500">No linked month entries yet.</p>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-sky-100 bg-sky-50/70 px-5 py-4 text-sm leading-6 text-sky-950">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <p class="font-semibold text-slate-900">Balance math at a glance</p>
+        <% if !balance_available %>
+          <p class="mt-1">Recorded rows are retained, but the account needs an institution balance or manual snapshot before balances can be calculated.</p>
+        <% elsif balance_source == :snapshot %>
+          <p class="mt-1">No institution activity applies to the current period. The latest manual snapshot plus paid budget-linked activity gives the current balance; planned activity stays separate.</p>
+        <% elsif balance_source == :institution_import %>
+          <p class="mt-1">The latest institution-reported balance is the trusted base. Newer institution activity rolls it forward; planned budget entries remain projections.</p>
+        <% else %>
+          <p class="mt-1">The latest manual snapshot is the trusted base. Institution activity rolls it forward; planned budget entries remain projections.</p>
+        <% end %>
+      </div>
+      <%= link_to account_path(account, view: "manage"), class: "fb-btn-secondary ta-action-btn shrink-0" do %>
+        <%= tabler_icon("calculator", classes: "ta-action-icon text-sky-700") %>
+        <span>Review sources</span>
+      <% end %>
+    </div>
+  </section>
+</div>
