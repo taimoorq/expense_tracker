@@ -6,8 +6,10 @@
 <% freshness_on = @balance_summary[:activity_through_on] || @balance_summary[:balance_source_recorded_on] %>
 
 <div class="space-y-6">
-  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-    <article class="ta-card min-w-0">
+  <section class="ta-section-frame" aria-labelledby="balance-story-title">
+    <div class="ta-section-header"><div class="ta-ledger-rail"><p class="ta-page-eyebrow">Balance story</p><h2 id="balance-story-title" class="ta-section-title mt-1"><%= @account_story[:question] %></h2><p class="mt-1 text-sm text-slate-600">Trusted source → recorded activity → current balance → planned impact → projected balance.</p></div></div>
+  <div class="grid divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+    <article class="min-w-0 p-5">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= liability ? "Current Debt" : "Current Balance" %></p>
       <% if balance_available %>
         <p class="mt-2 break-words text-3xl font-semibold text-slate-900"><%= number_to_currency(current_value) %></p>
@@ -18,7 +20,7 @@
       <% end %>
     </article>
 
-    <article class="ta-card min-w-0">
+    <article class="min-w-0 p-5">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= liability ? "Projected Debt" : "Projected Balance" %></p>
       <% if balance_available %>
         <p class="mt-2 break-words text-3xl font-semibold text-slate-900"><%= number_to_currency(projected_value) %></p>
@@ -29,7 +31,7 @@
       <% end %>
     </article>
 
-    <article class="ta-card min-w-0">
+    <article class="min-w-0 p-5">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Activity Since Source</p>
       <% if balance_available %>
         <p class="mt-2 break-words text-3xl font-semibold <%= @balance_summary[:paid_delta].to_d >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= @balance_summary[:paid_delta].to_d >= 0 ? "+" : "" %><%= number_to_currency(@balance_summary[:paid_delta]) %></p>
@@ -40,12 +42,13 @@
       <% end %>
     </article>
 
-    <article class="ta-card min-w-0">
+    <article class="min-w-0 bg-slate-50/70 p-5">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">What This View Answers</p>
       <p class="mt-2 text-lg font-semibold leading-snug text-slate-900"><%= @account_story[:question] %></p>
       <p class="mt-2 text-xs text-slate-500">Every movement total links to the records behind it.</p>
     </article>
   </div>
+  </section>
 
   <%= render "accounts/movement_timeline", account: account, story: @account_story, timeline: @movement_timeline %>
 

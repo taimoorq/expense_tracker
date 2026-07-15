@@ -3,12 +3,12 @@
   <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: anchored_return_to } %>
   <% show_collapsible_form = !budget_month && !credit_card.persisted? %>
   <% form_open = budget_month || credit_card.persisted? || credit_card.errors.any? %>
-  <section id="credit-cards" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+  <section id="credit-cards" class="ta-section-frame p-4">
     <div class="mb-3 flex items-center gap-2">
-      <h3 class="inline-flex items-center gap-2 text-lg font-semibold">
+      <h2 class="inline-flex items-center gap-2 text-lg font-semibold">
         <%= tabler_icon("shield-lock", classes: "h-5 w-5 text-violet-600") %>
         <span><%= budget_month ? "5) Credit Cards (estimate from leftover)" : "Credit Cards" %></span>
-      </h3>
+      </h2>
       <button type="button" class="ta-icon-btn" aria-label="Credit Cards Help" title="Credit Cards Help" data-action="click->help-modal#open" data-help-title="Credit Cards Help" data-help-body="Used by 'Estimate Cards' in month view.
 
 Card being paid down: optional credit card account this recurring item pays.

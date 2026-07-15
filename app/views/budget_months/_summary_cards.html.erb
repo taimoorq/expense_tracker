@@ -1,40 +1,39 @@
 <%= turbo_frame_tag "month_summary" do %>
-  <% account_flow_payload = Budgeting::MonthAccountFlowSummary.cached_payload(budget_month: budget_month, expense_entries: expense_entries) %>
-  <% top_account = account_flow_payload[:top_account] %>
-  <section class="mb-6">
+  <% summary = Budgeting::MonthWorkspaceSummary.call(budget_month: budget_month, expense_entries: expense_entries) %>
+  <% account_flow = Budgeting::MonthAccountFlowSummary.cached_payload(budget_month: budget_month, expense_entries: expense_entries) %>
+  <% metrics = [
+    { label: "Income", value: summary.income, tone: "text-emerald-700", note: "Effective income" },
+    { label: "Planned outflow", value: summary.planned_outflow, tone: "text-slate-900", note: "Expected this month" },
+    { label: "Actual outflow", value: summary.actual_outflow, tone: "text-rose-700", note: "#{summary.actual_coverage_count} of #{summary.outflow_count} recorded" },
+    { label: "Leftover", value: summary.leftover, tone: (summary.leftover >= 0 ? "text-emerald-700" : "text-rose-700"), note: "Income minus effective outflow" }
+  ] %>
+  <section class="ta-section-frame mb-5" aria-labelledby="month-summary-title">
     <details class="group ta-summary-collapse sm:open">
-      <summary class="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 sm:hidden">
-        <span class="inline-flex items-center gap-2">
-          <%= tabler_icon("cash", classes: "h-4 w-4 text-emerald-600") %>
-          Income, Outflow & Leftover
-        </span>
-        <span class="ml-auto text-xs text-slate-500">Tap to expand/collapse</span>
+      <summary class="ta-section-header flex cursor-pointer list-none items-center gap-3 sm:hidden">
+        <span id="month-summary-title" class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("calculator", classes: "h-4 w-4") %> Month summary</span>
+        <span class="ml-auto ta-number text-sm font-semibold <%= summary.leftover >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= number_to_currency(summary.leftover) %></span>
+        <%= tabler_icon("chevron-down", classes: "h-4 w-4 text-slate-500 transition group-open:rotate-180") %>
       </summary>
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="ta-card-tinted ta-summary-income" style="view-transition-name: summary-income-card; view-transition-class: ta-vt-card;">
-          <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("cash", classes: "h-4 w-4 text-emerald-600") %> Income</p>
-          <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.income_total) %></p>
-        </div>
-        <div class="ta-card-tinted ta-summary-outflow" style="view-transition-name: summary-outflow-card; view-transition-class: ta-vt-card;">
-          <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("cash", classes: "h-4 w-4 text-rose-600") %> Outflow</p>
-          <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.outflow_total) %></p>
-        </div>
-        <div class="ta-card-tinted ta-summary-leftover" style="view-transition-name: summary-leftover-card; view-transition-class: ta-vt-card;">
-          <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("chart-bar", classes: "h-4 w-4 text-indigo-600") %> Leftover</p>
-          <p class="mt-1 text-xl font-semibold"><%= number_to_currency(budget_month.calculated_leftover) %></p>
-        </div>
-        <div class="ta-card-tinted ta-summary-accounts">
-          <p class="inline-flex items-center gap-2 text-sm text-slate-500"><%= tabler_icon("credit-card", classes: "h-4 w-4 text-sky-600") %> Account Flow</p>
-          <p class="mt-1 text-xl font-semibold"><%= pluralize(account_flow_payload[:account_count], "account") %> tracked</p>
-          <p class="mt-2 text-sm text-slate-600">
-            <%= number_to_currency(account_flow_payload[:charged_total]) %> charged
-            <span class="text-slate-400">|</span>
-            <%= number_to_currency(account_flow_payload[:paid_total]) %> paid to
-          </p>
-          <p class="mt-1 text-xs text-slate-500">
-            <%= top_account ? "Top activity: #{top_account[:name]}" : "Link accounts on entries to populate this card." %>
-          </p>
-        </div>
+
+      <div class="grid divide-y divide-slate-200 sm:grid-cols-5 sm:divide-x sm:divide-y-0">
+        <% metrics.each do |metric| %>
+          <div class="px-4 py-4 sm:px-5">
+            <p class="ta-ledger-label"><%= metric[:label] %></p>
+            <p class="ta-money mt-1 text-xl font-semibold <%= metric[:tone] %>"><%= number_to_currency(metric[:value]) %></p>
+            <p class="mt-1 text-[11px] leading-4 text-slate-500"><%= metric[:note] %></p>
+          </div>
+        <% end %>
+
+        <%= link_to budget_month_tab_path(budget_month, "entries", review: "all", anchor: "plan-review"), class: "group/review block px-4 py-4 transition hover:bg-amber-50 sm:px-5", aria: { label: "Review #{summary.review_count} month issues" } do %>
+          <p class="ta-ledger-label">Needs review</p>
+          <p class="ta-number mt-1 flex items-center gap-2 text-xl font-semibold <%= summary.review_count.zero? ? 'text-emerald-700' : 'text-amber-700' %>"><%= summary.review_count %><%= tabler_icon("arrow-right", classes: "h-4 w-4 transition group-hover/review:translate-x-0.5") %></p>
+          <p class="mt-1 text-[11px] leading-4 text-slate-500"><%= summary.review_count.zero? ? "No cleanup queued" : "Open exact entries" %></p>
+        <% end %>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs text-slate-600 sm:px-5">
+        <span><strong class="ta-ledger-label mr-2 text-slate-800">Account flow</strong><strong class="text-slate-800"><%= pluralize(account_flow[:account_count], "account") %></strong> linked · <span class="ta-money"><%= number_to_currency(account_flow[:charged_total]) %></span> charged · <span class="ta-money"><%= number_to_currency(account_flow[:paid_total]) %></span> paid to</span>
+        <%= link_to "Review account movement", budget_month_account_movement_path(budget_month), class: "font-semibold text-indigo-700 hover:text-indigo-600" %>
       </div>
     </details>
   </section>

@@ -1,25 +1,18 @@
 <% breadcrumb "Help" %>
 
 <div class="space-y-6">
-  <% content_for :page_header do %>
-    <div class="flex flex-wrap items-center gap-3">
-      <div>
-        <h2 class="inline-flex items-center gap-2 text-2xl font-semibold text-slate-900">
-          <%= tabler_icon("lifebuoy", classes: "h-6 w-6 text-indigo-600") %>
-          <span>Help & Documentation</span>
-        </h2>
-        <p class="mt-1 text-sm text-slate-500">A guided overview of what each part of the app does and when to use it.</p>
-      </div>
-    </div>
-  <% end %>
+  <% page_header title: "Help & Documentation",
+    eyebrow: "Product guide",
+    subtitle: "A guided overview of what each part of the app does and when to use it.",
+    icon: "lifebuoy" %>
 
-  <section class="rounded-xl border border-indigo-100 bg-indigo-50 p-5 shadow-sm">
+  <section class="ta-section-frame border-indigo-100 bg-indigo-50 p-5">
     <div class="flex flex-wrap items-start gap-3">
       <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white">
         <%= tabler_icon("help", classes: "ta-panel-icon") %>
       </div>
       <div class="flex-1 min-w-0">
-        <h3 class="text-lg font-semibold text-slate-900">Start here</h3>
+        <h2 class="text-lg font-semibold text-slate-900">Start here</h2>
         <p class="mt-1 text-sm leading-6 text-slate-600">The app works best in a simple order: set up your accounts, save your recurring transactions, create the month, then keep it updated as real life happens.</p>
       </div>
     </div>
@@ -58,11 +51,11 @@
 
   <div class="grid gap-6 xl:grid-cols-[1.5fr,1fr]">
     <div class="space-y-6">
-      <section id="dashboard" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+      <section id="dashboard" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("calendar-month", classes: "h-5 w-5 text-indigo-600") %>
           <span>Home and Months</span>
-        </h3>
+        </h2>
         <p class="mt-2 text-sm leading-6 text-slate-600">Home is a lightweight Overview page. The Months screen is where existing months, imports, and month-related actions now live.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Use Home as a landing page:</strong> the overview is meant to point you toward the next setup step or the month that most needs attention.</li>
@@ -75,11 +68,11 @@
         </ul>
       </section>
 
-      <section id="months" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+      <section id="months" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("copy", classes: "h-5 w-5 text-indigo-600") %>
           <span>Creating and cloning months</span>
-        </h3>
+        </h2>
         <p class="mt-2 text-sm leading-6 text-slate-600">Each month is its own working budget. Most people set up recurring transactions first, then use the month wizard to start fresh or clone a previous month and pull them into the new month.</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -93,11 +86,11 @@
         </div>
       </section>
 
-      <section id="entries" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+      <section id="entries" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("list", classes: "h-5 w-5 text-indigo-600") %>
           <span>Adding and managing entries</span>
-        </h3>
+        </h2>
         <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments after your recurring transaction structure is in place.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Manual entry form:</strong> useful for quick edits and one-off transactions that appear after the month has already been set up.</li>
@@ -110,11 +103,11 @@
         </ul>
       </section>
 
-      <section id="templates" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+      <section id="templates" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("repeat", classes: "h-5 w-5 text-emerald-600") %>
           <span>Recurring Transactions</span>
-        </h3>
+        </h2>
         <p class="mt-2 text-sm leading-6 text-slate-600">Add recurring transactions for the repeating monthly items you expect so you do not have to rebuild the same month from scratch. This is where you store paychecks, bills, subscriptions, payment plans, and card payments before you create the month.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Save the recurring items you expect:</strong> store income, bills, debt payments, subscriptions, and other repeating activity once, then pull them into future months from Plan and Edit.</li>
@@ -145,11 +138,11 @@
         </div>
       </section>
 
-      <section id="review" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+      <section id="review" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("chart-pie", classes: "h-5 w-5 text-indigo-600") %>
           <span>Reviewing a month</span>
-        </h3>
+        </h2>
         <p class="mt-2 text-sm leading-6 text-slate-600">Once entries are in place, the app gives several ways to review and manage the month while you keep adjusting amounts, adding one-offs, and marking activity paid.</p>
         <div class="mt-4 space-y-4">
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -172,7 +165,7 @@
       </section>
     </div>
 
-    <div class="space-y-6">
+    <aside class="space-y-6 xl:sticky xl:top-6 xl:self-start">
       <section class="rounded-xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
         <h3 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("sparkles", classes: "h-5 w-5 text-emerald-600") %>
@@ -241,6 +234,6 @@
           <% end %>
         </div>
       </section>
-    </div>
+    </aside>
   </div>
 </div>

@@ -2,9 +2,10 @@
 <% filtered = ledger[:starts_on].present? || ledger[:ends_on].present? || ledger[:source] != "all" || ledger[:direction] != "all" || ledger[:merchant].present? || ledger[:classification].present? %>
 
 <div class="space-y-6">
-  <section class="ta-card min-w-0">
+  <section class="ta-section-frame min-w-0">
+    <div class="ta-section-header">
     <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
+      <div class="ta-ledger-rail">
         <h2 class="ta-section-title inline-flex items-center gap-2">
           <%= tabler_icon("list-details", classes: "h-5 w-5 text-indigo-600") %>
           <span>Account activity</span>
@@ -16,9 +17,22 @@
         <span>Import activity</span>
       <% end %>
     </div>
+    </div>
+
+    <details class="group border-t border-slate-200" <%= "open" if filtered %>>
+      <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3"><span class="text-sm font-semibold text-slate-900">Filter this ledger<% if filtered %> <span class="ml-1 ta-status-badge bg-indigo-100 text-indigo-800">Applied</span><% end %></span><%= tabler_icon("chevron-down", classes: "h-5 w-5 text-slate-500 transition group-open:rotate-180") %></summary>
+      <%= form_with url: account_path(account), method: :get, class: "grid gap-3 border-t border-slate-200 bg-slate-50/70 p-4 sm:grid-cols-2 lg:grid-cols-5", data: { turbo_frame: "_top" } do |form| %>
+        <%= hidden_field_tag :view, "activity" %>
+        <div><%= form.label :source, class: "fb-label" %><%= form.select :source, [["All sources", "all"], ["Institution activity", "institution_activity"], ["Budget-linked entries", "budget_entries"]], { selected: ledger[:source] }, class: "fb-select" %></div>
+        <div><%= form.label :direction, class: "fb-label" %><%= form.select :direction, [["All movement", "all"], ["Money in", "incoming"], ["Money out", "outgoing"]], { selected: ledger[:direction] }, class: "fb-select" %></div>
+        <div><%= form.label :starts_on, "From", class: "fb-label" %><%= form.date_field :starts_on, value: ledger[:starts_on], class: "fb-input" %></div>
+        <div><%= form.label :ends_on, "Through", class: "fb-label" %><%= form.date_field :ends_on, value: ledger[:ends_on], class: "fb-input" %></div>
+        <div class="flex items-end gap-2"><%= form.submit "Apply", class: "fb-btn-primary min-h-11 flex-1" %><% if filtered %><%= link_to "Clear", account_path(account, view: "activity"), class: "fb-btn-secondary min-h-11" %><% end %></div>
+      <% end %>
+    </details>
 
     <% if filtered %>
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
         <p>
           Showing <%= ledger[:direction] == "all" ? "all movement" : ledger[:direction] %>
           from <%= ledger[:source].humanize.downcase %><%= ledger[:starts_on] ? " starting #{l(ledger[:starts_on], format: :long)}" : "" %><%= ledger[:ends_on] ? " through #{l(ledger[:ends_on], format: :long)}" : "" %>.

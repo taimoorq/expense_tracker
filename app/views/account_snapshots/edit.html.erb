@@ -3,14 +3,11 @@
 <% breadcrumb @account.name, account_path(@account) %>
 <% breadcrumb "Edit Balance Snapshot" %>
 
-<% content_for :page_header do %>
-  <div>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.name %></p>
-    <h2 class="text-2xl font-semibold">Edit Balance Snapshot</h2>
-    <p class="mt-1 text-sm text-slate-600">Update the recorded date, balance, and notes for this manual account snapshot.</p>
-  </div>
-<% end %>
+<% page_header title: "Edit Balance Snapshot",
+  eyebrow: "Balance correction",
+  subtitle: "Update the recorded date, balance, and notes for this manual account snapshot." %>
 
-<section class="ta-card max-w-3xl">
+<section class="ta-section-frame max-w-3xl p-5">
+  <div class="mb-5 border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950"><strong>Downstream effect:</strong> correcting this trusted balance can change later current and projected figures for <%= @account.name %>. Existing activity rows are preserved.</div>
   <%= render "accounts/snapshot_form", account: @account, account_snapshot: @account_snapshot %>
 </section>

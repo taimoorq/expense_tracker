@@ -1,4 +1,16 @@
 releases:
+  - version: "0.8.1"
+    released_on: "2026-07-14"
+    title: "Clearer budget workspaces"
+    summary: "This release makes the app calmer and easier to scan with decision-first budgeting views, exact month review workflows, consistent page headers, and stronger responsive and accessibility behavior."
+    changes:
+      - "Reworks Overview around the current financial position, one clear next action, and an attention queue that links directly to the entries behind each count."
+      - "Adds URL-addressable Month Review modes for due items, missing details, missing actual amounts, and auto-completed entries, backed by one server-side query shared by Overview and Plan and Edit."
+      - "Refines the month workspace with a compact summary rail, clearer Budget, Breakdown, and Plan and Edit sections, responsive ledger rows, and a mobile-friendly calendar agenda."
+      - "Clarifies account balances, activity, insights, snapshots, recurring templates, CSV previews, and backup restores with more visible source, scope, and before-and-after context."
+      - "Moves breadcrumbs onto their own content line, omits the repeated current-page crumb, and standardizes page titles, supporting copy, and actions through a shared Rails header partial."
+      - "Simplifies Profile, Settings, authentication, Help, Releases, and administration screens so each page has one clear task heading without repeated introductory content."
+      - "Strengthens theme consistency, keyboard focus, dialog behavior, chart descriptions, mobile layouts, touch targets, and no-horizontal-overflow coverage across primary screens."
   - version: "0.8.0"
     released_on: "2026-07-11"
     title: "Account activity and insights"

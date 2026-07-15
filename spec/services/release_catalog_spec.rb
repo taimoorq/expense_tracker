@@ -1,6 +1,12 @@
 require "rails_helper"
 
 RSpec.describe ReleaseCatalog do
+  describe ".current_version" do
+    it "uses the newest release entry as the app version" do
+      expect(described_class.current_version).to eq("0.8.1")
+    end
+  end
+
   describe ".unread_for" do
     it "returns all releases when the user has never seen one" do
       user = build(:user, last_seen_release_version: nil)

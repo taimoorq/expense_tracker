@@ -31,6 +31,7 @@
 
   <% theme = auth_page_theme %>
   <body class="ta-auth-shell <%= current_theme_class %>" style="<%= current_theme_css_variables %>" data-rails-env="<%= Rails.env %>" data-controller="auth-scene" data-action="pointermove->auth-scene#move">
+    <a href="#main-content" class="ta-skip-link">Skip to account form</a>
     <div class="ta-auth-backdrop"></div>
     <div class="ta-auth-orb ta-auth-float <%= theme[:glow] %> left-[-5rem] top-[-4rem] h-56 w-56" data-auth-scene-target="layer" data-depth="18"></div>
     <div class="ta-auth-orb ta-auth-float-delayed <%= theme[:glow] %> bottom-[-5rem] right-[-4rem] h-72 w-72 opacity-70" data-auth-scene-target="layer" data-depth="26"></div>
@@ -38,7 +39,7 @@
     <div class="ta-auth-grid">
       <section class="ta-auth-showcase bg-gradient-to-br <%= theme[:gradient] %>" data-auth-scene-target="layer" data-depth="8">
         <div class="absolute inset-0 bg-gradient-to-br <%= theme[:panel_tint] %>"></div>
-        <div class="relative z-10 flex min-h-[680px] flex-col justify-between">
+        <div class="relative z-10 flex min-h-[560px] flex-col justify-between">
           <div>
             <%= link_to(authentication_brand_path, class: "inline-flex items-center gap-3 text-white") do %>
               <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-11 w-11 rounded-2xl border border-white/15 bg-white/10 p-2 shadow-lg shadow-slate-950/20" %>
@@ -53,11 +54,11 @@
                 <%= tabler_icon(theme[:feature_icon], classes: "ta-action-icon") %>
                 <span><%= theme[:badge] %></span>
               </span>
-              <h1 class="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-5xl"><%= theme[:title] %></h1>
-              <p class="mt-4 max-w-md text-base leading-7 <%= theme[:accent] %>"><%= theme[:description] %></p>
+              <h2 class="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-5xl"><%= theme[:feature_title] %></h2>
+              <p class="mt-4 max-w-md text-base leading-7 <%= theme[:accent] %>"><%= theme[:feature_copy] %></p>
             </div>
 
-            <div class="mt-10 grid gap-4 sm:grid-cols-2">
+            <div class="mt-10 hidden gap-4 2xl:grid 2xl:grid-cols-2">
               <div class="ta-auth-stat">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Designed for focus</p>
                 <p class="mt-2 text-lg font-semibold text-white">One clean place for months, recurring items, and forecasting.</p>
@@ -70,15 +71,15 @@
             <br>
           </div>
 
-          <div class="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <div class="hidden gap-4 2xl:grid 2xl:grid-cols-[1.15fr_0.85fr]">
             <div class="ta-auth-showcase-card">
               <div class="flex items-start gap-3">
                 <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
                   <%= tabler_icon(theme[:feature_icon], classes: "ta-panel-icon") %>
                 </span>
                 <div>
-                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-white/50"><%= theme[:feature_title] %></p>
-                  <p class="mt-2 text-sm leading-6 text-white/80"><%= theme[:feature_copy] %></p>
+                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-white/50"><%= admin_auth_scope? ? "Auditable access" : "Local control" %></p>
+                  <p class="mt-2 text-sm leading-6 text-white/80"><%= admin_auth_scope? ? "Administrative actions stay separated from private budgeting records." : "Use manual data, institution CSV exports, and inspectable backups without sharing bank credentials." %></p>
                 </div>
               </div>
             </div>
@@ -94,19 +95,21 @@
         </div>
       </section>
 
-      <section class="ta-auth-form-wrap">
+      <main id="main-content" tabindex="-1" class="ta-auth-form-wrap">
         <div class="ta-auth-form-card">
           <div class="ta-auth-form-top">
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400"><%= theme[:badge] %></p>
-                <h2 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950"><%= theme[:title] %></h2>
+                <h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950"><%= theme[:title] %></h1>
               </div>
               <%= link_to authentication_back_path, class: "ta-icon-btn" do %>
                 <%= tabler_icon("arrow-left", classes: "ta-action-icon") %>
               <% end %>
             </div>
-            <p class="mt-4 max-w-lg text-sm leading-6 text-slate-500"><%= theme[:description] %></p>
+            <% if theme[:description].present? %>
+              <p class="mt-4 max-w-lg text-sm leading-6 text-slate-500"><%= theme[:description] %></p>
+            <% end %>
           </div>
 
           <div class="ta-auth-form-body">
@@ -116,7 +119,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </main>
     </div>
   </body>
 </html>

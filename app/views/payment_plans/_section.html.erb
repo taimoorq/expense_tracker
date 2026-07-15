@@ -3,12 +3,12 @@
   <% action_params = budget_month ? { budget_month_id: budget_month.id } : { return_to: anchored_return_to } %>
   <% show_collapsible_form = !budget_month && !payment_plan.persisted? %>
   <% form_open = budget_month || payment_plan.persisted? || payment_plan.errors.any? %>
-  <section id="payment-plans" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+  <section id="payment-plans" class="ta-section-frame p-4">
     <div class="mb-3 flex items-center gap-2">
-      <h3 class="inline-flex items-center gap-2 text-lg font-semibold">
+      <h2 class="inline-flex items-center gap-2 text-lg font-semibold">
         <%= tabler_icon("chart-bar", classes: "h-5 w-5 text-amber-600") %>
         <span><%= budget_month ? "4) Payment Plans (total due + custom monthly)" : "Payment Plans" %></span>
-      </h3>
+      </h2>
       <button type="button" class="ta-icon-btn" aria-label="Payment Plans Help" title="Payment Plans Help" data-action="click->help-modal#open" data-help-title="Payment Plans Help" data-help-body="Use for balances you are paying down over time.
 
 Total Due: full balance.

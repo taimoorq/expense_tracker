@@ -1,6 +1,6 @@
 <% has_activity = insights[:has_activity] %>
 
-<section class="ta-card min-w-0">
+<section class="ta-section-frame min-w-0 p-5">
   <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
     <div>
       <h2 class="ta-section-title inline-flex items-center gap-2">
@@ -16,23 +16,23 @@
   </div>
 
   <% if has_activity %>
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div class="grid overflow-hidden border-y border-slate-200 sm:grid-cols-2 xl:grid-cols-4 xl:divide-x xl:divide-slate-200">
+      <div class="border-b border-slate-200 p-4 xl:border-b-0">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Imported rows</p>
         <p class="mt-2 text-2xl font-semibold text-slate-900"><%= insights[:total_rows] %></p>
         <p class="mt-1 text-xs text-slate-500"><%= insights[:started_on] && insights[:ended_on] ? "#{l(insights[:started_on], format: :short)} to #{l(insights[:ended_on], format: :short)}" : "No date range" %></p>
       </div>
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="border-b border-slate-200 p-4 xl:border-b-0">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= @account_story[:outgoing_label] %></p>
         <p class="mt-2 text-2xl font-semibold text-rose-700"><%= number_to_currency(insights[:charges_total]) %></p>
         <p class="mt-1 text-xs text-slate-500">Imported rows with negative account impact.</p>
       </div>
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="border-b border-slate-200 p-4 sm:border-b-0">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= @account_story[:incoming_label] %></p>
         <p class="mt-2 text-2xl font-semibold text-emerald-700"><%= number_to_currency(insights[:credits_total]) %></p>
         <p class="mt-1 text-xs text-slate-500">Imported rows with positive account impact.</p>
       </div>
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= @account_story[:net_label] %></p>
         <p class="mt-2 text-2xl font-semibold <%= insights[:net_delta].to_d >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= insights[:net_delta].to_d >= 0 ? "+" : "" %><%= number_to_currency(insights[:net_delta]) %></p>
         <p class="mt-1 text-xs text-slate-500">Signed movement from imported rows.</p>

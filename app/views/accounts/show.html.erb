@@ -6,21 +6,14 @@
   <%= chart_library_tags %>
 <% end %>
 
-<% content_for :page_header do %>
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.kind.humanize %></p>
-      <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-        <%= tabler_icon("building-library", classes: "h-6 w-6 text-indigo-600") %>
-        <span><%= @account.name %></span>
-      </h2>
-      <p class="mt-1 text-sm text-slate-600"><%= @account.institution_name.presence || "Manual account" %></p>
-    </div>
+<% page_header title: @account.name,
+  eyebrow: @account.kind.humanize,
+  subtitle: @account.institution_name.presence || "Manual account",
+  icon: "building-library" do %>
     <%= link_to new_account_account_activity_import_path(@account), class: "fb-btn-primary ta-action-btn" do %>
       <%= tabler_icon("upload", classes: "ta-action-icon text-indigo-100") %>
       <span>Import Institution CSV</span>
     <% end %>
-  </div>
 <% end %>
 
 <%= render "accounts/account_navigation", account: @account, active_view: @account_view, range: @selected_range %>

@@ -5,7 +5,7 @@ RSpec.describe "Accounts CRUD", type: :request do
 
   before { sign_in user }
 
-  it "shows breadcrumbs and resolved imported balances on the accounts overview" do
+  it "shows one top-level heading and resolved imported balances on the accounts overview" do
     checking = create(:account, user: user, name: "Checking", kind: :checking, include_in_net_worth: true)
     create(:account_snapshot, account: checking, recorded_on: Date.new(2026, 7, 1), balance: 1_000)
     import = create(
@@ -21,8 +21,9 @@ RSpec.describe "Accounts CRUD", type: :request do
     get accounts_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('aria-label="Breadcrumb"')
-    expect(response.body).to include("Accounts")
+    document = Nokogiri::HTML(response.body)
+    expect(document.css(".ta-content-header h1").text.strip).to eq("Accounts")
+    expect(document.css("nav[aria-label='Breadcrumb']")).to be_empty
     expect(response.body).to include("$2,175.00")
     expect(response.body).to include("Institution import")
     expect(response.body).to include("Latest trusted source")

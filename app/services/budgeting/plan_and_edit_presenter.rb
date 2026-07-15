@@ -107,13 +107,37 @@ module Budgeting
       3 => "#plan-review"
     }.freeze
 
-    def initialize(budget_month:, expense_entries:, today: Date.current)
+    REVIEW_DEFINITIONS = {
+      due: {
+        label: "Still planned and due",
+        description: "Items due today or earlier that are still marked planned.",
+        tone: "warning"
+      },
+      missing_details: {
+        label: "Missing key details",
+        description: "Items missing a date, category, or payee.",
+        tone: "info"
+      },
+      missing_actual: {
+        label: "Paid without actual",
+        description: "Items marked paid that still need an actual amount.",
+        tone: "danger"
+      },
+      auto_completed: {
+        label: "Auto-completed",
+        description: "Recurring items marked paid automatically and ready to confirm.",
+        tone: "feature"
+      }
+    }.freeze
+
+    def initialize(budget_month:, expense_entries:, today: Date.current, selected_review: nil)
       @budget_month = budget_month
       @expense_entries = Array(expense_entries)
       @today = today
+      @selected_review = selected_review
     end
 
-    attr_reader :budget_month, :expense_entries, :today
+    attr_reader :budget_month, :expense_entries, :today, :selected_review
 
     def recurring_actions
       @recurring_actions ||= [
@@ -223,23 +247,54 @@ module Budgeting
     end
 
     def due_planned_count
-      expense_entries.count { |entry| entry.planned? && entry.occurred_on.present? && entry.occurred_on <= today }
+      review_result.count_for(:due)
     end
 
     def missing_details_count
-      expense_entries.count { |entry| entry.occurred_on.blank? || entry.category.blank? || entry.payee.blank? }
+      review_result.count_for(:missing_details)
     end
 
     def paid_missing_actual_count
-      expense_entries.count { |entry| entry.paid? && entry.actual_amount.blank? }
+      review_result.count_for(:missing_actual)
     end
 
     def auto_completed_count
-      expense_entries.count { |entry| auto_completed_entry?(entry) }
+      review_result.count_for(:auto_completed)
     end
 
     def review_attention_count
-      due_planned_count + missing_details_count + paid_missing_actual_count + auto_completed_count
+      review_result.issue_count
+    end
+
+    def review_active?
+      review_result.active?
+    end
+
+    def review_selected_reason
+      review_result.selected_reason
+    end
+
+    def review_entries
+      review_result.entries
+    end
+
+    def review_cards
+      REVIEW_DEFINITIONS.map do |key, definition|
+        definition.merge(
+          key: key,
+          count: review_result.count_for(key),
+          active: review_selected_reason == key.to_s,
+          path: review_path(key)
+        )
+      end
+    end
+
+    def review_all_path
+      review_path(:all)
+    end
+
+    def clear_review_path
+      routes.budget_month_tab_path(budget_month, "entries", anchor: "plan-review")
     end
 
     def month_items_count
@@ -344,16 +399,22 @@ module Budgeting
       previews.sort_by { |preview| [ preview[:occurred_on] || Date.new(9999, 12, 31), preview[:payee].to_s.downcase ] }
     end
 
+    def review_result
+      @review_result ||= Budgeting::MonthReviewQuery.call(
+        entries: expense_entries,
+        reason: selected_review,
+        today: today
+      )
+    end
+
+    def review_path(reason)
+      routes.budget_month_tab_path(budget_month, "entries", review: reason, anchor: "plan-review")
+    end
+
     def manual_entry?(entry)
       return entry.manual_origin? if entry.respond_to?(:manual_origin?)
 
       entry.source_file.blank? || entry.source_file == "manual"
-    end
-
-    def auto_completed_entry?(entry)
-      return entry.auto_completed? if entry.respond_to?(:auto_completed?)
-
-      entry.respond_to?(:auto_completed_at) && entry.auto_completed_at.present?
     end
 
     def routes

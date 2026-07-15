@@ -1,3 +1,5 @@
+Selenium::WebDriver.logger.level = :warn
+
 Capybara.register_driver :managed_headless_chrome do |app|
   options = Selenium::WebDriver::Chrome::Options.new
   options.add_argument("--headless=new")

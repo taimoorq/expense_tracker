@@ -176,7 +176,12 @@ module ExpenseEntriesResponses
       timeline_query = current_timeline_view == "sections" ? { view: "sections" } : {}
       budget_month_tab_path(@budget_month, "timeline", timeline_query)
     else
-      budget_month_tab_path(@budget_month, tab)
+      review_query = current_review_reason.present? ? { review: current_review_reason, anchor: "plan-review" } : {}
+      budget_month_tab_path(@budget_month, tab, review_query)
     end
+  end
+
+  def current_review_reason
+    params[:review].presence_in(Budgeting::MonthReviewQuery::REASONS)
   end
 end

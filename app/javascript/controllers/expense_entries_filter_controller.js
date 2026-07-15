@@ -15,7 +15,10 @@ export default class extends Controller {
     "reason",
     "status",
     "category",
-    "account"
+    "account",
+    "summary",
+    "count",
+    "clear"
   ]
 
   connect() {
@@ -61,6 +64,21 @@ export default class extends Controller {
       payeeValue !== "" ||
       reasonValue !== "" ||
       statusValue !== ""
+    const activeFilterCount = [categoryValue, accountValue, dateValue, payeeValue, reasonValue, statusValue]
+      .filter((value) => value !== "").length
+
+    if (this.hasSummaryTarget) {
+      this.summaryTarget.textContent = filtersActive
+        ? `${activeFilterCount} ${activeFilterCount === 1 ? "filter" : "filters"} applied`
+        : "All month entries"
+    }
+    if (this.hasCountTarget) {
+      this.countTarget.textContent = activeFilterCount
+      this.countTarget.classList.toggle("hidden", !filtersActive)
+    }
+    if (this.hasClearTarget) {
+      this.clearTargets.forEach((button) => button.classList.toggle("invisible", !filtersActive))
+    }
 
     if (this.hasRowTarget) {
       this.filterRows(categoryValue, noCategoryFilter, accountValue, noAccountFilter, dateValue, payeeValue, reasonValue, statusValue)

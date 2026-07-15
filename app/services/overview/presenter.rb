@@ -125,7 +125,7 @@ module Overview
           value: due_planned_count_value,
           description: "Planned entries dated today or earlier.",
           tone: due_planned_count_value.positive? ? :attention : :clear,
-          path: routes.budget_month_tab_path(current_month_data, "entries")
+          path: review_path(:due)
         ),
         check_in_item(
           label: "Due next 7 days",
@@ -139,7 +139,7 @@ module Overview
           value: paid_missing_actual_count_value,
           description: "Paid entries that still need the real amount.",
           tone: paid_missing_actual_count_value.positive? ? :attention : :clear,
-          path: routes.budget_month_tab_path(current_month_data, "entries")
+          path: review_path(:missing_actual)
         ),
         check_in_item(
           label: "Linked activity",
@@ -303,10 +303,10 @@ module Overview
 
     def attention_items
       [
-        { label: "Still planned and due", count: due_planned_count_value },
-        { label: "Missing key details", count: missing_details_count_value },
-        { label: "Paid without actual", count: paid_missing_actual_count_value },
-        { label: "Auto-completed", count: auto_completed_count_value }
+        { label: "Still planned and due", count: due_planned_count_value, path: review_path(:due) },
+        { label: "Missing key details", count: missing_details_count_value, path: review_path(:missing_details) },
+        { label: "Paid without actual", count: paid_missing_actual_count_value, path: review_path(:missing_actual) },
+        { label: "Auto-completed", count: auto_completed_count_value, path: review_path(:auto_completed) }
       ]
     end
 
@@ -650,6 +650,12 @@ module Overview
         card_classes: check_in_card_classes(tone),
         value_classes: check_in_value_classes(tone)
       }
+    end
+
+    def review_path(reason)
+      return routes.budget_months_path unless current_month_data
+
+      routes.budget_month_tab_path(current_month_data, "entries", review: reason, anchor: "plan-review")
     end
 
     def check_in_card_classes(tone)

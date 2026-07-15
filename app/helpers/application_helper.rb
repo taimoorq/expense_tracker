@@ -144,10 +144,34 @@ module ApplicationHelper
     Array(@breadcrumbs)
   end
 
-  def render_breadcrumbs
-    return if breadcrumbs.blank?
+  def breadcrumb_trail
+    return breadcrumbs if breadcrumbs.last&.fetch(:path).present?
 
-    render "shared/breadcrumbs", breadcrumbs: breadcrumbs
+    breadcrumbs[0...-1]
+  end
+
+  def render_breadcrumbs
+    return if breadcrumb_trail.blank?
+
+    render "shared/breadcrumbs", breadcrumbs: breadcrumb_trail
+  end
+
+  def page_header(title:, eyebrow: nil, subtitle: nil, icon: nil, icon_classes: nil, title_class: nil, subtitle_class: nil, &block)
+    actions = capture(&block) if block
+    header = render(
+      "shared/page_header",
+      title: title,
+      eyebrow: eyebrow,
+      subtitle: subtitle,
+      icon: icon,
+      icon_classes: icon_classes,
+      title_class: title_class,
+      subtitle_class: subtitle_class,
+      actions: actions
+    )
+
+    content_for(:page_header, header)
+    nil
   end
 
   def authentication_brand_path

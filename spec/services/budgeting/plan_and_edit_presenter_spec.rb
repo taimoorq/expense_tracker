@@ -96,6 +96,40 @@ RSpec.describe Budgeting::PlanAndEditPresenter do
     end
   end
 
+  describe "#review_cards" do
+    it "builds URL-addressable review destinations and selects matching entries" do
+      user = create(:user)
+      budget_month = create(:budget_month, user: user)
+      due_entry = create(
+        :expense_entry,
+        budget_month: budget_month,
+        user: user,
+        occurred_on: Date.current,
+        category: "Rent",
+        payee: "Landlord",
+        status: :planned
+      )
+
+      presenter = described_class.new(
+        budget_month: budget_month,
+        expense_entries: [ due_entry ],
+        selected_review: "due"
+      )
+
+      due_card = presenter.review_cards.find { |card| card[:key] == :due }
+      expect(due_card).to include(count: 1, active: true)
+      expect(due_card[:path]).to eq(
+        Rails.application.routes.url_helpers.budget_month_tab_path(
+          budget_month,
+          "entries",
+          review: "due",
+          anchor: "plan-review"
+        )
+      )
+      expect(presenter.review_entries).to eq([ due_entry ])
+    end
+  end
+
   describe "#recurring_actions" do
     it "summarizes generated and missing paychecks for the month" do
       user = create(:user)

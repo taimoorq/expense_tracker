@@ -51,7 +51,7 @@ module MonthPageRefresh
   end
 
   def plan_and_edit_panel_locals
-    { budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry }
+    { budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry, selected_review: params[:review] }
   end
 
   def auto_complete_due_recurring_entries(entries)

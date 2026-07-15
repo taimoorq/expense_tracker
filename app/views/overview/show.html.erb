@@ -2,232 +2,170 @@
   <%= chart_library_tags %>
 <% end %>
 
-<% content_for :page_header do %>
-  <div>
-    <h2 class="text-2xl font-semibold">Overview</h2>
-    <p class="ta-muted mt-1 hidden sm:block">Start here when you want the fastest path back into your budget workflow.</p>
-  </div>
-<% end %>
+<% page_header title: "Overview",
+  eyebrow: "Monthly command center",
+  subtitle: "Start here when you want the fastest path back into your budget workflow.",
+  subtitle_class: "hidden sm:block" %>
 
 <% overview = @overview %>
 
 <div class="space-y-6">
   <% if overview.onboarding_visible %>
-    <section class="ta-card ta-surface-plan-soft">
+    <section class="ta-section-frame" aria-labelledby="onboarding-title">
+      <div class="ta-section-header">
       <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">New User Onboarding</p>
-          <h3 class="mt-2 text-xl font-semibold text-slate-900">Set up the month in the right order</h3>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Start small: add one account, record one trusted balance, save one recurring item, then create the first month. You can fill in the rest as the workflow becomes useful.</p>
+        <div class="ta-ledger-rail">
+          <p class="ta-page-eyebrow">New user onboarding</p>
+          <h2 id="onboarding-title" class="ta-section-title mt-1">Set up the month in the right order</h2>
+          <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Start small: add one account, record one trusted balance, save one recurring item, then create the first month.</p>
         </div>
-        <span class="rounded-full px-3 py-1 text-xs font-semibold <%= overview.onboarding_status[:classes] %>">
+        <span class="ta-status-badge <%= overview.onboarding_status[:classes] %>">
           <%= overview.onboarding_status[:label] %>
         </span>
       </div>
-
-      <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <% overview.onboarding_steps.each do |step| %>
-          <article class="rounded-2xl border bg-white/90 p-4 <%= step[:card_classes] %>">
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Step <%= step[:number] %></p>
-              <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold <%= step[:badge_classes] %>"><%= step[:badge_label] %></span>
-            </div>
-            <h4 class="mt-2 text-sm font-semibold text-slate-900"><%= step[:title] %></h4>
-            <p class="mt-1 text-xs leading-5 text-slate-600"><%= step[:description] %></p>
-            <p class="mt-3 text-xs font-semibold text-slate-700"><%= step[:metric] %></p>
-            <%= link_to step[:action_path], class: "mt-3 inline-flex text-xs font-semibold text-indigo-700 hover:text-indigo-600" do %>
-              <span><%= step[:action_label] %></span>
-            <% end %>
-          </article>
-        <% end %>
       </div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-2">
-        <%= link_to accounts_path, class: "fb-btn-primary ta-action-btn" do %>
-          <%= tabler_icon("credit-card", classes: "ta-action-icon text-indigo-100") %>
-          <span>Set up Accounts</span>
-        <% end %>
-        <%= link_to planning_templates_path, class: "fb-btn-secondary ta-action-btn" do %>
-          <%= tabler_icon("repeat", classes: "ta-action-icon text-slate-600") %>
-          <span>Set Up Recurring</span>
-        <% end %>
-        <% if overview.current_month %>
-          <%= link_to budget_month_tab_path(overview.current_month, "entries"), class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("list", classes: "ta-action-icon text-slate-600") %>
-            <span>Import Recurring into Month</span>
-          <% end %>
-        <% else %>
-          <%= link_to new_budget_month_path, class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("calendar-plus", classes: "ta-action-icon text-slate-600") %>
-            <span>Create First Month</span>
-          <% end %>
+      <div class="ta-section-body grid gap-0 p-0 md:grid-cols-2 xl:grid-cols-4">
+        <% overview.onboarding_steps.each do |step| %>
+          <article class="border-b border-slate-200 p-4 last:border-b-0 md:border-r md:odd:border-r xl:border-b-0 xl:last:border-r-0 <%= step[:card_classes] %>">
+            <div class="flex items-center justify-between gap-2">
+              <p class="ta-ledger-label">Step <%= step[:number] %></p>
+              <span class="ta-status-badge <%= step[:badge_classes] %>"><%= step[:badge_label] %></span>
+            </div>
+            <h3 class="mt-2 text-sm font-semibold text-slate-900"><%= step[:title] %></h3>
+            <p class="mt-1 text-xs leading-5 text-slate-600"><%= step[:description] %></p>
+            <p class="mt-3 text-xs font-semibold text-slate-700"><%= step[:metric] %></p>
+            <%= link_to step[:action_path], class: "mt-3 inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:text-indigo-600" do %>
+              <span><%= step[:action_label] %></span><%= tabler_icon("arrow-right", classes: "h-3.5 w-3.5") %>
+            <% end %>
+          </article>
         <% end %>
       </div>
     </section>
   <% end %>
 
-  <section>
-    <details class="ta-card group" open>
-      <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
-        <div>
-          <h3 class="inline-flex items-center gap-2 text-base font-semibold text-slate-900">
-            <%= tabler_icon("sparkles", classes: "h-4 w-4 text-indigo-600") %>
-            <span>Quick Actions</span>
-          </h3>
-          <p class="mt-1 text-sm text-slate-500">Common shortcuts for creating the next month, adding entries, importing activity, and checking accounts.</p>
-        </div>
-        <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition group-open:rotate-180">
-          <%= tabler_icon("chevron-down", classes: "ta-action-icon") %>
-        </span>
-      </summary>
-
-      <div class="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
-        <%= link_to new_budget_month_path, class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50" do %>
-          <p class="text-[13px] font-semibold text-slate-900">New Month</p>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Start a fresh month or clone from the latest one.</p>
-        <% end %>
-
-        <%= link_to(overview.current_month ? new_budget_month_from_path(overview.current_month) : budget_months_path(anchor: "existing-months"), class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50") do %>
-          <p class="text-[13px] font-semibold text-slate-900">Clone Latest Month</p>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Reuse the most recent setup for the next available month.</p>
-        <% end %>
-
-        <%= link_to(overview.current_month ? new_wizard_budget_month_expense_entries_path(overview.current_month) : new_budget_month_path, class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50", data: (overview.current_month ? { turbo_frame: "entry_wizard_modal" } : {})) do %>
-          <p class="text-[13px] font-semibold text-slate-900">Add Entry with Wizard</p>
-          <p class="mt-1 text-xs leading-5 text-slate-600"><%= overview.current_month ? "Open the guided wizard directly for the active month." : "Create a month first, then use the guided wizard for one-off items." %></p>
-        <% end %>
-
-        <%= link_to budget_months_path(anchor: "quick-import"), class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50" do %>
-          <p class="text-[13px] font-semibold text-slate-900">Import CSV</p>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Jump to the upload card for a month import.</p>
-        <% end %>
-
-        <%= link_to accounts_path, class: "rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50" do %>
-          <p class="text-[13px] font-semibold text-slate-900">Accounts & Net Worth</p>
-          <p class="mt-1 text-xs leading-5 text-slate-600">Review balances, snapshots, and net worth history.</p>
-        <% end %>
-      </div>
-    </details>
-  </section>
-
-  <section class="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.95fr)]">
-    <article class="ta-card ta-surface-shell min-w-0">
+  <section class="grid overflow-hidden rounded-[var(--ta-radius-xl)] border border-slate-200 bg-white shadow-[var(--ta-shadow-low)] xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.8fr)]" aria-labelledby="current-position-title">
+    <article class="min-w-0 p-5 sm:p-6 lg:p-8">
       <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Continue</p>
-          <h3 class="mt-2 text-2xl font-semibold text-slate-900"><%= overview.continue_title %></h3>
-          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"><%= overview.continue_description %></p>
+        <div class="ta-ledger-rail">
+          <p class="ta-page-eyebrow">Continue</p>
+          <h2 id="current-position-title" class="mt-1 font-[family-name:var(--ta-font-display)] text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl"><%= overview.continue_title %></h2>
+          <p class="mt-3 text-sm font-semibold text-slate-900"><%= overview.next_step_title %></p>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"><%= overview.next_step_description %></p>
         </div>
-        <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+        <div class="ta-status-badge bg-slate-100 text-slate-600">
           <%= overview.continue_badge_label %>
         </div>
       </div>
 
-      <div class="mt-5 grid gap-3 sm:grid-cols-3">
+      <div class="mt-6 grid divide-y divide-slate-200 border-y border-slate-200 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         <% overview.continue_stats.each do |item| %>
-          <%= render "overview/stat_card", item: item %>
-        <% end %>
-      </div>
-
-      <div class="mt-5 flex flex-wrap items-center gap-2">
-        <% if overview.current_month %>
-          <%= link_to budget_month_tab_path(overview.current_month, "timeline"), class: "fb-btn-primary ta-action-btn" do %>
-            <%= tabler_icon("timeline", classes: "ta-action-icon text-indigo-100") %>
-            <span>Open Budget</span>
-          <% end %>
-          <%= link_to budget_month_tab_path(overview.current_month, "entries"), class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("list", classes: "ta-action-icon text-slate-600") %>
-            <span>Open Plan and Edit</span>
-          <% end %>
-          <%= link_to budget_month_tab_path(overview.current_month, "calendar"), class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("calendar-month", classes: "ta-action-icon text-slate-600") %>
-            <span>Open Calendar</span>
-          <% end %>
-        <% else %>
-          <%= link_to new_budget_month_path, class: "fb-btn-primary ta-action-btn" do %>
-            <%= tabler_icon("calendar-plus", classes: "ta-action-icon text-indigo-100") %>
-            <span>Create Month</span>
-          <% end %>
-          <%= link_to budget_months_path, class: "fb-btn-secondary ta-action-btn" do %>
-            <%= tabler_icon("calendar-month", classes: "ta-action-icon text-slate-600") %>
-            <span>Open Months</span>
-          <% end %>
-        <% end %>
-      </div>
-
-      <% if overview.recent_months.any? %>
-        <div class="mt-5 border-t border-slate-200 pt-4">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Recent months</p>
-          <div class="mt-3 grid gap-2 sm:grid-cols-2">
-            <% overview.recent_months.each do |month| %>
-              <%= link_to budget_month_path(month), class: "flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
-                <span><%= month.label %></span>
-                <span class="font-semibold"><%= number_to_currency(month.calculated_leftover) %></span>
-              <% end %>
-            <% end %>
+          <div class="py-4 sm:px-5 sm:first:pl-0">
+            <p class="ta-ledger-label"><%= item[:label] %></p>
+            <p class="ta-number mt-1 text-2xl font-semibold <%= item[:value_classes] %>"><%= item[:value] %></p>
           </div>
+        <% end %>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center gap-3">
+        <%= link_to overview.next_step_primary_action[:path], class: "fb-btn-primary ta-action-btn", data: (overview.next_step_primary_action[:turbo_frame] ? { turbo_frame: overview.next_step_primary_action[:turbo_frame] } : {}) do %>
+          <span><%= overview.next_step_primary_action[:label] %></span>
+          <%= tabler_icon("arrow-right", classes: "ta-action-icon text-indigo-100") %>
+        <% end %>
+        <%= link_to overview.next_step_secondary_action[:path], class: "text-sm font-semibold text-indigo-700 hover:text-indigo-600", data: (overview.next_step_secondary_action[:turbo_frame] ? { turbo_frame: overview.next_step_secondary_action[:turbo_frame] } : {}) do %>
+          <%= overview.next_step_secondary_action[:label] %>
+        <% end %>
+      </div>
+
+      <details class="group mt-5 border-t border-slate-200 pt-4">
+        <summary class="flex cursor-pointer list-none items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900">
+          <%= tabler_icon("info-circle", classes: "h-4 w-4") %><span>How this is chosen</span><%= tabler_icon("chevron-down", classes: "ml-auto h-4 w-4 transition group-open:rotate-180") %>
+        </summary>
+        <p class="mt-2 max-w-2xl text-xs leading-5 text-slate-500">The next step reflects whether you have a current month, saved recurring transactions, month entries, and unresolved attention items.</p>
+      </details>
+    </article>
+
+    <aside class="border-t border-slate-200 bg-slate-50/80 p-5 sm:p-6 xl:border-l xl:border-t-0" aria-labelledby="attention-title">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="ta-page-eyebrow">Attention Queue</p>
+          <h2 id="attention-title" class="ta-section-title mt-1">What needs review</h2>
+        </div>
+        <span class="ta-status-badge <%= overview.attention_queue_badge[:classes] %>"><%= overview.attention_queue_badge[:label] %></span>
+      </div>
+      <p class="mt-2 text-sm leading-6 text-slate-600"><%= overview.attention_queue_description %></p>
+
+      <% if overview.current_month && overview.attention_queue_total.zero? %>
+        <div class="mt-4 border-l-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+          <p class="font-semibold">Nothing needs cleanup right now.</p>
+          <p class="mt-1">Keep actuals current as the month changes.</p>
         </div>
       <% end %>
-    </article>
 
-    <article class="ta-card ta-surface-plan-soft h-fit">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= overview.next_step_badge %></p>
-      <h3 class="mt-3 text-xl font-semibold text-slate-900"><%= overview.next_step_title %></h3>
-      <p class="mt-2 text-sm leading-6 text-slate-600"><%= overview.next_step_description %></p>
-
-      <div class="mt-5 space-y-3">
-        <%= link_to overview.next_step_primary_action[:path], class: "fb-btn-primary ta-action-btn w-full justify-center", data: (overview.next_step_primary_action[:turbo_frame] ? { turbo_frame: overview.next_step_primary_action[:turbo_frame] } : {}) do %>
-          <%= tabler_icon("arrow-right", classes: "ta-action-icon text-indigo-100") %>
-          <span><%= overview.next_step_primary_action[:label] %></span>
-        <% end %>
-        <%= link_to overview.next_step_secondary_action[:path], class: "fb-btn-secondary ta-action-btn w-full justify-center", data: (overview.next_step_secondary_action[:turbo_frame] ? { turbo_frame: overview.next_step_secondary_action[:turbo_frame] } : {}) do %>
-          <%= tabler_icon("sparkles", classes: "ta-action-icon text-slate-600") %>
-          <span><%= overview.next_step_secondary_action[:label] %></span>
+      <div class="mt-4 divide-y divide-slate-200 border-y border-slate-200">
+        <% overview.attention_items.each do |item| %>
+          <% if overview.current_month %>
+            <%= link_to item[:path], class: "group flex min-h-11 items-center justify-between py-2.5 text-sm text-slate-700 hover:text-indigo-700", aria: { label: "Review #{item[:count]} #{item[:label].downcase} entries" } do %>
+              <span><%= item[:label] %></span>
+              <span class="inline-flex items-center gap-2"><strong class="ta-number"><%= item[:count] %></strong><%= tabler_icon("arrow-right", classes: "h-4 w-4 transition group-hover:translate-x-0.5") %></span>
+            <% end %>
+          <% else %>
+            <div class="flex min-h-11 items-center justify-between py-2.5 text-sm text-slate-500"><span><%= item[:label] %></span><strong class="ta-number">0</strong></div>
+          <% end %>
         <% end %>
       </div>
-
-      <div class="mt-5 rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-600">
-        <p class="font-semibold text-slate-900">How this is chosen</p>
-        <p class="mt-2 leading-6">The next-step card looks at whether you have a current month, saved recurring transactions, month entries, and unresolved attention items.</p>
-      </div>
-    </article>
+    </aside>
   </section>
 
-  <section class="ta-card ta-surface-plan-soft">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= overview.check_in_badge %></p>
-        <h3 class="mt-2 text-xl font-semibold text-slate-900"><%= overview.check_in_title %></h3>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600"><%= overview.check_in_description %></p>
+  <section class="ta-section-frame" aria-labelledby="check-in-title">
+    <div class="ta-section-header">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="ta-ledger-rail"><p class="ta-page-eyebrow"><%= overview.check_in_badge %></p><h2 id="check-in-title" class="ta-section-title mt-1"><%= overview.check_in_title %></h2><p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600"><%= overview.check_in_description %></p></div>
+        <span class="ta-status-badge <%= overview.check_in_status[:classes] %>"><%= overview.check_in_status[:label] %></span>
       </div>
-      <span class="rounded-full px-3 py-1 text-xs font-semibold <%= overview.check_in_status[:classes] %>">
-        <%= overview.check_in_status[:label] %>
-      </span>
     </div>
-
-    <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="ta-section-body grid gap-0 p-0 sm:grid-cols-2 xl:grid-cols-4">
       <% overview.check_in_items.each do |item| %>
-        <%= link_to item[:path], class: "block rounded-2xl border px-4 py-3 transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white #{item[:card_classes]}" do %>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"><%= item[:label] %></p>
-          <p class="mt-2 text-2xl font-semibold <%= item[:value_classes] %>"><%= item[:value] %></p>
+        <%= link_to item[:path], class: "block min-h-32 border-b border-slate-200 p-4 transition hover:bg-slate-50 sm:border-r xl:border-b-0 xl:last:border-r-0 #{item[:card_classes]}" do %>
+          <p class="ta-ledger-label"><%= item[:label] %></p>
+          <p class="ta-number mt-2 text-2xl font-semibold <%= item[:value_classes] %>"><%= item[:value] %></p>
           <p class="mt-1 text-xs leading-5 text-slate-600"><%= item[:description] %></p>
         <% end %>
       <% end %>
     </div>
-
-    <% if overview.check_in_win %>
-      <div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm leading-6 text-emerald-900">
-        <p class="font-semibold"><%= overview.check_in_win[:title] %></p>
-        <p class="mt-1"><%= overview.check_in_win[:description] %></p>
-      </div>
-    <% end %>
-
-    <div class="mt-4 rounded-2xl border border-white bg-white/80 px-4 py-3 text-sm leading-6 text-slate-600">
-      <span class="font-semibold text-slate-900"><%= overview.financial_rhythm_label %>:</span>
-      <%= overview.financial_rhythm_guidance %>
-      <%= link_to "Adjust in Settings", settings_path, class: "ml-1 font-semibold text-indigo-700 hover:text-indigo-600" %>
+    <div class="border-t border-slate-200 px-4 py-3 text-sm leading-6 text-slate-600 sm:px-5">
+      <% if overview.check_in_win %>
+        <span class="font-semibold text-emerald-800"><%= overview.check_in_win[:title] %>:</span> <%= overview.check_in_win[:description] %>
+      <% else %>
+        <span class="font-semibold text-slate-900"><%= overview.financial_rhythm_label %>:</span> <%= overview.financial_rhythm_guidance %>
+        <%= link_to "Adjust in Settings", settings_path, class: "ml-1 font-semibold text-indigo-700 hover:text-indigo-600" %>
+      <% end %>
     </div>
   </section>
+
+  <details class="ta-section-frame group" <%= "open" if overview.onboarding_visible %>>
+    <summary class="ta-section-header flex cursor-pointer list-none items-center justify-between gap-3">
+      <div><h2 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("sparkles", classes: "h-4 w-4 text-indigo-600") %><span>Quick Actions</span></h2><p class="mt-1 text-sm text-slate-500">Create, import, or jump to another workspace.</p></div>
+      <%= tabler_icon("chevron-down", classes: "h-5 w-5 text-slate-500 transition group-open:rotate-180") %>
+    </summary>
+    <div class="grid gap-0 border-t border-slate-200 md:grid-cols-2 xl:grid-cols-5">
+      <% quick_actions = [
+        ["New Month", "Start fresh or clone the latest setup.", new_budget_month_path, {}],
+        ["Clone Latest Month", "Reuse the most recent month.", (overview.current_month ? new_budget_month_from_path(overview.current_month) : budget_months_path(anchor: "existing-months")), {}],
+        ["Add Entry with Wizard", (overview.current_month ? "Add a one-off item to the active month." : "Create a month, then add an item."), (overview.current_month ? new_wizard_budget_month_expense_entries_path(overview.current_month) : new_budget_month_path), (overview.current_month ? { turbo_frame: "entry_wizard_modal" } : {})],
+        ["Import CSV", "Preview a month import before writing.", budget_months_path(anchor: "quick-import"), {}],
+        ["Accounts & Net Worth", "Review trusted balances and movement.", accounts_path, {}]
+      ] %>
+      <% quick_actions.each do |label, description, path, data| %>
+        <%= link_to path, class: "group/quick border-b border-slate-200 p-4 transition hover:bg-slate-50 md:border-r xl:border-b-0 xl:last:border-r-0", data: data do %>
+          <p class="flex items-center justify-between text-sm font-semibold text-slate-900"><span><%= label %></span><%= tabler_icon("arrow-up-right", classes: "h-4 w-4 text-slate-400 transition group-hover/quick:text-indigo-600") %></p>
+          <p class="mt-1 text-xs leading-5 text-slate-600"><%= description %></p>
+        <% end %>
+      <% end %>
+    </div>
+  </details>
+
+  <div class="ta-page-header pt-2"><div class="ta-ledger-rail"><p class="ta-page-eyebrow">Financial picture</p><h2 class="ta-page-title ta-page-title-compact">The evidence behind this month</h2><p class="ta-page-subtitle">Year-to-date cash flow, account movement, and trusted balance coverage.</p></div></div>
 
   <section class="ta-card ta-surface-shell">
     <div class="flex flex-wrap items-start justify-between gap-3">
@@ -291,44 +229,7 @@
 
   <%= render "overview/account_flow_panel", overview: overview %>
 
-  <section class="grid gap-6 xl:grid-cols-3">
-    <article class="ta-card ta-surface-edit-soft">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Attention Queue</p>
-          <h3 class="mt-2 inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <%= tabler_icon("check-circle", classes: "h-5 w-5 text-amber-600") %>
-            <span>What needs review</span>
-          </h3>
-          <p class="mt-2 text-sm leading-6 text-slate-600"><%= overview.attention_queue_description %></p>
-        </div>
-        <div class="rounded-full px-3 py-1 text-xs font-semibold <%= overview.attention_queue_badge[:classes] %>"><%= overview.attention_queue_badge[:label] %></div>
-      </div>
-
-      <% if overview.current_month && overview.attention_queue_total.zero? %>
-        <div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm leading-6 text-emerald-900">
-          <p class="font-semibold">Nothing needs cleanup right now.</p>
-          <p class="mt-1">Keep marking items paid and updating actuals as the month changes.</p>
-        </div>
-      <% end %>
-
-      <div class="mt-4 space-y-3">
-        <% overview.attention_items.each do |item| %>
-          <% if overview.current_month %>
-            <%= link_to budget_month_tab_path(overview.current_month, "entries"), class: "flex items-center justify-between rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm text-slate-700 transition hover:border-amber-200 hover:bg-amber-50" do %>
-              <span><%= item[:label] %></span>
-              <span class="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700"><%= item[:count] %></span>
-            <% end %>
-          <% else %>
-            <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-500">
-              <span><%= item[:label] %></span>
-              <span class="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600">0</span>
-            </div>
-          <% end %>
-        <% end %>
-      </div>
-    </article>
-
+  <section class="grid gap-6 xl:grid-cols-2" aria-label="Financial setup and balance coverage">
     <article class="ta-card ta-surface-plan-soft">
       <div class="flex items-start justify-between gap-3">
         <div>
@@ -388,7 +289,7 @@
       <div class="mt-4 flex flex-wrap items-center gap-2">
         <%= link_to accounts_path, class: "fb-btn-secondary ta-action-btn" do %>
           <%= tabler_icon("cash", classes: "ta-action-icon text-slate-600") %>
-          <span>Open Accounts</span>
+          <span>Set up Accounts</span>
         <% end %>
         <%= link_to new_account_path, class: "fb-btn-secondary ta-action-btn" do %>
           <%= tabler_icon("plus", classes: "ta-action-icon text-slate-600") %>

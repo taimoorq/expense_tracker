@@ -50,11 +50,12 @@
     <% end %>
   <% end %>
 
-  <div class="rounded-2xl border border-rose-200 bg-rose-50 p-5">
-    <p class="text-sm font-semibold text-rose-900">Cancel my account</p>
-    <p class="mt-2 text-sm leading-6 text-rose-700">This permanently removes your access and deletes the user record.</p>
+  <div class="rounded-2xl border-2 border-rose-300 bg-rose-50 p-5">
+    <p class="ta-page-eyebrow text-rose-700">Danger zone</p>
+    <p class="mt-1 text-sm font-semibold text-rose-900">Cancel my account</p>
+    <p class="mt-2 text-sm leading-6 text-rose-700">This permanently removes your access and deletes the user record and its owned financial data. This action cannot be undone.</p>
     <div class="mt-4">
-      <%= button_to "Cancel my account", registration_path(resource_name), data: { turbo_confirm: "Are you sure?" }, method: :delete, class: "fb-btn-danger" %>
+      <%= button_to "Cancel my account", registration_path(resource_name), data: { turbo_confirm: "Permanently cancel this account and delete its owned data?" }, method: :delete, class: "fb-btn-danger" %>
     </div>
   </div>
 

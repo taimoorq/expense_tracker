@@ -39,7 +39,7 @@ RSpec.describe "Themes", type: :request do
     get settings_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Appearance and app settings")
+    expect(response.body).to include("<span class=\"min-w-0\">Settings</span>")
     expect(response.body).to include("Choose your palette")
     expect(response.body).to include("aria-label=\"Earth palette\"")
   end

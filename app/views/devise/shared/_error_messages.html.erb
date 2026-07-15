@@ -1,5 +1,5 @@
 <% if resource.errors.any? %>
-  <div class="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+  <div class="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert" aria-live="assertive">
     <p class="font-semibold"><%= pluralize(resource.errors.count, "error") %> prevented this form from saving:</p>
     <ul class="mt-2 list-disc space-y-1 pl-5">
       <% resource.errors.full_messages.each do |message| %>

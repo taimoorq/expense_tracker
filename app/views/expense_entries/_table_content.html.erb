@@ -1,78 +1,9 @@
 <% timeline_view = local_assigns[:timeline_view] %>
+<% selected_review = local_assigns[:selected_review] %>
 
 <div class="space-y-3 md:hidden">
   <% expense_entries.each do |entry| %>
-    <% reason_for_entry = entry.category.presence || entry.section.humanize %>
-    <article id="<%= dom_id(entry) %>"
-             class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-             data-expense-entries-filter-target="row"
-             data-date="<%= entry.occurred_on&.iso8601 %>"
-             data-payee="<%= entry.payee.to_s %>"
-             data-reason="<%= reason_for_entry.to_s %>"
-             data-value="<%= reason_for_entry.to_s.downcase %>"
-             data-account="<%= entry.account_name.to_s %>"
-             data-status="<%= entry.status %>">
-      <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-slate-900"><%= entry.payee.presence || entry.category.presence || entry.section.humanize %></p>
-          <p class="mt-1 text-xs text-slate-500"><%= entry.occurred_on || "No date" %> · <%= entry.section.humanize %></p>
-        </div>
-        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600"><%= entry.status.humanize %></span>
-      </div>
-
-      <dl class="mt-4 grid gap-3 sm:grid-cols-2">
-        <div class="rounded-xl bg-slate-50 px-3 py-2.5">
-          <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Category</dt>
-          <dd class="mt-1 text-sm font-medium text-slate-900"><%= entry.category.presence || "-" %></dd>
-        </div>
-        <div class="rounded-xl bg-slate-50 px-3 py-2.5">
-          <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Planned</dt>
-          <dd class="mt-1 text-sm font-medium text-slate-900"><%= number_to_currency(entry.planned_amount || 0) %></dd>
-        </div>
-        <div class="rounded-xl bg-slate-50 px-3 py-2.5">
-          <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Actual</dt>
-          <dd class="mt-1 text-sm font-medium text-slate-900"><%= number_to_currency(entry.actual_amount || 0) %></dd>
-        </div>
-      </dl>
-
-      <div class="mt-4 flex flex-wrap gap-2">
-        <% unless entry.paid? %>
-          <%= button_to budget_month_expense_entry_path(budget_month, entry),
-                        method: :patch,
-                        params: {
-                          mark_as_paid: "1",
-                          timeline_view: timeline_view,
-                          expense_entry: {
-                            actual_amount: entry.actual_amount.presence || entry.planned_amount
-                          }
-                        },
-                        class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm",
-                        title: "Mark as paid",
-                        aria: { label: "Mark as paid" } do %>
-            <%= tabler_icon("check-circle", classes: "h-4 w-4 text-emerald-600") %>
-            <span>Mark Paid</span>
-          <% end %>
-        <% end %>
-        <%= link_to edit_budget_month_expense_entry_path(budget_month, entry, timeline_view: timeline_view),
-                    data: { turbo_frame: "entry_editor_modal" },
-                    class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm",
-                    title: "Edit entry",
-                    aria: { label: "Edit entry" } do %>
-          <%= tabler_icon("pencil", classes: "h-4 w-4 text-indigo-600") %>
-          <span>Edit</span>
-        <% end %>
-        <%= button_to budget_month_expense_entry_path(budget_month, entry),
-                      method: :delete,
-                      params: { timeline_view: timeline_view },
-                      class: "fb-btn-danger ta-action-btn !px-3 !py-2 !text-sm",
-                      title: "Delete entry",
-                      aria: { label: "Delete entry" },
-                      form: { data: { turbo_confirm: "Delete this entry?" } } do %>
-          <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
-          <span>Delete</span>
-        <% end %>
-      </div>
-    </article>
+    <%= render "expense_entries/mobile_entry_card", entry: entry, budget_month: budget_month, timeline_view: timeline_view, selected_review: selected_review %>
   <% end %>
 </div>
 
@@ -93,7 +24,7 @@
     </thead>
     <tbody class="divide-y divide-slate-100">
       <% expense_entries.each do |entry| %>
-        <%= render "expense_entries/row", budget_month: budget_month, entry: entry, timeline_view: timeline_view %>
+        <%= render "expense_entries/row", budget_month: budget_month, entry: entry, timeline_view: timeline_view, selected_review: selected_review %>
       <% end %>
     </tbody>
   </table>

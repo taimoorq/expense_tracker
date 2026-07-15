@@ -5,8 +5,8 @@
     This directory intentionally exposes only user identity and access-state metadata. Budget months, entries, templates, and account balances are not available in the admin surface.
   </div>
 
-  <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white">
-    <table class="min-w-full divide-y divide-slate-200 text-sm">
+  <div class="overflow-x-auto rounded-3xl border border-slate-200 bg-white">
+    <table class="min-w-[42rem] divide-y divide-slate-200 text-sm">
       <thead class="bg-slate-50">
         <tr class="text-left text-slate-500">
           <th class="px-6 py-4 font-medium">Email</th>
@@ -24,7 +24,7 @@
                 <%= user.access_state.humanize %>
               </span>
             </td>
-            <td class="px-6 py-4 text-slate-600"><%= user.created_at.to_date %></td>
+            <td class="px-6 py-4 font-mono tabular-nums text-slate-600"><%= user.created_at.to_date %></td>
             <td class="px-6 py-4 text-right"><%= link_to "Manage", admin_user_path(user), class: "font-semibold text-cyan-700 hover:text-cyan-900" %></td>
           </tr>
         <% end %>

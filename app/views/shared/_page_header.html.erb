@@ -1,0 +1,24 @@
+<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div class="min-w-0">
+    <% if eyebrow.present? %>
+      <p class="ta-page-eyebrow"><%= eyebrow %></p>
+    <% end %>
+
+    <h1 class="<%= class_names("ta-page-title", ("inline-flex items-center gap-2" if icon.present?), title_class) %>">
+      <% if icon.present? %>
+        <%= tabler_icon(icon, classes: icon_classes.presence || "h-6 w-6 shrink-0 text-indigo-600") %>
+      <% end %>
+      <span class="min-w-0"><%= title %></span>
+    </h1>
+
+    <% if subtitle.present? %>
+      <p class="<%= class_names("ta-page-subtitle", subtitle_class) %>"><%= subtitle %></p>
+    <% end %>
+  </div>
+
+  <% if actions.present? %>
+    <div class="flex shrink-0 flex-wrap items-center gap-2">
+      <%= actions %>
+    </div>
+  <% end %>
+</div>

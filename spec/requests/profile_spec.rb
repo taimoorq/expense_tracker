@@ -19,14 +19,16 @@ RSpec.describe "Profile", type: :request do
     }
   end
 
-  it "shows the current user profile details and settings summary" do
+  it "shows identity details and links to the dedicated edit surfaces" do
     get profile_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Your profile")
+    expect(response.body).to include("<h1 class=\"ta-page-title inline-flex items-center gap-2\">")
+    expect(response.body).to include("<span class=\"min-w-0\">Profile</span>")
     expect(response.body).to include(user.email)
-    expect(response.body).to include("Accounts &amp; Net Worth")
-    expect(response.body).to include("Calendar")
+    expect(response.body).to include("Sign-in details")
+    expect(response.body).not_to include("Default landing page")
+    expect(response.body).not_to include("Preferred month view")
     expect(response.body).to include(edit_user_registration_path)
     expect(response.body).to include(settings_path)
   end

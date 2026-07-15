@@ -101,13 +101,16 @@ RSpec.describe Overview::Presenter do
     expect(presenter.continue_stats.last[:value_classes]).to eq("text-slate-900")
     expect(presenter.next_step_primary_action).to eq(label: "Open Plan and Edit", path: "/months/april/entries", turbo_frame: nil)
     expect(presenter.next_step_secondary_action).to eq(label: "Add Entry with Wizard", path: "/months/april/entries/new", turbo_frame: "entry_wizard_modal")
-    expect(presenter.attention_items).to eq(
+    expect(presenter.attention_items.map { |item| item.except(:path) }).to eq(
       [
         { label: "Still planned and due", count: 1 },
         { label: "Missing key details", count: 1 },
         { label: "Paid without actual", count: 0 },
         { label: "Auto-completed", count: 0 }
       ]
+    )
+    expect(presenter.attention_items.map { |item| item[:path] }).to match(
+      [ include("review=due"), include("review=missing_details"), include("review=missing_actual"), include("review=auto_completed") ]
     )
     expect(presenter.check_in_badge).to eq("Weekly check-in")
     expect(presenter.check_in_title).to eq("Keep April 2026 easy to trust")

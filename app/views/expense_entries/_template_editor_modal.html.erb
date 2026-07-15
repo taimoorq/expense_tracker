@@ -1,25 +1,30 @@
 <%= turbo_frame_tag "template_editor_modal" do %>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close click->template-modal#backdropClose">
-    <div class="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl flex flex-col max-h-[90vh]">
-      <div class="overflow-y-auto flex-1">
+  <div class="ta-dialog-backdrop" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close keydown@window->template-modal#trapFocus click->template-modal#backdropClose">
+    <div class="ta-dialog max-w-2xl" role="dialog" aria-modal="true" aria-labelledby="template-editor-title" tabindex="-1" data-template-modal-target="dialog">
       <% submit_state_data = {
         controller: "turbo-submit",
         action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
         turbo_submit_default_label_value: "Save",
         turbo_submit_pending_label_value: "Saving recurring item..."
       } %>
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("file-pencil", classes: "h-4 w-4 text-violet-600") %> Edit Recurring: <%= template_record.class.model_name.human %></h3>
-        <button type="button" class="ta-icon-btn" aria-label="Close recurring editor" title="Close" data-action="click->template-modal#close">
-          <%= tabler_icon("x", classes: "h-4 w-4 text-slate-500") %>
+      <div class="ta-dialog-header">
+        <div class="ta-ledger-rail">
+          <p class="ta-page-eyebrow">Future months</p>
+          <h3 id="template-editor-title" class="ta-dialog-title inline-flex items-center gap-2"><%= tabler_icon("file-pencil", classes: "h-5 w-5 text-violet-600") %> Edit Recurring: <%= template_record.class.model_name.human %></h3>
+          <p class="ta-dialog-description">Changes update the reusable recurring item. This month’s entry remains its own record.</p>
+        </div>
+        <button type="button" class="ta-icon-btn" aria-label="Close recurring editor" title="Close" data-modal-initial-focus data-action="click->template-modal#close">
+          <%= tabler_icon("x", classes: "h-4 w-4") %>
         </button>
       </div>
 
-      <% if template_record.errors.any? %>
-        <div class="mb-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          <%= template_record.errors.full_messages.join(", ") %>
-        </div>
-      <% end %>
+      <div class="ta-dialog-body">
+        <% if template_record.errors.any? %>
+          <div class="ta-alert-danger mb-4" role="alert">
+            <p class="font-semibold">Review the following before saving:</p>
+            <p class="mt-1"><%= template_record.errors.full_messages.join(", ") %></p>
+          </div>
+        <% end %>
 
       <% if template_record.is_a?(PaySchedule) %>
         <%= form_with model: template_record, url: update_template_budget_month_expense_entry_path(budget_month, expense_entry), method: :patch, class: "grid gap-3 sm:grid-cols-2", data: submit_state_data do |form| %>
@@ -110,6 +115,7 @@
           <button type="button" class="fb-btn-secondary" data-action="click->template-modal#close">Close</button>
         </div>
       <% end %>
+      </div>
     </div>
   </div>
 <% end %>

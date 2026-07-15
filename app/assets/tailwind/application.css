@@ -31,6 +31,28 @@
 	--ta-warning-soft: #fffbeb;
 	--ta-danger: #e11d48;
 	--ta-danger-soft: #fff1f2;
+	--ta-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--ta-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+	--ta-font-numeric: "SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace;
+	--ta-canvas: var(--ta-app-bg);
+	--ta-canvas-strong: var(--ta-app-bg-strong);
+	--ta-raised: var(--ta-surface);
+	--ta-inset: var(--ta-surface-alt);
+	--ta-overlay: var(--ta-surface);
+	--ta-text-primary: var(--ta-text);
+	--ta-text-secondary: var(--ta-text-muted);
+	--ta-text-tertiary: var(--ta-text-soft);
+	--ta-focus: var(--ta-accent);
+	--ta-radius-sm: 0.75rem;
+	--ta-radius-md: 1rem;
+	--ta-radius-lg: 1.375rem;
+	--ta-radius-xl: 1.75rem;
+	--ta-shadow-low: 0 1px 2px rgb(var(--ta-shadow-rgb) / 0.05), 0 8px 24px rgb(var(--ta-shadow-rgb) / 0.04);
+	--ta-shadow-mid: 0 18px 45px rgb(var(--ta-shadow-rgb) / 0.1);
+	--ta-shadow-high: 0 28px 80px rgb(var(--ta-shadow-rgb) / 0.2);
+	--ta-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ta-duration-fast: 160ms;
+	--ta-duration-base: 240ms;
 }
 
 .ta-theme-emerald {
@@ -210,6 +232,32 @@
 	}
 }
 
+@layer base {
+	html {
+		font-family: var(--ta-font-body);
+		font-variant-numeric: lining-nums;
+		text-rendering: optimizeLegibility;
+	}
+
+	body {
+		font-family: var(--ta-font-body);
+	}
+
+	:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+		outline: 2px solid var(--ta-focus);
+		outline-offset: 3px;
+	}
+
+	:where(button, input, select, textarea) {
+		font: inherit;
+	}
+
+	::selection {
+		background-color: var(--ta-accent-soft-strong);
+		color: var(--ta-text-primary);
+	}
+}
+
 @layer components {
 	/*
 	 * The default presets live above as CSS fallbacks.
@@ -219,8 +267,22 @@
 
 	.ta-shell {
 		@apply min-h-screen lg:grid;
-		background-color: var(--ta-app-bg);
+		background-color: var(--ta-canvas);
+		background-image:
+			radial-gradient(circle at 78% 8%, rgb(var(--ta-accent-rgb) / 0.055), transparent 26rem),
+			repeating-linear-gradient(0deg, transparent, transparent 31px, color-mix(in srgb, var(--ta-border) 32%, transparent) 32px);
+		background-attachment: fixed;
 		color: var(--ta-text);
+	}
+
+	.ta-skip-link {
+		@apply fixed left-4 top-4 z-[100] -translate-y-24 rounded-xl px-4 py-2 text-sm font-semibold shadow-xl transition-transform;
+		background-color: var(--ta-accent);
+		color: var(--ta-accent-contrast);
+	}
+
+	.ta-skip-link:focus {
+		@apply translate-y-0;
 	}
 
 	.ta-shell-expanded {
@@ -236,7 +298,7 @@
 		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
 		background-color: var(--ta-surface);
 		color: var(--ta-text-muted);
-		box-shadow: 0 20px 50px rgb(var(--ta-shadow-rgb) / 0.18);
+		box-shadow: none;
 	}
 
 	.ta-sidebar-body {
@@ -249,6 +311,7 @@
 
 	.ta-shell-mobile-nav-open .ta-sidebar {
 		@apply translate-x-0;
+		box-shadow: 0 20px 50px rgb(var(--ta-shadow-rgb) / 0.18);
 	}
 
 	.ta-sidebar-overlay {
@@ -418,9 +481,10 @@
 	}
 
 	.ta-topbar {
-		@apply sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-4 shadow-sm backdrop-blur sm:px-6 lg:px-8;
+		@apply sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 backdrop-blur sm:px-6 lg:px-8;
 		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
 		background-color: color-mix(in srgb, var(--ta-surface) 92%, var(--ta-app-bg));
+		box-shadow: 0 1px 0 rgb(var(--ta-shadow-rgb) / 0.03);
 	}
 
 	.ta-topbar-row {
@@ -468,19 +532,115 @@
 	}
 
 	.ta-content {
-		@apply px-4 py-6 sm:px-6 lg:px-8;
+		@apply mx-auto w-full max-w-[100rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8;
+	}
+
+	.ta-content-header {
+		@apply mb-6 space-y-3 border-b pb-5;
+		border-color: color-mix(in srgb, var(--ta-border) 72%, transparent);
+	}
+
+	.ta-breadcrumbs {
+		@apply min-h-5 text-sm;
+	}
+
+	.ta-page-header {
+		@apply min-w-0;
+	}
+
+	.ta-page-title {
+		@apply text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-3xl;
+		font-family: var(--ta-font-display);
+		color: var(--ta-text-primary);
+	}
+
+	.ta-page-title-compact {
+		@apply text-xl sm:text-2xl;
+	}
+
+	.ta-page-eyebrow {
+		@apply text-[0.6875rem] font-bold uppercase tracking-[0.22em];
+		color: var(--ta-text-tertiary);
+	}
+
+	.ta-page-subtitle {
+		@apply mt-1 max-w-3xl text-sm leading-6;
+		color: var(--ta-text-secondary);
+	}
+
+	.ta-number,
+	.ta-money {
+		font-family: var(--ta-font-numeric);
+		font-variant-numeric: tabular-nums lining-nums;
+		letter-spacing: -0.035em;
+	}
+
+	.ta-ledger-label {
+		@apply text-[0.6875rem] font-bold uppercase tracking-[0.2em];
+		color: var(--ta-text-tertiary);
+	}
+
+	.ta-ledger-rail {
+		@apply relative pl-5;
+	}
+
+	.ta-ledger-rail::before {
+		content: "";
+		@apply absolute bottom-1 left-0 top-1 w-1 rounded-full;
+		background: linear-gradient(180deg, var(--ta-accent), color-mix(in srgb, var(--ta-feature) 65%, var(--ta-accent)));
+	}
+
+	.ta-section-frame {
+		@apply overflow-hidden border;
+		border-radius: var(--ta-radius-lg);
+		border-color: color-mix(in srgb, var(--ta-border) 88%, transparent);
+		background-color: color-mix(in srgb, var(--ta-raised) 96%, transparent);
+		box-shadow: var(--ta-shadow-low);
+	}
+
+	.ta-section-header {
+		@apply flex flex-wrap items-start justify-between gap-4 border-b px-5 py-4;
+		border-color: var(--ta-border);
+		background-color: color-mix(in srgb, var(--ta-inset) 82%, var(--ta-raised));
+	}
+
+	.ta-section-body {
+		@apply p-5;
+	}
+
+	.ta-ledger-row {
+		@apply grid items-center gap-3 border-b px-4 py-3 transition-colors last:border-b-0;
+		border-color: color-mix(in srgb, var(--ta-border) 82%, transparent);
+	}
+
+	.ta-ledger-row:hover {
+		background-color: color-mix(in srgb, var(--ta-accent-soft) 45%, transparent);
+	}
+
+	.ta-inset-panel {
+		@apply border p-4;
+		border-radius: var(--ta-radius-md);
+		border-color: color-mix(in srgb, var(--ta-border) 88%, transparent);
+		background-color: var(--ta-inset);
+	}
+
+	.ta-status-badge {
+		@apply inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold;
+		border-color: color-mix(in srgb, currentColor 18%, transparent);
 	}
 
 	.ta-card {
-		@apply rounded-2xl border p-5;
+		@apply border p-5;
+		border-radius: var(--ta-radius-lg);
 		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
 		background-color: var(--ta-surface);
-		box-shadow: 0 10px 30px rgb(var(--ta-shadow-rgb) / 0.06);
+		box-shadow: var(--ta-shadow-low);
 	}
 
 	.ta-card-tinted {
-		@apply rounded-2xl border p-5;
-		box-shadow: 0 10px 30px rgb(var(--ta-shadow-rgb) / 0.05);
+		@apply border p-5;
+		border-radius: var(--ta-radius-lg);
+		box-shadow: var(--ta-shadow-low);
 	}
 
 	.ta-surface-shell {
@@ -544,7 +704,7 @@
 	}
 
 	.ta-section-title {
-		@apply text-lg font-semibold tracking-tight;
+		@apply text-lg font-semibold tracking-[-0.015em];
 		color: var(--ta-text);
 	}
 
@@ -554,7 +714,8 @@
 	}
 
 	.ta-table {
-		@apply min-w-full divide-y divide-slate-200 text-sm;
+		@apply min-w-full divide-y text-sm;
+		border-color: var(--ta-border);
 	}
 
 	.ta-table-head {
@@ -604,6 +765,49 @@
 
 	.ta-td {
 		@apply px-3 py-2;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.ta-dialog-backdrop {
+		@apply fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4;
+		background-color: rgb(var(--ta-shadow-rgb) / 0.48);
+		backdrop-filter: blur(7px);
+	}
+
+	.ta-dialog {
+		@apply flex max-h-[94vh] w-full flex-col overflow-hidden border sm:max-h-[90vh];
+		border-radius: var(--ta-radius-xl) var(--ta-radius-xl) 0 0;
+		border-color: color-mix(in srgb, var(--ta-border) 86%, transparent);
+		background-color: var(--ta-overlay);
+		box-shadow: var(--ta-shadow-high);
+	}
+
+	@media (min-width: 640px) {
+		.ta-dialog {
+			border-radius: var(--ta-radius-xl);
+		}
+	}
+
+	.ta-dialog-header {
+		@apply flex items-start justify-between gap-4 border-b px-5 py-4 sm:px-6;
+		border-color: var(--ta-border);
+		background-color: color-mix(in srgb, var(--ta-inset) 74%, var(--ta-raised));
+	}
+
+	.ta-dialog-body {
+		@apply min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6;
+		overscroll-behavior: contain;
+	}
+
+	.ta-dialog-title {
+		@apply text-xl font-semibold tracking-[-0.02em];
+		font-family: var(--ta-font-display);
+		color: var(--ta-text-primary);
+	}
+
+	.ta-dialog-description {
+		@apply mt-1 text-sm leading-6;
+		color: var(--ta-text-secondary);
 	}
 
 	.ta-alert-success {
@@ -740,7 +944,7 @@
 	}
 
 	.ta-action-btn {
-		@apply inline-flex items-center gap-2;
+		@apply inline-flex min-h-11 items-center gap-2;
 	}
 
 	.ta-action-icon-sm {
@@ -760,7 +964,7 @@
 	}
 
 	.ta-icon-btn {
-		@apply inline-flex h-10 w-10 items-center justify-center rounded-2xl border shadow-sm transition focus:outline-none;
+		@apply inline-flex h-11 w-11 items-center justify-center rounded-2xl border shadow-sm transition focus:outline-none;
 		border-color: var(--ta-border);
 		background-color: var(--ta-surface);
 		color: var(--ta-text-muted);
@@ -776,7 +980,7 @@
 	}
 
 	.ta-user-chip {
-		@apply inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-medium shadow-sm transition;
+		@apply inline-flex min-h-11 items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-medium shadow-sm transition;
 		border-color: var(--ta-border);
 		background-color: var(--ta-surface);
 		color: var(--ta-text-muted);
@@ -793,7 +997,7 @@
 
 	@media (max-width: 639px) {
 		.ta-user-chip-compact {
-			@apply h-10 w-10 justify-center rounded-2xl px-0;
+			@apply h-11 w-11 justify-center rounded-2xl px-0;
 		}
 	}
 
@@ -1113,4 +1317,48 @@
 	50% {
 		transform: translate3d(0, -10px, 0);
 	}
+}
+
+/* Compatibility mappings keep legacy utility-heavy views inside the selected palette
+   while those views move to semantic components. */
+.ta-theme-emerald :where(.text-indigo-500, .text-indigo-600, .text-indigo-700, .text-indigo-800),
+.ta-theme-sunset :where(.text-indigo-500, .text-indigo-600, .text-indigo-700, .text-indigo-800),
+.ta-theme-earth :where(.text-indigo-500, .text-indigo-600, .text-indigo-700, .text-indigo-800) {
+	color: var(--ta-accent);
+}
+
+.ta-theme-emerald :where(.bg-indigo-50, .bg-indigo-100),
+.ta-theme-sunset :where(.bg-indigo-50, .bg-indigo-100),
+.ta-theme-earth :where(.bg-indigo-50, .bg-indigo-100) {
+	background-color: var(--ta-accent-soft);
+}
+
+.ta-theme-emerald :where(.border-indigo-100, .border-indigo-200, .border-indigo-300),
+.ta-theme-sunset :where(.border-indigo-100, .border-indigo-200, .border-indigo-300),
+.ta-theme-earth :where(.border-indigo-100, .border-indigo-200, .border-indigo-300) {
+	border-color: var(--ta-accent-muted);
+}
+
+.ta-theme-earth :where(.text-slate-950, .text-slate-900, .text-slate-800, .text-slate-700) {
+	color: var(--ta-text-primary);
+}
+
+.ta-theme-earth :where(.text-slate-600, .text-slate-500) {
+	color: var(--ta-text-secondary);
+}
+
+.ta-theme-earth :where(.text-slate-400) {
+	color: var(--ta-text-tertiary);
+}
+
+.ta-theme-earth :where(.bg-white) {
+	background-color: var(--ta-raised);
+}
+
+.ta-theme-earth :where(.bg-slate-50, .bg-slate-100) {
+	background-color: var(--ta-inset);
+}
+
+.ta-theme-earth :where(.border-slate-100, .border-slate-200, .border-slate-300) {
+	border-color: var(--ta-border);
 }

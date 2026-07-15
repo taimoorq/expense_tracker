@@ -5,37 +5,26 @@
   <%= chart_library_tags %>
 <% end %>
 
-<% content_for :page_header do %>
-  <div class="flex flex-wrap items-center gap-3">
-    <div>
-      <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-        <%= tabler_icon("credit-card", classes: "h-6 w-6 text-indigo-600") %>
-        <span>Accounts</span>
-      </h2>
-      <p class="mt-1 text-sm text-slate-600">Track savings, investment, cash, and debt balances from the latest trusted source: institution imports when available, otherwise manual snapshots.</p>
-    </div>
-  </div>
+<% page_header title: "Accounts",
+  eyebrow: "Trusted balances",
+  subtitle: "Track savings, investment, cash, and debt balances from the latest trusted source: institution imports when available, otherwise manual snapshots.",
+  icon: "credit-card" do %>
+    <%= link_to new_account_path, class: "fb-btn-primary ta-action-btn" do %><%= tabler_icon("plus", classes: "ta-action-icon") %><span>New Account</span><% end %>
 <% end %>
 
-<div class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
-  <section class="space-y-6">
-    <div class="grid gap-4 md:grid-cols-3">
-      <article class="ta-card">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assets</p>
-        <p class="mt-2 text-3xl font-semibold text-emerald-700"><%= number_to_currency(@assets_total) %></p>
-        <p class="mt-1 text-sm text-slate-500">Final current balances from accounts included in net worth.</p>
-      </article>
-      <article class="ta-card">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Liabilities</p>
-        <p class="mt-2 text-3xl font-semibold text-rose-700"><%= number_to_currency(@liabilities_total) %></p>
-        <p class="mt-1 text-sm text-slate-500">Shown as positive total debt for readability.</p>
-      </article>
-      <article class="ta-card">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Net Worth</p>
-        <p class="mt-2 text-3xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-900' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p>
-        <p class="mt-1 text-sm text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included. Imports and paid linked entries are reflected from their trusted sources.</p>
-      </article>
-    </div>
+<div class="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
+  <section class="min-w-0 space-y-6">
+    <section class="ta-section-frame" aria-labelledby="net-worth-equation-title">
+      <div class="ta-section-header"><div class="ta-ledger-rail"><p class="ta-page-eyebrow">Net worth equation</p><h2 id="net-worth-equation-title" class="ta-section-title mt-1">Assets minus liabilities</h2><p class="mt-1 text-sm text-slate-600">Current balances use the latest applicable institution import or manual snapshot. Imports and paid linked entries are reflected from their trusted sources.</p></div></div>
+      <div class="grid items-stretch divide-y divide-slate-200 lg:grid-cols-[1fr_auto_1fr_auto_1.15fr] lg:divide-x lg:divide-y-0">
+        <div class="p-5"><p class="ta-ledger-label">Assets</p><p class="ta-money mt-2 text-3xl font-semibold text-emerald-700"><%= number_to_currency(@assets_total) %></p></div>
+        <div class="hidden items-center px-3 text-2xl text-slate-400 lg:flex" aria-hidden="true">−</div>
+        <div class="p-5"><p class="ta-ledger-label">Liabilities</p><p class="ta-money mt-2 text-3xl font-semibold text-rose-700"><%= number_to_currency(@liabilities_total) %></p></div>
+        <div class="hidden items-center px-3 text-2xl text-slate-400 lg:flex" aria-hidden="true">=</div>
+        <div class="bg-slate-50/70 p-5"><p class="ta-ledger-label">Net worth</p><p class="ta-money mt-2 text-3xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-950' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p><p class="mt-1 text-xs text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included</p></div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50/70 px-5 py-3 text-xs text-slate-600"><span><strong class="text-slate-800">Coverage:</strong> <%= @accounts_with_balance_sources_count %> of <%= @accounts.count %> accounts have a trusted source.</span><span><%= pluralize(@accounts_missing_balance_sources_count, "account") %> unresolved</span></div>
+    </section>
 
     <section class="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4 text-sm leading-6 text-emerald-900">
       <div class="flex items-start gap-3">
@@ -50,7 +39,7 @@
     </section>
 
     <div class="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_300px]">
-      <section class="ta-card min-w-0">
+      <section class="ta-section-frame min-w-0 p-5">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="ta-section-title inline-flex items-center gap-2">
@@ -81,7 +70,7 @@
         <% end %>
       </section>
 
-      <section class="ta-card h-fit">
+      <section class="ta-section-frame h-fit p-5">
         <div class="mb-4">
           <h2 class="ta-section-title inline-flex items-center gap-2">
             <%= tabler_icon("calendar-month", classes: "ta-action-icon-lg text-indigo-600") %>
@@ -107,7 +96,7 @@
       </section>
     </div>
 
-    <section class="ta-card min-w-0">
+    <section class="ta-section-frame min-w-0 p-5">
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="ta-section-title inline-flex items-center gap-2">
@@ -120,10 +109,6 @@
           <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             <%= pluralize(@accounts.count, "account") %>
           </div>
-          <%= link_to new_account_path, class: "fb-btn-primary ta-action-btn" do %>
-            <%= tabler_icon("plus", classes: "ta-action-icon text-indigo-100") %>
-            <span>New Account</span>
-          <% end %>
         </div>
       </div>
 
@@ -131,7 +116,7 @@
         <div class="space-y-3 md:hidden">
           <% @account_balance_rows.each do |row| %>
             <% account = row.fetch(:account) %>
-            <article id="<%= dom_id(account) %>" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <article id="mobile_<%= dom_id(account) %>" class="ta-ledger-row ta-ledger-rail bg-white">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <%= link_to account.name, account_path(account), class: "text-base font-semibold text-indigo-600 hover:text-indigo-500" %>
@@ -276,7 +261,7 @@
   </section>
 
   <aside class="space-y-6">
-    <section class="ta-card h-fit xl:sticky xl:top-6">
+    <section class="ta-section-frame h-fit p-5 xl:sticky xl:top-6">
       <div class="mb-4">
         <h2 class="ta-section-title inline-flex items-center gap-2">
           <%= tabler_icon("document-text", classes: "ta-action-icon-lg text-indigo-600") %>

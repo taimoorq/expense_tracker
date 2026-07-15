@@ -3,10 +3,10 @@
   <% flash_messages << ["notice", notice] if notice.present? %>
   <% flash_messages << ["alert", alert] if alert.present? %>
 
-  <div class="ta-toast-stack" aria-live="polite" aria-atomic="true">
+  <div class="ta-toast-stack" aria-atomic="true">
     <% flash_messages.each do |kind, message| %>
       <% toast_class = kind == "notice" ? "ta-toast-success" : "ta-toast-danger" %>
-      <div class="ta-toast <%= toast_class %>" data-controller="toast" data-toast-timeout-value="4500" role="status">
+      <div class="ta-toast <%= toast_class %>" data-controller="toast" data-toast-timeout-value="<%= kind == "notice" ? 4500 : 10000 %>" role="<%= kind == "notice" ? "status" : "alert" %>" aria-live="<%= kind == "notice" ? "polite" : "assertive" %>">
         <div class="min-w-0 flex-1 pr-2 text-sm font-medium leading-6"><%= message %></div>
         <button type="button" class="ta-toast-close" aria-label="Dismiss notification" data-action="click->toast#close">
           <%= tabler_icon("x", classes: "ta-action-icon text-current") %>

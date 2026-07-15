@@ -12,7 +12,7 @@ RSpec.describe "Sidebar navigation", type: :system, js: true do
     click_link "Settings"
 
     expect(page).to have_current_path(settings_path)
-    expect(page).to have_content("Appearance and app settings")
+    expect(page).to have_css(".ta-content-header h1", text: "Settings")
   end
 
   it "shows icon labels when hovering collapsed sidebar links" do

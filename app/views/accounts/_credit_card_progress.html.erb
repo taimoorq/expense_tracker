@@ -1,6 +1,6 @@
 <% progress_width = credit_card_progress[:progress_percent] || 0 %>
 
-<section class="ta-card overflow-hidden">
+<section class="ta-section-frame overflow-hidden p-5">
   <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
     <div>
       <h2 class="ta-section-title inline-flex items-center gap-2">
@@ -16,27 +16,27 @@
     <% end %>
   </div>
 
-  <div class="grid gap-4 md:grid-cols-3">
-    <article class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+  <div class="grid overflow-hidden border-y border-slate-200 md:grid-cols-3 md:divide-x md:divide-slate-200">
+    <article class="border-b border-emerald-100 bg-emerald-50/60 p-4 md:border-b-0">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Paid down this month</p>
       <p class="mt-2 text-2xl font-semibold text-emerald-800"><%= number_to_currency(credit_card_progress[:paid_down_this_month]) %></p>
       <p class="mt-1 text-xs text-emerald-900/75">Payments linked to this card.</p>
     </article>
 
-    <article class="rounded-2xl border border-rose-100 bg-rose-50 p-4">
+    <article class="border-b border-rose-100 bg-rose-50/60 p-4 md:border-b-0">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">Added this month</p>
       <p class="mt-2 text-2xl font-semibold text-rose-800"><%= number_to_currency(credit_card_progress[:added_this_month]) %></p>
       <p class="mt-1 text-xs text-rose-900/75">Paid purchases recorded on this card.</p>
     </article>
 
-    <article class="rounded-2xl border border-sky-100 bg-sky-50 p-4">
+    <article class="bg-sky-50/60 p-4">
       <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Remaining balance</p>
       <p class="mt-2 text-2xl font-semibold text-sky-900"><%= number_to_currency(credit_card_progress[:current_debt]) %></p>
       <p class="mt-1 text-xs text-sky-900/75">Projected after planned payments: <%= number_to_currency(credit_card_progress[:projected_debt]) %></p>
     </article>
   </div>
 
-  <div class="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+  <div class="mt-5 border-t border-slate-200 pt-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <p class="text-sm font-semibold text-slate-900">Progress toward payoff</p>

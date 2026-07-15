@@ -44,36 +44,41 @@
 
   <% content_for :page_header do %>
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 class="inline-flex items-center gap-3 text-2xl font-semibold">
+      <div class="min-w-0">
+        <p class="ta-page-eyebrow">Month workspace</p>
+        <div class="mt-1 flex items-center gap-2 sm:gap-3">
           <% if @previous_budget_month %>
             <%= link_to(previous_month_tab_urls[active_navigation_tab.to_sym],
-                        class: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600",
+                        class: "ta-icon-btn shrink-0",
                         title: @previous_budget_month.label,
                         aria: { label: "View #{@previous_budget_month.label}" }) do %>
               <%= tabler_icon("chevron-left", classes: "h-5 w-5") %>
             <% end %>
           <% end %>
 
-          <span class="inline-flex items-center gap-2" style="view-transition-name: month-page-title; view-transition-class: ta-vt-shell;">
+          <h1 class="ta-page-title min-w-0 inline-flex items-center gap-2" style="view-transition-name: month-page-title; view-transition-class: ta-vt-shell;">
             <%= tabler_icon("calendar-month", classes: "h-6 w-6 text-indigo-600") %>
-            <span><%= @budget_month.label %></span>
-          </span>
+            <span class="truncate"><%= @budget_month.label %></span>
+          </h1>
 
           <% if @next_budget_month %>
             <%= link_to(next_month_tab_urls[active_navigation_tab.to_sym],
-                        class: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600",
+                        class: "ta-icon-btn shrink-0",
                         title: @next_budget_month.label,
                         aria: { label: "View #{@next_budget_month.label}" }) do %>
               <%= tabler_icon("chevron-right", classes: "h-5 w-5") %>
             <% end %>
           <% end %>
-        </h2>
+        </div>
         <% if generation_actions_hidden %>
           <p class="ta-muted mt-1">This month looks complete, so template generation actions are hidden to avoid unnecessary changes.</p>
         <% end %>
       </div>
       <div class="flex flex-wrap items-center gap-2">
+        <%= link_to new_wizard_budget_month_expense_entries_path(@budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
+          <%= tabler_icon("plus", classes: "ta-action-icon") %>
+          <span>Add Entry</span>
+        <% end %>
         <%= link_to new_budget_month_from_path(@budget_month), class: "fb-btn-secondary ta-action-btn" do %>
           <%= tabler_icon("copy", classes: "ta-action-icon text-slate-600") %>
           <span>Clone Month</span>
@@ -82,8 +87,9 @@
     </div>
   <% end %>
 
-  <section class="ta-card ta-surface-shell" style="view-transition-name: month-page-shell; view-transition-class: ta-vt-shell;">
-    <div class="mb-4 ta-tab-list" role="tablist" aria-label="Month view tabs" style="view-transition-name: month-page-tabs; view-transition-class: ta-vt-nav;">
+  <section class="ta-section-frame overflow-visible" style="view-transition-name: month-page-shell; view-transition-class: ta-vt-shell;">
+    <div class="border-b border-slate-200 p-2 sm:px-4 sm:py-3" style="view-transition-name: month-page-tabs; view-transition-class: ta-vt-nav;">
+    <div class="ta-tab-list" role="tablist" aria-label="Month workspace views">
       <%= link_to current_month_tab_urls[:timeline], class: ["ta-tab", ("ta-tab-active" if timeline_tab_active)], role: "tab", "aria-selected": timeline_tab_active.to_s do %>
         <span class="inline-flex items-center gap-2"><%= tabler_icon("timeline", classes: "ta-tab-icon") %> Budget</span>
       <% end %>
@@ -94,11 +100,12 @@
         <span class="inline-flex items-center gap-2"><%= tabler_icon("list", classes: "ta-tab-icon") %> Plan and Edit</span>
       <% end %>
     </div>
+    </div>
 
     <div
       data-panel-name="timeline"
       role="tabpanel"
-      class="<%= timeline_tab_active ? "space-y-6" : "hidden space-y-6" %>"
+      class="<%= timeline_tab_active ? "space-y-5 p-3 sm:p-5" : "hidden space-y-5 p-3 sm:p-5" %>"
       <%= %(style="view-transition-name: month-page-panel; view-transition-class: ta-vt-panel;") if timeline_tab_active %>>
       <%= render "summary_cards", budget_month: @budget_month, expense_entries: @expense_entries if timeline_tab_active %>
       <%= render "expense_entries/timeline", expense_entries: @expense_entries, budget_month: @budget_month, default_timeline_view: default_timeline_view, timeline_view: default_timeline_view if timeline_tab_active %>
@@ -107,7 +114,7 @@
     <div
       data-panel-name="breakdown"
       role="tabpanel"
-      class="<%= active_navigation_tab == "breakdown" ? "space-y-4" : "hidden space-y-4" %>"
+      class="<%= active_navigation_tab == "breakdown" ? "space-y-4 p-3 sm:p-5" : "hidden space-y-4 p-3 sm:p-5" %>"
       <%= %(style="view-transition-name: month-page-panel; view-transition-class: ta-vt-panel;") if active_navigation_tab == "breakdown" %>>
       <%= render "visual_dashboard", budget_month: @budget_month, expense_entries: @expense_entries if active_navigation_tab == "breakdown" %>
     </div>
@@ -115,9 +122,9 @@
     <div
       data-panel-name="entries"
       role="tabpanel"
-      class="<%= active_navigation_tab == "entries" ? "space-y-4" : "hidden space-y-4" %>"
+      class="<%= active_navigation_tab == "entries" ? "space-y-4 p-3 sm:p-5" : "hidden space-y-4 p-3 sm:p-5" %>"
       <%= %(style="view-transition-name: month-page-panel; view-transition-class: ta-vt-panel;") if active_navigation_tab == "entries" %>>
-      <%= render "plan_and_edit_panel", budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry if active_navigation_tab == "entries" %>
+      <%= render "plan_and_edit_panel", budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry, selected_review: params[:review] if active_navigation_tab == "entries" %>
     </div>
   </section>
 </div>

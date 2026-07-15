@@ -4,7 +4,7 @@
 
 <div class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
   <div class="space-y-6">
-    <section class="ta-card min-w-0">
+    <section class="ta-section-frame min-w-0 p-5">
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="ta-section-title inline-flex items-center gap-2">
@@ -55,7 +55,7 @@
       <% end %>
     </section>
 
-    <section class="ta-card min-w-0">
+    <section class="ta-section-frame min-w-0 p-5">
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="ta-section-title">Manual snapshots</h2>
@@ -105,7 +105,7 @@
       <% end %>
     </section>
 
-    <section class="ta-card min-w-0">
+    <section class="ta-section-frame min-w-0 p-5">
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="ta-section-title">Connected recurring templates</h2>
@@ -138,7 +138,12 @@
   </div>
 
   <aside class="space-y-6">
-    <section class="ta-card">
+    <section class="ta-section-frame p-5 xl:sticky xl:top-6">
+      <div class="ta-ledger-rail"><p class="ta-page-eyebrow">Trusted starting point</p><h2 class="ta-section-title mt-1">Record balance</h2><p class="ta-muted mt-1">Add a manual snapshot whenever you review this account. This can change later current and projected figures.</p></div>
+      <div class="mt-4"><%= render "accounts/snapshot_form", account: account, account_snapshot: @account_snapshot %></div>
+    </section>
+
+    <section class="ta-section-frame p-5">
       <h2 class="ta-section-title">Account details</h2>
       <dl class="mt-4 space-y-3 text-sm text-slate-600">
         <div class="flex justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"><dt class="font-semibold text-slate-900">Institution</dt><dd class="text-right"><%= account.institution_name.presence || "Manual account" %></dd></div>
@@ -151,7 +156,7 @@
       <% end %>
     </section>
 
-    <section class="ta-card">
+    <section class="ta-section-frame p-5">
       <h2 class="ta-section-title">How balance is calculated</h2>
       <p class="ta-muted mt-1">Institution data is preferred; manual snapshots fill periods where no applicable import exists.</p>
       <ol class="mt-4 space-y-3 text-sm text-slate-600">
@@ -162,7 +167,7 @@
     </section>
 
     <% if @import_history.any? %>
-      <section class="ta-card">
+      <section class="ta-section-frame p-5">
         <h2 class="ta-section-title">Recent imports</h2>
         <div class="mt-4 space-y-2">
           <% @import_history.each do |activity_import| %>
@@ -175,10 +180,5 @@
       </section>
     <% end %>
 
-    <section class="ta-card xl:sticky xl:top-6">
-      <h2 class="ta-section-title">Record balance</h2>
-      <p class="ta-muted mt-1">Add a manual snapshot whenever you review this account.</p>
-      <div class="mt-4"><%= render "accounts/snapshot_form", account: account, account_snapshot: @account_snapshot %></div>
-    </section>
   </aside>
 </div>

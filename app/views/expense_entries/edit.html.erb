@@ -3,18 +3,16 @@
   <% breadcrumb @budget_month.label, budget_month_path(@budget_month) %>
   <% breadcrumb "Edit Entry" %>
 
-  <% content_for :page_header do %>
-    <div class="flex items-center justify-between gap-3">
-      <h2 class="text-2xl font-semibold">Edit Entry</h2>
+  <% page_header title: "Edit Entry", eyebrow: "Month entry" do %>
       <%= link_to budget_month_path(@budget_month), class: "fb-btn-secondary ta-action-btn" do %>
         <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
         <span>Back to Month</span>
       <% end %>
-    </div>
   <% end %>
 
   <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <%= form_with model: [@budget_month, @expense_entry], class: "grid gap-3 sm:grid-cols-2" do |form| %>
+      <%= hidden_field_tag :review, params[:review] if params[:review].present? %>
       <% if @expense_entry.errors.any? %>
         <div class="sm:col-span-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           <%= @expense_entry.errors.full_messages.join(", ") %>

@@ -1,17 +1,10 @@
 <% breadcrumb "Months", budget_months_path %>
 <% breadcrumb "New Budget Month" %>
 
-<% content_for :page_header do %>
-  <div class="flex flex-wrap items-center gap-3">
-    <div>
-      <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-        <%= tabler_icon("calendar-plus", classes: "h-6 w-6 text-indigo-600") %>
-        <span>New Budget Month</span>
-      </h2>
-      <p class="ta-muted mt-1">Choose a quick clone workflow or start a month from scratch with guided details.</p>
-    </div>
-  </div>
-<% end %>
+<% page_header title: "New Budget Month",
+  eyebrow: "Month setup",
+  subtitle: "Choose a quick clone workflow or start a month from scratch with guided details.",
+  icon: "calendar-plus" %>
 
 <%= form_with model: @budget_month,
   class: "ta-wizard-shell",
@@ -19,7 +12,7 @@
   <div class="ta-wizard-header">
     <div class="flex items-center justify-between gap-3">
       <div class="text-sm font-medium text-slate-700" data-month-wizard-target="progress">Step 1 of 2</div>
-      <div data-month-wizard-target="error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
+      <div data-month-wizard-target="error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert" aria-live="assertive"></div>
     </div>
 
     <div class="ta-wizard-steps mt-4">
@@ -41,14 +34,14 @@
   </div>
 
   <% if @budget_month.errors.any? %>
-    <div class="mt-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+    <div class="mt-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert">
       <%= @budget_month.errors.full_messages.join(", ") %>
     </div>
   <% end %>
 
   <section data-month-wizard-target="step" class="mt-4 space-y-4">
     <div>
-      <h3 class="text-lg font-semibold text-slate-900">1. How do you want to create this month?</h3>
+      <h2 class="text-lg font-semibold text-slate-900">1. How do you want to create this month?</h2>
       <p class="ta-muted mt-1">Clone a previous month for a fast setup, or start fresh and enter the details manually.</p>
     </div>
 
@@ -123,7 +116,7 @@
 
   <section data-month-wizard-target="step" class="mt-4 space-y-4">
     <div>
-      <h3 class="text-lg font-semibold text-slate-900">2. Enter the month details</h3>
+      <h2 class="text-lg font-semibold text-slate-900">2. Enter the month details</h2>
       <p class="ta-muted mt-1">Use this path when you want a clean month without copied entries.</p>
     </div>
 

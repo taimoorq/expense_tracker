@@ -28,6 +28,7 @@
   </head>
 
   <body class="ta-shell ta-shell-collapsed <%= current_theme_class %>" style="<%= current_theme_css_variables %>" data-rails-env="<%= Rails.env %>" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc keydown.esc->sidebar#close click@window->sidebar#closeFromOutside resize@window->sidebar#syncMode" data-sidebar-target="shell">
+    <%= link_to "Skip to main content", "#main-content", class: "ta-skip-link" %>
     <% overview_active = controller_name == "overview" %>
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
@@ -118,51 +119,20 @@
       <% end %>
     </aside>
 
-    <main class="ta-main">
+    <main id="main-content" class="ta-main" tabindex="-1">
       <header class="ta-topbar">
         <div class="ta-topbar-row flex-wrap sm:flex-nowrap">
           <% if user_signed_in? %>
-            <div class="flex w-full items-center justify-between gap-3 sm:hidden">
-              <button type="button" class="ta-icon-btn" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-sidebar-target="toggleButton" data-action="click->sidebar#toggle">
-                <span class="ta-mobile-toggle-icon" data-sidebar-target="mobileOpenIcon"><%= tabler_icon("menu-2", classes: "ta-action-icon-lg") %></span>
-                <span class="ta-mobile-toggle-icon hidden" data-sidebar-target="mobileCloseIcon"><%= tabler_icon("x", classes: "ta-action-icon-lg") %></span>
-                <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="expandIcon"><%= tabler_icon("layout-sidebar-left-expand", classes: "ta-action-icon-lg") %></span>
-                <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="collapseIcon"><%= tabler_icon("layout-sidebar-left-collapse", classes: "ta-action-icon-lg") %></span>
-              </button>
-            </div>
-          <% end %>
-
-          <div class="ta-topbar-heading-group">
-          <% if user_signed_in? %>
-            <button type="button" class="ta-icon-btn hidden sm:inline-flex" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-sidebar-target="toggleButton" data-action="click->sidebar#toggle">
+            <button type="button" class="ta-icon-btn shrink-0" title="Toggle navigation" aria-label="Toggle navigation" aria-expanded="false" data-sidebar-target="toggleButton" data-action="click->sidebar#toggle">
               <span class="ta-mobile-toggle-icon" data-sidebar-target="mobileOpenIcon"><%= tabler_icon("menu-2", classes: "ta-action-icon-lg") %></span>
               <span class="ta-mobile-toggle-icon hidden" data-sidebar-target="mobileCloseIcon"><%= tabler_icon("x", classes: "ta-action-icon-lg") %></span>
               <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="expandIcon"><%= tabler_icon("layout-sidebar-left-expand", classes: "ta-action-icon-lg") %></span>
               <span class="ta-desktop-toggle-icon hidden" data-sidebar-target="collapseIcon"><%= tabler_icon("layout-sidebar-left-collapse", classes: "ta-action-icon-lg") %></span>
             </button>
           <% end %>
-          <div class="min-w-0 flex-1">
-            <%= render_breadcrumbs if user_signed_in? %>
-            <% if content_for?(:page_header) %>
-              <div class="ta-page-header">
-                <%= yield :page_header %>
-              </div>
-            <% else %>
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <h1 class="text-xl font-semibold tracking-tight text-slate-900"><%= content_for(:title) || "Expense Tracker" %></h1>
-                <% if show_back_nav %>
-                  <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
-                    <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
-                    <span>Back to Home</span>
-                  <% end %>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-          </div>
 
           <% if user_signed_in? %>
-            <div class="w-full sm:order-none sm:w-auto sm:flex-none lg:mx-4">
+            <div class="min-w-0 flex-1 sm:flex-none lg:ml-auto">
               <%= render "shared/month_jump" %>
             </div>
           <% else %>
@@ -181,10 +151,36 @@
       </header>
 
       <section class="ta-content">
+        <div class="ta-content-header">
+          <% if user_signed_in? && breadcrumb_trail.any? %>
+            <div class="ta-breadcrumb-row">
+              <%= render_breadcrumbs %>
+            </div>
+          <% end %>
+
+          <% if content_for?(:page_header) %>
+            <div class="ta-page-header">
+              <%= yield :page_header %>
+            </div>
+          <% else %>
+            <div class="ta-page-header flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 class="ta-page-title"><%= content_for(:title) || "Expense Tracker" %></h1>
+              </div>
+              <% if show_back_nav %>
+                <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>
+                  <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
+                  <span>Back to Home</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
         <%= render "shared/flash" %>
 
         <% if latest_unread_release.present? %>
-          <section class="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-4 shadow-sm">
+          <section class="ta-section-frame mb-4 border-l-4 border-l-indigo-500 px-4 py-3" role="status" aria-label="Unread release note">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div class="min-w-0">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">New update available</p>
@@ -208,7 +204,7 @@
         <% end %>
 
         <% if available_github_update.present? %>
-          <section class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 shadow-sm">
+          <section class="ta-section-frame mb-4 border-l-4 border-l-amber-500 px-4 py-3" role="status" aria-label="Software update available">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div class="min-w-0">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">Update Available</p>
@@ -227,7 +223,7 @@
           </section>
         <% end %>
 
-        <div class="mt-4">
+        <div>
           <%= yield %>
         </div>
       </section>

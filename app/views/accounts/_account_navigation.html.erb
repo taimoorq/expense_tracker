@@ -1,4 +1,4 @@
-<nav class="mb-6 overflow-x-auto" aria-label="Account information">
+<nav class="mb-6 overflow-x-auto rounded-[var(--ta-radius-md)] border border-slate-200 bg-white p-2 shadow-[var(--ta-shadow-low)]" aria-label="Account information">
   <div class="ta-tab-list min-w-max">
     <% {
       "overview" => ["layout-dashboard", "Overview"],
@@ -8,7 +8,7 @@
     }.each do |view, (icon, label)| %>
       <%= link_to account_path(account, view: view, range: range),
                   class: "ta-tab #{'ta-tab-active' if active_view == view}",
-                  aria: { current: ("page" if active_view == view) } do %>
+                  aria: { current: ("page" if active_view == view), selected: (active_view == view).to_s } do %>
         <span class="inline-flex items-center gap-2">
           <%= tabler_icon(icon, classes: "ta-tab-icon") %>
           <span><%= label %></span>

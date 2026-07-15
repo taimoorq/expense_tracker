@@ -3,21 +3,16 @@
 <% breadcrumb @account.name, account_path(@account) %>
 <% breadcrumb "Import Activity" %>
 
-<% content_for :page_header do %>
-  <div>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.name %></p>
-    <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-      <%= tabler_icon("upload", classes: "h-6 w-6 text-indigo-600") %>
-      <span>Import Account Activity</span>
-    </h2>
-  </div>
-<% end %>
+<% page_header title: "Import Account Activity",
+  eyebrow: "Institution activity import",
+  subtitle: "Review the source file before any activity or balances are saved.",
+  icon: "upload" %>
 
 <div class="mx-auto max-w-4xl space-y-6">
-  <section class="ta-card">
+  <section class="ta-section-frame p-5">
     <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
       <div>
-        <h3 class="text-lg font-semibold text-slate-900">Upload activity CSV</h3>
+        <h2 class="text-lg font-semibold text-slate-900">Upload activity CSV</h2>
         <p class="mt-1 text-sm leading-6 text-slate-600">Use the activity export from <%= @account.institution_name.presence || @account.name %>. Preview reads the institution file, maps the columns, detects debit and credit direction, checks for duplicate rows, and captures any reported balance before anything is saved.</p>
       </div>
       <%= link_to account_path(@account), class: "fb-btn-secondary ta-action-btn" do %>
@@ -27,7 +22,7 @@
     </div>
 
     <div class="mb-5 border-y border-slate-200 py-4">
-      <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Import stages</h3>
+      <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Import stages</h2>
       <div class="mt-3 grid gap-4 md:grid-cols-3">
         <div>
           <p class="text-sm font-semibold text-slate-900">1. Preview</p>

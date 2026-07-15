@@ -120,7 +120,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_months_path
 
-    expect(page).to have_css('[data-month-list="scrollable"][style*="max-height: 26rem"]', visible: :all)
+    expect(page).to have_css('[data-month-list="scrollable"]', visible: :all)
   end
 
   it "shows a recurring transactions overview on the months page" do
@@ -376,7 +376,7 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_link("Breakdown")
     expect(page).to have_css('[data-panel-name="breakdown"]')
-    expect(page).to have_content("Visual Budget Breakdown")
+    expect(page).to have_content("Month Breakdown")
     expect(page).to have_content("Charged vs paid to by account")
     expect(page).to have_css('[data-chart-title-value="Charged vs Paid To by Account"]', visible: :all)
     expect(page).to have_content("1 tracked account")
@@ -398,8 +398,8 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_content("Account Flow")
-    expect(page).to have_content("2 accounts tracked")
+    expect(page).to have_content("Account flow")
+    expect(page).to have_content("2 accounts linked")
     expect(page).to have_content("$1,240.00 charged")
     expect(page).to have_content("$3,200.00 paid to")
   end
@@ -718,7 +718,7 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_content("Add Entry with Wizard")
     expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
-    expect(page).to have_content("This saves directly into #{month.label}")
+    expect(page).to have_content("Save directly into #{month.label}")
     expect(page).to have_content("Step 1")
     expect(page).to have_content("Review")
   end

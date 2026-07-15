@@ -13,6 +13,16 @@ RSpec.describe "Authentication", type: :request do
     expect(response.body).not_to include("data-controller=\"turnstile\"")
   end
 
+  it "uses one task heading and a distinct supporting showcase heading" do
+    get new_user_session_path
+
+    document = Nokogiri::HTML(response.body)
+
+    expect(document.css("h1").map(&:text).map(&:strip)).to eq([ "Sign in to your workspace" ])
+    expect(document.css(".ta-auth-showcase h2").text.strip).to eq("Secure access")
+    expect(document.css(".ta-auth-showcase").text.scan("Sign in to your workspace")).to be_empty
+  end
+
   it "saves the financial rhythm selected during sign up" do
     expect do
       post user_registration_path, params: {

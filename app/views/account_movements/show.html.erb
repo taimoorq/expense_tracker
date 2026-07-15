@@ -3,37 +3,31 @@
 <% breadcrumb @budget_month.label, budget_month_path(@budget_month) %>
 <% breadcrumb @movement.fetch(:title) %>
 
-<% content_for :page_header do %>
-  <div>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @budget_month.label %></p>
-    <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-      <%= tabler_icon("chart-bar", classes: "h-6 w-6 text-indigo-600") %>
-      <span><%= @movement.fetch(:title) %></span>
-    </h2>
-    <p class="mt-1 text-sm text-slate-600"><%= @account.name %></p>
-  </div>
-<% end %>
+<% page_header title: @movement.fetch(:title),
+  eyebrow: "Account movement",
+  subtitle: @account.name,
+  icon: "chart-bar" %>
 
 <div class="space-y-6">
-  <section class="grid gap-4 md:grid-cols-3">
-    <article class="ta-card">
+  <section class="ta-section-frame grid divide-y divide-slate-200 md:grid-cols-3 md:divide-x md:divide-y-0" aria-label="Movement equation">
+    <article class="ta-ledger-rail p-5">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total</p>
       <p class="mt-2 text-3xl font-semibold text-slate-900"><%= number_to_currency(@movement.fetch(:total)) %></p>
     </article>
-    <article class="ta-card">
+    <article class="p-5">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Entries</p>
       <p class="mt-2 text-3xl font-semibold text-slate-900"><%= @movement.fetch(:entry_count) %></p>
     </article>
-    <article class="ta-card">
+    <article class="bg-slate-50/70 p-5">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Account</p>
       <p class="mt-2 text-3xl font-semibold text-slate-900"><%= @account.name %></p>
     </article>
   </section>
 
-  <section class="ta-card">
+  <section class="ta-section-frame p-5">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h3 class="ta-section-title">Entries Behind This Number</h3>
+        <h2 class="ta-section-title">Entries Behind This Number</h2>
         <p class="mt-1 text-sm text-slate-500">These are the month entries included in the overview movement total.</p>
       </div>
       <div class="flex flex-wrap gap-2">

@@ -3,21 +3,16 @@
 <% breadcrumb @account.name, account_path(@account) %>
 <% breadcrumb "Activity Import Preview" %>
 
-<% content_for :page_header do %>
-  <div>
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"><%= @account.name %></p>
-    <h2 class="inline-flex items-center gap-2 text-2xl font-semibold">
-      <%= tabler_icon("table-import", classes: "h-6 w-6 text-indigo-600") %>
-      <span>Activity Import Preview</span>
-    </h2>
-  </div>
-<% end %>
+<% page_header title: "Activity Import Preview",
+  eyebrow: "Import verification",
+  subtitle: "Confirm mapped rows, duplicates, and balance changes before saving.",
+  icon: "table-import" %>
 
-<div class="mx-auto max-w-5xl space-y-6">
-  <section class="ta-card">
+<div class="mx-auto max-w-6xl space-y-6">
+  <section class="ta-section-frame p-5">
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div>
-        <h3 class="text-lg font-semibold text-slate-900">Review before importing</h3>
+        <h2 class="text-lg font-semibold text-slate-900">Review before importing</h2>
         <p class="mt-1 text-sm leading-6 text-slate-600"><%= @preview[:original_filename].presence || "Uploaded CSV" %> has been parsed into a temporary preview. No account activity rows have been saved yet.</p>
       </div>
       <%= link_to new_account_account_activity_import_path(@account), class: "fb-btn-secondary ta-action-btn" do %>
@@ -26,22 +21,26 @@
       <% end %>
     </div>
 
-    <div class="mt-5 grid gap-3 sm:grid-cols-4">
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div class="mt-5 grid divide-y divide-slate-200 border-y border-slate-200 sm:grid-cols-5 sm:divide-x sm:divide-y-0">
+      <div class="p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Rows</p>
         <p class="mt-2 text-2xl font-semibold text-slate-900"><%= @preview[:rows_count].to_i %></p>
       </div>
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Importable</p>
         <p class="mt-2 text-2xl font-semibold text-slate-900"><%= @preview[:imported_count].to_i %></p>
       </div>
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Duplicates</p>
         <p class="mt-2 text-2xl font-semibold text-slate-900"><%= @preview[:duplicate_count].to_i %></p>
       </div>
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Direction</p>
         <p class="mt-2 break-words text-sm font-semibold text-slate-900"><%= @preview[:amount_strategy].to_s.humanize %></p>
+      </div>
+      <div class="p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Statement period</p>
+        <p class="mt-2 text-sm font-semibold text-slate-900"><%= @preview[:started_on].present? && @preview[:ended_on].present? ? "#{l(Date.parse(@preview[:started_on].to_s), format: :short)} – #{l(Date.parse(@preview[:ended_on].to_s), format: :short)}" : "Not detected" %></p>
       </div>
     </div>
 
@@ -86,9 +85,10 @@
   <% end %>
 
   <% if Array(@preview[:sample_rows]).any? %>
-    <section class="ta-card">
+    <section class="ta-section-frame p-5">
       <div class="mb-4">
-        <h3 class="text-base font-semibold text-slate-900">Sample rows</h3>
+        <h2 class="text-base font-semibold text-slate-900">Sample rows</h2>
+        <p class="mt-1 text-sm text-slate-500">A bounded sample of <%= pluralize(Array(@preview[:sample_rows]).size, "row") %> from the parsed file.</p>
       </div>
 
       <div class="overflow-x-auto">
@@ -123,10 +123,10 @@
   <% end %>
 
   <% if @preview[:ok] %>
-    <section class="ta-card">
+    <section class="ta-section-frame p-5">
       <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h3 class="text-base font-semibold text-slate-900">Ready to import</h3>
+          <h2 class="text-base font-semibold text-slate-900">Ready to import</h2>
           <% if @preview[:institution_balance].present? %>
             <p class="mt-1 text-sm leading-6 text-slate-600">Import runs after this confirmation. The saved rows update the account activity views, duplicates stay skipped, and the institution-reported account balance becomes the balance source shown on the account.</p>
           <% else %>

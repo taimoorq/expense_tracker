@@ -11,6 +11,7 @@ export default class extends Controller {
   }
 
   connect() {
+    this.describeChart()
     this.beforeCacheHandler = () => this.destroyChart()
     document.addEventListener("turbo:before-cache", this.beforeCacheHandler)
 
@@ -84,7 +85,10 @@ export default class extends Controller {
     }
 
     this.chartWaitRetries = (this.chartWaitRetries || 0) + 1
-    if (this.chartWaitRetries > 20) return
+    if (this.chartWaitRetries > 20) {
+      this.element.setAttribute("data-chart-state", "unavailable")
+      return
+    }
 
     setTimeout(() => this.renderWhenReady(), 50)
   }
@@ -109,5 +113,18 @@ export default class extends Controller {
     }
 
     return "rgba(79, 70, 229, 0.55)"
+  }
+
+  describeChart() {
+    if (!(this.element instanceof HTMLCanvasElement)) return
+
+    const title = this.titleValue || "Financial chart"
+    const labels = this.labelsValue || []
+    const range = labels.length > 0 ? ` Covers ${labels.length} ${labels.length === 1 ? "period" : "periods"}.` : ""
+    const description = `${title}.${range} A text summary is provided next to this chart.`
+
+    this.element.setAttribute("role", "img")
+    this.element.setAttribute("aria-label", description)
+    this.element.textContent = description
   }
 }

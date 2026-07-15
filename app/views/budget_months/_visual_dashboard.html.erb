@@ -23,7 +23,11 @@
 
   <section class="ta-card ta-surface-breakdown">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("chart-bar") %> Visual Budget Breakdown</h3>
+      <div class="ta-ledger-rail">
+      <p class="ta-page-eyebrow">Financial narrative</p>
+      <h2 class="ta-section-title mt-1 inline-flex items-center gap-2"><%= tabler_icon("chart-bar") %> Month Breakdown</h2>
+      <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Start with the audit totals, then use the flow and account views to answer where money moved. Supporting trend charts are optional detail.</p>
+      </div>
       <p class="ta-muted"><%= compact ? "Compact chart view" : "" %></p>
     </div>
 
@@ -183,6 +187,12 @@
         <% end %>
       </div>
 
+      <details class="group mt-4 overflow-hidden rounded-[var(--ta-radius-md)] border border-slate-200 bg-slate-50/70">
+        <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+          <div><h3 class="text-sm font-semibold text-slate-900">Supporting trends</h3><p class="mt-0.5 text-xs text-slate-500">Section mix, running cash flow, variance, and cumulative outflow.</p></div>
+          <%= tabler_icon("chevron-down", classes: "h-5 w-5 text-slate-500 transition group-open:rotate-180") %>
+        </summary>
+        <div class="border-t border-slate-200 p-3 sm:p-4">
       <div class="grid gap-4 xl:grid-cols-2">
         <div class="rounded-lg border border-indigo-100 bg-white/90 p-3">
           <div class="h-72">
@@ -267,6 +277,8 @@
           </div>
         </div>
       </div>
+        </div>
+      </details>
 
     <% else %>
       <div class="space-y-4">

@@ -94,6 +94,46 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("On track")
   end
 
+  it "opens an exact review queue from Overview and edits a matching entry", js: true do
+    user = create(:user, email: "overviewreview@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      occurred_on: Date.current,
+      section: :fixed,
+      category: "Utilities",
+      payee: "Due power bill",
+      planned_amount: 95,
+      status: :planned)
+    create(:expense_entry,
+      budget_month: month,
+      user: user,
+      occurred_on: Date.current,
+      section: :variable,
+      category: "Groceries",
+      payee: "Paid market trip",
+      planned_amount: 70,
+      status: :paid,
+      actual_amount: nil)
+
+    sign_in_as(user)
+    visit root_path
+
+    find('a[aria-label="Review 1 still planned and due entries"]').click
+
+    expect(page).to have_current_path(budget_month_tab_path(month, "entries", review: "due"), ignore_query: false)
+    expect(page.evaluate_script("window.location.hash")).to eq("#plan-review")
+    within("#plan-review") do
+      expect(page).to have_content("Due power bill")
+      expect(page).not_to have_content("Paid market trip")
+      find('a[aria-label="Edit entry"]', match: :first).click
+    end
+
+    expect(page).to have_css('[role="dialog"][aria-labelledby="entry-editor-title"]')
+    expect(page).to have_field("Payee", with: "Due power bill")
+  end
+
   it "filters account activity by selected saved months", js: true do
     user = create(:user, email: "overviewaccountflow@example.com")
     current_month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))

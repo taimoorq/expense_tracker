@@ -110,6 +110,7 @@ module Budgeting
       impact = entry.cashflow_amount
       variable_payment_entry = variable_payment_entry?(entry)
       {
+        entry: entry,
         dom_id: dom_id(entry),
         date: entry.occurred_on || "—",
         date_iso8601: entry.occurred_on&.iso8601,

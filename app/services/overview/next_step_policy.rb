@@ -74,7 +74,7 @@ module Overview
           title: "Review #{context.fetch(:review_attention_count)} attention item#{context.fetch(:review_attention_count) == 1 ? "" : "s"}",
           description: "Some entries are due, missing details, or marked paid without an actual amount.",
           primary_label: "Open Plan and Edit",
-          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries"),
+          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries", review: "all", anchor: "plan-review"),
           secondary_label: "Open Budget",
           secondary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline")
         }

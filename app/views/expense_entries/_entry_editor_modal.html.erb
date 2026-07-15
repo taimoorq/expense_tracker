@@ -1,44 +1,50 @@
 <%= turbo_frame_tag "entry_editor_modal" do %>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close click->template-modal#backdropClose">
-    <div class="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-xl flex flex-col max-h-[90vh]">
-      <div class="overflow-y-auto flex-1">
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("pencil", classes: "h-4 w-4 text-indigo-600") %> Edit Entry</h3>
-        <button type="button" class="ta-icon-btn" aria-label="Close entry editor" title="Close" data-action="click->template-modal#close">
-          <%= tabler_icon("x", classes: "h-4 w-4 text-slate-500") %>
+  <div class="ta-dialog-backdrop" data-controller="template-modal" data-action="keydown.esc@window->template-modal#close keydown@window->template-modal#trapFocus click->template-modal#backdropClose">
+    <div class="ta-dialog max-w-3xl" role="dialog" aria-modal="true" aria-labelledby="entry-editor-title" tabindex="-1" data-template-modal-target="dialog">
+      <div class="ta-dialog-header">
+        <div class="ta-ledger-rail">
+          <p class="ta-page-eyebrow">Month entry</p>
+          <h3 id="entry-editor-title" class="ta-dialog-title inline-flex items-center gap-2"><%= tabler_icon("pencil", classes: "h-5 w-5 text-indigo-600") %> Edit Entry</h3>
+        </div>
+        <button type="button" class="ta-icon-btn" aria-label="Close entry editor" title="Close" data-modal-initial-focus data-action="click->template-modal#close">
+          <%= tabler_icon("x", classes: "h-4 w-4") %>
         </button>
       </div>
 
-      <%= form_with model: [budget_month, expense_entry],
-                    class: "grid gap-3 sm:grid-cols-2",
-                    data: {
-                      controller: "turbo-submit",
-                      action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
-                      turbo_submit_default_label_value: "Update Entry",
-                      turbo_submit_pending_label_value: "Saving changes..."
-                    } do |form| %>
-        <%= hidden_field_tag :timeline_view, params[:timeline_view] if params[:timeline_view].present? %>
-        <% if expense_entry.errors.any? %>
-          <div class="sm:col-span-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            <%= expense_entry.errors.full_messages.join(", ") %>
-          </div>
+      <div class="ta-dialog-body">
+        <%= form_with model: [budget_month, expense_entry],
+                      class: "grid gap-3 sm:grid-cols-2",
+                      data: {
+                        controller: "turbo-submit",
+                        action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
+                        turbo_submit_default_label_value: "Update Entry",
+                        turbo_submit_pending_label_value: "Saving changes..."
+                      } do |form| %>
+          <%= hidden_field_tag :timeline_view, params[:timeline_view] if params[:timeline_view].present? %>
+          <%= hidden_field_tag :review, params[:review] if params[:review].present? %>
+          <% if expense_entry.errors.any? %>
+            <div class="ta-alert-danger sm:col-span-2" role="alert">
+              <p class="font-semibold">Review the following before saving:</p>
+              <p class="mt-1"><%= expense_entry.errors.full_messages.join(", ") %></p>
+            </div>
+          <% end %>
+          <%= render "expense_entries/edit_fields", form: form, notes_input: :text_area, notes_rows: 4, notes_wrapper_class: "sm:col-span-2" %>
+          <%= render "expense_entries/edit_actions",
+                     form: form,
+                     expense_entry: expense_entry,
+                     wrapper_class: "sm:col-span-2 flex flex-wrap items-center justify-end gap-2 border-t pt-4",
+                     mark_paid_class: "fb-btn-secondary ta-action-btn",
+                     submit_label: "Update Entry",
+                     submit_class: "fb-btn-primary",
+                     enable_submit_state: true,
+                     cancel_button: true,
+                     cancel_label: "Cancel",
+                     cancel_class: "fb-btn-secondary",
+                     cancel_action: "click->template-modal#close",
+                     cancel_path: nil,
+                     cancel_options: {} %>
         <% end %>
-        <%= render "expense_entries/edit_fields", form: form, notes_input: :text_area, notes_rows: 4, notes_wrapper_class: "sm:col-span-2" %>
-        <%= render "expense_entries/edit_actions",
-                   form: form,
-                   expense_entry: expense_entry,
-                   wrapper_class: "sm:col-span-2 flex items-center justify-end gap-2",
-                   mark_paid_class: "fb-btn-secondary ta-action-btn",
-                   submit_label: "Update Entry",
-                   submit_class: "fb-btn-primary",
-                   enable_submit_state: true,
-                   cancel_button: true,
-                   cancel_label: "Cancel",
-                   cancel_class: "fb-btn-secondary",
-                   cancel_action: "click->template-modal#close",
-                   cancel_path: nil,
-                   cancel_options: {} %>
-      <% end %>
+      </div>
     </div>
   </div>
 <% end %>

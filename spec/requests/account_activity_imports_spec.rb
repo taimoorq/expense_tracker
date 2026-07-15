@@ -13,7 +13,7 @@ RSpec.describe "Account activity imports", type: :request do
     expect(response.body).to include("Import stages")
     expect(response.body).to include('aria-label="Breadcrumb"')
     expect(response.body).to include("Rewards Card")
-    expect(response.body).to include("Import Activity")
+    expect(response.body).to include("Import Account Activity")
     expect(response.body).to include("Building preview...")
     expect(response.body).to include("Preview submitted")
     expect(response.body).to include("imported account balances become the trusted balance source over snapshots")
