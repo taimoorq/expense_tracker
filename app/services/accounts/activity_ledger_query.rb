@@ -4,11 +4,12 @@ module Accounts
     DIRECTIONS = %w[all incoming outgoing].freeze
     DEFAULT_LIMIT = 150
 
-    def initialize(account:, filters: {}, limit: DEFAULT_LIMIT)
+    def initialize(account:, filters: {}, limit: DEFAULT_LIMIT, preload_ledger_associations: false)
       @account = account
       @user = account.user
       @filters = filters.to_h.with_indifferent_access
       @limit = limit
+      @preload_ledger_associations = preload_ledger_associations
     end
 
     def call
@@ -28,13 +29,14 @@ module Accounts
 
     private
 
-    attr_reader :account, :filters, :limit, :user
+    attr_reader :account, :filters, :limit, :preload_ledger_associations, :user
 
     def institution_rows
       return [] if source == "budget_entries"
 
       @institution_rows ||= begin
-        scope = account.account_activities.includes(:account_activity_import).recent_first
+        scope = account.account_activities.recent_first
+        scope = scope.includes(:account_activity_import) if preload_ledger_associations
         scope = scope.where(transaction_on: starts_on..) if starts_on
         scope = scope.where(transaction_on: ..ends_on) if ends_on
         rows = scope.to_a.select do |row|
@@ -51,8 +53,8 @@ module Accounts
         scope = user.expense_entries
           .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
           .where.not(occurred_on: nil)
-          .includes(:budget_month, :source_account, :destination_account, :source_template)
           .order(occurred_on: :desc, created_at: :desc)
+        scope = scope.includes(:budget_month) if preload_ledger_associations
         scope = scope.where(occurred_on: starts_on..) if starts_on
         scope = scope.where(occurred_on: ..ends_on) if ends_on
         rows = scope.limit(limit * 2).to_a.select { |entry| direction_matches?(impact_for(entry)) }

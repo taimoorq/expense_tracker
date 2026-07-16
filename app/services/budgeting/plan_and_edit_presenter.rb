@@ -381,15 +381,15 @@ module Budgeting
     def templates_for_type(template_type)
       case template_type
       when :pay_schedules
-        budget_month.user.pay_schedules.active_during_month(budget_month.month_on).to_a
+        budget_month.user.pay_schedules.active_during_month(budget_month.month_on).includes(:linked_account).to_a
       when :subscriptions
-        budget_month.user.subscriptions.active_only.to_a
+        budget_month.user.subscriptions.active_only.includes(:linked_account).to_a
       when :monthly_bills
-        budget_month.user.monthly_bills.active_only.select { |bill| bill.scheduled_for_month?(budget_month.month_on) }
+        budget_month.user.monthly_bills.active_only.includes(:linked_account).select { |bill| bill.scheduled_for_month?(budget_month.month_on) }
       when :payment_plans
-        budget_month.user.payment_plans.active_only.to_a
+        budget_month.user.payment_plans.active_only.includes(:linked_account).to_a
       when :credit_cards
-        budget_month.user.credit_cards.active_only.to_a
+        budget_month.user.credit_cards.active_only.includes(:payment_account).to_a
       else
         []
       end

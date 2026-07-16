@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe ReleaseCatalog do
   describe ".current_version" do
     it "uses the newest release entry as the app version" do
-      expect(described_class.current_version).to eq("0.8.1")
+      expect(described_class.current_version).to eq("0.9.0")
     end
   end
 

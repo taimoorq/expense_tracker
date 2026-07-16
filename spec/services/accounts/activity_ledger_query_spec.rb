@@ -22,6 +22,25 @@ RSpec.describe Accounts::ActivityLedgerQuery do
     expect(result.fetch(:budget_net)).to eq(50.to_d)
   end
 
+  it "only preloads associations used by the full ledger" do
+    preview = described_class.new(account: account).call
+    preview_activity = preview.fetch(:institution_rows).first
+    preview_entry = preview.fetch(:budget_entries).first
+
+    expect(preview_activity.association(:account_activity_import)).not_to be_loaded
+    expect(preview_entry.association(:budget_month)).not_to be_loaded
+
+    ledger = described_class.new(account: account, preload_ledger_associations: true).call
+    ledger_activity = ledger.fetch(:institution_rows).first
+    ledger_entry = ledger.fetch(:budget_entries).first
+
+    expect(ledger_activity.association(:account_activity_import)).to be_loaded
+    expect(ledger_entry.association(:budget_month)).to be_loaded
+    expect(ledger_entry.association(:source_account)).not_to be_loaded
+    expect(ledger_entry.association(:destination_account)).not_to be_loaded
+    expect(ledger_entry.association(:source_template)).not_to be_loaded
+  end
+
   it "filters by source, direction, and exact dates" do
     result = described_class.new(
       account: account,

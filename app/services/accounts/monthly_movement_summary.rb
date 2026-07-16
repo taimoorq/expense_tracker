@@ -1,8 +1,8 @@
 module Accounts
   class MonthlyMovementSummary
-    def initialize(budget_months:)
+    def initialize(budget_months:, expense_entries: nil)
       @budget_months = Array(budget_months).sort_by(&:month_on)
-      @entries_by_month_id = @budget_months.index_with { |month| month.expense_entries.to_a }
+      @entries_by_month_id = entries_by_month(expense_entries)
     end
 
     def payload
@@ -73,7 +73,7 @@ module Accounts
       budget_months.each do |month|
         month_index = month_index_by_id.fetch(month.id)
 
-        entries_by_month_id.fetch(month).each do |entry|
+        entries_by_month_id.fetch(month.id).each do |entry|
           movement_accounts_for(entry).each do |account|
             impact = Accounts::EntryImpact.new(account: account, entry: entry)
             movement_type = impact.movement_type
@@ -90,6 +90,13 @@ module Accounts
 
     def movement_accounts_for(entry)
       [ entry.source_account, entry.destination_account ].compact.uniq
+    end
+
+    def entries_by_month(expense_entries)
+      return budget_months.index_with { |month| month.expense_entries.to_a }.transform_keys(&:id) if expense_entries.nil?
+
+      grouped_entries = Array(expense_entries).group_by(&:budget_month_id)
+      budget_months.to_h { |month| [ month.id, grouped_entries.fetch(month.id, []) ] }
     end
 
     def bucket_for(movement_type)

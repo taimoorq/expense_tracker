@@ -24,6 +24,7 @@ module BudgetMonthFlow
     @selected_year = index_data.selected_year
     @previous_years = index_data.previous_years
     @visible_budget_months = index_data.visible_budget_months
+    @entry_counts = index_data.entry_counts
     @planning_template_counts = index_data.planning_template_counts
   end
 

@@ -96,13 +96,7 @@ module Budgeting
     end
 
     def preload_entries(entries)
-      ActiveRecord::Associations::Preloader.new(records: entries, associations: [ :budget_month, :source_account, :source_template ]).call
-
-      credit_card_templates = entries.filter_map { |entry| entry.source_template if entry.source_template.is_a?(CreditCard) }
-      if credit_card_templates.any?
-        ActiveRecord::Associations::Preloader.new(records: credit_card_templates, associations: [ :linked_account, :payment_account ]).call
-      end
-
+      ActiveRecord::Associations::Preloader.new(records: entries, associations: [ :budget_month, :source_account ]).call
       entries
     end
 

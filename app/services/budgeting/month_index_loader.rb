@@ -5,6 +5,7 @@ module Budgeting
       :selected_year,
       :previous_years,
       :visible_budget_months,
+      :entry_counts,
       :planning_template_counts
     )
 
@@ -23,6 +24,7 @@ module Budgeting
         selected_year: selected_year,
         previous_years: available_years.select { |year| year < current_year },
         visible_budget_months: visible_budget_months,
+        entry_counts: entry_counts,
         planning_template_counts: planning_template_counts
       )
     end
@@ -32,7 +34,11 @@ module Budgeting
     attr_reader :user, :year_param
 
     def budget_months
-      @budget_months ||= user.budget_months.includes(:expense_entries).recent_first.to_a
+      @budget_months ||= user.budget_months.recent_first.to_a
+    end
+
+    def entry_counts
+      @entry_counts ||= user.expense_entries.group(:budget_month_id).count
     end
 
     def current_year

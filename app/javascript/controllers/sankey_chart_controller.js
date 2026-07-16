@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
+const DESTINATION_LABEL_SPACE = 180
+
 export default class extends Controller {
   static targets = ["chart", "loading", "error", "errorMessage"]
   static values = {
@@ -77,8 +79,9 @@ export default class extends Controller {
 
   renderChartSafely() {
     try {
-      this.renderChart()
       this.showChart()
+      this.renderChart()
+      requestAnimationFrame(() => this.chart?.resize())
     } catch (error) {
       this.showError(error?.message || "The graph could not be rendered.")
     }
@@ -108,7 +111,7 @@ export default class extends Controller {
         {
           type: "sankey",
           left: 12,
-          right: 12,
+          right: DESTINATION_LABEL_SPACE,
           top: 16,
           bottom: 16,
           emphasis: { focus: "adjacency" },

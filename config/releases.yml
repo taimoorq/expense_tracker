@@ -1,4 +1,16 @@
 releases:
+  - version: "0.9.0"
+    released_on: "2026-07-16"
+    title: "Faster financial workspaces"
+    summary: "This release makes the busiest overview, month, account, and planning screens faster and more predictable by loading only the financial records each view needs, while giving account-flow charts more room to explain where money goes."
+    changes:
+      - "Speeds up the Months overview by calculating entry totals without loading every entry for every saved month."
+      - "Loads month data according to the active Budget, Breakdown, Calendar, or Plan and Edit workspace so each view avoids associations it does not use."
+      - "Keeps compact account activity previews lean while the full Activity ledger still loads the import and month context needed for detailed review."
+      - "Reuses one scoped set of entries across Overview cash-flow and monthly account-movement summaries instead of repeatedly loading each month association."
+      - "Preloads only the linked account details needed by recurring summaries, Plan and Edit coverage, and account-flow calculations."
+      - "Gives Sankey chart destination labels more room and resizes the chart after it becomes visible so account-flow paths remain readable."
+      - "Adds regression coverage for the compact and full account activity loading paths."
   - version: "0.8.1"
     released_on: "2026-07-14"
     title: "Clearer budget workspaces"

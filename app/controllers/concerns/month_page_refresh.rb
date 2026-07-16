@@ -60,13 +60,16 @@ module MonthPageRefresh
 
   def preload_month_expense_entries(entries)
     loaded_entries = entries.to_a
-    ActiveRecord::Associations::Preloader.new(records: loaded_entries, associations: [ :budget_month, :source_account, :source_template ]).call
+    ActiveRecord::Associations::Preloader.new(records: loaded_entries, associations: [ :budget_month, :source_account ]).call
+    loaded_entries
+  end
 
-    credit_card_templates = loaded_entries.filter_map { |entry| entry.source_template if entry.source_template.is_a?(CreditCard) }
-    if credit_card_templates.any?
-      ActiveRecord::Associations::Preloader.new(records: credit_card_templates, associations: [ :linked_account, :payment_account ]).call
+  def preload_plan_expense_entries(entries)
+    loaded_entries = entries.to_a
+    entries_with_source_accounts = loaded_entries.select { |entry| entry.source_account_id.present? }
+    if entries_with_source_accounts.any?
+      ActiveRecord::Associations::Preloader.new(records: entries_with_source_accounts, associations: :source_account).call
     end
-
     loaded_entries
   end
 end

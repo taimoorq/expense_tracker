@@ -10,7 +10,11 @@ class BudgetMonthsController < ApplicationController
   def show
     @budget_month = current_user.budget_months.find(params[:id])
     auto_complete_due_recurring_entries(@budget_month.expense_entries)
-    month_data = Budgeting::MonthShowLoader.call(user: current_user, budget_month: @budget_month, expense_entry_loader: method(:preload_month_expense_entries))
+    month_data = Budgeting::MonthShowLoader.call(
+      user: current_user,
+      budget_month: @budget_month,
+      expense_entry_loader: month_expense_entry_loader
+    )
     @expense_entries = month_data.expense_entries
     @expense_entry = month_data.expense_entry
     @previous_budget_month = month_data.previous_budget_month
@@ -59,6 +63,25 @@ class BudgetMonthsController < ApplicationController
   end
 
   private
+
+  def month_expense_entry_loader
+    case active_month_view
+    when "breakdown"
+      ->(entries) { entries.to_a }
+    when "entries"
+      method(:preload_plan_expense_entries)
+    else
+      method(:preload_month_expense_entries)
+    end
+  end
+
+  def active_month_view
+    requested_tab = params[:tab].presence_in(%w[timeline breakdown calendar entries])
+    return requested_tab if requested_tab.present?
+    return "timeline" if params[:view].presence_in(%w[sections full-list]).present?
+
+    current_user.preferred_month_view.presence_in(%w[timeline breakdown calendar entries]) || "timeline"
+  end
 
   def budget_month_params
     params.fetch(:budget_month, ActionController::Parameters.new).permit(:label, :month_on, :leftover, :notes)

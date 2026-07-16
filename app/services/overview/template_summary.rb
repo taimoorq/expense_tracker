@@ -78,15 +78,15 @@ module Overview
     def templates_for_type(template_type)
       case template_type
       when :pay_schedules
-        user.pay_schedules.active_during_month(current_month.month_on).to_a
+        user.pay_schedules.active_during_month(current_month.month_on).includes(:linked_account).to_a
       when :subscriptions
-        user.subscriptions.active_only.to_a
+        user.subscriptions.active_only.includes(:linked_account).to_a
       when :monthly_bills
-        user.monthly_bills.active_only.select { |bill| bill.scheduled_for_month?(current_month.month_on) }
+        user.monthly_bills.active_only.includes(:linked_account).select { |bill| bill.scheduled_for_month?(current_month.month_on) }
       when :payment_plans
-        user.payment_plans.active_only.to_a
+        user.payment_plans.active_only.includes(:linked_account).to_a
       when :credit_cards
-        user.credit_cards.active_only.to_a
+        user.credit_cards.active_only.includes(:payment_account).to_a
       else
         []
       end

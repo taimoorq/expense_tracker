@@ -38,7 +38,13 @@ class AccountsController < ApplicationController
     @import_history = detail_page[:import_history]
     @movement_timeline = detail_page[:movement_timeline]
     @recent_activity = detail_page[:recent_activity]
-    @activity_ledger = Accounts::ActivityLedgerQuery.new(account: @account, filters: activity_ledger_filters).call if @account_view == "activity"
+    if @account_view == "activity"
+      @activity_ledger = Accounts::ActivityLedgerQuery.new(
+        account: @account,
+        filters: activity_ledger_filters,
+        preload_ledger_associations: true
+      ).call
+    end
   end
 
   def new
