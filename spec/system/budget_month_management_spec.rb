@@ -77,6 +77,18 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_content("Drop a CSV here")
   end
 
+  it "opens listed months in the budget workspace by default" do
+    user = create(:user, email: "openbudget@example.com")
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
+
+    sign_in_as(user)
+    visit budget_months_path
+
+    budget_path = budget_month_tab_path(month, "timeline")
+    expect(page).to have_link(month.label, href: budget_path, count: 2)
+    expect(page).to have_link("Open Budget", href: budget_path, count: 2)
+  end
+
   it "shows only the current year's months by default and filters older years" do
     user = create(:user, email: "yearfilter@example.com")
     create(:budget_month, user: user, month_on: Date.new(2026, 1, 1), label: "January 2026")

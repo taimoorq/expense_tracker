@@ -39,7 +39,7 @@ export default class extends Controller {
         label: this.titleValue || "Series",
         data: this.dataValue || [],
         backgroundColor: this.defaultColors(chartType),
-        borderColor: "rgb(79,70,229)",
+        borderColor: this.themeColor("--ta-accent", "#4F46E5"),
         borderWidth: 2,
         tension: 0.3
       }
@@ -102,17 +102,27 @@ export default class extends Controller {
 
   defaultColors(type) {
     if (type === "doughnut" || type === "pie") {
-      return [
-        "rgba(79, 70, 229, 0.8)",
-        "rgba(14, 165, 233, 0.8)",
-        "rgba(16, 185, 129, 0.8)",
-        "rgba(245, 158, 11, 0.8)",
-        "rgba(244, 63, 94, 0.8)",
-        "rgba(168, 85, 247, 0.8)"
-      ]
+      return [ "--ta-accent", "--ta-info", "--ta-success", "--ta-warning", "--ta-danger", "--ta-feature" ]
+        .map((name) => this.colorWithAlpha(this.themeColor(name, "#4F46E5"), 0.8))
     }
 
-    return "rgba(79, 70, 229, 0.55)"
+    return this.colorWithAlpha(this.themeColor("--ta-accent", "#4F46E5"), 0.55)
+  }
+
+  themeColor(name, fallback) {
+    return window.getComputedStyle(document.body).getPropertyValue(name).trim() || fallback
+  }
+
+  colorWithAlpha(color, alpha) {
+    const normalized = color.trim()
+    const shortHex = /^#([0-9a-f]{3})$/i.exec(normalized)
+    const longHex = /^#([0-9a-f]{6})$/i.exec(normalized)
+    const hex = longHex?.[1] || shortHex?.[1].split("").map((character) => character.repeat(2)).join("")
+
+    if (!hex) return normalized
+
+    const channels = [ 0, 2, 4 ].map((index) => Number.parseInt(hex.slice(index, index + 2), 16))
+    return `rgba(${channels.join(", ")}, ${alpha})`
   }
 
   describeChart() {

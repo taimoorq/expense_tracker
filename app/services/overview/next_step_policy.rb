@@ -60,11 +60,10 @@ module Overview
           badge: "Next step",
           title: "Import recurring transactions into #{current_month.label}",
           description: "Start the month by pulling in the recurring transactions you already saved, then adjust the entries from there.",
-          primary_label: "Open Plan and Edit",
-          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries"),
-          secondary_label: "Add Entry with Wizard",
-          secondary_path: Rails.application.routes.url_helpers.new_wizard_budget_month_expense_entries_path(current_month),
-          secondary_turbo_frame: "entry_wizard_modal"
+          primary_label: "Open Budget",
+          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline"),
+          secondary_label: "Open Plan and Edit",
+          secondary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries")
         }
       end
 
@@ -73,10 +72,10 @@ module Overview
           badge: "Needs review",
           title: "Review #{context.fetch(:review_attention_count)} attention item#{context.fetch(:review_attention_count) == 1 ? "" : "s"}",
           description: "Some entries are due, missing details, or marked paid without an actual amount.",
-          primary_label: "Open Plan and Edit",
-          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries", review: "all", anchor: "plan-review"),
-          secondary_label: "Open Budget",
-          secondary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline")
+          primary_label: "Open Budget",
+          primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline"),
+          secondary_label: "Open Plan and Edit",
+          secondary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "entries", review: "all", anchor: "plan-review")
         }
       end
 

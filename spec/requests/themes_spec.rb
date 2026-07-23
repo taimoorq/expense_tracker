@@ -20,9 +20,21 @@ RSpec.describe "Themes", type: :request do
     follow_redirect!
 
     expect(response.body).to include("ta-theme-indigo")
-    expect(response.body).to include("aria-label=\"Indigo palette\"")
-    expect(response.body).to include("background-color: #4F46E5")
+    expect(response.body).to include("aria-label=\"Smoky Violet palette\"")
+    expect(response.body).to include("background-color: #5E5768")
     expect(response.body).to match(/<option[^>]*(selected=\"selected\"[^>]*value=\"indigo\"|value=\"indigo\"[^>]*selected=\"selected\")/)
+  end
+
+  it "applies the dark color scheme" do
+    patch theme_path, params: { theme: "dark" }, headers: { "HTTP_REFERER" => settings_path }
+
+    follow_redirect!
+
+    expect(response.body).to include("ta-theme-dark")
+    expect(response.body).to include("aria-label=\"Midnight palette\"")
+    expect(response.body).to include("--ta-color-scheme: dark")
+    expect(response.body).to include("background-color: #AAB7D1")
+    expect(response.body).to include("<meta name=\"theme-color\" content=\"#0F131B\">")
   end
 
   it "falls back to the default theme when an unknown key is posted" do

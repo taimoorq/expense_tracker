@@ -57,9 +57,11 @@ RSpec.describe "Responsive accessibility contracts", type: :system, js: true do
 
     {
       "Earth" => "earth",
-      "Indigo" => "indigo",
-      "Emerald" => "emerald",
-      "Sunset" => "sunset"
+      "Smoky Violet" => "indigo",
+      "Blue Slate" => "emerald",
+      "Sage" => "sage",
+      "Sunset" => "sunset",
+      "Midnight" => "dark"
     }.each do |label, key|
       select label, from: "Color scheme"
 
@@ -107,6 +109,29 @@ RSpec.describe "Responsive accessibility contracts", type: :system, js: true do
 
     expect(page).to have_no_css(".ta-breadcrumb-row")
     expect(page).to have_css(".ta-content-header h1", text: "Months", exact_text: true)
+  end
+
+  it "keeps the expanded sidebar profile menu above month content" do
+    user = create(:user, email: "profile-menu-stacking@example.com")
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 7, 1), label: "July 2026")
+
+    sign_in_as(user)
+    page.current_window.resize_to(1_280, 900)
+    visit budget_month_path(month)
+
+    find("button[aria-label='Toggle navigation']").click
+    expect(page).to have_css("body.ta-shell-expanded")
+
+    find("button[aria-label='Open profile menu']").click
+    expect(page).to have_css(".ta-user-menu-panel:not(.hidden)")
+
+    expect(page.evaluate_script(<<~JS)).to be(true)
+      (() => {
+        const menu = document.querySelector('.ta-user-menu-panel')
+        const rect = menu.getBoundingClientRect()
+        return document.elementsFromPoint(rect.right - 20, rect.top + 70).includes(menu)
+      })()
+    JS
   end
 
   private

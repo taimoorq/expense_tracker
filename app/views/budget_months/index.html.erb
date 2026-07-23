@@ -56,7 +56,7 @@
           <article id="mobile_<%= dom_id(month) %>" class="ta-ledger-row ta-ledger-rail bg-white" style="view-transition-name: dashboard-month-<%= dom_id(month) %>; view-transition-class: ta-vt-row;">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <%= link_to month.label, budget_month_path(month), class: "text-base font-semibold text-indigo-600 hover:text-indigo-500" %>
+                <%= link_to month.label, budget_month_tab_path(month, "timeline"), class: "text-base font-semibold text-indigo-600 hover:text-indigo-500" %>
                 <p class="mt-1 text-sm text-slate-500"><%= @entry_counts.fetch(month.id, 0) %> entries</p>
               </div>
               <span class="ta-money ta-status-badge bg-slate-100 text-slate-700"><%= number_to_currency(month.calculated_leftover) %></span>
@@ -78,9 +78,9 @@
             </dl>
 
             <div class="mt-4 flex flex-wrap gap-2">
-              <%= link_to budget_month_path(month), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
+              <%= link_to budget_month_tab_path(month, "timeline"), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                 <%= tabler_icon("calendar-month", classes: "ta-action-icon text-indigo-600") %>
-                <span>Open</span>
+                <span>Open Budget</span>
               <% end %>
               <%= link_to new_budget_month_from_path(month), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                 <%= tabler_icon("copy", classes: "ta-action-icon text-slate-600") %>
@@ -116,16 +116,16 @@
         <% if @visible_budget_months.any? %>
         <% @visible_budget_months.each do |month| %>
           <tr id="<%= dom_id(month) %>" style="view-transition-name: dashboard-month-<%= dom_id(month) %>; view-transition-class: ta-vt-row;">
-            <td class="ta-td"><%= link_to month.label, budget_month_path(month), class: "font-medium text-indigo-600 hover:text-indigo-500" %></td>
+            <td class="ta-td"><%= link_to month.label, budget_month_tab_path(month, "timeline"), class: "font-medium text-indigo-600 hover:text-indigo-500" %></td>
             <td class="ta-td text-right"><%= number_to_currency(month.income_total) %></td>
             <td class="ta-td text-right"><%= number_to_currency(month.outflow_total) %></td>
             <td class="ta-td text-right"><%= number_to_currency(month.calculated_leftover) %></td>
             <td class="ta-td text-right"><%= @entry_counts.fetch(month.id, 0) %></td>
             <td class="ta-td">
               <div class="flex justify-end gap-2">
-                <%= link_to budget_month_path(month), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
+                <%= link_to budget_month_tab_path(month, "timeline"), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
                   <%= tabler_icon("calendar-month", classes: "ta-action-icon text-indigo-600") %>
-                  <span>Open</span>
+                  <span>Open Budget</span>
                 <% end %>
 
                 <%= link_to new_budget_month_from_path(month), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>

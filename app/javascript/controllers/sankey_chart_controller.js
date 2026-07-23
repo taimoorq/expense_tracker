@@ -125,14 +125,14 @@ export default class extends Controller {
             opacity: 0.35
           },
           label: {
-            color: "#0f172a",
+            color: this.themeColor("--ta-text", "#0F172A"),
             fontSize: 12,
             fontWeight: 600
           },
           levels: [
-            { depth: 0, itemStyle: { color: "#0ea5e9" }, lineStyle: { color: "source" } },
-            { depth: 1, itemStyle: { color: "#16a34a" }, lineStyle: { color: "source" } },
-            { depth: 2, itemStyle: { color: "#4f46e5" }, lineStyle: { color: "target" } }
+            { depth: 0, itemStyle: { color: this.themeColor("--ta-info", "#0369A1") }, lineStyle: { color: "source" } },
+            { depth: 1, itemStyle: { color: this.themeColor("--ta-success", "#047857") }, lineStyle: { color: "source" } },
+            { depth: 2, itemStyle: { color: this.themeColor("--ta-accent", "#4F46E5") }, lineStyle: { color: "target" } }
           ],
           data: this.nodesValue || [],
           links: this.linksValue || []
@@ -208,5 +208,9 @@ export default class extends Controller {
     }
 
     return "graph"
+  }
+
+  themeColor(name, fallback) {
+    return window.getComputedStyle(document.body).getPropertyValue(name).trim() || fallback
   }
 }

@@ -1,7 +1,7 @@
-<div class="relative" data-controller="user-menu" data-action="click@window->user-menu#closeFromOutside keydown.esc->user-menu#closeOnEsc">
+<div class="ta-user-menu" data-controller="user-menu" data-action="click@window->user-menu#closeFromOutside keydown.esc->user-menu#closeOnEsc">
   <button
     type="button"
-    class="ta-sidebar-link w-full justify-between rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50"
+    class="ta-sidebar-link ta-user-menu-button"
     aria-label="Open profile menu"
     aria-expanded="false"
     data-user-menu-target="button"
@@ -10,32 +10,32 @@
     <span class="flex min-w-0 items-center gap-3">
       <%= tabler_icon("user-circle", classes: "ta-sidebar-link-icon") %>
       <span class="min-w-0 text-left">
-        <span class="block truncate text-sm font-medium text-slate-700">Profile</span>
-        <span class="block truncate text-xs text-slate-500"><%= current_user.email %></span>
+        <span class="ta-user-menu-title">Profile</span>
+        <span class="ta-user-menu-email block truncate text-xs"><%= current_user.email %></span>
       </span>
     </span>
-    <%= tabler_icon("chevron-right", classes: "h-4 w-4 shrink-0 text-slate-400") %>
+    <%= tabler_icon("chevron-right", classes: "ta-user-menu-email h-4 w-4 shrink-0") %>
   </button>
 
   <div
-    class="absolute bottom-[calc(100%+0.5rem)] left-0 z-40 hidden max-h-[min(20rem,calc(100vh-2rem))] w-[min(18rem,calc(100vw-3rem))] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 lg:bottom-0 lg:left-[calc(100%+0.75rem)]"
+    class="ta-user-menu-panel hidden"
     data-user-menu-target="menu"
   >
-    <div class="border-b border-slate-100 bg-slate-50 px-4 py-3">
-      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Signed in as</p>
-      <p class="mt-1 truncate text-sm font-semibold text-slate-900"><%= current_user.email %></p>
+    <div class="ta-user-menu-header">
+      <p class="ta-user-menu-eyebrow">Signed in as</p>
+      <p class="ta-user-menu-account"><%= current_user.email %></p>
     </div>
 
     <div class="p-2">
-      <%= link_to profile_path, class: "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700" do %>
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+      <%= link_to profile_path, class: "ta-user-menu-action" do %>
+        <span class="ta-user-menu-action-icon">
           <%= tabler_icon("user-circle", classes: "h-4 w-4") %>
         </span>
         <span class="flex-1">Profile</span>
       <% end %>
 
-      <%= button_to destroy_user_session_path, method: :delete, class: "mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50" do %>
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+      <%= button_to destroy_user_session_path, method: :delete, class: "ta-user-menu-action ta-user-menu-action-danger mt-1" do %>
+        <span class="ta-user-menu-action-icon">
           <%= tabler_icon("logout", classes: "h-4 w-4") %>
         </span>
         <span class="flex-1">Sign out</span>
