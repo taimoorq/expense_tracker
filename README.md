@@ -1,310 +1,287 @@
 # Expense Tracker
 
-A budgeting app for building month-by-month spending plans, tracking real activity, and reusing the recurring parts of a household budget.
+Expense Tracker is a self-hosted Rails app for people who plan their money one month at a time. Build a month from recurring paychecks and bills, record what actually happened, and keep account balances close to the budget.
 
-## Table of Contents
+The app favors manual planning and CSV imports over live bank sync. It is a good fit if you want a private, hands-on budget that you control and host yourself.
 
-- [Overview](#overview)
-- [Quick Start (Docker)](#quick-start-docker)
+[Product overview](https://financetracking.app/) · [User guide](https://financetracking.app/docs/) · [Releases](https://github.com/taimoorq/expense_tracker/releases)
+
+## Contents
+
+- [Quick start](#quick-start)
+- [What you can do](#what-you-can-do)
 - [Screenshots](#screenshots)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-	- [Run with Docker](#run-with-docker)
-	- [Run Locally](#run-locally)
-- [Authentication](#authentication)
-- [Self-Hosted HTTPS](#self-hosted-https)
-- [Published Docker Images](#published-docker-images)
-- [Updating a Self-Hosted Install](#updating-a-self-hosted-install)
-- [Demo and Sample Data](#demo-and-sample-data)
-	- [Sample User](#sample-user)
-	- [Seeded Demo Month](#seeded-demo-month)
-	- [Sample CSV Files](#sample-csv-files)
-- [User Documentation](#user-documentation)
-- [Open Source Readiness](#open-source-readiness)
-- [Development Commands](#development-commands)
+- [How the monthly workflow fits together](#how-the-monthly-workflow-fits-together)
+- [Self-hosting](#self-hosting)
+- [Demo and sample data](#demo-and-sample-data)
+- [Local development](#local-development)
+- [Authentication and configuration](#authentication-and-configuration)
 - [Troubleshooting](#troubleshooting)
-- [Docker Files](#docker-files)
 
-## Overview
+## Quick start
 
-Expense Tracker is built for people who budget by month and want one place to plan income, fixed bills, variable spending, debt payments, and carry-over decisions.
+Docker is the shortest path to a working local install. It starts the Rails app and PostgreSQL together.
 
-It also includes a manual accounts area for tracking balances in checking, savings, brokerage, retirement, and debt accounts without relying on live bank syncing. Account pages explain balances from snapshots plus paid and planned activity, so users can see both current and projected balances.
+### 1. Start the app
 
-Recurring transactions and month entries can optionally link to accounts, so account context carries through month workflows instead of living only in the balances area.
+Install Docker Desktop, or Docker Engine with Compose, then run:
 
-Hosted product overview and screenshots: https://financetracking.app/
+```bash
+git clone https://github.com/taimoorq/expense_tracker.git
+cd expense_tracker
+cp .env.example .env
+docker compose up --build
+```
 
-Hosted user documentation for current app behavior: https://financetracking.app/docs/
+Open [http://localhost:4287](http://localhost:4287) and create an account at `/users/sign_up`.
 
-With it, a user can:
+If the Overview page loads after sign-in, the app and database are ready.
 
-- restart from an Overview page that highlights the current month, quick actions, recurring status, and account context
-- use a weekly check-in card for due items, upcoming plans, missing actuals, and linked account activity
-- choose a lightweight financial rhythm during signup or in Settings so guidance fits steady income, variable income, shared household, or debt payoff workflows
-- build a fresh month or start from a previous month instead of recreating the same structure every time
-- review the same budget in a timeline, calendar, or editable list depending on how they like to think about money
-- add manual adjustments and one-off entries once the recurring structure is in place
-- reuse recurring items so routine planning takes less manual work through dedicated recurring transactions
-- preview and restore versioned JSON backups, including optional encrypted exports, workflow preferences, and reference sample backup files
-- estimate credit-card payments based on the cash left in the month rather than guessing in isolation
-- record manual account balance snapshots, review net worth trends, and understand current/projected balances from linked activity
-- trace account movement totals from overview charts back to the month entries behind them
-- keep in-app help available so the intended workflow is documented inside the product
+### 2. Optional: load a complete demo budget
 
-This README focuses on installing, configuring, seeding, and operating the app. User-facing walkthroughs of the current product flow now live in the hosted documentation above.
+In another terminal, run:
 
-For most people, the easiest way to try the app is the Docker setup below because it avoids local Ruby, PostgreSQL, and system package setup.
+```bash
+docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed
+```
 
-## Quick Start (Docker)
+Then sign in with:
 
-If the goal is to get the app running as quickly as possible, use Docker:
+- Email: `demo@example.com`
+- Password: `password123!`
 
-1. Clone the repository and move into it
-	- `git clone <repo-url>`
-	- `cd expense_tracker`
-2. Install Docker Desktop
-3. Optional: create a local env file for port, admin, or seed overrides
-	- `cp .env.example .env`
-4. Start the app
-	- `docker compose up --build`
-5. Open the app
-	- http://localhost:4287
-6. Optional: load seed data in another terminal
-	- users only: `docker compose exec web bin/rails db:seed`
-	- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
-	- all dev test users: `docker compose exec web env SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
+These credentials are for local evaluation only. Change them before exposing the app to anyone else.
 
-This quick-start Docker setup builds from a local git checkout of the repository. For production self-hosting from a prebuilt release image, see [Published Docker Images](#published-docker-images).
+### 3. Stop the app
 
-If you set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` in `.env` before starting Docker, the app will create or update the admin account automatically during startup.
+```bash
+docker compose down
+```
 
-If `4287` is already in use, set `APP_PORT` before starting Docker, for example `APP_PORT=4317 docker compose up --build`.
+Your database stays in the Docker volume. `docker compose down -v` also deletes that volume, so use it only when you want to erase the local database.
 
-After startup, admins can sign in through `/admin/sign_in` if `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` were configured. Regular users can create their own accounts at `/users/sign_up`. After seeding, you can also sign in with the demo account described in the [Sample User](#sample-user) section. Use `SEED_MODE=users_with_transactions` if you also want the sample month and seeded transaction history, or `SEED_PROFILE=all_test_users` when you want multiple QA-focused seed personas.
+### Common quick-start options
+
+- Change the host port: set `APP_PORT` in `.env`, or run `APP_PORT=4317 docker compose up --build`.
+- Create an admin during startup: set both `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` in `.env` before starting the containers.
+- Sign in as an admin: open `/admin/sign_in` after the admin account has been created.
+- Open the app from another device on your LAN: use `http://YOUR_COMPUTER_IP:4287` and allow the port through your firewall.
+
+## What you can do
+
+- Create a month from scratch or copy an earlier month.
+- Reuse paychecks, subscriptions, bills, payment plans, and credit-card payments without rebuilding the same plan each month.
+- Add one-off entries by hand or import activity from CSV.
+- Review a month as a full list, grouped budget, calendar, breakdown, or money-flow view.
+- Track manual balances and snapshots for cash, bank, investment, credit-card, loan, and other accounts.
+- Connect budget entries to the accounts money leaves or reaches, then inspect the activity behind balance and movement totals.
+- Export versioned JSON backups, optionally encrypt them, preview a restore, and bring the data back into the app.
+
+The app includes in-product help for day-to-day workflows. The hosted [user guide](https://financetracking.app/docs/) covers the same features in more detail.
 
 ## Screenshots
 
-Current screenshots reflect the latest overview, month-budget workflow, money-flow review, account tracking, account movement, and backup workflow.
-
 <table>
-	<tr>
-		<td align="center">
-			<img src="app/assets/images/marketing/overview-main.webp" alt="Overview page" width="100%">
-			<br>
-			<strong>Overview</strong>
-			<br>
-			Quick actions, continue guidance, recent months, and review prompts from one landing screen.
-		</td>
-		<td align="center">
-			<img src="app/assets/images/marketing/month-timeline-desktop.webp" alt="Month budget screen" width="100%">
-			<br>
-			<strong>Month Budget</strong>
-			<br>
-			Grouped budget sections, filters, view toggles, and a focused month workflow in one place.
-		</td>
-	</tr>
-	<tr>
-		<td align="center">
-			<img src="app/assets/images/marketing/overview-money-flow.webp" alt="Overview money flow graph" width="100%">
-			<br>
-			<strong>Money Flow View</strong>
-			<br>
-			See how saved months roll income into spending buckets and leftover cash across the year.
-		</td>
-		<td align="center">
-			<img src="app/assets/images/marketing/accounts-overview-desktop.webp" alt="Accounts and net worth" width="100%">
-			<br>
-			<strong>Accounts &amp; Net Worth</strong>
-			<br>
-			Manual balance tracking, snapshot history, and projected account context that stay close to the budgeting workflow.
-		</td>
-	</tr>
-	<tr>
-		<td align="center">
-			<img src="app/assets/images/marketing/overview-paid-vs-actual.webp" alt="Overview account movement chart" width="100%">
-			<br>
-			<strong>Account Movement</strong>
-			<br>
-			Review card additions, card payments, bank movement, and drilldowns without leaving the overview flow.
-		</td>
-		<td align="center">
-			<img src="app/assets/images/marketing/backup-and-restore-desktop.webp" alt="Backup and restore" width="100%">
-			<br>
-			<strong>Backup &amp; Restore</strong>
-			<br>
-			Versioned JSON exports, optional encryption, import previews, and reference sample backups.
-		</td>
-	</tr>
+  <tr>
+    <td align="center">
+      <img src="app/assets/images/marketing/overview-main.webp" alt="Overview showing the current month, account summary, and next actions" width="100%">
+      <br>
+      <strong>Overview</strong>
+      <br>
+      See the current month, account context, and the next item that needs attention.
+    </td>
+    <td align="center">
+      <img src="app/assets/images/marketing/month-timeline-desktop.webp" alt="Monthly budget grouped into income, bills, spending, and other sections" width="100%">
+      <br>
+      <strong>Monthly budget</strong>
+      <br>
+      Filter and review planned and paid entries without leaving the month.
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="app/assets/images/marketing/overview-money-flow.webp" alt="Money-flow chart tracing income through spending groups and leftover cash" width="100%">
+      <br>
+      <strong>Money flow</strong>
+      <br>
+      Trace how income moved through spending groups across saved months.
+    </td>
+    <td align="center">
+      <img src="app/assets/images/marketing/accounts-overview-desktop.webp" alt="Accounts overview with manual balances, snapshots, and net worth" width="100%">
+      <br>
+      <strong>Accounts and net worth</strong>
+      <br>
+      Keep manual balances, snapshots, and projections beside the budget.
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="app/assets/images/marketing/overview-paid-vs-actual.webp" alt="Account movement chart with links to the entries behind each total" width="100%">
+      <br>
+      <strong>Account movement</strong>
+      <br>
+      Open the entries behind bank movement, card charges, and card payments.
+    </td>
+    <td align="center">
+      <img src="app/assets/images/marketing/backup-and-restore-desktop.webp" alt="Backup page with export, encryption, preview, and restore options" width="100%">
+      <br>
+      <strong>Backup and restore</strong>
+      <br>
+      Preview a versioned backup before restoring it.
+    </td>
+  </tr>
 </table>
 
-## Features
+## How the monthly workflow fits together
 
-### Accounts and Context
+1. **Set up reusable items.** Add the paychecks, bills, subscriptions, payment plans, and card payments that usually appear each month.
+2. **Build the month.** Start fresh, copy an earlier month, or generate entries from the recurring items you want to use.
+3. **Keep it current.** Add one-off entries, import CSV activity, and confirm planned entries after the activity occurs. Opening a month never marks entries paid for you.
+4. **Review the result.** Use the budget, breakdown, calendar, account, and money-flow views to compare the plan with actual activity.
 
-- Start from an Overview page that surfaces the current month, attention items, recurring progress, account summaries, and quick actions
-- Track manual balances for savings, investment, cash, and debt accounts without coupling budgeting to bank-sync reliability
-- Use snapshots as reconciliation points, then see paid activity, planned activity, current balances, projected balances, and month-by-month rollforwards
-- Link recurring transactions and entries to accounts while still allowing a manual account label when needed
-- Show linked account context directly in month review views, overview movement charts, drilldowns, and credit-card payoff progress
+Accounts are tracked manually. A balance snapshot provides a known starting point; paid activity explains the current balance, and planned activity contributes to the projected balance.
 
-### Recurring Transactions and Automation
+## Self-hosting
 
-- Reuse recurring items like paychecks, subscriptions, monthly bills, payment plans, and credit cards so routine planning takes less effort
-- Create credit card accounts and optionally schedule their monthly payments in the same setup flow
-- Save supported wizard-created entries directly as recurring transactions when you want a one-off action to become reusable later
-- Recalculate card payment estimates from available leftover cash so payoff planning stays aligned with the rest of the month
+The quick start is intended for local evaluation and development. For a public deployment, use the production Compose stack behind the included Caddy reverse proxy.
 
-### Month Setup and Workflow
+### Public HTTPS deployment
 
-- Plan each month in one place so income, bills, subscriptions, debt payments, and discretionary spending stay visible together
-- Start a new month quickly by cloning an existing one, which saves time when your budget structure stays mostly the same
-- Keep workflow guidance available inside the app through a dedicated Help area
-- Tune lightweight Overview guidance with a financial rhythm choice during signup or in Settings for steady income, variable income, shared household, or debt payoff workflows
-- Avoid accidental duplicate generation on older completed months with safeguards that hide actions you likely no longer need
+1. Copy the production environment template.
 
-### Entries and Review
+   ```bash
+   cp .env.production.example .env.production
+   ```
 
-- See your budget in multiple views so you can review the same data as a timeline, a calendar, a breakdown, or a detailed entry list
-- Add transactions the way that fits your workflow, whether that means entering them manually, using the guided wizard, or launching the wizard from month views
-- Upload past transactions to get a month populated faster, including optional money-leaves and money-goes-to account columns for account movement
-- Filter entries by the reasons and categories that actually appear in your month, making it easier to focus on specific spending patterns
-- Toggle between grouped timeline sections and a full month list without leaving the same review surface
+2. In `.env.production`, set:
 
-### Backup and Privacy
+   - `APP_HOST` and `ALLOWED_HOSTS` to your domain
+   - a strong `POSTGRES_PASSWORD`
+   - the matching password inside `DATABASE_URL`
+   - valid `SECRET_KEY_BASE` and `RAILS_MASTER_KEY` values
 
-- Export and restore recurring transactions, months, account data, and workflow preferences through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items, explicit money-leaves/money-goes-to account links, generated-entry metadata, and historical recurring auto-completion markers
-- Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
-- Keep each person’s budget private behind sign-in so one account only sees its own months and entries
+3. Point the domain's DNS record at the server.
 
-## Tech Stack
+4. Start the stack.
 
-For developers and contributors, the app is built with:
+   ```bash
+   docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
+   ```
 
-- Ruby 4.0.5
-- Rails 8.1.3
-- PostgreSQL
-- Devise
-- Turbo + Stimulus
-- Tailwind CSS
-- Chart.js (loaded from CDN for line, bar, doughnut, and other standard charts)
-- Apache ECharts (loaded from CDN for the monthly flow graph)
-- RSpec + FactoryBot
+Caddy is the only service exposed on ports `80` and `443`. Rails and PostgreSQL remain on the internal Docker network.
 
-## Getting Started
+### Use a published image
 
-For most users, Docker is the recommended way to run the app.
+For a repeatable deployment, set a versioned image in `.env.production`:
 
-Use Docker if you want the quickest path to opening the app without manually setting up Ruby, PostgreSQL, or system dependencies.
+```dotenv
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.0.0
+```
 
-Use the local setup only if you plan to develop on the project or prefer managing those dependencies yourself.
+Then pull and start it without building locally:
 
-### Run with Docker
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml pull web
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build
+```
 
-This is the recommended setup for most users.
+Use a version tag instead of `latest` when you want controlled upgrades.
 
-The repository includes a Docker-based environment that starts the Rails app and PostgreSQL together.
+### Private LAN HTTPS
 
-For local evaluation and development, run Docker Compose from a local clone and rebuild from source. For production self-hosting, you can either build the image from your checkout or set `EXPENSE_TRACKER_IMAGE` to a published release image from GHCR or Docker Hub.
+For a private hostname such as `budget.lan`, use Caddy's internal certificate authority:
 
-#### Prerequisites
+```bash
+docker compose --env-file .env.production \
+  -f docker-compose.production.yml \
+  -f docker-compose.lan-https.yml \
+  up -d --build
+```
 
-- Docker Desktop, or Docker Engine + Docker Compose
+Each client device must trust the root certificate generated in the `caddy_data` volume. Copy it from the running container with:
 
-#### Start the app
+```bash
+docker compose --env-file .env.production \
+  -f docker-compose.production.yml \
+  -f docker-compose.lan-https.yml \
+  cp caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-local-root.crt
+```
 
-1. Clone the repository and move into it
-	- `git clone <repo-url>`
-	- `cd expense_tracker`
-2. Optional: copy the example environment file and adjust any values you want to override
-	- `cp .env.example .env`
-3. Build and start the containers
-	 - `docker compose up --build`
-4. Open the app
-	 - http://localhost:4287
+If you replace the `caddy_data` volume, Caddy may create a new root certificate that clients must trust again.
 
-Start the full Compose stack from this directory. Do not start the `web` container by itself with `docker run` or from a GUI action that skips the `db` service, because the Rails container expects to reach PostgreSQL at the Compose hostname `db`.
+### Update an install
 
-For access from the same machine, use `http://localhost:4287`.
+Before updating, back up PostgreSQL and compare your environment file with the current example for new settings.
 
-For access from another device on your network, use `http://YOUR_COMPUTER_IP:4287`. The Docker setup enables non-localhost hosts for development, but your OS firewall and router still need to allow inbound connections to that port.
+For the local Docker setup from the quick start:
 
-The Docker setup publishes the app on host port `4287` by default to avoid the more commonly used `3000`.
+```bash
+git pull
+docker compose up -d --build
+```
 
-To override it, set `APP_PORT` in your shell or a local `.env` file before starting Docker.
+For a production install built from source:
 
-For convenience, copy `.env.example` to `.env` and edit the values you want to override.
+```bash
+git pull
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
+```
 
-Because this flow builds from your local checkout, later source-based updates are done from this same directory with:
+For a production install using a published image, change `EXPENSE_TRACKER_IMAGE` to the new version, then run:
 
-- `git pull`
-- `docker compose up -d --build`
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml pull web
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build
+```
 
-Examples:
+The container runs `bin/rails db:prepare` during startup, so migrations are applied automatically. Keep the PostgreSQL volume intact, and do not run `db:seed` during a normal update.
 
-- `APP_PORT=4317 docker compose up --build`
-- `.env` file entry: `APP_PORT=4317`
+The app also checks GitHub Releases and shows an update notice when a newer release is available. The related overrides are documented in [.env.example](.env.example).
 
-Services included:
+## Demo and sample data
 
-- `web` — Rails app running via `bin/dev`
-- `db` — PostgreSQL 16 on the internal Compose network
+`bin/rails db:seed` creates or refreshes a demo user. By default it adds recurring transactions, linked accounts, and balance snapshots without creating month history.
 
-The PostgreSQL container is not published to a host port by default. The Rails app connects to it over the Compose network as `db`, which avoids conflicts on machines that already use port `5432` for another local PostgreSQL instance.
+Add six months of sample history with:
 
-The container entrypoint automatically runs `bin/rails db:prepare` when the app starts.
+```bash
+SEED_MODE=users_with_transactions bin/rails db:seed
+```
 
-If `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are present in the container environment, the entrypoint also runs `bin/rails admin:bootstrap` so the admin account exists from the initial install.
+For Docker, prefix the command with `docker compose exec web env`.
 
-#### Optional: load seed data
+### Seed profiles
 
-In another terminal:
+Set `SEED_PROFILE` to choose the data shape you need:
 
-- users only: `docker compose exec web bin/rails db:seed`
-- users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
-- all dev test users: `docker compose exec web env SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
+| Profile | Useful for |
+| --- | --- |
+| `demo` | A balanced account with recurring items and optional month history |
+| `new_user` | Onboarding and empty-state testing |
+| `recurring_heavy` | A large recurring library without month history |
+| `month_history_heavy` | Twelve months of budget history |
+| `account_heavy` | More account types, snapshots, and linked activity |
+| `manual_adjustments` | Skipped items, exceptions, and manual entries |
+| `all_test_users` | Every profile in one seed run |
 
-The default command creates or refreshes a demo account with reusable recurring transactions, linked manual accounts across the supported account kinds, and balance snapshots. Use `SEED_MODE=users_with_transactions` to also create the sample month and seeded transaction history. Use `SEED_PROFILE=all_test_users` to add a broader set of targeted dev personas for QA and UI review.
+Example:
 
-If you prefer storing these overrides in `.env` before running Docker, set:
+```bash
+SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed
+```
 
-- `ADMIN_USER_EMAIL=admin@example.com`
-- `ADMIN_USER_PASSWORD=strong-password`
-- `SEED_MODE=users_with_transactions` when you want full demo data
-- `SEED_PROFILE=all_test_users` when you want multiple targeted test users
+You can override the primary demo credentials with `SEED_USER_EMAIL` and `SEED_USER_PASSWORD`.
 
-Then:
+Sample import files live in [`public/samples/`](public/samples/):
 
-- run `docker compose up --build` to install and bootstrap the admin user automatically
-- run `docker compose exec web bin/rails db:seed` only if you also want the demo user and sample budgeting data
+- [`monthly_transactions_template.csv`](public/samples/monthly_transactions_template.csv)
+- [`sample_month_common_payments.csv`](public/samples/sample_month_common_payments.csv)
 
-From there, the admin can sign in through `/admin/sign_in`, and end users can create their own accounts through `/users/sign_up`.
+## Local development
 
-#### Confirming recurring activity
+Use this path when you want to change the app without Docker.
 
-Recurring-generated entries stay planned when their due date arrives. Opening a
-month never changes financial records. Confirm an entry as paid after the
-activity occurs; the app then uses its actual amount in current account movement
-and balance calculations.
-
-Older backups may contain `auto_completed_at` markers created by versions that
-automatically completed recurring entries. Those markers remain importable and
-reviewable, and are cleared when the entry is explicitly saved.
-
-#### Stop the app
-
-- `docker compose down`
-
-To also remove the database volume:
-
-- `docker compose down -v`
-
-### Run Locally
-
-This setup is mainly for developers and contributors.
-
-#### Prerequisites
+### Prerequisites
 
 - Ruby 4.0.5
 - Bundler
@@ -312,545 +289,107 @@ This setup is mainly for developers and contributors.
 - libpq development headers
 - libvips
 
-Typical macOS setup with Homebrew:
+On macOS with Homebrew:
 
-- `brew install postgresql libpq vips`
+```bash
+brew install postgresql libpq vips
+```
 
-Make sure PostgreSQL is running before starting the app.
+Start PostgreSQL, then run:
 
-#### Setup
+```bash
+cp .env.example .env
+bin/setup --skip-server
+bin/dev
+```
 
-1. Create a local env file
-	 - `cp .env.example .env`
-2. Install gems
-	 - `bundle install`
-3. Prepare the database
-	 - `bin/setup --skip-server`
-4. Optional: load seed data
-	 - users only: `bin/rails db:seed`
-	 - users with transactions: `SEED_MODE=users_with_transactions bin/rails db:seed`
-5. Start the development server
-	 - `bin/dev`
+Open [http://localhost:3000](http://localhost:3000).
 
-Open http://localhost:3000. Admins sign in through `/admin/sign_in`, and regular users can register through `/users/sign_up` before signing in to start creating budget months.
+### Stack
 
-The `Accounts & Net Worth` area is available from the signed-in sidebar if you want to track manual balances alongside the monthly budgeting workflow.
+- Rails 8.1.3 and Ruby 4.0.5
+- PostgreSQL
+- Hotwire with Turbo and Stimulus
+- Tailwind CSS through `tailwindcss-rails`
+- Propshaft and Importmap
+- Chart.js and Apache ECharts
+- Rails tests plus RSpec and FactoryBot
 
-`bin/setup` runs `bin/rails db:prepare` and then `bin/rails admin:bootstrap`. If `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are set in `.env`, the admin account is created or updated automatically as part of local install.
+### Useful commands
 
-`dotenv-rails` is enabled in development, so values in `.env` are loaded automatically when you run Rails commands locally.
+| Task | Command |
+| --- | --- |
+| Prepare or update the development database | `bin/setup --skip-server` |
+| Open a Rails console | `bin/rails console` |
+| Run Rails tests | `bin/rails test` |
+| Run RSpec | `bundle exec rspec` |
+| Run RuboCop | `bin/rubocop` |
+| Scan Rails code | `bin/brakeman --no-pager` |
+| Audit bundled gems | `bin/bundler-audit` |
+| Audit importmap packages | `bin/importmap audit` |
+| Check autoloading | `bin/rails zeitwerk:check` |
+| Install the tracked pre-commit hook | `bin/rails git_hooks:install` |
 
-Common local `.env` uses:
+The pre-commit hook runs RuboCop against staged Ruby files.
 
-- override `PORT` for `bin/dev`
-- override `APP_PORT` for Docker
-- set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` when you want install-time admin bootstrap
-- set `SEED_MODE`, `SEED_USER_EMAIL`, and `SEED_USER_PASSWORD` before running `bin/rails db:seed`
-- set `DATABASE_URL` if you want to connect to PostgreSQL over TCP instead of the default local socket setup
+### Releases
 
-## Authentication
+`config/releases.yml` is the source for the in-app release feed. Add new releases at the top. When that change lands on `main`, [the release workflow](.github/workflows/publish_release.yml) creates the GitHub release and publishes versioned Docker images.
 
-The app requires sign-in so each account only sees its own months, entries, imports, and recurring transactions.
+## Authentication and configuration
 
-There is also a separate admin authentication surface for user-access management. The admin console is intentionally limited to identity metadata, access-state changes, and admin audit logs. It does not provide routes for viewing budget months, entries, recurring transactions, or account balances.
+Regular and admin accounts use separate sign-in pages:
 
-The intended install flow is:
+- Regular users register at `/users/sign_up` and sign in at `/users/sign_in`.
+- Admins sign in at `/admin/sign_in`.
+- The admin console manages user access and audit history. It does not expose users' budgets, entries, recurring transactions, or account balances.
 
-- set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD`
-- run `bin/setup --skip-server` locally or `docker compose up --build` in Docker
-- sign in to `/admin/sign_in`
-- let end users register through `/users/sign_up`
+Set both `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` to create or update an admin through `bin/setup`, the development Docker entrypoint, or `bin/rails admin:bootstrap`. If only one value is present, bootstrap stops with an error instead of creating a partial account.
 
-You can:
+The public authentication routes include cache-backed rate limiting. Optional Cloudflare Turnstile protection is enabled when the Rails process receives both `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
 
-- create a new regular user account from `/users/sign_up`
-- sign in as an admin from `/admin/sign_in`
-- sign in with your own account
-- use the seeded demo account after running `bin/rails db:seed`
+Common settings are documented in:
 
-The default seed creates the demo user with recurring transactions and account data. Use `SEED_MODE=users_with_transactions` if you also want seeded month data and transaction history.
-
-Admin provisioning is normally handled during install by `bin/setup`, the Docker entrypoint, or `bin/rails admin:bootstrap` when `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are set.
-
-Examples:
-
-- `ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD=password123! bin/setup --skip-server`
-- `ADMIN_USER_EMAIL=admin@example.com ADMIN_USER_PASSWORD=password123! bin/rails admin:bootstrap`
-- `docker compose up --build` with those same values present in `.env`
-
-If only one of those admin env vars is set, admin bootstrap fails fast so you do not end up with a half-configured admin setup.
-
-Optional Cloudflare Turnstile protection is available for the public authentication entry points:
-
-- user sign in
-- user sign up
-- password reset request
-- admin sign in
-
-To enable it, set both `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` before booting the app. If either value is missing, the widget stays disabled and authentication behaves normally.
-
-The Turnstile widget is rendered explicitly on the shared authentication layout so it can recover cleanly across Turbo visits and cached page restores.
-
-### Authentication rate limiting
-
-The same public Devise entry points are also rate limited with Rails' built-in controller rate limiting before Devise or Turnstile performs expensive work:
-
-- user sign in: 5 attempts per email/IP pair every 5 minutes, plus 25 attempts per IP every 5 minutes
-- admin sign in: 5 attempts per email/IP pair every 5 minutes, plus 15 attempts per IP every 5 minutes
-- user sign up: 5 attempts per IP every hour
-- password reset request: 5 attempts per email/IP pair every 15 minutes, plus 20 attempts per IP every hour
-
-When a request is throttled, the authentication page renders again with `429 Too Many Requests` and a generic "Too many requests" error. The limiter intentionally keys email-based throttles by IP plus an app-secret-backed HMAC of the submitted email, so raw email addresses are not stored in cache keys.
-
-Rate-limit counters use the app cache store. In production this is Solid Cache, so throttles survive app process restarts and work across Rails workers. In test, the rate limiter uses an in-memory cache store that is cleared before each example.
-
-The shared behavior lives in `app/controllers/concerns/devise_rate_limited.rb`. The per-endpoint limits are declared in the custom Devise controllers under `app/controllers/users` and `app/controllers/admin`.
-
-You can still create an admin manually from the Rails console if that fits your deployment workflow better:
-
-- `bin/rails console`
-- `AdminUser.create!(email: "admin@example.com", password: "password123!", password_confirmation: "password123!")`
-
-For stronger hardening in production, run the admin surface with a restricted PostgreSQL role that can only read `users`, `admin_users`, and `admin_audit_logs`, plus update `users.access_state`.
-
-## Self-Hosted HTTPS
-
-For a public self-hosted deployment, run the Rails app behind a reverse proxy that terminates TLS instead of exposing the app container directly.
-
-This repository includes a Caddy-based production example:
-
-1. Copy the production environment template.
-	- `cp .env.production.example .env.production`
-2. Set a real domain name in `APP_HOST`.
-3. Set strong values for `POSTGRES_PASSWORD`, `SECRET_KEY_BASE`, and `RAILS_MASTER_KEY`.
-4. Point your DNS record at the server.
-5. Start the production stack.
-	- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --build`
-
-The command above builds the Rails image from your local checkout. To use a published release image instead, set `EXPENSE_TRACKER_IMAGE` in `.env.production`, pull the `web` image, and start the stack with `--no-build`.
-
-This setup publishes only Caddy on ports `80` and `443`. Rails stays private on the internal Docker network and receives forwarded HTTPS traffic from Caddy.
-
-Included files for this flow:
-
-- `docker-compose.production.yml`
-- `deploy/Caddyfile`
-- `.env.production.example`
-
-Rails production is configured to expect an SSL-terminating proxy by default. If you run production over plain HTTP (e.g. LAN without HTTPS), set `ASSUME_SSL=false` and `FORCE_SSL=false` in your `.env.production` file so cookies and redirects work correctly.
-
-### Self-signed / LAN HTTPS
-
-For a private LAN install where you do not want public certificates, use the dedicated Caddy config that issues certificates from Caddy's internal CA.
-
-1. Copy the production environment template.
-	- `cp .env.production.example .env.production`
-2. Set `APP_HOST` to the hostname you will actually use on your LAN, such as `budget.lan`.
-3. Start the same production stack with the LAN HTTPS override.
-	- `docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.lan-https.yml up -d --build`
-4. Install Caddy's internal root CA on each client device that will access the app.
-
-Files for this variant:
-
-- `docker-compose.lan-https.yml`
-- `deploy/Caddyfile.internal`
-
-This is appropriate for private networks and self-hosted setups without public DNS. Browsers will warn about the site until the internal CA is trusted on the client device.
-
-#### Trust the LAN certificate authority
-
-After the stack starts for the first time, Caddy creates its internal root CA inside the `caddy_data` volume. You need to export that root certificate and trust it on each client device that will open the app.
-
-One simple way to copy it out is:
-
-1. Start the LAN HTTPS stack.
-	- `docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.lan-https.yml up -d --build`
-2. Copy the root certificate from the running Caddy container.
-	- `docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.lan-https.yml cp caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-local-root.crt`
-3. Install `caddy-local-root.crt` into the trust store of each browser or device that should trust your LAN deployment.
-
-Typical trust flow:
-
-- macOS: open Keychain Access, import `caddy-local-root.crt` into the `System` or `login` keychain, then mark it as `Always Trust`
-- iPhone/iPad: AirDrop or host the certificate file locally, install the profile, then enable full trust for the root certificate in Settings
-- Windows: import the certificate into `Trusted Root Certification Authorities`
-- Linux: import it into the system CA store or the browser-specific store, depending on your distro and browser
-
-If you rebuild or replace the `caddy_data` volume, Caddy may generate a new internal CA and you would need to trust the new root certificate again.
-
-## Published Docker Images
-
-Release images are published from the same workflow that creates GitHub Releases.
-
-Published image providers:
-
-- GitHub Container Registry: `ghcr.io/taimoorq/expense_tracker`
-- Docker Hub: `docker.io/<dockerhub-username>/expense-tracker`
-
-Each provider receives the same tag set:
-
-- `vX.Y.Z`
-- `X.Y.Z`
-- `latest`
-- `sha-<commit>`
-
-For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v1.0.0` instead of `latest`.
-
-To run the production Compose stack from a published image:
-
-1. Set the app image in `.env.production`.
-
-   ```bash
-   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.0.0
-   ```
-
-   Or use the Docker Hub mirror:
-
-   ```bash
-   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v1.0.0
-   ```
-
-2. Pull the image.
-
-   ```bash
-   docker compose --env-file .env.production -f docker-compose.production.yml pull web
-   ```
-
-3. Start the stack without rebuilding locally.
-
-   ```bash
-   docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build
-   ```
-
-If the GHCR package is not anonymously pullable, make the package public in GitHub's package settings or authenticate Docker to `ghcr.io` before pulling. If the Docker Hub repository is private, authenticate Docker to Docker Hub before pulling.
-
-Replace `<dockerhub-username>` with the Docker Hub namespace configured in the `DOCKERHUB_USERNAME` repository secret.
-
-Docker Hub publishing requires repository secrets named `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
-
-## Updating a Self-Hosted Install
-
-Most self-hosted users should update by pulling the latest code and then restarting the app in a way that reruns `db:prepare`.
-
-Before updating:
-
-- back up your PostgreSQL database
-- review `.env.example` and compare it to your existing `.env` for any new required settings
-- keep your current database volume or database server intact so user data is preserved
-
-The app checks the latest GitHub Release for this repository and shows an **Update Available** button near the bottom of the sidebar when the published release tag is newer than the local app version in `config/releases.yml`. It also shows a main-page update banner with a link to these instructions so the notice stays visible even when the sidebar is collapsed. The check is cached for 15 minutes and silently disappears if GitHub cannot be reached.
-
-Optional update-check settings:
-
-- `GITHUB_UPDATE_CHECKS_ENABLED=false` disables the GitHub release check.
-- `GITHUB_UPDATE_REPOSITORY=owner/repo` checks a different GitHub repository.
-- `GITHUB_UPDATE_TOKEN=...` adds a token for private repositories or higher GitHub API rate limits.
-- `GITHUB_UPDATE_README_URL=...` changes where the sidebar update button links.
-
-### Developer release-note workflow
-
-This app includes an in-product release feed for self-hosted users. Developers should update it whenever a deploy includes user-visible changes worth calling out.
-
-For each new release:
-
-1. Add a new top entry to `config/releases.yml`.
-2. Use a new version string, release date, short title, one-sentence summary, and a few plain-language change bullets.
-3. Keep the newest release first so it becomes the current in-app version.
-4. Ship that file change in the same commit or release branch as the product changes it describes.
-5. After that change lands on `main`, GitHub Actions automatically creates the matching git tag, publishes the GitHub Release if that version does not already exist yet, and publishes Docker images for that version.
-
-How it works:
-
-- the latest entry in `config/releases.yml` is treated as the current app release
-- signed-in users see a banner and Help badge until they mark that release as read
-- old entries remain visible in Help as release history, so do not delete them during normal updates
-- `.github/workflows/publish_release.yml` reads the top release entry on pushes to `main`, publishes `vX.Y.Z`, and pushes Docker image tags `vX.Y.Z`, `X.Y.Z`, `latest`, and `sha-<commit>`
-
-### Docker update flow
-
-If you are running the included Docker setup:
-
-1. Pull the latest code.
-2. Review `.env.example` for any new environment variables and update your `.env` if needed.
-3. Rebuild and restart the app:
-	- `docker compose up -d --build`
-4. Check logs if needed:
-	- `docker compose logs -f web`
-
-What happens during startup:
-
-- the container entrypoint runs `bin/rails db:prepare`, so new migrations are applied automatically
-- it also runs `bin/rails admin:bootstrap`, so admin credentials stay in sync with `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` if you changed them
-
-What not to do during a normal update:
-
-- do not run `docker compose down -v` unless you intentionally want to delete the database volume
-- do not run `db:seed` unless you explicitly want demo/sample data
-
-If you are running the production stack from a published image, update `EXPENSE_TRACKER_IMAGE` to the new version tag, then run:
-
-- `docker compose --env-file .env.production -f docker-compose.production.yml pull web`
-- `docker compose --env-file .env.production -f docker-compose.production.yml up -d --no-build`
-
-### Local update flow
-
-If you are running the app directly on a server without Docker:
-
-1. Pull the latest code.
-2. Review `.env.example` and update your `.env` if needed.
-3. Install any new gems:
-	- `bundle install`
-4. Run setup again:
-	- `bin/setup --skip-server`
-5. Restart the app process:
-	- `bin/dev`
-
-`bin/setup --skip-server` reruns `db:prepare` and `admin:bootstrap`, so schema updates and install-time admin configuration are applied as part of the update.
-
-### Demo data note
-
-Regular user accounts, budget months, recurring transactions, snapshots, and admin audit logs are stored in the database and survive normal updates.
-
-`bin/rails db:seed` is only for creating or refreshing the demo user and sample data. It is not required for routine self-hosted upgrades.
-
-## Demo and Sample Data
-
-This project includes demo data for evaluation and sample files for testing imports.
-
-### Sample User
-
-Running `bin/rails db:seed` creates or updates a demo user you can sign in with.
-
-By default this is a users-only seed with reusable recurring transactions, linked accounts, and manual balance history but no budget month history. To also load six past months of generated demo history, run `SEED_MODE=users_with_transactions bin/rails db:seed`.
-
-If `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are present, the same seed run can also create or update an admin user, but the normal path is to bootstrap that admin during install before other users begin signing up.
-
-Seeded credentials:
-
-- Email: `demo@example.com`
-- Password: `password123!`
-
-All seeded non-admin users created in the same run use the current `SEED_USER_PASSWORD` value. If you set `SEED_USER_PASSWORD=my-secret`, every seeded test user created by that run will use `my-secret`.
-
-You can override these when seeding with:
-
-- `SEED_PROFILE=demo`, `new_user`, `recurring_heavy`, `month_history_heavy`, `account_heavy`, `manual_adjustments`, or `all_test_users`
-- `SEED_MODE=users` or `SEED_MODE=users_with_transactions`
-- `SEED_USER_EMAIL=your-email@example.com`
-- `SEED_USER_PASSWORD=your-password`
-- `ADMIN_USER_EMAIL=admin@example.com`
-- `ADMIN_USER_PASSWORD=choose-a-strong-password`
-
-### Seed Profiles
-
-The seed script now supports multiple dev-focused personas:
-
-- `demo`: the balanced default user with recurring transactions, linked accounts, and optional month history
-- `new_user`: a near-empty account for onboarding and first-run testing
-- `recurring_heavy`: many recurring transactions with no month history, useful for recurring-library views
-- `month_history_heavy`: a recurring-rich user with 12 months of history for timeline and month-review testing
-- `account_heavy`: broader account coverage with extra snapshots and linked recurring/account behavior
-- `manual_adjustments`: realistic months with exceptions, skipped items, and manual entries linked back to recurring transactions
-- `all_test_users`: creates the full set above in one run for local QA
-
-When `SEED_PROFILE=all_test_users`, the seeded user emails are:
-
-- primary demo user: whatever `SEED_USER_EMAIL` is set to, or `demo@example.com` by default
-- `new-user@example.com`
-- `recurring-heavy@example.com`
-- `month-history@example.com`
-- `account-heavy@example.com`
-- `manual-adjustments@example.com`
-
-Suggested dev command:
-
-- `SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed`
-- `SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions SEED_USER_PASSWORD=password123! bin/rails db:seed`
-
-### Seeded Demo Months
-
-When `SEED_MODE=users_with_transactions`, the seed process also generates six past months of demo history from the seeded recurring transactions and accounts.
-
-The demo data also:
-
-- attaches all seeded records to the sample user
-- creates starter recurring transactions for pay, subscriptions, bills, plans, and cards
-- links those recurring transactions to seeded accounts where appropriate so account rollups, movement drilldowns, and payoff progress views have representative data
-- creates manual accounts across checking, savings, brokerage, retirement, cash, asset, credit-card, loan, and other-liability categories with balance snapshots
-- creates generated month entries from those recurring transactions across the previous six months
-- adds realistic manual spending, savings, and investing entries on top of the generated recurring entries
-- keeps demo cashflow positive for the seeded months
-- prints a summary of what was created or refreshed
-
-### Sample CSV Files
-
-Sample import files are available in `public/samples/` and downloadable from the app:
-
-- `monthly_transactions_template.csv`
-- `sample_month_common_payments.csv`
-
-Expected transaction columns:
-
-- `Month`
-- `Date`
-- `Section`
-- `Category`
-- `Payee`
-- `Planned Amount`
-- `Actual Amount`
-- `Account`
-- `Status`
-- `Need or Want`
-- `Notes`
-
-## User Documentation
-
-Current user-facing documentation lives on the hosted site instead of in this README:
-
-- https://financetracking.app/docs/
-
-That guide covers:
-
-- the Overview page and how to re-enter the workflow quickly
-- signup and Settings preferences that tune lightweight Overview guidance
-- Accounts & Net Worth, including snapshot-based balances, linked-account behavior, and credit-card payoff progress
-- creating or cloning months
-- adding entries manually or with the guided wizard
-- recurring transactions and the current source/destination account-linkage model
-- reviewing a month in Budget, Breakdown, Calendar, and Plan and Edit
-- backup and restore behavior, including account-aware exports, preferences, and restores
-- how the hosted docs and in-app Help page complement each other
-
-## Open Source Readiness
-
-This section is for maintainers preparing the repository for public sharing.
-
-This repo is already set up to avoid committing the usual local-only files, including:
-
-- `config/*.key`
-- `.env*`
-- `log/*`
-- `tmp/*`
-- `storage/*`
-- `.vscode/`
-
-Before publishing, review this checklist:
-
-1. Confirm secrets were never committed
-	- `config/master.key` is ignored and is not currently tracked.
-	- If a real secret was ever committed in the past, rotate it before publishing.
-2. Keep deployment config as example-only
-	- [config/deploy.yml](config/deploy.yml) now uses placeholder hosts and registry values.
-3. Review sample data and screenshots
-	- Seed/sample CSVs use generic names and demo content.
-	- Screenshots currently show demo data and a demo account identity.
-4. Regenerate credentials if needed
-	- [config/credentials.yml.enc](config/credentials.yml.enc) is safe to publish only if the matching key is never shared.
-	- If you are unsure what is inside, create fresh credentials before publishing.
-5. Check git history one more time before pushing
-	- Review for accidental secrets, exported data, or personal notes.
-
-Recommended pre-publish commands:
-
-- `git log -- config/master.key`
-- `git log -- log/test.log`
-- `git grep -n "@"`
-- `git grep -n "password"`
-- `git grep -n "/Users/"`
-
-## Development Commands
-
-These commands are mainly for local development, debugging, and contribution work.
-
-- Lint Ruby: `bin/rubocop`
-- Security scan: `bin/brakeman`
-- Install git hooks: `bin/rails git_hooks:install`
-
-### Local
-
-- Start app: `bin/dev`
-- Setup app: `bin/setup --skip-server`
-- Prepare DB: `bin/rails db:prepare`
-- Bootstrap admin from env: `bin/rails admin:bootstrap`
-- Seed users only: `bin/rails db:seed`
-- Seed users with transactions: `SEED_MODE=users_with_transactions bin/rails db:seed`
-- Run tests: `bundle exec rspec`
-- Rails console: `bin/rails console`
-- Autoload check: `bin/rails zeitwerk:check`
-
-### Docker
-
-- Start app: `docker compose up --build`
-- Start app with env-driven admin bootstrap: set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` in `.env`, then run `docker compose up --build`
-- Seed users only: `docker compose exec web bin/rails db:seed`
-- Seed users with transactions: `docker compose exec web env SEED_MODE=users_with_transactions bin/rails db:seed`
-- Run tests: `docker compose exec web bundle exec rspec`
-- Rails console: `docker compose exec web bin/rails console`
-- Stop app: `docker compose down`
-
-### Pre-commit lint hook
-
-This repository includes a tracked pre-commit hook in `.githooks/pre-commit`.
-
-To enable it locally, run:
-
-- `bin/rails git_hooks:install`
-
-After that, each commit runs `bin/rubocop` against staged Ruby files and blocks the commit if lint fails.
+- [`.env.example`](.env.example) for local development and Docker
+- [`.env.production.example`](.env.production.example) for production
 
 ## Troubleshooting
 
-These notes are intended for contributors running the project locally.
+### Port 4287 is already in use
 
-### Docker port 4287 already in use
+Set another port in `.env`:
 
-Stop the process using it, or start Docker with a different `APP_PORT` value.
+```dotenv
+APP_PORT=4317
+```
 
-### Database connection problems
+Then restart Docker Compose.
 
-- Local: make sure PostgreSQL is running
-- Docker: make sure the `db` container is healthy
+### Docker cannot resolve the database host
 
-If the `web` container logs `could not translate host name "db" to address`, the app was almost certainly started outside the normal Compose network.
+If the web logs contain `could not translate host name "db" to address`, confirm that both services are running:
 
-Use these checks:
+```bash
+docker compose ps
+docker compose logs db
+```
 
-- `docker compose ps`
-- `docker compose logs db`
+Start the complete stack from the repository directory with `docker compose up --build`. The web container expects PostgreSQL at the Compose hostname `db`; running the app container by itself does not provide that network.
 
-The expected fix is to start both services together from the repository directory:
+### The app works on localhost but not another device
 
-- `docker compose up --build`
+Check the host machine's firewall, use the machine's LAN IP, and confirm both devices are on the same non-isolated network. The development Compose setup accepts non-localhost hosts, but it cannot change firewall or router rules.
 
-Do not start the Rails container by itself with `docker run` unless you also provide a reachable PostgreSQL host and override `DATABASE_URL` accordingly.
+### Docker changes break another local network
 
-If Docker fails with `Bind for 0.0.0.0:5432 failed: port is already allocated`, another process on your machine is already using host port `5432`.
+The Compose files use `172.28.1.0/24` for development and `172.28.2.0/24` for production. If either range overlaps your LAN or VPN, change the corresponding network subnet in the Compose file.
 
-The default Compose file no longer publishes PostgreSQL to the host, so pulling the latest code and restarting with `docker compose up --build` should avoid that conflict.
+### Gems changed but the container still uses old dependencies
 
-If the app starts but is not reachable from another device, check these in order:
+Rebuild the development image:
 
-- confirm it opens on the host machine at `http://localhost:4287`
-- find the host machine's LAN IP and try `http://YOUR_COMPUTER_IP:4287`
-- allow inbound connections for Docker or your terminal app in the OS firewall
-- make sure you are on the same local network and not crossing a guest or isolated VLAN
+```bash
+docker compose up --build
+```
 
-If it works on `localhost` but not on the LAN IP, the problem is outside Rails and is usually firewall or network policy.
-
-### Other Docker containers lose network connectivity when this app runs
-
-Docker Compose creates a default bridge network for each project. Docker may auto-allocate a subnet that conflicts with your host LAN (e.g. 192.168.x.x), which can break routing and prevent other containers from communicating over the host IP. The compose files use explicit subnets (172.28.1.0/24 for dev, 172.28.2.0/24 for production) to avoid this. If you still see conflicts, you can change the subnet in the `networks` section of `docker-compose.yml` to a range that does not overlap your LAN.
-
-### Rebuild Docker after gem changes
-
-- `docker compose up --build`
-
-## Docker Files
-
-These files matter primarily for developers working on the project locally or preparing deployment-related changes.
-
-- `Dockerfile` — production-oriented image
-- `Dockerfile.dev` — local development image
-- `docker-compose.yml` — local multi-container setup
-
-For local Docker development, use `Dockerfile.dev` and `docker-compose.yml`.
+For product workflows and in-app behavior, continue with the [user guide](https://financetracking.app/docs/). For bugs or setup problems, [open a GitHub issue](https://github.com/taimoorq/expense_tracker/issues).
