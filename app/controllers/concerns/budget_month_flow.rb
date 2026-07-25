@@ -12,7 +12,7 @@ module BudgetMonthFlow
   def handle_month_generation(budget_month, message)
     respond_to do |format|
       format.turbo_stream do
-        prepare_month_refresh_state(budget_month, expense_entry: budget_month.expense_entries.new, auto_complete_recurring: true)
+        prepare_month_refresh_state(budget_month, expense_entry: budget_month.expense_entries.new)
         render_month_page_refresh(message: message, include_entry_form: true)
       end
       format.html { redirect_to budget_month, notice: message }

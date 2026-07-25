@@ -45,7 +45,7 @@ module Admin
         redirect_to_user_access_transition(notice)
       else
         set_admin_audit_context(action: "#{audit_action}.failed", target_user: @user)
-        render :show, status: :unprocessable_entity
+        render :show, status: :unprocessable_content
       end
     end
 

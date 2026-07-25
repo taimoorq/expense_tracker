@@ -174,7 +174,7 @@ Current screenshots reflect the latest overview, month-budget workflow, money-fl
 
 ### Backup and Privacy
 
-- Export and restore recurring transactions, months, account data, and workflow preferences through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items, explicit money-leaves/money-goes-to account links, generated-entry metadata, and recurring auto-completion markers
+- Export and restore recurring transactions, months, account data, and workflow preferences through versioned JSON backups with optional password encryption, including manual entries linked back to recurring items, explicit money-leaves/money-goes-to account links, generated-entry metadata, and historical recurring auto-completion markers
 - Preview imports before restoring anything, and use a sample backup file to inspect the expected structure
 - Keep each person’s budget private behind sign-in so one account only sees its own months and entries
 
@@ -281,21 +281,16 @@ Then:
 
 From there, the admin can sign in through `/admin/sign_in`, and end users can create their own accounts through `/users/sign_up`.
 
-#### Automatic recurring completion
+#### Confirming recurring activity
 
-Due recurring-generated entries are automatically marked as done by setting their status to `paid` and copying the planned amount into the actual amount when needed.
+Recurring-generated entries stay planned when their due date arrives. Opening a
+month never changes financial records. Confirm an entry as paid after the
+activity occurs; the app then uses its actual amount in current account movement
+and balance calculations.
 
-This works in two ways:
-
-- month pages run a small sync when opened, so self-hosted installs still update during normal use
-- production also schedules a daily Solid Queue job for unattended auto-completion
-
-For self-hosted production:
-
-- single-server installs can keep using the existing `SOLID_QUEUE_IN_PUMA=true` setup so jobs run inside Puma
-- multi-server installs should move job processing to a dedicated `bin/jobs` process or job host
-
-The recurring schedule lives in [config/recurring.yml](config/recurring.yml).
+Older backups may contain `auto_completed_at` markers created by versions that
+automatically completed recurring entries. Those markers remain importable and
+reviewable, and are cleared when the entry is explicitly saved.
 
 #### Stop the app
 
@@ -499,20 +494,20 @@ Each provider receives the same tag set:
 - `latest`
 - `sha-<commit>`
 
-For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v0.10.0` instead of `latest`.
+For repeatable production deploys, prefer a version tag such as `ghcr.io/taimoorq/expense_tracker:v1.0.0` instead of `latest`.
 
 To run the production Compose stack from a published image:
 
 1. Set the app image in `.env.production`.
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v0.10.0
+   EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.0.0
    ```
 
    Or use the Docker Hub mirror:
 
    ```bash
-   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v0.10.0
+   EXPENSE_TRACKER_IMAGE=docker.io/<dockerhub-username>/expense-tracker:v1.0.0
    ```
 
 2. Pull the image.

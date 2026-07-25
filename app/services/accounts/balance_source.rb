@@ -14,10 +14,24 @@ module Accounts
       activity_import.institution_balance_as_of || activity_import.ended_on || activity_import.created_at&.to_date || Date.current
     end
 
-    def initialize(account:, as_of: Date.current, imported_activity_range: nil)
+    def self.latest_snapshot_for(account, as_of: Date.current)
+      account.account_snapshots
+        .select { |snapshot| snapshot.persisted? && snapshot.recorded_on <= as_of }
+        .max_by { |snapshot| [ snapshot.recorded_on, snapshot.created_at || Time.zone.at(0) ] }
+    end
+
+    def self.latest_institution_balance_import_for(account, as_of: Date.current)
+      account.account_activity_imports.to_a
+        .select(&:institution_balance?)
+        .select { |activity_import| institution_balance_source_date(activity_import) <= as_of }
+        .max_by { |activity_import| [ institution_balance_source_date(activity_import), activity_import.created_at || Time.zone.at(0) ] }
+    end
+
+    def initialize(account:, as_of: Date.current, imported_activity_range: nil, imported_activity_exists: nil)
       @account = account
       @as_of = as_of
       @imported_activity_range = imported_activity_range
+      @imported_activity_exists = imported_activity_exists
     end
 
     def call
@@ -30,7 +44,7 @@ module Accounts
 
     private
 
-    attr_reader :account, :as_of, :imported_activity_range
+    attr_reader :account, :as_of, :imported_activity_exists, :imported_activity_range
 
     def institution_import_source(activity_import)
       build_result(
@@ -77,20 +91,16 @@ module Accounts
     end
 
     def latest_snapshot
-      @latest_snapshot ||= account.account_snapshots
-        .select { |snapshot| snapshot.persisted? && snapshot.recorded_on <= as_of }
-        .max_by { |snapshot| [ snapshot.recorded_on, snapshot.created_at || Time.zone.at(0) ] }
+      @latest_snapshot ||= self.class.latest_snapshot_for(account, as_of: as_of)
     end
 
     def latest_institution_balance_import
-      @latest_institution_balance_import ||= account.account_activity_imports.to_a
-        .select(&:institution_balance?)
-        .select { |activity_import| self.class.institution_balance_source_date(activity_import) <= as_of }
-        .max_by { |activity_import| [ self.class.institution_balance_source_date(activity_import), activity_import.created_at || Time.zone.at(0) ] }
+      @latest_institution_balance_import ||= self.class.latest_institution_balance_import_for(account, as_of: as_of)
     end
 
     def imported_activity_after_snapshot?
       return false if latest_snapshot.blank?
+      return imported_activity_exists unless imported_activity_exists.nil?
 
       imported_activities_after_snapshot.exists?
     end

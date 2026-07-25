@@ -1,14 +1,8 @@
 <% timeline_view = local_assigns[:timeline_view] %>
 <% selected_review = local_assigns[:selected_review] %>
 
-<div class="space-y-3 md:hidden">
-  <% expense_entries.each do |entry| %>
-    <%= render "expense_entries/mobile_entry_card", entry: entry, budget_month: budget_month, timeline_view: timeline_view, selected_review: selected_review %>
-  <% end %>
-</div>
-
-<div class="hidden overflow-x-auto md:block">
-  <table class="ta-table" data-controller="sortable-table">
+<div class="overflow-x-auto">
+  <table class="ta-table min-w-[840px]" data-controller="sortable-table">
     <thead class="ta-table-head">
       <tr>
         <%= sortable_table_header("Date", key: "date", type: "date") %>

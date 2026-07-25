@@ -38,7 +38,7 @@ module Budgeting
     attr_reader :user, :params
 
     def cloneable_budget_months
-      @cloneable_budget_months ||= user.budget_months.includes(:expense_entries).recent_first.to_a
+      @cloneable_budget_months ||= user.budget_months.recent_first.to_a
     end
 
     def cloneable_month_options
@@ -49,13 +49,28 @@ module Budgeting
           id: month.id,
           source_label: month.label,
           target_label: target_month.strftime("%B %Y"),
-          entry_count: month.expense_entries.size
+          entry_count: entry_counts.fetch(month.id, 0)
         }
       end
     end
 
     def source_budget_month
-      @source_budget_month ||= user.budget_months.find_by(id: params[:source_month_id])
+      @source_budget_month ||= cloneable_budget_months.find do |month|
+        month.id.to_s == params[:source_month_id].to_s
+      end
+    end
+
+    def entry_counts
+      @entry_counts ||= user.expense_entries
+        .where(budget_month_id: cloneable_budget_months.map(&:id))
+        .group(:budget_month_id)
+        .count
+    end
+
+    def occupied_months
+      @occupied_months ||= cloneable_budget_months.index_by do |month|
+        month.month_on.to_date.beginning_of_month
+      end
     end
 
     def clone_preview
@@ -100,7 +115,7 @@ module Budgeting
     def next_available_month_after(month_on)
       target_month = month_on.next_month.beginning_of_month
 
-      while user.budget_months.exists?(month_on: target_month)
+      while occupied_months.key?(target_month)
         target_month = target_month.next_month.beginning_of_month
       end
 

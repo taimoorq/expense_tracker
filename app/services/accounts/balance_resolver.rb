@@ -18,9 +18,12 @@ module Accounts
       :balance_available
     )
 
-    def initialize(account:, as_of: Date.current)
+    ActivitySummary = Data.define(:account_delta, :through_on, :count)
+
+    def initialize(account:, as_of: Date.current, inputs: nil)
       @account = account
-      @user = account.user
+      @inputs = inputs
+      @user = inputs&.user || account.user
       @as_of = as_of
     end
 
@@ -39,14 +42,14 @@ module Accounts
 
     private
 
-    attr_reader :account, :as_of, :user
+    attr_reader :account, :as_of, :inputs, :user
 
     def from_institution_import
       activity_import = balance_source.balance_source_record
       source_date = balance_source.balance_source_recorded_on
-      activity_rows = imported_activities_after(source_date)
-      activity_delta = activity_rows.sum(:account_delta).to_d
-      activity_through_on = activity_rows.maximum(:transaction_on)
+      activity_summary = imported_activity_summary_after(source_date)
+      activity_delta = activity_summary.account_delta
+      activity_through_on = activity_summary.through_on
       base_balance = activity_import.institution_balance.to_d
       current_balance = base_balance + activity_delta
       planned_delta = totals_for(planned_entries_after_as_of)
@@ -62,7 +65,7 @@ module Accounts
         planned_delta: planned_delta,
         current_balance: current_balance,
         projected_balance: current_balance + planned_delta,
-        paid_entries_count: activity_rows.count,
+        paid_entries_count: activity_summary.count,
         planned_entries_count: planned_entries_after_as_of.size,
         balance_available: true
       )
@@ -70,9 +73,9 @@ module Accounts
 
     def from_imported_activity
       source_date = balance_source.balance_source_recorded_on
-      activity_rows = imported_activities_after(source_date)
-      activity_delta = activity_rows.sum(:account_delta).to_d
-      activity_through_on = activity_rows.maximum(:transaction_on)
+      activity_summary = imported_activity_summary_after(source_date)
+      activity_delta = activity_summary.account_delta
+      activity_through_on = activity_summary.through_on
       base_balance = balance_source.snapshot.balance.to_d
       current_balance = base_balance + activity_delta
       planned_delta = totals_for(planned_entries_after_as_of)
@@ -88,7 +91,7 @@ module Accounts
         planned_delta: planned_delta,
         current_balance: current_balance,
         projected_balance: current_balance + planned_delta,
-        paid_entries_count: activity_rows.count,
+        paid_entries_count: activity_summary.count,
         planned_entries_count: planned_entries_after_as_of.size,
         balance_available: true
       )
@@ -144,7 +147,11 @@ module Accounts
     end
 
     def balance_source
-      @balance_source ||= Accounts::BalanceSource.new(account: account, as_of: as_of).call
+      @balance_source ||= if inputs
+        inputs.balance_source_for(account)
+      else
+        Accounts::BalanceSource.new(account: account, as_of: as_of).call
+      end
     end
 
     def imported_activities_after(date)
@@ -153,13 +160,28 @@ module Accounts
       account.account_activities.where(transaction_on: (date.next_day)..as_of)
     end
 
+    def imported_activity_summary_after(date)
+      return inputs.activity_summary_for(account) if inputs
+
+      activity_rows = imported_activities_after(date)
+      ActivitySummary.new(
+        account_delta: activity_rows.sum(:account_delta).to_d,
+        through_on: activity_rows.maximum(:transaction_on),
+        count: activity_rows.count
+      )
+    end
+
     def linked_entries
-      @linked_entries ||= user.expense_entries
-        .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
-        .where.not(occurred_on: nil)
-        .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])
-        .order(:occurred_on, :created_at)
-        .to_a
+      @linked_entries ||= if inputs
+        inputs.entries_for(account)
+      else
+        user.expense_entries
+          .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
+          .where.not(occurred_on: nil)
+          .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])
+          .order(:occurred_on, :created_at)
+          .to_a
+      end
     end
 
     def paid_entries

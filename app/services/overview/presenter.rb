@@ -60,7 +60,7 @@ module Overview
         build_step(
           number: 4,
           title: "Adjust as the month unfolds",
-          description: "Add one-off items, update amounts, and mark entries paid as you go. Some recurring items may also auto-complete when due.",
+          description: "Add one-off items, update amounts, and confirm entries as paid when the activity occurs.",
           metric: current_month_data ? "#{review_attention_count_value} items still need review" : "Review starts after month setup",
           action_label: current_month_data ? "Review Month" : "Create Month",
           action_path: current_month_data ? routes.budget_month_tab_path(current_month_data, "entries") : routes.new_budget_month_path,

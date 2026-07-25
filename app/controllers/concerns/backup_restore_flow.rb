@@ -68,7 +68,7 @@ module BackupRestoreFlow
       token: params[:preview_token]
     )
     flash.now[:alert] = "Confirm that you want to import the reference-only sample backup before restoring it."
-    render :show, status: :unprocessable_entity
+    render :show, status: :unprocessable_content
   end
 
   def selected_scopes(param_key)

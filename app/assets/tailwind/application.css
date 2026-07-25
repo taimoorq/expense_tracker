@@ -643,7 +643,7 @@
 	}
 
 	.ta-table {
-		@apply min-w-full divide-y text-sm;
+		@apply w-full min-w-full divide-y text-sm;
 		border-color: var(--ta-border);
 	}
 

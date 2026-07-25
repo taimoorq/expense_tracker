@@ -27,7 +27,7 @@ RSpec.describe "page load indexes" do
     expect(fingerprint_index.unique).to be(true)
   end
 
-  it "supports recurring-entry auto completion for a signed-in user" do
+  it "supports due recurring-entry review for a signed-in user" do
     index = index_by_name(:expense_entries, "index_expense_entries_on_user_due_recurring")
 
     expect(index.columns).to eq(%w[user_id status occurred_on])

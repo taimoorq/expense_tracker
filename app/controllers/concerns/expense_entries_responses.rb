@@ -38,16 +38,16 @@ module ExpenseEntriesResponses
     respond_to do |format|
       format.turbo_stream do
         if turbo_frame_request?
-          render partial: "expense_entries/entry_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: entry }, status: :unprocessable_entity
+          render partial: "expense_entries/entry_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: entry }, status: :unprocessable_content
         else
           render turbo_stream: turbo_stream.replace(
             dom_id(entry),
             partial: "expense_entries/row_form",
             locals: { budget_month: @budget_month, expense_entry: entry }
-          ), status: :unprocessable_entity
+          ), status: :unprocessable_content
         end
       end
-      format.html { render :edit, status: :unprocessable_entity }
+      format.html { render :edit, status: :unprocessable_content }
     end
   end
 
@@ -99,20 +99,20 @@ module ExpenseEntriesResponses
     respond_to do |format|
       format.turbo_stream do
         if params[:wizard_flow] == "1" && turbo_frame_request?
-          render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: entry }, status: :unprocessable_entity
+          render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: entry }, status: :unprocessable_content
         else
           flash.now[:alert] = entry.errors.full_messages.join(", ")
           render turbo_stream: [
             turbo_stream.replace("flash", partial: "shared/flash"),
             turbo_stream.replace("entry_form", partial: "expense_entries/form", locals: { budget_month: @budget_month, expense_entry: entry })
-          ], status: :unprocessable_entity
+          ], status: :unprocessable_content
         end
       end
       format.html do
         if params[:wizard_flow] == "1"
-          render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: entry }, status: :unprocessable_entity
+          render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: entry }, status: :unprocessable_content
         else
-          render "budget_months/show", status: :unprocessable_entity
+          render "budget_months/show", status: :unprocessable_content
         end
       end
     end
@@ -147,7 +147,7 @@ module ExpenseEntriesResponses
   def render_template_update_failure(template_record)
     respond_to do |format|
       format.turbo_stream do
-        render partial: "expense_entries/template_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: template_record }, status: :unprocessable_entity
+        render partial: "expense_entries/template_editor_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry, template_record: template_record }, status: :unprocessable_content
       end
       format.html { redirect_to @budget_month, alert: template_record.errors.full_messages.join(", ") }
     end

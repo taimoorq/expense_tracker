@@ -33,9 +33,11 @@ Expense Tracker is a self-hosted, month-first budgeting app for manual planning,
 
 ### 3. Financial Truth
 
-- Make recurring auto-completion auditable or reviewable.
-- Distinguish automatic paid status from user-confirmed paid status.
-- Show auto-completed entries in cleanup/review counts so users can confirm them.
+- Keep recurring entries planned until users explicitly confirm that activity
+  occurred; page reads and scheduled jobs must not infer paid state.
+- Preserve historical automatic-completion markers in backup/restore and review
+  flows until users save the affected entries.
+- Keep current account balances grounded in confirmed or imported activity.
 
 ### 4. Credit Card Estimate Replacement
 

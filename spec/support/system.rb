@@ -1,3 +1,5 @@
+require "selenium-webdriver"
+
 Selenium::WebDriver.logger.level = :warn
 
 Capybara.register_driver :managed_headless_chrome do |app|
@@ -7,18 +9,11 @@ Capybara.register_driver :managed_headless_chrome do |app|
   options.add_argument("--disable-gpu")
   options.add_argument("--no-sandbox")
 
-  original_path = ENV["PATH"]
-  service = nil
+  chrome_binary = ENV["CHROME_BIN"]
+  driver_binary = ENV["CHROMEDRIVER_PATH"]
 
-  begin
-    ENV["PATH"] = original_path.split(File::PATH_SEPARATOR).reject { |path| File.executable?(File.join(path, "chromedriver")) }.join(File::PATH_SEPARATOR)
-
-    resolved_paths = Selenium::WebDriver::SeleniumManager.binary_paths("--browser", "chrome")
-    service = Selenium::WebDriver::Service.chrome(path: resolved_paths.fetch("driver_path"))
-    options.binary = resolved_paths["browser_path"] if resolved_paths["browser_path"]
-  ensure
-    ENV["PATH"] = original_path
-  end
+  options.binary = chrome_binary if chrome_binary.present?
+  service = Selenium::WebDriver::Service.chrome(path: driver_binary) if driver_binary.present?
 
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options, service: service)
 end

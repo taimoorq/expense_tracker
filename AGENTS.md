@@ -71,7 +71,7 @@ Budgeting UX should make money movement explainable: keep history, drilldowns, a
 - `app/helpers` view-oriented helper methods shared by ERB templates
 - `app/javascript/controllers` Stimulus controllers for interactive UI behavior
 - `app/views` ERB views, Turbo frame content, and modal partials
-- `app/jobs` background jobs, including recurring-entry completion flows
+- `app/jobs` background jobs and retry-safe asynchronous work
 - `config/releases.yml` source of truth for in-app release notes and GitHub release publishing
 - `spec` RSpec coverage for requests, services, models, DB, and system flows
 - `test` Rails test framework files that are still used by current CI

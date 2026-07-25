@@ -1,4 +1,18 @@
 releases:
+  - version: "1.0.0"
+    released_on: "2026-07-24"
+    title: "Expense Tracker 1.0"
+    summary: "Expense Tracker 1.0 makes financial state explicit and gives the busiest month and account workflows a substantially faster, more dependable foundation."
+    changes:
+      - "Keeps due recurring entries planned until a user explicitly confirms payment, so opening a month or running background work never changes financial activity by assumption."
+      - "Preserves historical automatic-completion markers for review and backup compatibility while removing runtime recurring auto-completion services and schedules."
+      - "Renders only the selected Full List, Calendar, or Grouped budget mode and removes duplicate responsive entry trees that made larger months slower."
+      - "Makes ledger tables use the full available workspace after filtering while retaining horizontal scrolling on smaller screens."
+      - "Batches Overview recurring summaries and account balance inputs so account totals, linked activity, and recurring progress avoid repeated queries."
+      - "Shares imported activity, snapshots, entries, and balance sources across account timeline and history buckets to keep activity-heavy account pages responsive."
+      - "Builds New Month clone counts and target suggestions from grouped reads without loading every historical entry."
+      - "Updates in-app guidance and regression coverage around confirmed payments, selected ledger modes, filtering, query ceilings, and financial-state invariants."
+      - "Adds architecture-matched Chromium support to the development image and updates HTTP 422 responses to the current Rack status name."
   - version: "0.10.0"
     released_on: "2026-07-22"
     title: "Accessible themes and budget-first navigation"

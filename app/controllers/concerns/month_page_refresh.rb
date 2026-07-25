@@ -3,9 +3,8 @@ module MonthPageRefresh
 
   private
 
-  def prepare_month_refresh_state(budget_month, expense_entry: nil, auto_complete_recurring: false, timeline_view: nil)
+  def prepare_month_refresh_state(budget_month, expense_entry: nil, timeline_view: nil)
     @budget_month = budget_month
-    auto_complete_due_recurring_entries(@budget_month.expense_entries) if auto_complete_recurring
     @expense_entries = preload_month_expense_entries(@budget_month.expense_entries.chronological)
     @expense_entry = expense_entry if expense_entry
     @timeline_view = timeline_view if timeline_view.present?
@@ -52,10 +51,6 @@ module MonthPageRefresh
 
   def plan_and_edit_panel_locals
     { budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry, selected_review: params[:review] }
-  end
-
-  def auto_complete_due_recurring_entries(entries)
-    Budgeting::AutoCompleteRecurringEntries.new(entries: entries, as_of: Date.current).call
   end
 
   def preload_month_expense_entries(entries)

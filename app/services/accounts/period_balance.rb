@@ -21,11 +21,13 @@ module Accounts
       :balance_available
     )
 
-    def initialize(account:, period_start:, period_end:)
+    def initialize(account:, period_start:, period_end:, linked_entries: nil, activity_rows: nil)
       @account = account
       @user = account.user
       @period_start = period_start
       @period_end = period_end
+      @preloaded_linked_entries = linked_entries
+      @preloaded_activity_rows = activity_rows
     end
 
     def call
@@ -43,7 +45,7 @@ module Accounts
 
     private
 
-    attr_reader :account, :period_end, :period_start, :user
+    attr_reader :account, :period_end, :period_start, :preloaded_activity_rows, :preloaded_linked_entries, :user
 
     def from_institution_import
       activity_import = balance_source.balance_source_record
@@ -62,21 +64,21 @@ module Accounts
     def build_imported_result(base_balance:)
       source_date = balance_source.balance_source_recorded_on
       activity_rows = imported_activity_rows(source_date)
-      paid_delta = activity_rows.sum(:account_delta).to_d
+      paid_delta = activity_sum(activity_rows)
       planned_entries_for_period = planned_entries_after_source(source_date)
       planned_delta = totals_for(planned_entries_for_period)
       starting_balance = imported_starting_balance(base_balance: base_balance, source_date: source_date)
       current_balance = starting_balance + paid_delta
 
       build_result(
-        activity_through_on: activity_rows.maximum(:transaction_on),
+        activity_through_on: activity_maximum_date(activity_rows),
         base_balance: base_balance,
         starting_balance: starting_balance,
         paid_delta: paid_delta,
         planned_delta: planned_delta,
         current_balance: current_balance,
         projected_balance: current_balance + planned_delta,
-        paid_entries_count: activity_rows.count,
+        paid_entries_count: activity_count(activity_rows),
         planned_entries_count: planned_entries_for_period.size,
         balance_available: true
       )
@@ -136,11 +138,15 @@ module Accounts
     end
 
     def balance_source
-      @balance_source ||= Accounts::BalanceSource.new(
-        account: account,
-        as_of: period_end,
-        imported_activity_range: period_start..period_end
-      ).call
+      @balance_source ||= begin
+        attributes = {
+          account: account,
+          as_of: period_end,
+          imported_activity_range: period_start..period_end
+        }
+        attributes[:imported_activity_exists] = imported_activity_after_snapshot? unless preloaded_activity_rows.nil?
+        Accounts::BalanceSource.new(**attributes).call
+      end
     end
 
     def imported_starting_balance(base_balance:, source_date:)
@@ -157,7 +163,12 @@ module Accounts
 
     def imported_activity_rows(source_date)
       start_on = activity_start_on(source_date)
+      return [] if preloaded_activity_rows && start_on > period_end
       return account.account_activities.none if start_on > period_end
+
+      if preloaded_activity_rows
+        return preloaded_activity_rows.select { |activity| activity.transaction_on.between?(start_on, period_end) }
+      end
 
       account.account_activities.where(transaction_on: start_on..period_end)
     end
@@ -165,7 +176,39 @@ module Accounts
     def imported_delta_between(start_on, end_on)
       return 0.to_d if start_on > end_on
 
+      if preloaded_activity_rows
+        return preloaded_activity_rows.sum do |activity|
+          activity.transaction_on.between?(start_on, end_on) ? activity.account_delta.to_d : 0.to_d
+        end
+      end
+
       account.account_activities.where(transaction_on: start_on..end_on).sum(:account_delta).to_d
+    end
+
+    def imported_activity_after_snapshot?
+      snapshot = Accounts::BalanceSource.latest_snapshot_for(account, as_of: period_end)
+      return false if snapshot.blank?
+
+      preloaded_activity_rows.any? do |activity|
+        activity.transaction_on > snapshot.recorded_on &&
+          activity.transaction_on.between?(period_start, period_end)
+      end
+    end
+
+    def activity_sum(rows)
+      return rows.sum { |activity| activity.account_delta.to_d } if preloaded_activity_rows
+
+      rows.sum(:account_delta).to_d
+    end
+
+    def activity_maximum_date(rows)
+      return rows.map(&:transaction_on).max if preloaded_activity_rows
+
+      rows.maximum(:transaction_on)
+    end
+
+    def activity_count(rows)
+      preloaded_activity_rows ? rows.size : rows.count
     end
 
     def paid_entries_after_source(source_date)
@@ -193,7 +236,7 @@ module Accounts
     end
 
     def linked_entries
-      @linked_entries ||= user.expense_entries
+      @linked_entries ||= preloaded_linked_entries || user.expense_entries
         .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
         .where.not(occurred_on: nil)
         .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])

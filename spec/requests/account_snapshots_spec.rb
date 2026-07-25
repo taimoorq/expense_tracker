@@ -46,7 +46,7 @@ RSpec.describe "Account snapshots", type: :request do
       account_snapshot: { recorded_on: "", balance: "" }
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Fix the snapshot details.")
     expect(response.body).to include("Monthly balance history")
     expect(response.body).to include('aria-current="page"')

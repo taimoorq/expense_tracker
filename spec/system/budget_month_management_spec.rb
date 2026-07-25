@@ -448,6 +448,9 @@ RSpec.describe "Budget month management", type: :system do
 
     expect(page).to have_text("Rent")
     expect(page).not_to have_text("Streaming")
+    table_width = page.evaluate_script('document.querySelector("#entries_table table").getBoundingClientRect().width')
+    table_container_width = page.evaluate_script('document.querySelector("#entries_table .overflow-x-auto").getBoundingClientRect().width')
+    expect(table_width).to be_within(1).of(table_container_width)
 
     click_link "Calendar", match: :first
 
@@ -758,7 +761,7 @@ RSpec.describe "Budget month management", type: :system do
     create(:expense_entry, budget_month: month, user: user, payee: "Visa", category: "Credit Card", section: :debt, status: :planned, planned_amount: 75, source_file: "credit_card_estimate")
 
     sign_in_as(user)
-    visit budget_month_path(month)
+    visit budget_month_tab_path(month, "timeline", view: "sections")
 
     body = page.body
     expect(body.index("Payment Plans")).to be < body.index("Recurring Subscriptions")

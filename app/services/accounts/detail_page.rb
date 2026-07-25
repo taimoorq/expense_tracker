@@ -52,7 +52,14 @@ module Accounts
     end
 
     def movement_timeline
-      @movement_timeline ||= Accounts::MovementTimeline.new(account: account, range: range, as_of: as_of).call
+      @movement_timeline ||= Accounts::MovementTimeline.new(
+        account: account,
+        range: range,
+        as_of: as_of,
+        entries: balance_inputs.entries_for(account),
+        activities: balance_inputs.activities_for(account),
+        imports: balance_inputs.imports_for(account)
+      ).call
     end
 
     def recent_activity
@@ -60,11 +67,28 @@ module Accounts
     end
 
     def balance_history_rows
-      @balance_history_rows ||= Accounts::BalanceHistory.new(account: account, as_of: as_of).call.fetch(:rows)
+      @balance_history_rows ||= Accounts::BalanceHistory.new(
+        account: account,
+        as_of: as_of,
+        inputs: balance_inputs
+      ).call.fetch(:rows)
     end
 
     def balance_summary
-      @balance_summary ||= Accounts::BalanceResolver.new(account: account, as_of: as_of).call.to_h
+      @balance_summary ||= Accounts::BalanceResolver.new(
+        account: account,
+        as_of: as_of,
+        inputs: balance_inputs
+      ).call.to_h
+    end
+
+    def balance_inputs
+      @balance_inputs ||= Accounts::BalanceInputs.new(
+        user: user,
+        accounts: [ account ],
+        as_of: as_of,
+        load_activities: true
+      )
     end
 
     def credit_card_progress
@@ -74,7 +98,8 @@ module Accounts
       @credit_card_progress ||= Accounts::CreditCardProgress.new(
         account: account,
         balance_summary: balance_summary,
-        as_of: as_of
+        as_of: as_of,
+        entries: balance_inputs.entries_for(account)
       ).call
     end
 

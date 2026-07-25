@@ -1,6 +1,16 @@
 require "rails_helper"
 
 RSpec.describe Accounts::DetailPage do
+  def count_select_queries
+    count = 0
+    callback = lambda do |_name, _started, _finished, _unique_id, payload|
+      count += 1 if payload[:sql].to_s.match?(/\ASELECT/i) && payload[:name] != "SCHEMA"
+    end
+
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
+    count
+  end
+
   it "composes account detail data including credit card progress and connected templates" do
     user = create(:user)
     checking = create(:account, user: user, name: "Checking", kind: :checking)
@@ -32,5 +42,36 @@ RSpec.describe Accounts::DetailPage do
     expect(manage_page.fetch(:connected_templates_count)).to eq(1)
     expect(manage_page.fetch(:connected_templates).fetch("Credit Cards").first.name).to eq("Rewards Visa")
     expect(manage_page.fetch(:balance_history_rows)).to be_present
+  end
+
+  it "batches imported activity across overview timeline buckets" do
+    user = create(:user)
+    account = create(:account, user: user, kind: :checking)
+    create(:account_snapshot, account: account, recorded_on: Date.new(2026, 1, 1), balance: 2_000)
+
+    6.times do |offset|
+      transaction_on = Date.new(2026, 1, 15).next_month(offset)
+      activity_import = create(
+        :account_activity_import,
+        account: account,
+        started_on: transaction_on.beginning_of_month,
+        ended_on: transaction_on.end_of_month
+      )
+      create(
+        :account_activity,
+        account: account,
+        account_activity_import: activity_import,
+        transaction_on: transaction_on,
+        account_delta: -25,
+        amount: 25
+      )
+    end
+
+    queries = count_select_queries do
+      result = described_class.new(account: account.reload, as_of: Date.new(2026, 6, 30), view: "overview").call
+      expect(result.fetch(:movement_timeline).fetch(:buckets).sum { |bucket| bucket.fetch(:activity_count) }).to eq(6)
+    end
+
+    expect(queries).to be <= 12
   end
 end

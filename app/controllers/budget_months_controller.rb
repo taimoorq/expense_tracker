@@ -3,13 +3,11 @@ class BudgetMonthsController < ApplicationController
   include BudgetMonthFlow
 
   def index
-    auto_complete_due_recurring_entries(current_user.expense_entries)
     apply_index_data(Budgeting::MonthIndexLoader.call(user: current_user, year_param: params[:year]))
   end
 
   def show
     @budget_month = current_user.budget_months.find(params[:id])
-    auto_complete_due_recurring_entries(@budget_month.expense_entries)
     month_data = Budgeting::MonthShowLoader.call(
       user: current_user,
       budget_month: @budget_month,
@@ -39,7 +37,7 @@ class BudgetMonthsController < ApplicationController
     return redirect_to @budget_month, notice: result.notice if result.success?
 
     @wizard_step = result.wizard_step
-    render :new, status: :unprocessable_entity
+    render :new, status: :unprocessable_content
   end
 
   def generate_paychecks

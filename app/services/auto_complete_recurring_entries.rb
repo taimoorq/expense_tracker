@@ -1,1 +1,0 @@
-AutoCompleteRecurringEntries = Budgeting::AutoCompleteRecurringEntries

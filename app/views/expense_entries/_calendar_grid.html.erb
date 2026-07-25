@@ -16,32 +16,10 @@
   end
 } %>
 
-<div class="space-y-3 md:hidden" aria-label="Month agenda">
-  <% (month_start..month_end).each do |day| %>
-    <% day_entries = entries_by_day.fetch(day, []).sort_by { |entry| [entry.cashflow_amount, entry.payee.to_s.downcase] } %>
-    <% next if day_entries.empty? %>
-    <section class="overflow-hidden rounded-[var(--ta-radius-md)] border border-slate-200 bg-white" data-expense-entries-filter-target="day">
-      <div class="flex items-center justify-between border-l-4 border-l-[var(--ta-accent)] bg-slate-50 px-3 py-2.5">
-        <div><p class="text-sm font-semibold text-slate-900"><%= day.strftime("%A, %B %-d") %></p><p class="mt-0.5 text-xs text-slate-500" data-expense-entries-filter-target="count"><%= pluralize(day_entries.count, "entry") %></p></div>
-        <p class="ta-money text-sm font-semibold <%= day_entries.sum(&:cashflow_amount) >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= number_to_currency(day_entries.sum(&:cashflow_amount)) %></p>
-      </div>
-      <div class="divide-y divide-slate-200">
-        <% day_entries.each do |entry| %>
-          <%= link_to edit_budget_month_expense_entry_path(budget_month, entry), class: "flex min-h-11 items-center justify-between gap-3 px-3 py-2.5 text-sm hover:bg-slate-50", data: { expense_entries_filter_target: "chip", value: reason_for_entry.call(entry).to_s.downcase, date: entry.occurred_on&.iso8601, payee: entry.payee.to_s, reason: reason_for_entry.call(entry).to_s, account: entry.account_name.to_s, status: entry.status, turbo_frame: "entry_editor_modal" } do %>
-            <span class="min-w-0"><span class="block truncate font-medium text-slate-900"><%= entry.payee.presence || entry.category.presence || entry.section.humanize %></span><span class="mt-0.5 block text-xs text-slate-500"><%= entry.status.humanize %> · <%= entry.category.presence || entry.section.humanize %></span></span>
-            <span class="ta-money shrink-0 font-semibold <%= entry.cashflow_amount >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= entry.cashflow_amount >= 0 ? "+" : "" %><%= number_to_currency(entry.cashflow_amount) %></span>
-          <% end %>
-        <% end %>
-        <p class="hidden px-3 py-3 text-sm text-slate-500" data-expense-entries-filter-target="empty">No matching entries</p>
-      </div>
-    </section>
-  <% end %>
-</div>
-
-<div class="hidden overflow-x-auto md:block">
-  <div class="grid min-w-[960px] grid-cols-7 gap-2 text-sm">
+<div class="overflow-x-auto" aria-label="Month calendar">
+  <div class="grid grid-cols-1 gap-2 text-sm md:min-w-[960px] md:grid-cols-7">
     <% %w[Sun Mon Tue Wed Thu Fri Sat].each do |day_name| %>
-      <div class="rounded-lg bg-slate-100 px-2 py-1 text-center font-semibold text-slate-600"><%= day_name %></div>
+      <div class="hidden rounded-lg bg-slate-100 px-2 py-1 text-center font-semibold text-slate-600 md:block"><%= day_name %></div>
     <% end %>
 
     <% (grid_start..grid_end).each do |day| %>
@@ -49,9 +27,9 @@
       <% in_month = day.month == month_on.month %>
       <% is_today = day == Date.current %>
 
-      <div class="min-h-36 rounded-lg border <%= is_today ? 'border-indigo-500 bg-indigo-50' : (in_month ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50') %> p-2" data-expense-entries-filter-target="day">
+      <div class="<%= 'hidden md:block' if day_entries.empty? %> min-h-24 rounded-lg border <%= is_today ? 'border-indigo-500 bg-indigo-50' : (in_month ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50') %> p-2 md:min-h-36" data-expense-entries-filter-target="day">
         <div class="mb-2 flex items-center justify-between">
-          <span class="text-xs font-semibold <%= is_today ? 'text-indigo-600' : (in_month ? 'text-slate-700' : 'text-slate-400') %>"><%= day.strftime("%-d") %></span>
+          <span class="text-xs font-semibold <%= is_today ? 'text-indigo-600' : (in_month ? 'text-slate-700' : 'text-slate-400') %>"><span class="md:hidden"><%= day.strftime("%A, %B %-d") %></span><span class="hidden md:inline"><%= day.strftime("%-d") %></span></span>
           <% if day_entries.any? %>
             <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600" data-expense-entries-filter-target="count"><%= pluralize(day_entries.count, "entry") %></span>
           <% end %>

@@ -9,21 +9,9 @@ module Overview
     end
 
     def call
-      counts = {
-        pay_schedules: user.pay_schedules.count,
-        subscriptions: user.subscriptions.count,
-        monthly_bills: user.monthly_bills.count,
-        payment_plans: user.payment_plans.count,
-        credit_cards: user.credit_cards.count
-      }
-
-      linked_counts = {
-        pay_schedules: user.pay_schedules.where.not(linked_account_id: nil).count,
-        subscriptions: user.subscriptions.where.not(linked_account_id: nil).count,
-        monthly_bills: user.monthly_bills.where.not(linked_account_id: nil).count,
-        payment_plans: user.payment_plans.where.not(linked_account_id: nil).count,
-        credit_cards: user.credit_cards.where.not(linked_account_id: nil).count
-      }
+      count_pairs = TEMPLATE_TYPES.to_h { |template_type| [ template_type, count_pair_for(template_type) ] }
+      counts = count_pairs.transform_values { |pair| pair.fetch(:total) }
+      linked_counts = count_pairs.transform_values { |pair| pair.fetch(:linked) }
 
       {
         template_counts: counts,
@@ -37,6 +25,15 @@ module Overview
     private
 
     attr_reader :current_month, :current_month_entries, :user
+
+    def count_pair_for(template_type)
+      total, linked = user.public_send(template_type).unscope(:order).pick(
+        Arel.sql("COUNT(*)"),
+        Arel.sql("COUNT(linked_account_id)")
+      )
+
+      { total: total.to_i, linked: linked.to_i }
+    end
 
     def template_actions_completed
       return 0 unless current_month
@@ -68,28 +65,33 @@ module Overview
     end
 
     def matching_template_entries(template_type)
+      templates = templates_for_type(template_type)
       current_month_entries.select do |entry|
-        templates_for_type(template_type).any? do |template|
+        templates.any? do |template|
           template_matches_entry?(template, entry)
         end
       end
     end
 
     def templates_for_type(template_type)
-      case template_type
-      when :pay_schedules
-        user.pay_schedules.active_during_month(current_month.month_on).includes(:linked_account).to_a
-      when :subscriptions
-        user.subscriptions.active_only.includes(:linked_account).to_a
-      when :monthly_bills
-        user.monthly_bills.active_only.includes(:linked_account).select { |bill| bill.scheduled_for_month?(current_month.month_on) }
-      when :payment_plans
-        user.payment_plans.active_only.includes(:linked_account).to_a
-      when :credit_cards
-        user.credit_cards.active_only.includes(:payment_account).to_a
-      else
-        []
-      end
+      @templates_by_type ||= {}
+      return @templates_by_type.fetch(template_type) if @templates_by_type.key?(template_type)
+
+      @templates_by_type[template_type] =
+        case template_type
+        when :pay_schedules
+          user.pay_schedules.active_during_month(current_month.month_on).includes(:linked_account).to_a
+        when :subscriptions
+          user.subscriptions.active_only.includes(:linked_account).to_a
+        when :monthly_bills
+          user.monthly_bills.active_only.includes(:linked_account).select { |bill| bill.scheduled_for_month?(current_month.month_on) }
+        when :payment_plans
+          user.payment_plans.active_only.includes(:linked_account).to_a
+        when :credit_cards
+          user.credit_cards.active_only.includes(:payment_account).to_a
+        else
+          []
+        end
     end
 
     def template_matches_entry?(template, entry)

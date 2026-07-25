@@ -17,9 +17,10 @@ module Accounts
       balance_available: false
     }.freeze
 
-    def initialize(account:, as_of: Date.current)
+    def initialize(account:, as_of: Date.current, inputs: nil)
       @account = account
-      @user = account.user
+      @inputs = inputs
+      @user = inputs&.user || account.user
       @as_of = as_of
     end
 
@@ -32,10 +33,10 @@ module Accounts
 
     private
 
-    attr_reader :account, :user, :as_of
+    attr_reader :account, :as_of, :inputs, :user
 
     def summary
-      @summary ||= Accounts::BalanceResolver.new(account: account, as_of: as_of).call.to_h
+      @summary ||= Accounts::BalanceResolver.new(account: account, as_of: as_of, inputs: inputs).call.to_h
     end
 
     def rows
@@ -43,7 +44,9 @@ module Accounts
         Accounts::PeriodBalance.new(
           account: account,
           period_start: month_start,
-          period_end: month_start.end_of_month
+          period_end: month_start.end_of_month,
+          linked_entries: linked_entries,
+          activity_rows: activity_rows
         ).call.to_h.merge(month_on: month_start)
       end
     end
@@ -73,7 +76,11 @@ module Accounts
     end
 
     def imported_activity_dates
-      @imported_activity_dates ||= account.account_activities.pluck(:transaction_on)
+      @imported_activity_dates ||= if inputs
+        activity_rows.map(&:transaction_on)
+      else
+        account.account_activities.pluck(:transaction_on)
+      end
     end
 
     def institution_balance_source_dates
@@ -83,12 +90,20 @@ module Accounts
     end
 
     def linked_entries
-      @linked_entries ||= user.expense_entries
-                            .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
-                            .where.not(occurred_on: nil)
-                            .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])
-                            .order(:occurred_on, :created_at)
-                            .to_a
+      @linked_entries ||= if inputs
+        inputs.entries_for(account)
+      else
+        user.expense_entries
+          .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
+          .where.not(occurred_on: nil)
+          .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])
+          .order(:occurred_on, :created_at)
+          .to_a
+      end
+    end
+
+    def activity_rows
+      @activity_rows ||= inputs ? inputs.activities_for(account) : nil
     end
   end
 end

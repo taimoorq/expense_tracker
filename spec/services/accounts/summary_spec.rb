@@ -1,6 +1,16 @@
 require "rails_helper"
 
 RSpec.describe Accounts::Summary do
+  def count_select_queries
+    count = 0
+    callback = lambda do |_name, _started, _finished, _unique_id, payload|
+      count += 1 if payload[:sql].to_s.match?(/\ASELECT/i) && payload[:name] != "SCHEMA"
+    end
+
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
+    count
+  end
+
   it "builds shared account summary data" do
     user = create(:user)
     checking = create(:account, user:, name: "Checking", kind: :checking, include_in_net_worth: true)
@@ -79,5 +89,21 @@ RSpec.describe Accounts::Summary do
       imported_activity_count: 1,
       balance_available: false
     )
+  end
+
+  it "loads balance inputs in batches as account count grows" do
+    user = create(:user)
+    month = create(:budget_month, user:, month_on: Date.current.beginning_of_month)
+    accounts = create_list(:account, 6, user: user)
+    accounts.each do |account|
+      create(:account_snapshot, account: account, recorded_on: Date.current - 1.day, balance: 100)
+      create(:expense_entry, user:, budget_month: month, source_account: account, occurred_on: Date.current, status: :paid, actual_amount: 10)
+    end
+
+    queries = count_select_queries do
+      described_class.new(user: user.reload, include_trend: true).call
+    end
+
+    expect(queries).to be <= 15
   end
 end

@@ -1,6 +1,16 @@
 require "rails_helper"
 
 RSpec.describe Overview::TemplateSummary do
+  def count_select_queries
+    count = 0
+    callback = lambda do |_name, _started, _finished, _unique_id, payload|
+      count += 1 if payload[:sql].to_s.match?(/\ASELECT/i) && payload[:name] != "SCHEMA"
+    end
+
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
+    count
+  end
+
   it "tracks template counts, linked totals, and completed monthly actions" do
     user = create(:user)
     account = create(:account, user:, name: "Checking")
@@ -74,5 +84,20 @@ RSpec.describe Overview::TemplateSummary do
     summary = described_class.new(user: user, current_month: month, current_month_entries: month.expense_entries.to_a).call
 
     expect(summary[:template_actions_completed]).to eq(0)
+  end
+
+  it "loads each template type once while matching a populated month" do
+    user = create(:user)
+    account = create(:account, user:, name: "Checking")
+    month = create(:budget_month, user:, month_on: Date.new(2026, 7, 1), label: "July 2026")
+    card = create(:credit_card, user:, name: "Visa", payment_account: account)
+    create_list(:expense_entry, 20, user:, budget_month: month, section: :debt, category: "Credit Card", payee: card.name, account: account.name)
+
+    queries = count_select_queries do
+      entries = month.expense_entries.includes(:source_account).to_a
+      described_class.new(user: user.reload, current_month: month, current_month_entries: entries).call
+    end
+
+    expect(queries).to be <= 15
   end
 end

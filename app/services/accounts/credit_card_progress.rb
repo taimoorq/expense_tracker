@@ -1,9 +1,10 @@
 module Accounts
   class CreditCardProgress
-    def initialize(account:, balance_summary:, as_of: Date.current)
+    def initialize(account:, balance_summary:, as_of: Date.current, entries: nil)
       @account = account
       @balance_summary = balance_summary
       @as_of = as_of
+      @entries = entries
       @user = account.user
     end
 
@@ -26,7 +27,7 @@ module Accounts
 
     private
 
-    attr_reader :account, :balance_summary, :as_of, :user
+    attr_reader :account, :balance_summary, :as_of, :entries, :user
 
     def paid_down_this_month
       @paid_down_this_month ||= month_entries
@@ -71,12 +72,16 @@ module Accounts
     end
 
     def month_entries
-      @month_entries ||= user.expense_entries
-                             .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
-                             .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])
-                             .where.not(occurred_on: nil)
-                             .where(occurred_on: as_of.beginning_of_month..as_of.end_of_month)
-                             .to_a
+      @month_entries ||= if entries
+        entries.select { |entry| entry.occurred_on.between?(as_of.beginning_of_month, as_of.end_of_month) }
+      else
+        user.expense_entries
+          .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
+          .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])
+          .where.not(occurred_on: nil)
+          .where(occurred_on: as_of.beginning_of_month..as_of.end_of_month)
+          .to_a
+      end
     end
 
     def debt_amount(balance)

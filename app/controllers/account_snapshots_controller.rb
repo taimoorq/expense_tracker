@@ -7,7 +7,7 @@ class AccountSnapshotsController < ApplicationController
       redirect_to account_path(@account, view: "manage"), notice: "Balance snapshot recorded."
     else
       assign_manage_page
-      render "accounts/show", status: :unprocessable_entity
+      render "accounts/show", status: :unprocessable_content
     end
   end
 
@@ -23,7 +23,7 @@ class AccountSnapshotsController < ApplicationController
     if @account_snapshot.update(account_snapshot_params)
       redirect_to account_path(@account, view: "manage"), notice: "Balance snapshot updated."
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

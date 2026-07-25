@@ -68,7 +68,13 @@ module Accounts
     end
 
     def account_balances
-      @account_balances ||= accounts.index_with { |account| Accounts::BalanceResolver.new(account: account).call }
+      @account_balances ||= accounts.index_with do |account|
+        Accounts::BalanceResolver.new(account: account, inputs: balance_inputs).call
+      end
+    end
+
+    def balance_inputs
+      @balance_inputs ||= Accounts::BalanceInputs.new(user: user, accounts: accounts)
     end
 
     def account_balance_rows

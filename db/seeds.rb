@@ -621,7 +621,18 @@ def generate_seed_history_for!(user, accounts_by_name:, months_count:, source_pr
     end
 
     EstimateMonthCreditCards.new(budget_month: budget_month).call if user.credit_cards.active_only.any?
-    AutoCompleteRecurringEntries.new(entries: budget_month.expense_entries, as_of: budget_month.month_on.end_of_month).call
+    budget_month.expense_entries
+      .recurring_templates
+      .where(status: :planned)
+      .where.not(occurred_on: nil)
+      .due_on_or_before(budget_month.month_on.end_of_month)
+      .find_each do |entry|
+        entry.update!(
+          status: :paid,
+          actual_amount: entry.actual_amount.presence || entry.planned_amount,
+          auto_completed_at: Time.current
+        )
+      end
   end
 
   budget_months.each do |budget_month|

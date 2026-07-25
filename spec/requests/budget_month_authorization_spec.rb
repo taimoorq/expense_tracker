@@ -39,4 +39,53 @@ RSpec.describe "Budget month authorization", type: :request do
     expect(response.body).not_to include("Review mode")
     expect(response.body).not_to include("Private item")
   end
+
+  it "does not mutate due recurring entries while rendering month pages" do
+    user = create(:user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month)
+    due_entry = create(
+      :expense_entry,
+      user: user,
+      budget_month: month,
+      occurred_on: Date.current,
+      planned_amount: 89.50,
+      actual_amount: nil,
+      status: :planned,
+      source_file: "subscription"
+    )
+
+    sign_in user
+
+    expect { get budget_months_path }
+      .not_to change { due_entry.reload.slice(:status, :actual_amount, :auto_completed_at, :updated_at) }
+    expect(response).to have_http_status(:ok)
+
+    expect { get budget_month_tab_path(month, "timeline") }
+      .not_to change { due_entry.reload.slice(:status, :actual_amount, :auto_completed_at, :updated_at) }
+    expect(response).to have_http_status(:ok)
+  end
+
+  it "renders only the requested month ledger mode" do
+    user = create(:user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month)
+    create(:expense_entry, user: user, budget_month: month, payee: "Mode-specific entry")
+
+    sign_in user
+
+    get budget_month_tab_path(month, "timeline")
+    expect(response.body).to include('data-panel-name="full-list"')
+    expect(response.body).not_to include('data-panel-name="sections"')
+    expect(response.body).not_to include('data-panel-name="calendar"')
+    expect(response.body).not_to include('id="mobile_expense_entry_')
+
+    get budget_month_tab_path(month, "timeline", view: "sections")
+    expect(response.body).to include('data-panel-name="sections"')
+    expect(response.body).not_to include('data-panel-name="full-list"')
+    expect(response.body).not_to include('data-panel-name="calendar"')
+
+    get budget_month_tab_path(month, "calendar")
+    expect(response.body).to include('data-panel-name="calendar"')
+    expect(response.body).not_to include('data-panel-name="sections"')
+    expect(response.body).not_to include('data-panel-name="full-list"')
+  end
 end

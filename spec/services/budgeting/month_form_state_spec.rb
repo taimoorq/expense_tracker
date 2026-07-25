@@ -1,6 +1,16 @@
 require "rails_helper"
 
 RSpec.describe Budgeting::MonthFormState do
+  def count_select_queries
+    count = 0
+    callback = lambda do |_name, _started, _finished, _unique_id, payload|
+      count += 1 if payload[:sql].to_s.match?(/\ASELECT/i) && payload[:name] != "SCHEMA"
+    end
+
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
+    count
+  end
+
   describe ".call" do
     it "defaults to a fresh workflow and enables template import when no source month is selected" do
       user = create(:user)
@@ -42,6 +52,25 @@ RSpec.describe Budgeting::MonthFormState do
         month_on: Date.new(2026, 5, 1),
         label: "May 2026"
       )
+    end
+
+    it "uses aggregate counts without loading historical entry records" do
+      user = create(:user)
+      months = 6.times.map do |index|
+        create(:budget_month, user: user, month_on: Date.new(2026, index + 1, 1))
+      end
+      months.each_with_index do |month, index|
+        create_list(:expense_entry, index + 1, user: user, budget_month: month)
+      end
+
+      result = nil
+      queries = count_select_queries do
+        result = described_class.call(user: user.reload, params: {})
+      end
+
+      expect(result.cloneable_month_options.map { |option| option[:entry_count] }).to eq([ 6, 5, 4, 3, 2, 1 ])
+      expect(queries).to be <= 4
+      expect(result.cloneable_budget_months).to all(satisfy { |month| !month.association(:expense_entries).loaded? })
     end
   end
 end

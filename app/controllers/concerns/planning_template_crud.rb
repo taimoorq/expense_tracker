@@ -53,7 +53,7 @@ module PlanningTemplateCrud
   end
 
   def respond_error(message)
-    respond_with_section_update(message:, flash_key: :alert, status: :unprocessable_entity)
+    respond_with_section_update(message:, flash_key: :alert, status: :unprocessable_content)
   end
 
   def respond_with_section_update(message:, flash_key:, status: :ok)

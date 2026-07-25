@@ -9,11 +9,14 @@ module Accounts
     }.freeze
     DEFAULT_RANGE = "6m"
 
-    def initialize(account:, range: DEFAULT_RANGE, as_of: Date.current)
+    def initialize(account:, range: DEFAULT_RANGE, as_of: Date.current, entries: nil, activities: nil, imports: nil)
       @account = account
       @user = account.user
       @range = RANGE_OPTIONS.key?(range.to_s) ? range.to_s : DEFAULT_RANGE
       @as_of = as_of
+      @entries = entries
+      @activities = activities
+      @imports = imports
     end
 
     def call
@@ -30,19 +33,19 @@ module Accounts
 
     private
 
-    attr_reader :account, :as_of, :range, :user
+    attr_reader :account, :activities, :as_of, :entries, :imports, :range, :user
 
     def build_bucket(bucket_range)
       starts_on = bucket_range.begin
       ends_on = bucket_range.end
       actual_ends_on = [ ends_on, as_of ].min
-      imported_rows = imported_activities.where(transaction_on: starts_on..actual_ends_on)
+      imported_rows = imported_rows_between(starts_on, actual_ends_on)
       imports = imports_for_period(starts_on..actual_ends_on, imported_rows)
-      imported_source = imported_rows.exists?
+      imported_source = imported_rows_exist?(imported_rows)
       paid_rows = paid_entries.select { |entry| entry.occurred_on.between?(starts_on, actual_ends_on) }
       planned_rows = planned_entries.select { |entry| entry.occurred_on.between?(starts_on, ends_on) }
       actual_deltas = if imported_source
-        imported_rows.pluck(:account_delta).map(&:to_d)
+        imported_row_deltas(imported_rows)
       else
         paid_rows.map { |entry| Accounts::EntryImpact.new(account: account, entry: entry).delta }
       end
@@ -50,7 +53,9 @@ module Accounts
       balance = Accounts::PeriodBalance.new(
         account: account,
         period_start: starts_on,
-        period_end: actual_ends_on
+        period_end: actual_ends_on,
+        linked_entries: linked_entries,
+        activity_rows: activities
       ).call
 
       {
@@ -70,7 +75,7 @@ module Accounts
         ending_balance: display_balance(balance),
         projected_balance: display_projected_balance(balance),
         balance_available: balance.balance_available,
-        activity_count: imported_source ? imported_rows.count : paid_rows.size,
+        activity_count: imported_source ? imported_rows_count(imported_rows) : paid_rows.size,
         drilldown: {
           starts_on: starts_on.iso8601,
           ends_on: actual_ends_on.iso8601,
@@ -136,8 +141,8 @@ module Accounts
       if intervals.empty?
         return {
           status: :partial,
-          starts_on: imported_rows.minimum(:transaction_on),
-          ends_on: imported_rows.maximum(:transaction_on)
+          starts_on: imported_row_dates(imported_rows).min,
+          ends_on: imported_row_dates(imported_rows).max
         }
       end
 
@@ -249,18 +254,65 @@ module Accounts
 
     def earliest_activity_on
       @earliest_activity_on ||= [
-        account.account_snapshots.minimum(:recorded_on),
-        imported_activities.minimum(:transaction_on),
-        account.account_activity_imports.minimum(:started_on),
+        earliest_snapshot_on,
+        earliest_imported_activity_on,
+        earliest_import_on,
         linked_entries.filter_map(&:occurred_on).min,
         as_of
       ].compact.min
     end
 
     def imports_for_period(period, imported_rows)
+      if imports
+        row_import_ids = imported_rows.map(&:account_activity_import_id).to_set
+        return imports.select do |activity_import|
+          overlaps_period = activity_import.started_on.present? && activity_import.ended_on.present? &&
+            activity_import.started_on <= period.end && activity_import.ended_on >= period.begin
+          overlaps_period || row_import_ids.include?(activity_import.id)
+        end
+      end
+
       overlapping = account.account_activity_imports.where("started_on <= ? AND ended_on >= ?", period.end, period.begin)
       row_imports = account.account_activity_imports.where(id: imported_rows.select(:account_activity_import_id))
       (overlapping.to_a + row_imports.to_a).uniq(&:id)
+    end
+
+    def imported_rows_between(starts_on, ends_on)
+      return activities.select { |activity| activity.transaction_on.between?(starts_on, ends_on) } if activities
+
+      imported_activities.where(transaction_on: starts_on..ends_on)
+    end
+
+    def imported_rows_exist?(rows)
+      activities ? rows.any? : rows.exists?
+    end
+
+    def imported_row_deltas(rows)
+      activities ? rows.map { |activity| activity.account_delta.to_d } : rows.pluck(:account_delta).map(&:to_d)
+    end
+
+    def imported_rows_count(rows)
+      activities ? rows.size : rows.count
+    end
+
+    def imported_row_dates(rows)
+      activities ? rows.map(&:transaction_on) : rows.pluck(:transaction_on)
+    end
+
+    def earliest_imported_activity_on
+      activities ? activities.map(&:transaction_on).min : imported_activities.minimum(:transaction_on)
+    end
+
+    def earliest_snapshot_on
+      return account.account_snapshots.filter_map { |snapshot| snapshot.recorded_on if snapshot.persisted? }.min if activities
+
+      account.account_snapshots.minimum(:recorded_on)
+    end
+
+    def earliest_import_on
+      return imports.filter_map(&:started_on).min if imports
+
+      account.account_activity_imports.minimum(:started_on)
     end
 
     def imported_activities
@@ -268,7 +320,7 @@ module Accounts
     end
 
     def linked_entries
-      @linked_entries ||= user.expense_entries
+      @linked_entries ||= entries || user.expense_entries
         .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
         .where.not(occurred_on: nil)
         .where(status: [ ExpenseEntry.statuses[:paid], ExpenseEntry.statuses[:planned] ])
