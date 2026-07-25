@@ -7,8 +7,3 @@ Keep local planning, progress notes, audit drafts, risk registers, and
 implementation roadmaps in `docs/local-plans/`. That folder is ignored by git so
 working notes can stay local unless they are intentionally rewritten as public
 documentation.
-
-Published app-maintainer notes:
-
-- [Robustness Hardening Roadmap](robustness-hardening-roadmap.md)
-- [Service Architecture](service-architecture.md)
