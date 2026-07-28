@@ -12,20 +12,8 @@ class ImportsController < ApplicationController
   end
 
   def create
-    if params[:preview_token].present?
-      preview_data = csv_preview_store.load(params[:preview_token])
-      unless preview_data
-        redirect_to budget_months_path, alert: "CSV preview expired. Preview the file again before importing."
-        return
-      end
-
-      importer = Budgeting::CsvBudgetImporter.new(preview: preview_data, user: current_user)
-    elsif params[:file].present?
-      importer = Budgeting::CsvBudgetImporter.new(file: params[:file], user: current_user)
-    else
-      redirect_to budget_months_path, alert: "Choose a CSV file to import."
-      return
-    end
+    importer = importer_from_request
+    return if importer.blank?
 
     result = importer.call
 
@@ -38,6 +26,22 @@ class ImportsController < ApplicationController
   end
 
   private
+
+  def importer_from_request
+    return importer_from_preview if params[:preview_token].present?
+    return Budgeting::CsvBudgetImporter.new(file: params[:file], user: current_user) if params[:file].present?
+
+    redirect_to budget_months_path, alert: "Choose a CSV file to import."
+    nil
+  end
+
+  def importer_from_preview
+    preview_data = csv_preview_store.load(params[:preview_token])
+    return Budgeting::CsvBudgetImporter.new(preview: preview_data, user: current_user) if preview_data
+
+    redirect_to budget_months_path, alert: "CSV preview expired. Preview the file again before importing."
+    nil
+  end
 
   def import_success_notice(result)
     message = "Import complete: #{result[:months]} month(s), #{result[:entries]} entry(s)."

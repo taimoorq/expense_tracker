@@ -17,17 +17,8 @@ class AccountActivityImportsController < ApplicationController
   end
 
   def create
-    preview_data = preview_store.load(params[:preview_token])
-    unless preview_data
-      redirect_to new_account_account_activity_import_path(@account), alert: "Activity preview expired. Preview the file again before importing."
-      return
-    end
-    preview_data = preview_data.deep_symbolize_keys
-
-    unless preview_data[:account_id].to_s == @account.id
-      redirect_to new_account_account_activity_import_path(@account), alert: "Activity preview does not match this account."
-      return
-    end
+    preview_data = preview_data_for_import
+    return if preview_data.blank?
 
     result = Accounts::ActivityImports::Importer.new(user: current_user, account: @account, preview: preview_data).call
 
@@ -47,6 +38,22 @@ class AccountActivityImportsController < ApplicationController
 
   def preview_store
     @preview_store ||= Accounts::ActivityImports::PreviewStore.new(user: current_user)
+  end
+
+  def preview_data_for_import
+    preview_data = preview_store.load(params[:preview_token])
+    return redirect_for_expired_preview unless preview_data
+
+    preview_data = preview_data.deep_symbolize_keys
+    return preview_data if preview_data[:account_id].to_s == @account.id
+
+    redirect_to new_account_account_activity_import_path(@account), alert: "Activity preview does not match this account."
+    nil
+  end
+
+  def redirect_for_expired_preview
+    redirect_to new_account_account_activity_import_path(@account), alert: "Activity preview expired. Preview the file again before importing."
+    nil
   end
 
   def import_success_notice(result)

@@ -72,6 +72,16 @@ class Account < ApplicationRecord
     return nil unless balance.balance_available
     return nil unless balance.balance_source.in?([ :institution_import, :imported_activity ])
 
+    imported_card_balance_attributes(balance)
+  end
+
+  def current_balance(as_of: Date.current)
+    resolved_balance(as_of: as_of).current_balance
+  end
+
+  private
+
+  def imported_card_balance_attributes(balance)
     {
       type: balance.balance_source,
       label: balance.balance_source_label,
@@ -83,9 +93,5 @@ class Account < ApplicationRecord
       activity_through_on: balance.activity_through_on,
       activity_count: balance.paid_entries_count
     }
-  end
-
-  def current_balance(as_of: Date.current)
-    resolved_balance(as_of: as_of).current_balance
   end
 end

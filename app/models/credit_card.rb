@@ -45,7 +45,7 @@ class CreditCard < ApplicationRecord
 
     [
       ESTIMATE_ENTRY_KEY_VERSION,
-      self.class.name,
+      model_name.name,
       id,
       month_on.to_date.beginning_of_month.iso8601
     ].join(":")
@@ -61,7 +61,14 @@ class CreditCard < ApplicationRecord
       category: "Credit Card",
       payee: name,
       planned_amount: amount.round(2),
-      actual_amount: nil,
+      actual_amount: nil
+    }.merge(estimated_entry_metadata)
+  end
+
+  private
+
+  def estimated_entry_metadata
+    {
       account: account_name,
       status: :planned,
       need_or_want: "Need",
@@ -70,8 +77,6 @@ class CreditCard < ApplicationRecord
       source_template: self
     }
   end
-
-  private
 
   def comparable_text(value)
     value.to_s.strip.downcase

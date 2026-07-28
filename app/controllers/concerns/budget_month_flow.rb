@@ -42,4 +42,27 @@ module BudgetMonthFlow
     result = Recurring::MonthGenerationRunner.call(user: current_user, budget_month_id: params[:id], action: action)
     handle_month_generation(result.budget_month, result.message)
   end
+
+  def month_expense_entry_loader
+    case active_month_view
+    when "breakdown"
+      ->(entries) { entries.to_a }
+    when "entries"
+      method(:preload_plan_expense_entries)
+    else
+      method(:preload_month_expense_entries)
+    end
+  end
+
+  def active_month_view
+    requested_tab = params[:tab].presence_in(%w[timeline breakdown calendar entries])
+    return requested_tab if requested_tab.present?
+    return "timeline" if params[:view].presence_in(%w[sections full-list]).present?
+
+    current_user.preferred_month_view.presence_in(%w[timeline breakdown calendar entries]) || "timeline"
+  end
+
+  def budget_month_params
+    params.fetch(:budget_month, ActionController::Parameters.new).permit(:label, :month_on, :leftover, :notes)
+  end
 end
