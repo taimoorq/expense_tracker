@@ -1,0 +1,74 @@
+name: Bug report
+description: Report a reproducible problem in the current FinanceTracking.app release.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve FinanceTracking.app. Do not include real financial records, credentials, cookies, database URLs, private keys, or complete environment files.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I reproduced this on the latest stable release.
+          required: true
+        - label: I searched existing issues for the same symptom.
+          required: true
+        - label: I replaced personal and financial details with fabricated examples.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: FinanceTracking.app version
+      placeholder: v1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment path
+      options:
+        - Local Docker Compose trial
+        - Production Compose with a published image
+        - Production Compose built from source
+        - Local Rails development
+        - Other supported setup
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Host and browser
+      description: Include OS, CPU architecture, container runtime, and browser where relevant.
+      placeholder: Ubuntu 24.04, arm64, Docker 27, Firefox 142
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open …
+        2. Choose …
+        3. Observe …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior and sanitized logs
+      description: Include only the smallest useful excerpt and redact sensitive values.
+    validations:
+      required: true
+

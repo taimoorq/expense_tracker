@@ -1,0 +1,62 @@
+name: Setup or update help
+description: Ask about the documented Docker, production, update, or recovery paths.
+title: "[Setup]: "
+labels:
+  - support
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Support is best effort. Never post secrets, complete environment files, database dumps, bank exports, or real financial screenshots.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I reviewed the README and self-hosting guide.
+          required: true
+        - label: I am using or testing the latest stable release.
+          required: true
+        - label: I removed secrets and personal or financial information.
+          required: true
+  - type: dropdown
+    id: task
+    attributes:
+      label: What are you trying to do?
+      options:
+        - Run the local trial
+        - Deploy the production stack
+        - Update an existing install
+        - Configure private LAN HTTPS
+        - Back up or restore data
+        - Diagnose a startup problem
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version and image tag
+      placeholder: v1.0.0 / ghcr.io/taimoorq/expense_tracker:v1.0.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Host environment
+      placeholder: Debian 13, amd64, Docker Engine 27 with Compose v2
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and sanitized output
+      description: Include the exact command and smallest useful output excerpt. Replace secret values with REDACTED.
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+    validations:
+      required: true
+

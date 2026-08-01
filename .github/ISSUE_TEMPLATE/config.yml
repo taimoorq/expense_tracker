@@ -1,0 +1,12 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://financetracking.app/support/#security
+    about: Report suspected vulnerabilities privately instead of opening a public issue.
+  - name: Documentation
+    url: https://financetracking.app/docs/
+    about: Review setup, workflow, backup, and reference guidance.
+  - name: Commercial permission
+    url: https://github.com/taimoorq/expense_tracker/blob/main/COMMERCIAL-LICENSING.md
+    about: Request permission before using the software for a commercial purpose.
+

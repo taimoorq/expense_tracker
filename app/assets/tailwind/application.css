@@ -250,8 +250,12 @@
 	}
 
 	.ta-sidebar-brand {
-		@apply border-b px-6 py-5 text-lg font-semibold tracking-tight;
+		@apply border-b px-6 py-5 text-base font-semibold tracking-tight;
 		border-color: var(--ta-border);
+	}
+
+	.ta-sidebar-brand-text {
+		@apply whitespace-nowrap;
 	}
 
 	.ta-sidebar-nav {

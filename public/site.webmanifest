@@ -1,6 +1,6 @@
 {
-  "name": "Expense Tracker",
-  "short_name": "Expenses",
+  "name": "FinanceTracking.app",
+  "short_name": "FinanceTracking",
   "description": "Track monthly spending, templates, and cashflow.",
   "start_url": "/",
   "display": "standalone",

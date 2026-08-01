@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Expense Tracker" %></title>
+    <title><%= content_for(:title) || "FinanceTracking.app" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Expense Tracker">
+    <meta name="application-name" content="FinanceTracking.app">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -44,10 +44,10 @@
 
     <aside class="ta-sidebar" data-sidebar-target="sidebar">
       <div class="ta-sidebar-brand">
-        <%= link_to(user_signed_in? ? root_path : new_user_session_path, class: "inline-flex items-center gap-2.5 text-slate-900", title: "Expense Tracker") do %>
-          <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-7 w-7 rounded" %>
-          <span class="ta-sidebar-brand-text">Expense Tracker</span>
-          <span class="ta-sidebar-brand-mini">ET</span>
+        <%= link_to(user_signed_in? ? root_path : new_user_session_path, class: "inline-flex items-center gap-2.5 text-slate-900", title: "FinanceTracking.app") do %>
+          <%= image_tag "/logo.svg", alt: "FinanceTracking.app logo", class: "h-7 w-7 rounded" %>
+          <span class="ta-sidebar-brand-text">FinanceTracking.app</span>
+          <span class="ta-sidebar-brand-mini">FT</span>
         <% end %>
       </div>
       <% if user_signed_in? %>
@@ -165,7 +165,7 @@
           <% else %>
             <div class="ta-page-header flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 class="ta-page-title"><%= content_for(:title) || "Expense Tracker" %></h1>
+                <h1 class="ta-page-title"><%= content_for(:title) || "FinanceTracking.app" %></h1>
               </div>
               <% if show_back_nav %>
                 <%= link_to root_path, class: "fb-btn-secondary ta-action-btn" do %>

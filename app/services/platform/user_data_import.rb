@@ -21,7 +21,7 @@ module Platform
 
     def adapter_for_payload
       unless payload[:format] == Platform::UserDataExport::FORMAT_NAME
-        return failure("This file is not a supported Expense Tracker backup.")
+        return failure("This file is not a supported FinanceTracking.app backup.")
       end
 
       case payload[:version].to_i

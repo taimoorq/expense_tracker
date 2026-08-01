@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Expense Tracker" %></title>
+    <title><%= content_for(:title) || "FinanceTracking.app" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Expense Tracker">
+    <meta name="application-name" content="FinanceTracking.app">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -42,9 +42,9 @@
         <div class="relative z-10 flex min-h-[560px] flex-col justify-between">
           <div>
             <%= link_to(authentication_brand_path, class: "inline-flex items-center gap-3 text-white") do %>
-              <%= image_tag "/logo.svg", alt: "Expense Tracker logo", class: "h-11 w-11 rounded-2xl border border-white/15 bg-white/10 p-2 shadow-lg shadow-slate-950/20" %>
+              <%= image_tag "/logo.svg", alt: "FinanceTracking.app logo", class: "h-11 w-11 rounded-2xl border border-white/15 bg-white/10 p-2 shadow-lg shadow-slate-950/20" %>
               <div>
-                <p class="text-lg font-semibold tracking-tight">Expense Tracker</p>
+                <p class="text-lg font-semibold tracking-tight">FinanceTracking.app</p>
                 <p class="text-sm text-white/70"><%= authentication_brand_subtitle %></p>
               </div>
             <% end %>

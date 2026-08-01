@@ -1,6 +1,6 @@
 # Documentation
 
-This folder is for documentation that is safe to publish with the open-source
+This folder is for documentation that is safe to publish with the source-available
 repository.
 
 Keep local planning, progress notes, audit drafts, risk registers, and

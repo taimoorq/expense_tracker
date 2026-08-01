@@ -33,7 +33,7 @@ module Platform
       end
 
       unless parsed[:format] == ENCRYPTED_FORMAT_NAME
-        return failure("This file is not a supported Expense Tracker backup.")
+        return failure("This file is not a supported FinanceTracking.app backup.")
       end
 
       unless parsed[:version] == ENCRYPTED_FORMAT_VERSION
@@ -66,7 +66,7 @@ module Platform
 
     def self.validate_plain_payload(payload)
       unless payload[:format] == Platform::UserDataExport::FORMAT_NAME
-        return failure("This file is not a supported Expense Tracker backup.")
+        return failure("This file is not a supported FinanceTracking.app backup.")
       end
 
       unless payload[:version] == Platform::UserDataExport::FORMAT_VERSION

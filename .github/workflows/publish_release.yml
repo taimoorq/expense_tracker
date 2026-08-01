@@ -156,7 +156,7 @@ jobs:
           push: true
           tags: ${{ steps.image.outputs.tags }}
           labels: |
-            org.opencontainers.image.title=Expense Tracker
+            org.opencontainers.image.title=FinanceTracking.app
             org.opencontainers.image.description=Self-hosted monthly budgeting app built with Rails
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}

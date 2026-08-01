@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This repository contains the main Expense Tracker application, a self-hosted monthly budgeting app built with Rails.
+This repository contains the main FinanceTracking.app application, a self-hosted monthly budgeting app built with Rails.
 
 The app helps users:
 
@@ -16,7 +16,7 @@ The hosted marketing site and user documentation live in a separate frontend rep
 
 ## Business Context
 
-Expense Tracker is designed for people who budget by month and want one place to plan, review, and maintain that budget over time.
+FinanceTracking.app is designed for people who budget by month and want one place to plan, review, and maintain that budget over time.
 
 The product is intentionally opinionated around a month-based workflow:
 

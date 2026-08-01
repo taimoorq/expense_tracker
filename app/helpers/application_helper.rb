@@ -101,7 +101,7 @@ module ApplicationHelper
       }
     else
       {
-        badge: "Expense Tracker",
+        badge: "FinanceTracking.app",
         title: "Welcome",
         description: "Personal budgeting with private monthly planning.",
         gradient: "from-slate-800 via-indigo-700 to-sky-600",

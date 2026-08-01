@@ -786,7 +786,7 @@ profiles_to_seed =
     [ [ seed_profile.to_sym, seed_email ] ]
   end
 
-puts "Seeding Expense Tracker demo data..."
+puts "Seeding FinanceTracking.app demo data..."
 puts "- Seed profile: #{seed_profile}"
 puts "- Seed mode: #{seed_mode}"
 puts "- Admin user email: #{admin_seed_email}" if admin_seed_email.present?

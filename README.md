@@ -1,10 +1,10 @@
-# Expense Tracker
+# FinanceTracking.app
 
-Expense Tracker is a self-hosted Rails app for people who plan their money one month at a time. Build a month from recurring paychecks and bills, record what actually happened, and keep account balances close to the budget.
+FinanceTracking.app is a self-hosted Rails app for people who plan their money one month at a time. Build a month from recurring paychecks and bills, record what actually happened, and keep account balances close to the budget.
 
 The app favors manual planning and CSV imports over live bank sync. It is a good fit if you want a private, hands-on budget that you control and host yourself.
 
-[Product overview](https://financetracking.app/) · [User guide](https://financetracking.app/docs/) · [Releases](https://github.com/taimoorq/expense_tracker/releases)
+[Product overview](https://financetracking.app/) · [User guide](https://financetracking.app/docs/) · [Trust center](https://financetracking.app/trust/) · [Support](SUPPORT.md) · [Releases](https://github.com/taimoorq/expense_tracker/releases)
 
 ## Contents
 
@@ -16,6 +16,8 @@ The app favors manual planning and CSV imports over live bank sync. It is a good
 - [Demo and sample data](#demo-and-sample-data)
 - [Local development](#local-development)
 - [Authentication and configuration](#authentication-and-configuration)
+- [Security and support](#security-and-support)
+- [License](#license)
 - [Troubleshooting](#troubleshooting)
 
 ## Quick start
@@ -175,7 +177,7 @@ Caddy is the only service exposed on ports `80` and `443`. Rails and PostgreSQL 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.0.0
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.1.0
 ```
 
 Then pull and start it without building locally:
@@ -352,6 +354,20 @@ Common settings are documented in:
 
 - [`.env.example`](.env.example) for local development and Docker
 - [`.env.production.example`](.env.production.example) for production
+
+## Security and support
+
+Read [SECURITY.md](SECURITY.md) before reporting a suspected vulnerability, and keep security reports out of public issues. The public [trust center](https://financetracking.app/trust/) documents data storage, external requests, included controls, backups, and operator responsibilities.
+
+For installation help, reproducible bugs, workflow feedback, and support boundaries, read [SUPPORT.md](SUPPORT.md). Never publish credentials, complete environment files, database dumps, bank exports, or real financial screenshots.
+
+## License
+
+FinanceTracking.app is source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md). You may use, modify, fork, and redistribute the software for permitted noncommercial purposes under that license.
+
+Commercial use requires separate written permission. See [Commercial Licensing](COMMERCIAL-LICENSING.md) or email [hello@financetracking.app](mailto:hello@financetracking.app) before using the software for a commercial purpose.
+
+Because the license restricts commercial use, FinanceTracking.app should be described as source-available, not open source. The repository, Docker image, and environment-variable identifiers continue to use `expense_tracker` for compatibility.
 
 ## Troubleshooting
 

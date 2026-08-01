@@ -82,7 +82,7 @@ module Platform
       def github_request
         Net::HTTP::Get.new(github_latest_release_uri).tap do |request|
           request["Accept"] = "application/vnd.github+json"
-          request["User-Agent"] = "ExpenseTracker/#{Platform::ReleaseCatalog.current_version || "unknown"}"
+          request["User-Agent"] = "FinanceTracking.app/#{Platform::ReleaseCatalog.current_version || "unknown"}"
           request["Authorization"] = "Bearer #{github_token}" if github_token.present?
         end
       end

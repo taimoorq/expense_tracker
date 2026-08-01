@@ -1,8 +1,18 @@
 releases:
+  - version: "1.1.0"
+    released_on: "2026-08-01"
+    title: "FinanceTracking.app 1.1"
+    summary: "This release completes the FinanceTracking.app product identity and makes licensing, security, support, and deployment expectations easier to understand."
+    changes:
+      - "Renames user-facing app, PWA, release, backup, and demo labels to FinanceTracking.app while keeping internal repository and environment names stable for compatibility."
+      - "Adds PolyForm Noncommercial 1.0.0 terms with clear guidance for forks, redistribution, and commercial licensing requests."
+      - "Adds security reporting, support boundaries, and issue templates that help users ask for help without exposing private financial data or credentials."
+      - "Refreshes the README and product screenshots around the current monthly planning, manual-entry, account, import, and backup workflows."
+      - "Updates published-image examples and container metadata for repeatable FinanceTracking.app deployments."
   - version: "1.0.0"
     released_on: "2026-07-24"
-    title: "Expense Tracker 1.0"
-    summary: "Expense Tracker 1.0 makes financial state explicit and gives the busiest month and account workflows a substantially faster, more dependable foundation."
+    title: "FinanceTracking.app 1.0"
+    summary: "FinanceTracking.app 1.0 makes financial state explicit and gives the busiest month and account workflows a substantially faster, more dependable foundation."
     changes:
       - "Keeps due recurring entries planned until a user explicitly confirms payment, so opening a month or running background work never changes financial activity by assumption."
       - "Preserves historical automatic-completion markers for review and backup compatibility while removing runtime recurring auto-completion services and schedules."

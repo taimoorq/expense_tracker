@@ -1,0 +1,54 @@
+name: Product feedback
+description: Share a workflow problem, feature idea, or experience with FinanceTracking.app.
+title: "[Feedback]: "
+labels:
+  - feedback
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Specific workflow feedback is more useful than a feature name alone. Use fabricated examples and do not post real financial records or identifying details.
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where were you in the product?
+      options:
+        - Evaluating or installing
+        - Setting up the first month
+        - Planning recurring items
+        - Recording or importing activity
+        - Reviewing a month
+        - Tracking accounts or balances
+        - Backing up or restoring
+        - Updating or operating the install
+    validations:
+      required: true
+  - type: textarea
+    id: job
+    attributes:
+      label: What were you trying to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: What felt unclear, slow, or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: current_workaround
+    attributes:
+      label: What do you do today instead?
+  - type: textarea
+    id: success
+    attributes:
+      label: What would a good outcome look like?
+    validations:
+      required: true
+  - type: checkboxes
+    id: follow_up
+    attributes:
+      label: Follow-up
+      options:
+        - label: The maintainer may ask follow-up questions in this public issue.
+
