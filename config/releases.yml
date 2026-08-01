@@ -181,7 +181,7 @@ releases:
       - "Added Postgres indexes for month timelines, account detail activity, recurring-entry auto-completion, account lists, and Recurring Transactions management screens."
       - "Documented the page-load index assumptions with focused database coverage so future UI and schema refactors keep those access patterns supported."
       - "Configured Bullet in development with browser, Rails log, and Bullet log notifications, plus optional strict query checks for local test runs."
-      - "Updated the image_processing dependency to the 2.x line, trimming older MiniMagick and ruby-vips transitive dependencies from the bundle."
+      - "Updated the image_processing dependency to the 2.x line, removed the unused MiniMagick backend, and declared the ruby-vips backend explicitly."
   - version: "0.5.9"
     released_on: "2026-05-03"
     title: "Collapsed sidebar hover labels"
