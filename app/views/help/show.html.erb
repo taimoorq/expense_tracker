@@ -91,14 +91,15 @@
           <%= tabler_icon("list", classes: "h-5 w-5 text-indigo-600") %>
           <span>Adding and managing entries</span>
         </h2>
-        <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments after your recurring transaction structure is in place.</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments. The Add entry composer handles routine one-offs and recurring context in one place.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-          <li><strong class="text-slate-900">Manual entry form:</strong> useful for quick edits and one-off transactions that appear after the month has already been set up.</li>
-          <li><strong class="text-slate-900">Entry wizard:</strong> useful when you want a more guided flow through the fields and may want to save the result as a recurring transaction.</li>
+          <li><strong class="text-slate-900">Add a one-time entry:</strong> enter the kind, status, date, payee, category, amount, and saved-account context on one screen. Less common details stay under More options.</li>
+          <li><strong class="text-slate-900">Start from recurring:</strong> choose an existing paycheck, subscription, bill, payment plan, or credit card to fill its expected details. The composer shows whether it is missing, already added, or found on another date this month.</li>
+          <li><strong class="text-slate-900">Repeat this in future:</strong> turn a new one-time entry into a reusable recurring item without leaving the form. The saved recurring item remains linked to the entry that created it.</li>
           <li><strong class="text-slate-900">CSV import:</strong> useful when you already have transaction data outside the app and want to avoid retyping it. Use Money Leaves Account and Money Goes To Account columns when the imported activity should affect account movement.</li>
           <li><strong class="text-slate-900">Planned vs actual amounts:</strong> planned helps with forecasting, actual helps track what really happened.</li>
-          <li><strong class="text-slate-900">Account flow:</strong> use Money leaves / activity account for the account affected by the entry, and Money goes to when one account funds or pays down another.</li>
-          <li><strong class="text-slate-900">Status:</strong> use planned, paid, and other statuses to track progress through the month, and mark items paid as they clear.</li>
+          <li><strong class="text-slate-900">Account flow:</strong> use Deposited to for income, Paid from or charged to for spending, and Money goes to when one account funds or pays down another. The impact panel previews the month and account effect before saving.</li>
+          <li><strong class="text-slate-900">Status:</strong> planned entries affect the month plan, paid entries also affect linked balances, and skipped entries stay visible without changing financial totals.</li>
           <li><strong class="text-slate-900">Recurring due dates:</strong> generated entries remain planned when they become due until you confirm that they were paid.</li>
         </ul>
       </section>

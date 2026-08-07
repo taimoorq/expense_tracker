@@ -1,0 +1,14 @@
+<% content_for :title, "Add entry" %>
+<% breadcrumb "Months", budget_months_path %>
+<% breadcrumb @budget_month.label, budget_month_path(@budget_month) %>
+<% breadcrumb "Add entry" %>
+
+<% page_header(
+  title: "Add entry",
+  eyebrow: @budget_month.label,
+  subtitle: "Add a one-time entry, start from something recurring, or save a new recurring item."
+) %>
+
+<section class="mx-auto flex min-h-[36rem] max-w-5xl flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+  <%= render "expense_entries/entry_composer_form", budget_month: @budget_month, expense_entry: @expense_entry, modal: false %>
+</section>

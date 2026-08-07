@@ -37,4 +37,14 @@ RSpec.describe Overview::NextStepPolicy do
       secondary_path: "/budget_months/july-2026/entries"
     )
   end
+
+  it "opens the unified composer when recurring items exist but one-offs do not" do
+    action = described_class.new(context: base_context.merge(manual_entries_count: 0)).call
+
+    expect(action).to include(
+      primary_label: "Add entry",
+      primary_path: "/budget_months/july-2026/expense_entries/new_wizard",
+      primary_turbo_frame: "entry_wizard_modal"
+    )
+  end
 end

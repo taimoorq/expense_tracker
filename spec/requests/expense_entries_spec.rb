@@ -6,6 +6,90 @@ RSpec.describe "Expense entries", type: :request do
 
   before { sign_in user }
 
+  it "renders the canonical composer as a full page for a direct visit" do
+    get new_wizard_budget_month_expense_entries_path(budget_month)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ta-page-title", "Add entry")
+    expect(response.body).to include("One-time entry", "Existing recurring", "Add to March 2026")
+    expect(response.body).not_to include("Add Entry with Wizard")
+  end
+
+  it "leaves enhancement-only disclosures operable when JavaScript is unavailable" do
+    get new_wizard_budget_month_expense_entries_path(budget_month)
+
+    document = Nokogiri::HTML(response.body)
+    enhancement_targets = %w[
+      existingPanel
+      oneTimePanel
+      destinationGroup
+      templateFields
+      payScheduleFields
+      payScheduleSecondDayFields
+      monthlyBillFields
+      paymentPlanFields
+    ]
+
+    enhancement_targets.each do |target|
+      classes = document.at_css(%([data-entry-wizard-target="#{target}"]))["class"].to_s.split
+      expect(classes).not_to include("hidden"), "expected #{target} to remain visible before Stimulus connects"
+    end
+
+    expect(document.at_css("select#recurring_link").attribute("disabled")).to be_nil
+    expect(response.body).not_to include("<noscript>")
+  end
+
+  it "renders the same composer inside the modal frame for a Turbo Frame visit" do
+    get new_wizard_budget_month_expense_entries_path(budget_month), headers: { "Turbo-Frame" => "entry_wizard_modal" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('<turbo-frame id="entry_wizard_modal">')
+    expect(response.body).to include("Add entry", "One-time entry", "Existing recurring")
+  end
+
+  it "does not allow opening the composer for another user's month" do
+    other_month = create(:budget_month, user: create(:user), month_on: Date.new(2026, 3, 1))
+
+    get new_wizard_budget_month_expense_entries_path(other_month)
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "does not allow creating entries in another user's month" do
+    other_month = create(:budget_month, user: create(:user), month_on: Date.new(2026, 3, 1))
+
+    expect do
+      post budget_month_expense_entries_path(other_month), params: {
+        expense_entry: {
+          occurred_on: "2026-03-08",
+          section: "fixed",
+          category: "Streaming",
+          payee: "Private service",
+          planned_amount: "19.99",
+          status: "planned"
+        }
+      }
+    end.not_to change(ExpenseEntry, :count)
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "returns the full composer with preserved values after an HTML validation error" do
+    post budget_month_expense_entries_path(budget_month), params: {
+      wizard_flow: "1",
+      source_mode: "one_time",
+      expense_entry: {
+        occurred_on: "2026-03-05",
+        section: "fixed",
+        category: "Utilities",
+        payee: "",
+        planned_amount: "89.33",
+        status: "planned"
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("We couldn’t add this entry yet.", "Payee enter who this is with", "Utilities", "89.33")
+  end
+
   it "creates an entry for the signed in user's month" do
     expect do
       post budget_month_expense_entries_path(budget_month), params: {
@@ -58,10 +142,34 @@ RSpec.describe "Expense entries", type: :request do
     expect(flash[:notice]).to eq("Entry and recurring transaction added.")
 
     subscription = user.subscriptions.order(:created_at).last
+    entry = budget_month.expense_entries.order(:created_at).last
     expect(subscription.name).to eq("Netflix")
     expect(subscription.amount.to_d).to eq(19.99.to_d)
     expect(subscription.due_day).to eq(8)
     expect(subscription.linked_account).to eq(checking)
+    expect(entry.source_template).to eq(subscription)
+    expect(entry).not_to be_generated_from_template
+  end
+
+  it "rejects an out-of-month date without creating an entry or recurring item" do
+    expect do
+      post budget_month_expense_entries_path(budget_month), params: {
+        wizard_flow: "1",
+        expense_entry: {
+          occurred_on: "2026-04-05",
+          section: "fixed",
+          category: "Utilities",
+          payee: "Pepco",
+          planned_amount: "89.33",
+          status: "planned"
+        },
+        planning_template: { enabled: "1", template_type: "subscription", due_day: "5" }
+      }
+    end.not_to change(budget_month.expense_entries, :count)
+
+    expect(user.subscriptions.count).to eq(0)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Date must be in March 2026")
   end
 
   it "creates a monthly bill template with explicit billing months from the wizard payload" do
@@ -69,7 +177,7 @@ RSpec.describe "Expense entries", type: :request do
       post budget_month_expense_entries_path(budget_month), params: {
         wizard_flow: "1",
         expense_entry: {
-          occurred_on: "2026-07-15",
+          occurred_on: "2026-03-15",
           section: "fixed",
           category: "Housing",
           payee: "HOA",

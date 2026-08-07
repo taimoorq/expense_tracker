@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe Budgeting::MonthWorkspaceSummary do
   it "separates planned and actual outflow and reuses the month review query" do
-    month = create(:budget_month)
+    month = create(:budget_month, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     create(:expense_entry, budget_month: month, user: month.user, section: :income, planned_amount: 2_000, actual_amount: 2_100, status: :paid)
     create(:expense_entry, budget_month: month, user: month.user, section: :fixed, planned_amount: 500, actual_amount: 475, status: :paid)
     create(:expense_entry, budget_month: month, user: month.user, section: :variable, planned_amount: 200, actual_amount: nil, status: :planned, occurred_on: Date.current)

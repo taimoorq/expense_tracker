@@ -315,38 +315,12 @@ module ApplicationHelper
     end
   end
 
-  def wizard_template_type_options
-    Recurring::TemplateCatalog.wizard_template_types.map { |type| [ recurring_template_type_label(type), type ] }
-  end
-
   def entry_wizard_presenter(budget_month:, expense_entry:)
     Budgeting::EntryWizardPresenter.new(
       budget_month: budget_month,
       expense_entry: expense_entry,
-      params: params,
-      wizard_steps: entry_wizard_steps
+      params: params
     )
-  end
-
-  def entry_wizard_steps
-    [
-      { number: 1, title: "Type", description: "Choose what kind of money movement this is." },
-      { number: 2, title: "Details", description: "Name the category, payee, account, and notes." },
-      { number: 3, title: "Date and Amount", description: "Set when it happens and what you expect." },
-      { number: 4, title: "Review", description: "Save once, or make it repeat later." }
-    ]
-  end
-
-  def entry_wizard_section_options
-    [
-      { label: expense_entry_section_label("income"), value: "income", icon: "cash", color_class: "text-emerald-600", description: "Paychecks, side income, reimbursements, and other money coming in." },
-      { label: expense_entry_section_label("fixed"), value: "fixed", icon: "repeat", color_class: "text-sky-600", description: "Predictable costs like rent, insurance, utilities, and subscriptions." },
-      { label: expense_entry_section_label("variable"), value: "variable", icon: "list", color_class: "text-amber-600", description: "Groceries, dining, shopping, household items, and other changing spend." },
-      { label: expense_entry_section_label("debt"), value: "debt", icon: "chart-bar", color_class: "text-rose-600", description: "Credit card payments, loans, financing, and payoff plans." },
-      { label: expense_entry_section_label("manual"), value: "manual", icon: "adjustments", color_class: "text-violet-600", description: "Corrections, catch-up entries, transfers, and month-specific adjustments." },
-      { label: expense_entry_section_label("auto"), value: "auto", icon: "car", color_class: "text-slate-600", description: "Gas, repairs, registration, insurance, and vehicle-specific costs." },
-      { label: expense_entry_section_label("other"), value: "other", icon: "plus", color_class: "text-slate-600", description: "Anything that does not fit the common groups yet." }
-    ]
   end
 
   def expense_entry_section_options
@@ -375,15 +349,6 @@ module ApplicationHelper
       "paid" => "Paid",
       "skipped" => "Skipped"
     }.fetch(status.to_s, status.to_s.humanize)
-  end
-
-  def recurring_template_type_label(type)
-    {
-      "pay_schedule" => "Pay schedule",
-      "subscription" => "Subscription",
-      "monthly_bill" => "Bill",
-      "payment_plan" => "Payment plan"
-    }.fetch(type.to_s, type.to_s.humanize)
   end
 
   def pay_schedule_cadence_options

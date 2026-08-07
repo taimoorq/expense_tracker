@@ -702,26 +702,28 @@ RSpec.describe "Budget month management", type: :system do
     expect(entry.reload.status).to eq("paid")
   end
 
-  it "returns quick add submissions to the plan and edit tab", js: true do
+  it "returns composer submissions to the plan and edit tab", js: true do
     user = create(:user, email: "quickaddredirect@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
 
     sign_in_as(user)
     visit budget_month_tab_path(month, "entries")
 
-    execute_script("document.querySelector('turbo-frame#entry_form details')?.setAttribute('open', 'open')")
-    fill_in "Date", with: Date.current.iso8601
-    fill_in "Category", with: "Coffee"
-    fill_in "Payee", with: "Cafe"
-    fill_in "Planned amount", with: "8.50"
-    click_button "Add Entry"
+    within("turbo-frame#entry_form") { click_link "Add entry" }
+    within("turbo-frame#entry_wizard_modal") do
+      fill_in "Date", with: Date.current.strftime("%m/%d/%Y")
+      fill_in "Category", with: "Coffee"
+      fill_in "Payee", with: "Cafe"
+      fill_in "Amount", with: "8.50"
+      click_button "Add to #{month.label}"
+    end
 
     expect(page).to have_current_path(budget_month_tab_path(month, "entries"), ignore_query: false)
     expect(page).to have_content("Plan and Edit This Month")
     expect(month.expense_entries.where(payee: "Cafe").exists?).to be(true)
   end
 
-  it "opens the guided wizard from the timeline", js: true do
+  it "opens the composer from the timeline", js: true do
     user = create(:user, email: "timelinewizard@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     create(:expense_entry, budget_month: month, user: user, payee: "Phone", planned_amount: 45.10, actual_amount: nil, status: :planned)
@@ -729,16 +731,17 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    click_link "Add Entry with Wizard"
+    click_link "Add entry"
 
-    expect(page).to have_content("Add Entry with Wizard")
+    expect(page).to have_content("Add entry")
     expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
-    expect(page).to have_content("Save directly into #{month.label}")
-    expect(page).to have_content("Step 1")
-    expect(page).to have_content("Review")
+    expect(page).to have_content("#{month.label}")
+    expect(page).to have_content("One-time entry")
+    expect(page).to have_content("Existing recurring")
+    expect(page).to have_no_button("Next")
   end
 
-  it "opens the guided wizard from the calendar view", js: true do
+  it "opens the composer from the calendar view", js: true do
     user = create(:user, email: "calendarwizard@example.com")
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     create(:expense_entry, budget_month: month, user: user, payee: "Phone", planned_amount: 45.10, actual_amount: nil, status: :planned, occurred_on: Date.current.beginning_of_month + 2.days)
@@ -747,9 +750,9 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     click_link "Calendar", match: :first
-    click_link "Add Entry with Wizard"
+    click_link "Add entry"
 
-    expect(page).to have_content("Add Entry with Wizard")
+    expect(page).to have_content("Add entry")
     expect(page).to have_css("turbo-frame#entry_wizard_modal", visible: false)
   end
 

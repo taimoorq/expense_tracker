@@ -14,8 +14,7 @@ RSpec.describe Budgeting::EntryWizardPresenter do
             billing_frequency: "semiannual",
             billing_months: [ "" ]
           }
-        },
-        wizard_steps: []
+        }
       )
 
       expect(presenter.selected_billing_frequency).to eq("semiannual")
@@ -34,8 +33,7 @@ RSpec.describe Budgeting::EntryWizardPresenter do
       presenter = described_class.new(
         budget_month: month,
         expense_entry: entry,
-        params: {},
-        wizard_steps: []
+        params: {}
       )
 
       expect(presenter.selected_recurring_link).to eq("Subscription:#{template.id}")
@@ -50,8 +48,7 @@ RSpec.describe Budgeting::EntryWizardPresenter do
       presenter = described_class.new(
         budget_month: month,
         expense_entry: entry,
-        params: {},
-        wizard_steps: []
+        params: {}
       )
 
       expect(presenter.selected_due_day).to eq(18)
@@ -64,8 +61,7 @@ RSpec.describe Budgeting::EntryWizardPresenter do
       presenter = described_class.new(
         budget_month: build_stubbed(:budget_month),
         expense_entry: build_stubbed(:expense_entry),
-        params: {},
-        wizard_steps: []
+        params: {}
       )
 
       expect(presenter.supported_template_types_by_section).to include(
@@ -81,8 +77,7 @@ RSpec.describe Budgeting::EntryWizardPresenter do
       presenter = described_class.new(
         budget_month: build_stubbed(:budget_month),
         expense_entry: build_stubbed(:expense_entry),
-        params: {},
-        wizard_steps: []
+        params: {}
       )
 
       expect(presenter.billing_month_counts_by_frequency).to include(

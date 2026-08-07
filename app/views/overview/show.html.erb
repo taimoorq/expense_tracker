@@ -152,7 +152,7 @@
       <% quick_actions = [
         ["New Month", "Start fresh or clone the latest setup.", new_budget_month_path, {}],
         ["Clone Latest Month", "Reuse the most recent month.", (overview.current_month ? new_budget_month_from_path(overview.current_month) : budget_months_path(anchor: "existing-months")), {}],
-        ["Add Entry with Wizard", (overview.current_month ? "Add a one-off item to the active month." : "Create a month, then add an item."), (overview.current_month ? new_wizard_budget_month_expense_entries_path(overview.current_month) : new_budget_month_path), (overview.current_month ? { turbo_frame: "entry_wizard_modal" } : {})],
+        ["Add entry", (overview.current_month ? "Add once, use something recurring, or make it repeat." : "Create a month, then add an item."), (overview.current_month ? new_wizard_budget_month_expense_entries_path(overview.current_month) : new_budget_month_path), (overview.current_month ? { turbo_frame: "entry_wizard_modal" } : {})],
         ["Import CSV", "Preview a month import before writing.", budget_months_path(anchor: "quick-import"), {}],
         ["Accounts & Net Worth", "Review trusted balances and movement.", accounts_path, {}]
       ] %>

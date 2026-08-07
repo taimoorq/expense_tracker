@@ -9,11 +9,17 @@ class ExpenseEntriesController < ApplicationController
 
   def new_wizard
     @expense_entry = @budget_month.expense_entries.new(
+      occurred_on: default_entry_date,
       section: params[:section].presence || "fixed",
       status: params[:status].presence || "planned"
     )
+    prefill_selected_recurring_item
 
-    render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }
+    if turbo_frame_request?
+      render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: @expense_entry }
+    else
+      render :new_wizard
+    end
   end
 
   def show
@@ -68,5 +74,24 @@ class ExpenseEntriesController < ApplicationController
 
     @template_record = result.template_record
     result.success? ? render_template_update_success : render_template_update_failure(@template_record)
+  end
+
+  private
+
+  def default_entry_date
+    month_on = @budget_month.month_on.to_date
+    month_on.all_month.cover?(Date.current) ? Date.current : month_on
+  end
+
+  def prefill_selected_recurring_item
+    token = params[:recurring_link].to_s
+    return if token.blank?
+
+    template = Recurring::TemplateCatalog.user_record_from_token(user: current_user, token: token)
+    return if template.blank?
+
+    month_status = Recurring::TemplateMonthStatus.call(template: template, budget_month: @budget_month)
+    @expense_entry.assign_attributes(month_status.prefill.compact)
+    @expense_entry.source_template = template
   end
 end

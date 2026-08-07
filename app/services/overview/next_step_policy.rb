@@ -84,7 +84,7 @@ module Overview
           badge: "Next step",
           title: "Add one-off items",
           description: "Recurring items are in place. Add exceptions, adjustments, or irregular spending next.",
-          primary_label: "Add Entry with Wizard",
+          primary_label: "Add entry",
           primary_path: Rails.application.routes.url_helpers.new_wizard_budget_month_expense_entries_path(current_month),
           primary_turbo_frame: "entry_wizard_modal",
           secondary_label: "Open Budget",

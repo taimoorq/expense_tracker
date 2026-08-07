@@ -29,7 +29,7 @@ RSpec.describe "Budget month authorization", type: :request do
 
   it "ignores unsupported review reasons without exposing review results" do
     user = create(:user)
-    month = create(:budget_month, user: user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     create(:expense_entry, user: user, budget_month: month, occurred_on: Date.current, status: :planned, payee: "Private item")
 
     sign_in user

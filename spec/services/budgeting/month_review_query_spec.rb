@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe Budgeting::MonthReviewQuery do
   it "returns server-defined counts and the entries for a selected review reason" do
     user = create(:user)
-    month = create(:budget_month, user: user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     due_and_incomplete = create(
       :expense_entry,
       budget_month: month,
@@ -35,7 +35,7 @@ RSpec.describe Budgeting::MonthReviewQuery do
 
   it "deduplicates entries in all mode while preserving the total number of issues" do
     user = create(:user)
-    month = create(:budget_month, user: user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
     entry = create(
       :expense_entry,
       budget_month: month,

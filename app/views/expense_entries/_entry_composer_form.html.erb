@@ -1,0 +1,234 @@
+<% wizard = entry_wizard_presenter(budget_month: budget_month, expense_entry: expense_entry) %>
+<% month_start = budget_month.month_on.to_date.beginning_of_month %>
+<% month_end = month_start.end_of_month %>
+<% more_options_open = expense_entry.actual_amount.present? || expense_entry.need_or_want.present? || expense_entry.notes.present? || expense_entry.account.present? || expense_entry.errors.attribute_names.intersect?(%i[actual_amount need_or_want notes account]) %>
+
+<%= form_with model: [budget_month, expense_entry],
+  data: {
+    controller: "entry-wizard",
+    action: "submit->entry-wizard#validateSubmit turbo:submit-start->entry-wizard#submitStart turbo:submit-end->entry-wizard#submitEnd",
+    entry_wizard_supported_template_types_value: wizard.supported_template_types_by_section.to_json,
+    entry_wizard_month_label_value: budget_month.label
+  },
+  class: "flex min-h-0 flex-1 flex-col" do |form| %>
+  <%= hidden_field_tag :wizard_flow, "1" %>
+  <%= hidden_field_tag :timeline_view, params[:timeline_view] if params[:timeline_view].present? %>
+  <%= hidden_field_tag :review, params[:review] if params[:review].present? %>
+
+  <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+    <div class="hidden rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert" aria-live="assertive" data-entry-wizard-target="error"></div>
+
+    <% if expense_entry.errors.any? %>
+      <div class="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert" tabindex="-1" data-entry-wizard-target="errorSummary" data-server-errors="true">
+        <p class="font-semibold">We couldn’t add this entry yet.</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5">
+          <% expense_entry.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <fieldset>
+      <legend class="fb-label">Start with</legend>
+      <div class="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1.5">
+        <% [["One-time entry", "one_time"], ["Existing recurring", "existing"]].each do |label, value| %>
+          <label class="cursor-pointer">
+            <%= radio_button_tag :source_mode,
+                                 value,
+                                 wizard.selected_source_mode == value,
+                                 class: "peer sr-only",
+                                 data: { entry_wizard_target: "sourceMode", action: "change->entry-wizard#chooseSourceMode", modal_initial_focus: (value == "one_time" ? true : nil) } %>
+            <span class="flex min-h-11 items-center justify-center rounded-xl px-3 py-2 text-center text-sm font-semibold text-slate-600 transition peer-checked:bg-white peer-checked:text-slate-950 peer-checked:shadow-sm peer-focus-visible:ring-4 peer-focus-visible:ring-indigo-200"><%= label %></span>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <section class="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4" data-entry-wizard-target="existingPanel">
+      <label for="recurring_link" class="fb-label">Recurring item</label>
+      <select id="recurring_link" name="recurring_link" class="fb-select" data-entry-wizard-target="recurringLink" data-action="change->entry-wizard#prefillRecurring">
+        <option value="">Choose a recurring item</option>
+        <% wizard.recurring_choice_groups.each do |group_label, choices| %>
+          <optgroup label="<%= group_label %>">
+            <% choices.each do |choice| %>
+              <option value="<%= choice[:token] %>"
+                      <%= "selected" if wizard.selected_recurring_link == choice[:token] %>
+                      data-prefill="<%= choice[:prefill].to_json %>"
+                      data-status-label="<%= choice[:status_label] %>"
+                      data-status="<%= choice[:status] %>"
+                      data-extra-required="<%= choice[:extra_occurrence_required] %>"><%= choice[:name] %> — <%= choice[:status_label] %></option>
+            <% end %>
+          </optgroup>
+        <% end %>
+      </select>
+      <p class="mt-2 text-sm text-indigo-900" aria-live="polite" data-entry-wizard-target="recurringStatus">Choose an item to fill its date, amount, category, and account context.</p>
+
+      <label class="mt-3 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-950" data-entry-wizard-target="extraOccurrencePanel">
+        <%= check_box_tag :recurring_extra_occurrence, "1", params[:recurring_extra_occurrence] == "1", class: "fb-checkbox mt-0.5", data: { entry_wizard_target: "extraOccurrence" } %>
+        <span><strong class="block">Confirm this unusual occurrence.</strong> Add another or off-schedule occurrence anyway.</span>
+      </label>
+    </section>
+
+    <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
+      <div class="space-y-4">
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div>
+            <%= form.label :section, "Entry kind", class: "fb-label" %>
+            <%= form.select :section, expense_entry_section_options, {}, class: "fb-select", data: { entry_wizard_target: "section", action: "change->entry-wizard#update" } %>
+          </div>
+          <div>
+            <%= form.label :status, class: "fb-label" %>
+            <%= form.select :status, expense_entry_status_options, {}, class: "fb-select", data: { entry_wizard_target: "status", action: "change->entry-wizard#update" } %>
+          </div>
+          <div>
+            <%= form.label :occurred_on, "Date", class: "fb-label" %>
+            <%= form.date_field :occurred_on,
+                                min: month_start.iso8601,
+                                max: month_end.iso8601,
+                                required: true,
+                                class: "fb-input",
+                                aria: { invalid: expense_entry.errors[:occurred_on].any? },
+                                data: { entry_wizard_target: "date", action: "change->entry-wizard#update" } %>
+          </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <%= form.label :payee, "Payee", class: "fb-label", data: { entry_wizard_target: "payeeLabel" } %>
+            <%= form.text_field :payee,
+                                required: true,
+                                autocomplete: "organization",
+                                placeholder: "Power company, employer, landlord…",
+                                class: "fb-input",
+                                aria: { invalid: expense_entry.errors[:payee].any? },
+                                data: { entry_wizard_target: "payee", action: "input->entry-wizard#update" } %>
+          </div>
+          <div>
+            <%= form.label :category, class: "fb-label" %>
+            <%= form.text_field :category,
+                                required: true,
+                                placeholder: "Utilities, paycheck, groceries…",
+                                class: "fb-input",
+                                aria: { invalid: expense_entry.errors[:category].any? },
+                                data: { entry_wizard_target: "category", action: "input->entry-wizard#update" } %>
+          </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <%= form.label :planned_amount, "Amount", class: "fb-label" %>
+            <div class="relative">
+              <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm text-slate-500">$</span>
+              <%= form.number_field :planned_amount,
+                                    step: 0.01,
+                                    min: 0,
+                                    inputmode: "decimal",
+                                    placeholder: "0.00",
+                                    class: "fb-input pl-8 ta-number",
+                                    aria: { invalid: expense_entry.errors[:amount].any? },
+                                    data: { entry_wizard_target: "planned", action: "input->entry-wizard#update" } %>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">For paid entries, this becomes the actual amount unless you enter a different actual amount below.</p>
+          </div>
+          <div>
+            <%= form.label :source_account_id, "Paid from or charged to", class: "fb-label", data: { entry_wizard_target: "sourceAccountLabel" } %>
+            <% if current_user.accounts.active_first.any? %>
+              <%= form.collection_select :source_account_id,
+                                         current_user.accounts.active_first,
+                                         :id,
+                                         :name,
+                                         { include_blank: "No saved account" },
+                                         class: "fb-select",
+                                         data: { entry_wizard_target: "sourceAccount", action: "change->entry-wizard#update" } %>
+            <% else %>
+              <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                No saved accounts yet. <%= link_to "Add an account", accounts_path, class: "font-semibold text-indigo-700 underline", data: { turbo_frame: "_top" } %>, or use a manual label below.
+              </div>
+              <%= form.hidden_field :source_account_id, data: { entry_wizard_target: "sourceAccount" } %>
+            <% end %>
+          </div>
+          <div class="sm:col-span-2" data-entry-wizard-target="destinationGroup">
+            <%= form.label :destination_account_id, "Money goes to", class: "fb-label" %>
+            <%= form.collection_select :destination_account_id,
+                                       current_user.accounts.active_first,
+                                       :id,
+                                       :name,
+                                       { include_blank: "No destination account" },
+                                       class: "fb-select",
+                                       aria: { invalid: expense_entry.errors[:destination_account].any? },
+                                       data: { entry_wizard_target: "destinationAccount", action: "change->entry-wizard#update" } %>
+            <p class="mt-1 text-xs text-slate-500">Use this for a transfer or card payment—for example, checking pays down a credit card.</p>
+          </div>
+        </div>
+
+        <details class="rounded-2xl border border-slate-200 bg-slate-50/70" <%= "open" if more_options_open %>>
+          <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-800">
+            <span>More options</span>
+            <span class="text-xs font-medium text-slate-500">Actual amount, priority, notes, manual account</span>
+          </summary>
+          <div class="grid gap-3 border-t border-slate-200 p-4 sm:grid-cols-2">
+            <div>
+              <%= form.label :actual_amount, "Actual amount", class: "fb-label" %>
+              <%= form.number_field :actual_amount, step: 0.01, min: 0, inputmode: "decimal", placeholder: "Leave blank to use planned", class: "fb-input ta-number", data: { entry_wizard_target: "actual", action: "input->entry-wizard#update" } %>
+            </div>
+            <div>
+              <%= form.label :need_or_want, "Priority", class: "fb-label" %>
+              <%= form.select :need_or_want, [["Not set", ""], ["Need", "Need"], ["Want", "Want"]], {}, class: "fb-select", data: { entry_wizard_target: "need" } %>
+            </div>
+            <div class="sm:col-span-2">
+              <%= form.label :notes, class: "fb-label" %>
+              <%= form.text_field :notes, placeholder: "Optional details", class: "fb-input", data: { entry_wizard_target: "notes" } %>
+            </div>
+            <div class="sm:col-span-2">
+              <%= form.label :account, "Manual account label", class: "fb-label" %>
+              <%= form.text_field :account, placeholder: "Use only when this is not a saved account", autocomplete: "off", class: "fb-input", data: { entry_wizard_target: "account" } %>
+            </div>
+          </div>
+        </details>
+
+        <section class="rounded-2xl border border-violet-200 bg-violet-50/60 p-4" data-entry-wizard-target="oneTimePanel">
+          <label class="flex cursor-pointer items-start justify-between gap-4">
+            <span>
+              <strong class="block text-sm text-slate-950">Repeat this in future</strong>
+              <span class="mt-1 block text-sm leading-5 text-slate-600">Save a reusable paycheck, subscription, bill, or payment plan with this entry.</span>
+            </span>
+            <span>
+              <%= hidden_field_tag "planning_template[enabled]", "0", id: nil %>
+              <%= check_box_tag "planning_template[enabled]", "1", wizard.template_enabled?, class: "fb-checkbox", data: { entry_wizard_target: "templateEnabled", action: "change->entry-wizard#toggleTemplateFields" } %>
+            </span>
+          </label>
+
+          <%= render "expense_entries/entry_wizard_recurring_fields", wizard: wizard %>
+        </section>
+      </div>
+
+      <aside class="rounded-2xl border border-slate-200 bg-slate-950 p-4 text-white shadow-sm lg:sticky lg:top-0" aria-live="polite">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Before you add it</p>
+        <p class="ta-number mt-3 text-3xl font-semibold" data-entry-wizard-target="impactAmount"><%= number_to_currency(wizard.initial_impact.amount) %></p>
+        <div class="mt-4 space-y-3 text-sm leading-5">
+          <div class="rounded-xl bg-white/10 px-3 py-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Month</p>
+            <p class="mt-1" data-entry-wizard-target="monthImpact"><%= wizard.initial_impact.month_label %></p>
+          </div>
+          <div class="rounded-xl bg-white/10 px-3 py-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Accounts</p>
+            <p class="mt-1" data-entry-wizard-target="accountImpact"><%= wizard.initial_impact.account_lines.any? ? wizard.initial_impact.account_lines.map { |line| "#{line[:account].name} #{line[:delta].negative? ? '−' : '+'}#{number_to_currency(line[:delta].abs)}" }.join(" · ") : "No saved account linked yet" %></p>
+          </div>
+          <p class="text-xs leading-5 text-slate-300" data-entry-wizard-target="statusImpact"><%= wizard.initial_impact.status_label %></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white/95 px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur sm:px-6">
+    <% if local_assigns[:modal] %>
+      <button type="button" class="fb-btn-secondary" data-entry-wizard-target="cancelButton" data-action="click->template-modal#close">Cancel</button>
+    <% else %>
+      <%= link_to "Cancel", budget_month_tab_path(budget_month, "entries"), class: "fb-btn-secondary" %>
+    <% end %>
+    <%= form.button type: :submit, class: "fb-btn-primary inline-flex min-h-11 items-center justify-center", data: { entry_wizard_target: "submitButton" } do %>
+      <span data-entry-wizard-target="submitLabel">Add to <%= budget_month.label %></span>
+    <% end %>
+  </div>
+<% end %>

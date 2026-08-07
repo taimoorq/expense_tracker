@@ -29,3 +29,11 @@
 
 en:
   hello: "Hello world"
+  activerecord:
+    attributes:
+      expense_entry:
+        occurred_on: "Date"
+        source_account: "Money comes from"
+        destination_account: "Money goes to"
+        recurring_transaction: "Recurring transaction"
+        recurring_extra_occurrence: "Extra occurrence"

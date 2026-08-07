@@ -4,7 +4,7 @@ RSpec.describe Budgeting::PlanAndEditPresenter do
   describe "#manual_entries_count" do
     it "counts manual-origin entries using the model provenance rule" do
       user = create(:user)
-      budget_month = create(:budget_month, user: user)
+      budget_month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
       manual_entry = build_stubbed(:expense_entry, budget_month: budget_month, user: user, source_file: "manual")
       blank_legacy_entry = build_stubbed(:expense_entry, budget_month: budget_month, user: user, source_file: nil)
       recurring_entry = build_stubbed(:expense_entry, budget_month: budget_month, user: user, source_file: "pay_schedule")
@@ -99,7 +99,7 @@ RSpec.describe Budgeting::PlanAndEditPresenter do
   describe "#review_cards" do
     it "builds URL-addressable review destinations and selects matching entries" do
       user = create(:user)
-      budget_month = create(:budget_month, user: user)
+      budget_month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
       due_entry = create(
         :expense_entry,
         budget_month: budget_month,

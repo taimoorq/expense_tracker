@@ -1,4 +1,16 @@
 releases:
+  - version: "1.2.0"
+    released_on: "2026-08-07"
+    title: "Faster, clearer month entries"
+    summary: "Adding income, spending, transfers, and recurring items now happens in one focused composer with clearer account and month impact."
+    changes:
+      - "Replaces the four-step entry wizard and separate Quick Add form with one responsive Add entry composer for both direct-page and in-month dialog use."
+      - "Lets you start with a one-time entry or an existing recurring item, with recurring details, month coverage, dates, amounts, and account context filled in for you."
+      - "Shows when a recurring item is missing, already added, or found on another date, and asks for confirmation before adding an extra occurrence."
+      - "Adds an always-visible preview of how the normalized amount and status affect the selected month and linked accounts."
+      - "Keeps advanced amounts, priority, notes, manual account labels, and cadence-specific recurrence settings available under progressive disclosure."
+      - "Prevents out-of-month dates, same-account transfers, ambiguous recurring choices, and recurring saves that would silently lose a destination account."
+      - "Links newly created recurring items back to their originating entry and makes skipped entries consistently contribute zero to financial totals and cash-flow views."
   - version: "1.1.0"
     released_on: "2026-08-01"
     title: "FinanceTracking.app 1.1"

@@ -82,7 +82,7 @@ RSpec.describe Overview::Presenter do
           description: "Some entries need a second look.",
           primary_label: "Open Plan and Edit",
           primary_path: "/months/april/entries",
-          secondary_label: "Add Entry with Wizard",
+          secondary_label: "Add entry",
           secondary_path: "/months/april/entries/new",
           secondary_turbo_frame: "entry_wizard_modal"
         },
@@ -100,7 +100,7 @@ RSpec.describe Overview::Presenter do
     expect(presenter.continue_stats.map { |item| item[:label] }).to eq([ "Leftover", "Entries", "Needs review" ])
     expect(presenter.continue_stats.last[:value_classes]).to eq("text-slate-900")
     expect(presenter.next_step_primary_action).to eq(label: "Open Plan and Edit", path: "/months/april/entries", turbo_frame: nil)
-    expect(presenter.next_step_secondary_action).to eq(label: "Add Entry with Wizard", path: "/months/april/entries/new", turbo_frame: "entry_wizard_modal")
+    expect(presenter.next_step_secondary_action).to eq(label: "Add entry", path: "/months/april/entries/new", turbo_frame: "entry_wizard_modal")
     expect(presenter.attention_items.map { |item| item.except(:path) }).to eq(
       [
         { label: "Still planned and due", count: 1 },

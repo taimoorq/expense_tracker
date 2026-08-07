@@ -1,126 +1,18 @@
 <%= turbo_frame_tag "entry_form" do %>
-  <% quick_add_open = expense_entry.errors.any? %>
-
   <section class="mb-6 rounded-[24px] border border-slate-200 bg-white/85 p-5 shadow-sm">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="max-w-2xl">
-        <div class="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-violet-800">
-          <%= tabler_icon("adjustments", classes: "h-3.5 w-3.5") %>
-          <span>Best for one-off items</span>
-        </div>
-        <h3 class="mt-3 ta-section-title">Add an item</h3>
-        <p class="mt-1 text-sm leading-6 text-slate-600">Use the wizard for irregular income, one-time spending, adjustments, or a new recurring item.</p>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="ta-ledger-rail max-w-2xl">
+        <p class="ta-page-eyebrow">One place for every month entry</p>
+        <h3 class="ta-section-title mt-1">Add an entry</h3>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Add a one-time item, start from something recurring, or save a new recurring item in the same focused form.</p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
-          <%= tabler_icon("adjustments", classes: "h-4 w-4") %>
-          <span>Open Guided Wizard</span>
-        <% end %>
-
-        <button type="button" class="ta-icon-btn" aria-label="Add Entry Help" title="Add Entry Help" data-action="click->help-modal#open" data-help-title="Add Entry Help" data-help-body="Use this form to add money coming in and money going out.
-
-Date: when it happened or is due.
-Section: type of transaction (income, fixed, debt, etc).
-Category: reason for spending/income.
-Payee: who was paid or who paid you.
-Planned Amount: expected amount.
-Actual Amount: what actually happened (leave blank until paid).
-Status: planned, paid, or skipped.
-Need/Want: optional spending priority tag."><%= tabler_icon("help") %></button>
-      </div>
+      <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: local_assigns[:timeline_view]),
+                  class: "fb-btn-primary ta-action-btn shrink-0",
+                  data: { turbo_frame: "entry_wizard_modal" } do %>
+        <%= tabler_icon("plus", classes: "h-4 w-4") %>
+        <span>Add entry</span>
+      <% end %>
     </div>
-
-    <details class="mt-5 rounded-[22px] border border-slate-200 bg-slate-50/80 p-4 group" <%= "open" if quick_add_open %>>
-      <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-left">
-        <div>
-          <p class="text-sm font-semibold text-slate-900">Quick add</p>
-          <p class="mt-1 text-sm text-slate-600">Type directly when you already know the fields.</p>
-        </div>
-        <span class="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition group-open:bg-slate-900 group-open:text-white">Quick Add</span>
-      </summary>
-
-      <div class="mt-4 border-t border-slate-200 pt-4">
-        <% if expense_entry.errors.any? %>
-          <div class="mb-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            <%= expense_entry.errors.full_messages.join(", ") %>
-          </div>
-        <% end %>
-
-        <%= form_with model: [budget_month, expense_entry],
-                      data: {
-                        controller: "entry-preview turbo-submit",
-                        action: "turbo:submit-start->turbo-submit#submitStart turbo:submit-end->turbo-submit#submitEnd",
-                        turbo_submit_default_label_value: "Add Entry",
-                        turbo_submit_pending_label_value: "Adding entry..."
-                      },
-                      class: "grid gap-3 sm:grid-cols-2 lg:grid-cols-4" do |form| %>
-          <%= hidden_field_tag :timeline_view, local_assigns[:timeline_view] if local_assigns[:timeline_view].present? %>
-          <div>
-            <%= form.label :occurred_on, "Date", class: "fb-label" %>
-            <%= form.date_field :occurred_on, class: "fb-input" %>
-          </div>
-          <div>
-            <%= form.label :section, class: "fb-label" %>
-            <%= form.select :section, expense_entry_section_options, {}, class: "fb-select" %>
-          </div>
-          <div>
-            <%= form.label :category, class: "fb-label" %>
-            <%= form.text_field :category, placeholder: "Utilities, Paycheck, Card Payment...", class: "fb-input" %>
-          </div>
-          <div>
-            <%= form.label :payee, class: "fb-label" %>
-            <%= form.text_field :payee, placeholder: "Vendor or Source", class: "fb-input" %>
-          </div>
-          <div>
-            <%= form.label :planned_amount, class: "fb-label" %>
-            <%= form.number_field :planned_amount, step: 0.01, placeholder: "0.00", class: "fb-input", data: { action: "input->entry-preview#update", entry_preview_target: "planned" } %>
-          </div>
-          <div>
-            <%= form.label :actual_amount, class: "fb-label" %>
-            <%= form.number_field :actual_amount, step: 0.01, placeholder: "0.00", class: "fb-input", data: { action: "input->entry-preview#update", entry_preview_target: "actual" } %>
-          </div>
-          <div>
-            <% quick_add_account_options_list_id = "quick-add-account-options-#{budget_month.id}" %>
-            <%= form.label :account, class: "fb-label" %>
-            <%= form.text_field :account,
-                                placeholder: "Pick existing or type custom label",
-                                class: "fb-input",
-                                list: quick_add_account_options_list_id %>
-            <datalist id="<%= quick_add_account_options_list_id %>">
-              <% active_account_names.each do |account_name| %>
-                <option value="<%= account_name %>"></option>
-              <% end %>
-            </datalist>
-          </div>
-          <div>
-            <%= form.label :status, class: "fb-label" %>
-            <%= form.select :status, expense_entry_status_options, {}, class: "fb-select" %>
-          </div>
-          <div>
-            <%= form.label :need_or_want, "Need / Want", class: "fb-label" %>
-            <%= form.text_field :need_or_want, placeholder: "Need or Want", class: "fb-input" %>
-          </div>
-          <div>
-            <%= form.label :notes, class: "fb-label" %>
-            <%= form.text_field :notes, placeholder: "Optional details", class: "fb-input" %>
-          </div>
-          <div class="flex items-center rounded-md bg-slate-100 px-3 text-sm text-slate-700">
-            Effective: <span class="ml-1 font-semibold" data-entry-preview-target="effective">$0.00</span>
-          </div>
-          <div class="flex items-center gap-3 sm:col-span-2 lg:col-span-2">
-            <%= form.button type: :submit,
-                            class: "fb-btn-primary ta-action-btn justify-center",
-                            data: { turbo_submit_target: "submitButton" } do %>
-              <span class="hidden" data-turbo-submit-target="submitSpinner" aria-hidden="true">
-                <%= tabler_icon("loader-2", classes: "h-4 w-4 animate-spin") %>
-              </span>
-              <span data-turbo-submit-target="submitLabel">Add Entry</span>
-            <% end %>
-            <p class="text-xs leading-5 text-slate-500">Saves directly into this month and refreshes the review panels automatically.</p>
-          </div>
-        <% end %>
-      </div>
-    </details>
   </section>
 <% end %>

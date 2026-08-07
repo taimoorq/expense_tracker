@@ -18,7 +18,7 @@ module Budgeting
     def section_totals
       @section_totals ||= outflow_entries
         .group_by(&:section)
-        .transform_values { |items| items.sum { |item| item.effective_amount.to_f } }
+        .transform_values { |items| items.sum { |item| item.contributing_amount.to_f } }
         .sort_by { |_key, value| -value }
     end
 
@@ -92,7 +92,7 @@ module Budgeting
       @cumulative_outflow_points ||= begin
         spending_entries = outflow_entries.select { |entry| entry.occurred_on.present? }
         spending_entries.sort_by { |entry| [ entry.occurred_on, entry.created_at ] }.each_with_object({ labels: [], values: [], running: 0.0 }) do |entry, memo|
-          memo[:running] += entry.effective_amount.to_f
+          memo[:running] += entry.contributing_amount.to_f
           memo[:labels] << entry.occurred_on.strftime("%b %-d")
           memo[:values] << memo[:running].round(2)
         end.slice(:labels, :values)

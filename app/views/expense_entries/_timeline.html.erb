@@ -25,9 +25,9 @@
           <% end %>
         </div>
 
-        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add Entry with Wizard", aria: { label: "Add Entry with Wizard" } do %>
+        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add entry", aria: { label: "Add entry" } do %>
           <%= tabler_icon("plus", classes: "h-4 w-4") %>
-          <span class="hidden sm:inline">Add Entry with Wizard</span>
+          <span class="hidden sm:inline">Add entry</span>
         <% end %>
       </div>
     </div>
@@ -186,7 +186,7 @@
       <div class="rounded-[22px] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center">
         <p class="ta-muted">No entries for this month yet.</p>
         <div class="mt-4 flex justify-center">
-          <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add First Entry with Wizard", aria: { label: "Add First Entry with Wizard" } do %>
+          <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add first entry", aria: { label: "Add first entry" } do %>
             <%= tabler_icon("plus", classes: "h-4 w-4") %>
             <span class="hidden sm:inline">Add First Entry with Wizard</span>
           <% end %>

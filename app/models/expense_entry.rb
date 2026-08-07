@@ -31,6 +31,8 @@ class ExpenseEntry < ApplicationRecord
   validate :user_matches_budget_month
   validate :source_account_belongs_to_user
   validate :destination_account_belongs_to_user
+  validate :occurred_on_matches_budget_month
+  validate :source_and_destination_accounts_are_distinct
   validate :source_template_matches_user
 
   before_validation :assign_user_from_budget_month
@@ -43,8 +45,12 @@ class ExpenseEntry < ApplicationRecord
     actual_amount.presence || planned_amount.presence || 0
   end
 
+  def contributing_amount
+    skipped? ? 0 : effective_amount
+  end
+
   def cashflow_amount
-    income? ? effective_amount : -effective_amount
+    income? ? contributing_amount : -contributing_amount
   end
 
   def auto_completable_recurring?
@@ -109,6 +115,23 @@ class ExpenseEntry < ApplicationRecord
     return if destination_account.user_id == user_id
 
     errors.add(:destination_account, "must belong to the same user")
+  end
+
+  def occurred_on_matches_budget_month
+    return if occurred_on.blank? || budget_month.blank? || budget_month.month_on.blank?
+
+    month_on = budget_month.month_on.to_date.beginning_of_month
+    return if month_on.all_month.cover?(occurred_on.to_date)
+
+    current_range = "#{month_on.strftime('%B %-d')} through #{month_on.end_of_month.strftime('%B %-d')}"
+    errors.add(:occurred_on, "must be in #{budget_month.label} (#{current_range})")
+  end
+
+  def source_and_destination_accounts_are_distinct
+    return if source_account_id.blank? || destination_account_id.blank?
+    return unless source_account_id == destination_account_id
+
+    errors.add(:destination_account, "must be different from Money comes from")
   end
 
   def source_template_matches_user

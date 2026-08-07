@@ -2,38 +2,34 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "step",
-    "stepIndicator",
-    "progress",
-    "progressBar",
-    "nextButton",
-    "backButton",
-    "submitButton",
-    "cancelButton",
-    "submitHint",
-    "submitLabel",
-    "sectionChoice",
+    "sourceMode",
+    "oneTimePanel",
+    "existingPanel",
+    "recurringLink",
+    "recurringStatus",
+    "extraOccurrencePanel",
+    "extraOccurrence",
     "section",
     "status",
+    "date",
     "category",
     "payee",
     "sourceAccount",
     "destinationAccount",
+    "destinationGroup",
     "account",
-    "date",
     "planned",
     "actual",
     "need",
     "notes",
-    "summarySection",
-    "summaryWho",
-    "summaryWhen",
-    "summaryAmounts",
-    "summaryNotes",
-    "summaryRecurring",
-    "summaryTemplate",
+    "sourceAccountLabel",
+    "payeeLabel",
+    "impactAmount",
+    "monthImpact",
+    "accountImpact",
+    "statusImpact",
     "error",
-    "recurringLink",
+    "errorSummary",
     "templateEnabled",
     "templateFields",
     "templateType",
@@ -50,21 +46,251 @@ export default class extends Controller {
     "payScheduleFields",
     "payScheduleSecondDayFields",
     "monthlyBillFields",
-    "paymentPlanFields"
+    "paymentPlanFields",
+    "submitButton",
+    "submitLabel",
+    "cancelButton"
   ]
 
   static values = {
     supportedTemplateTypes: Object,
-    billingMonthCounts: Object
+    monthLabel: String
   }
 
   connect() {
-    this.index = 0
     this.submitting = false
+    this.syncSourceMode()
+    this.update()
+
+    if (this.hasErrorSummaryTarget && this.errorSummaryTarget.dataset.serverErrors === "true") {
+      requestAnimationFrame(() => this.errorSummaryTarget.focus())
+    }
+  }
+
+  chooseSourceMode() {
+    this.syncSourceMode()
+    this.update()
+  }
+
+  syncSourceMode() {
+    const existingMode = this.sourceModeTargets.find((target) => target.checked)?.value === "existing"
+
+    if (this.hasOneTimePanelTarget) this.oneTimePanelTarget.classList.toggle("hidden", existingMode)
+    if (this.hasExistingPanelTarget) this.existingPanelTarget.classList.toggle("hidden", !existingMode)
+    if (this.hasRecurringLinkTarget) this.recurringLinkTarget.disabled = !existingMode
+    if (this.hasTemplateEnabledTarget) this.templateEnabledTarget.disabled = existingMode
+
+    if (this.hasExtraOccurrencePanelTarget) this.extraOccurrencePanelTarget.classList.add("hidden")
+
+    if (this.hasExtraOccurrenceTarget) {
+      this.extraOccurrenceTarget.checked = false
+      this.extraOccurrenceTarget.disabled = true
+    }
+  }
+
+  prefillRecurring() {
+    if (!this.hasRecurringLinkTarget) return
+
+    const option = this.recurringLinkTarget.selectedOptions[0]
+    if (!option?.value) {
+      this.setRecurringStatus("Choose a recurring item to fill the entry.", false)
+      this.update()
+      return
+    }
+
+    let prefill = {}
+    try {
+      prefill = JSON.parse(option.dataset.prefill || "{}")
+    } catch (_error) {
+      prefill = {}
+    }
+
+    this.assignValue("section", prefill.section)
+    this.assignValue("status", prefill.status)
+    this.assignValue("date", prefill.occurred_on)
+    this.assignValue("category", prefill.category)
+    this.assignValue("payee", prefill.payee)
+    this.assignValue("planned", prefill.planned_amount)
+    this.assignValue("actual", prefill.actual_amount)
+    this.assignValue("sourceAccount", prefill.source_account_id)
+    this.assignValue("destinationAccount", prefill.destination_account_id)
+    this.assignValue("account", prefill.account)
+    this.assignValue("need", prefill.need_or_want)
+    this.assignValue("notes", prefill.notes)
+
+    const extraRequired = option.dataset.extraRequired === "true"
+    this.setRecurringStatus(option.dataset.statusLabel || "Recurring details added.", extraRequired)
+    this.update()
+  }
+
+  setRecurringStatus(message, extraRequired) {
+    if (this.hasRecurringStatusTarget) this.recurringStatusTarget.textContent = message
+    if (this.hasExtraOccurrencePanelTarget) this.extraOccurrencePanelTarget.classList.toggle("hidden", !extraRequired)
+    if (this.hasExtraOccurrenceTarget) {
+      this.extraOccurrenceTarget.disabled = !extraRequired
+      if (!extraRequired) this.extraOccurrenceTarget.checked = false
+    }
+  }
+
+  update() {
+    this.syncAccountLabels()
+    this.syncDestinationVisibility()
+    this.syncAccountFallback()
+    this.syncRecurringStatus()
     this.updateTemplateOptions()
     this.updateTemplateFields()
-    this.showCurrentStep()
-    this.updateSummary()
+    this.updateImpact()
+    this.updateSubmitLabel()
+    this.clearError()
+  }
+
+  syncAccountLabels() {
+    const section = this.valueFor("section")
+    const sourceLabel = section === "income" ? "Deposited to" : (section === "debt" ? "Paid from" : "Paid from or charged to")
+    const payeeLabel = section === "income" ? "Paid by" : "Payee"
+
+    if (this.hasSourceAccountLabelTarget) this.sourceAccountLabelTarget.textContent = sourceLabel
+    if (this.hasPayeeLabelTarget) this.payeeLabelTarget.textContent = payeeLabel
+  }
+
+  syncDestinationVisibility() {
+    if (!this.hasDestinationGroupTarget) return
+
+    const section = this.valueFor("section")
+    const destinationSelected = Boolean(this.valueFor("destinationAccount"))
+    const visible = ["debt", "manual"].includes(section) || destinationSelected
+    this.destinationGroupTarget.classList.toggle("hidden", !visible)
+  }
+
+  syncAccountFallback() {
+    if (!this.hasAccountTarget || !this.hasSourceAccountTarget) return
+
+    const selectedName = this.selectedOptionLabel(this.sourceAccountTarget)
+    if (selectedName) this.accountTarget.value = selectedName
+  }
+
+  syncRecurringStatus() {
+    if (!this.hasRecurringLinkTarget || this.recurringLinkTarget.disabled) return
+
+    const option = this.recurringLinkTarget.selectedOptions[0]
+    if (!option?.value) return
+
+    this.setRecurringStatus(option.dataset.statusLabel || "Recurring details added.", option.dataset.extraRequired === "true")
+  }
+
+  updateImpact() {
+    const actualValue = this.valueFor("actual")
+    const amount = this.numberFor(actualValue !== "" ? actualValue : this.valueFor("planned"))
+    const status = this.valueFor("status")
+    const section = this.valueFor("section")
+    const contributes = status !== "skipped" && amount !== 0
+    const signedMonthAmount = section === "income" ? amount : -amount
+
+    if (this.hasImpactAmountTarget) this.impactAmountTarget.textContent = this.formatCurrency(amount)
+
+    if (this.hasMonthImpactTarget) {
+      if (!contributes) {
+        this.monthImpactTarget.textContent = `No change to ${this.monthLabelValue}`
+      } else if (signedMonthAmount > 0) {
+        this.monthImpactTarget.textContent = `Adds ${this.formatCurrency(amount)} to money available in ${this.monthLabelValue}`
+      } else {
+        this.monthImpactTarget.textContent = `Uses ${this.formatCurrency(amount)} from money available in ${this.monthLabelValue}`
+      }
+    }
+
+    if (this.hasAccountImpactTarget) {
+      const source = this.hasSourceAccountTarget ? this.selectedOptionLabel(this.sourceAccountTarget) : ""
+      const destination = this.hasDestinationAccountTarget ? this.selectedOptionLabel(this.destinationAccountTarget) : ""
+      const lines = []
+
+      if (!contributes) {
+        lines.push("No linked account balance change")
+      } else {
+        if (source) lines.push(`${source} ${section === "income" ? "+" : "−"}${this.formatCurrency(amount)}`)
+        if (destination) lines.push(`${destination} +${this.formatCurrency(amount)}`)
+        if (!source && !destination) lines.push("No saved account linked yet")
+      }
+
+      this.accountImpactTarget.textContent = lines.join(" · ")
+    }
+
+    if (this.hasStatusImpactTarget) {
+      this.statusImpactTarget.textContent = {
+        planned: "Planned: updates the month plan, not current account balances.",
+        paid: "Paid: updates the month and linked account balances.",
+        skipped: "Skipped: stays visible without changing totals or balances."
+      }[status] || "Choose a status to see its effect."
+    }
+  }
+
+  toggleTemplateFields() {
+    this.updateTemplateOptions()
+    this.updateTemplateFields()
+    this.updateSubmitLabel()
+    this.clearError()
+  }
+
+  updateTemplateOptions() {
+    if (!this.hasTemplateTypeTarget) return
+
+    const supportedTypes = this.supportedTemplateTypesValue[this.valueFor("section")] || []
+    Array.from(this.templateTypeTarget.options).forEach((option) => {
+      if (!option.value) return
+
+      const supported = supportedTypes.includes(option.value)
+      option.hidden = !supported
+      option.disabled = !supported
+    })
+
+    if (this.templateTypeTarget.value && !supportedTypes.includes(this.templateTypeTarget.value)) {
+      this.templateTypeTarget.value = ""
+    }
+  }
+
+  updateTemplateFields() {
+    const enabled = this.templateEnabled()
+    const templateType = this.hasTemplateTypeTarget ? this.templateTypeTarget.value : ""
+
+    if (this.hasTemplateFieldsTarget) this.templateFieldsTarget.classList.toggle("hidden", !enabled)
+    if (this.hasPayScheduleFieldsTarget) this.payScheduleFieldsTarget.classList.toggle("hidden", !enabled || templateType !== "pay_schedule")
+    if (this.hasMonthlyBillFieldsTarget) this.monthlyBillFieldsTarget.classList.toggle("hidden", !enabled || templateType !== "monthly_bill")
+    if (this.hasPaymentPlanFieldsTarget) this.paymentPlanFieldsTarget.classList.toggle("hidden", !enabled || templateType !== "payment_plan")
+
+    if (this.hasPayScheduleSecondDayFieldsTarget) {
+      const show = enabled && templateType === "pay_schedule" && this.valueFor("templateCadence") === "semimonthly"
+      this.payScheduleSecondDayFieldsTarget.classList.toggle("hidden", !show)
+    }
+
+    if (enabled) this.deriveRecurringDates()
+  }
+
+  deriveRecurringDates() {
+    const dateValue = this.valueFor("date")
+    if (!dateValue) return
+
+    const day = Number(dateValue.split("-")[2])
+    if (this.hasTemplateDueDayTarget && !this.templateDueDayTarget.value) this.templateDueDayTarget.value = day
+    if (this.hasTemplateDayOneTarget && !this.templateDayOneTarget.value) this.templateDayOneTarget.value = day
+  }
+
+  suggestBillingMonths() {
+    if (!this.hasTemplateBillingFrequencyTarget) return
+
+    const frequency = this.templateBillingFrequencyTarget.value
+    const dateMonth = Number((this.valueFor("date") || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-01`).split("-")[1])
+    const monthSequence = (count, step) => Array.from({ length: count }, (_, index) => ((dateMonth - 1 + (index * step)) % 12) + 1)
+    const suggestions = {
+      monthly: monthSequence(12, 1),
+      quarterly: monthSequence(4, 3),
+      semiannual: monthSequence(2, 6),
+      annual: [dateMonth]
+    }[frequency] || []
+
+    this.element.querySelectorAll('input[name="planning_template[billing_months][]"]').forEach((checkbox) => {
+      if (checkbox.type === "checkbox") checkbox.checked = suggestions.includes(Number(checkbox.value))
+    })
+
+    this.update()
   }
 
   validateSubmit(event) {
@@ -73,484 +299,141 @@ export default class extends Controller {
       return
     }
 
-    if (this.index !== this.stepTargets.length - 1) {
-      event.preventDefault()
-      this.fail("Finish the wizard steps before saving.")
-      return
-    }
+    const validation = this.validationError()
+    if (!validation) return
 
-    const message = this.submitValidationMessage()
-    if (message) {
-      event.preventDefault()
-      this.fail(message)
-    }
+    event.preventDefault()
+    this.fail(validation.message, validation.target)
   }
 
-  next() {
-    if (this.submitting) return
-    if (!this.validateCurrentStep()) return
-    this.index = Math.min(this.index + 1, this.stepTargets.length - 1)
-    this.showCurrentStep()
-  }
+  validationError() {
+    if (!this.valueFor("date")) return { message: "Choose a date for this entry.", target: this.dateTarget }
+    if (!this.valueFor("category")) return { message: "Choose a category so this entry is easy to understand later.", target: this.categoryTarget }
+    if (!this.valueFor("payee")) return { message: "Enter who this entry is with.", target: this.payeeTarget }
+    if (!this.valueFor("planned") && !this.valueFor("actual")) return { message: "Enter an amount.", target: this.plannedTarget }
 
-  back() {
-    if (this.submitting) return
-    this.index = Math.max(this.index - 1, 0)
-    this.showCurrentStep()
-  }
-
-  chooseSection(event) {
-    if (this.submitting) return
-    const value = event.currentTarget.dataset.sectionValue
-    if (this.hasSectionTarget) this.sectionTarget.value = value
-    this.syncTemplateOptions()
-    this.updateSummary()
-    this.clearError()
-  }
-
-  chooseAccount(event) {
-    if (this.submitting) return
-    if (!this.hasAccountTarget) return
-
-    this.accountTarget.value = event.currentTarget.dataset.accountValue || ""
-    this.updateSummary()
-    this.clearError()
-  }
-
-  chooseSourceAccount(event) {
-    if (this.submitting) return
-    if (!this.hasSourceAccountTarget) return
-
-    this.sourceAccountTarget.value = event.currentTarget.dataset.accountIdValue || ""
-    this.syncAccountLabel()
-    this.updateSummary()
-    this.clearError()
-  }
-
-  syncAccountLabel() {
-    if (!this.hasAccountTarget || !this.hasSourceAccountTarget) return
-
-    const selectedName = this.selectedOptionLabel(this.sourceAccountTarget)
-    if (selectedName) this.accountTarget.value = selectedName
-  }
-
-  syncTemplateOptions() {
-    this.updateTemplateOptions()
-    this.updateTemplateFields()
-  }
-
-  updateSummary() {
-    this.updateSectionChoices()
-
-    if (this.hasSummarySectionTarget) {
-      const section = this.hasSectionTarget ? this.sectionTarget.value : ""
-      const status = this.hasStatusTarget ? this.statusTarget.value : ""
-      const need = this.hasNeedTarget ? this.needTarget.value : ""
-      this.summarySectionTarget.textContent = [this.humanize(section), this.humanize(status), need].filter(Boolean).join(" • ") || "Not set"
+    if (this.valueFor("sourceAccount") && this.valueFor("sourceAccount") === this.valueFor("destinationAccount")) {
+      return { message: "Money goes to must be a different account from Money comes from.", target: this.destinationAccountTarget }
     }
 
-    if (this.hasSummaryWhoTarget) {
-      const category = this.hasCategoryTarget ? this.categoryTarget.value.trim() : ""
-      const payee = this.hasPayeeTarget ? this.payeeTarget.value.trim() : ""
-      const account = this.hasAccountTarget ? this.accountTarget.value.trim() : ""
-      const sourceAccount = this.hasSourceAccountTarget ? this.selectedOptionLabel(this.sourceAccountTarget) : ""
-      const destinationAccount = this.hasDestinationAccountTarget ? this.selectedOptionLabel(this.destinationAccountTarget) : ""
-      this.summaryWhoTarget.textContent = [
-        category,
-        payee,
-        sourceAccount && `Money leaves ${sourceAccount}`,
-        destinationAccount && `Money goes to ${destinationAccount}`,
-        !sourceAccount && account && `Label: ${account}`
-      ].filter(Boolean).join(" • ") || "Not set"
+    if (this.existingMode()) {
+      if (!this.valueFor("recurringLink")) return { message: "Choose the recurring item to use.", target: this.recurringLinkTarget }
+      if (this.extraOccurrenceRequired() && !this.extraOccurrenceTarget.checked) {
+        return { message: "Confirm that this is an extra occurrence before adding it.", target: this.extraOccurrenceTarget }
+      }
     }
 
-    if (this.hasSummaryWhenTarget) {
-      const date = this.hasDateTarget ? this.dateTarget.value : ""
-      this.summaryWhenTarget.textContent = date || "Not set"
+    if (this.templateEnabled()) {
+      if (this.valueFor("destinationAccount")) {
+        return { message: "A new recurring item cannot carry the Money goes to account yet. Save this as one-time or link an existing credit card.", target: this.destinationAccountTarget }
+      }
+      if (!this.valueFor("templateType")) return { message: "Choose what should repeat.", target: this.templateTypeTarget }
+      if (this.usesDueDayTemplateType() && !this.valueFor("templateDueDay")) return { message: "Enter the day of month.", target: this.templateDueDayTarget }
+      if (this.valueFor("templateType") === "payment_plan" && !this.valueFor("templateTotalDue")) return { message: "Enter the total due for this payment plan.", target: this.templateTotalDueTarget }
+      if (this.valueFor("templateType") === "pay_schedule" && this.valueFor("templateCadence") === "semimonthly" && !this.valueFor("templateDayTwo")) {
+        return { message: "Enter the second pay day.", target: this.templateDayTwoTarget }
+      }
     }
 
-    if (this.hasSummaryAmountsTarget) {
-      const planned = this.formatCurrency(this.hasPlannedTarget ? this.plannedTarget.value : "")
-      const actual = this.formatCurrency(this.hasActualTarget ? this.actualTarget.value : "")
-      this.summaryAmountsTarget.textContent = `Planned: ${planned} • Actual: ${actual}`
-    }
-
-    if (this.hasSummaryNotesTarget) {
-      const notes = this.hasNotesTarget ? this.notesTarget.value.trim() : ""
-      this.summaryNotesTarget.textContent = notes || "No notes"
-    }
-
-    if (this.hasSummaryRecurringTarget) {
-      this.summaryRecurringTarget.textContent = this.recurringLinkSummary()
-    }
-
-    if (this.hasSummaryTemplateTarget) {
-      this.summaryTemplateTarget.textContent = this.templateSummary()
-    }
-
-    this.updateSubmitButtonState()
-  }
-
-  showCurrentStep() {
-    this.stepTargets.forEach((step, index) => {
-      step.classList.toggle("hidden", index !== this.index)
-    })
-
-    if (this.hasProgressTarget) {
-      this.progressTarget.textContent = `Step ${this.index + 1} of ${this.stepTargets.length}`
-    }
-
-    if (this.hasProgressBarTarget) {
-      const completion = ((this.index + 1) / this.stepTargets.length) * 100
-      this.progressBarTarget.style.width = `${completion}%`
-    }
-
-    if (this.hasStepIndicatorTarget) {
-      this.stepIndicatorTargets.forEach((indicator, index) => {
-        const complete = index < this.index
-        const active = index === this.index
-
-        indicator.classList.toggle("border-indigo-400", active)
-        indicator.classList.toggle("bg-indigo-50", active)
-        indicator.classList.toggle("text-indigo-700", active)
-        indicator.classList.toggle("border-emerald-300", complete)
-        indicator.classList.toggle("bg-emerald-50", complete)
-        indicator.classList.toggle("text-emerald-700", complete)
-        indicator.classList.toggle("border-slate-200", !active && !complete)
-        indicator.classList.toggle("bg-white", !active && !complete)
-        indicator.classList.toggle("text-slate-500", !active && !complete)
-      })
-    }
-
-    if (this.hasBackButtonTarget) {
-      this.backButtonTarget.classList.toggle("hidden", this.index === 0 || this.submitting)
-      this.backButtonTarget.disabled = this.submitting
-    }
-
-    if (this.hasNextButtonTarget) {
-      this.nextButtonTarget.classList.toggle("hidden", this.index === this.stepTargets.length - 1)
-      this.nextButtonTarget.disabled = this.submitting
-    }
-
-    if (this.hasSubmitButtonTarget) {
-      this.updateSubmitButtonState()
-    }
-
-    if (this.hasCancelButtonTarget) {
-      this.cancelButtonTarget.disabled = this.submitting
-    }
-
-    if (this.hasSubmitHintTarget) {
-      this.submitHintTarget.classList.toggle("hidden", this.submitting)
-    }
-
-    if (this.hasSubmitLabelTarget) {
-      this.submitLabelTarget.textContent = this.submitting ? "Saving entry..." : "Save Entry"
-    }
-
-    this.updateSummary()
-    this.clearError()
+    return null
   }
 
   submitStart() {
     this.submitting = true
-    this.showCurrentStep()
+    this.setPendingState()
   }
 
   submitEnd(event) {
-    const successful = event.detail?.success
-
-    if (successful) return
+    if (event.detail?.success) return
 
     this.submitting = false
-    this.showCurrentStep()
+    this.setPendingState()
   }
 
-  validateCurrentStep() {
-    const message = this.validationMessageForStep(this.index)
-    if (message) return this.fail(message)
-
-    this.clearError()
-    return true
+  setPendingState() {
+    if (this.hasSubmitButtonTarget) {
+      this.submitButtonTarget.disabled = this.submitting
+      this.submitButtonTarget.setAttribute("aria-busy", this.submitting ? "true" : "false")
+    }
+    if (this.hasCancelButtonTarget) this.cancelButtonTarget.disabled = this.submitting
+    this.updateSubmitLabel()
   }
 
-  validationMessageForStep(stepIndex) {
-    if (stepIndex === 0) {
-      if (!this.fieldValue("section")) return "Choose the kind of entry you are adding."
-      if (!this.fieldValue("status")) return "Choose a status for this entry."
-    }
+  updateSubmitLabel() {
+    if (!this.hasSubmitLabelTarget) return
 
-    if (stepIndex === 1) {
-      if (!this.fieldValue("category")) return "Add a category so this entry is easier to understand later."
-      if (!this.fieldValue("payee")) return "Add who paid you or who you paid."
-    }
-
-    if (stepIndex === 2) {
-      const planned = this.fieldValue("planned")
-      const actual = this.fieldValue("actual")
-      if (!this.fieldValue("date")) return "Choose the date for this entry."
-      if (!planned && !actual) return "Enter at least a planned or actual amount."
-    }
-
-    if (stepIndex === this.stepTargets.length - 1 && this.templateEnabled()) {
-      if (!this.fieldValue("templateType")) return "Choose what should repeat."
-
-      if (this.usesDueDayTemplateType() && !this.fieldValue("templateDueDay")) {
-        return "Add the day of month for the recurring item."
-      }
-
-      if (this.templateTypeTarget.value === "monthly_bill") {
-        const expectedMonths = this.expectedBillingMonthCount()
-        const selectedMonths = this.selectedBillingMonths().length
-
-        if (selectedMonths !== expectedMonths) {
-          return `Choose ${expectedMonths} billing month${expectedMonths === 1 ? "" : "s"} for this bill.`
-        }
-      }
-
-      if (this.templateTypeTarget.value === "payment_plan" && !this.fieldValue("templateTotalDue")) {
-        return "Add the total due for the payment plan."
-      }
-
-      if (this.templateTypeTarget.value === "pay_schedule" && this.hasTemplateCadenceTarget && this.templateCadenceTarget.value === "semimonthly") {
-        if (!this.fieldValue("templateDayOne")) return "Add the first pay day."
-        if (!this.fieldValue("templateDayTwo")) return "Add the second pay day."
-      }
-    }
-
-    return null
-  }
-
-  submitValidationMessage() {
-    for (let stepIndex = 0; stepIndex < this.stepTargets.length; stepIndex += 1) {
-      const message = this.validationMessageForStep(stepIndex)
-      if (message) return message
-    }
-
-    return null
-  }
-
-  toggleTemplateFields() {
-    if (this.hasTemplateFieldsTarget) {
-      this.templateFieldsTarget.classList.toggle("hidden", !this.templateEnabled())
-    }
-
-    this.updateTemplateOptions()
-    this.updateTemplateFields()
-    this.clearError()
-  }
-
-  updateTemplateOptions() {
-    if (!this.hasTemplateTypeTarget) return
-
-    const supportedTypes = this.supportedTypesForCurrentSection()
-
-    Array.from(this.templateTypeTarget.options).forEach((option) => {
-      if (option.value === "") {
-        option.hidden = false
-        option.disabled = false
-        return
-      }
-
-      const supported = supportedTypes.includes(option.value)
-      option.hidden = !supported
-      option.disabled = !supported
-    })
-
-    if (!supportedTypes.includes(this.templateTypeTarget.value)) {
-      this.templateTypeTarget.value = ""
+    if (this.submitting) {
+      this.submitLabelTarget.textContent = "Adding entry…"
+    } else if (this.templateEnabled()) {
+      this.submitLabelTarget.textContent = "Add and save recurring"
+    } else {
+      this.submitLabelTarget.textContent = `Add to ${this.monthLabelValue}`
     }
   }
 
-  updateTemplateFields() {
-    const templateType = this.hasTemplateTypeTarget ? this.templateTypeTarget.value : ""
-
-    if (this.hasPayScheduleFieldsTarget) {
-      this.payScheduleFieldsTarget.classList.toggle("hidden", !this.templateEnabled() || templateType !== "pay_schedule")
-    }
-
-    if (this.hasMonthlyBillFieldsTarget) {
-      this.monthlyBillFieldsTarget.classList.toggle("hidden", !this.templateEnabled() || templateType !== "monthly_bill")
-    }
-
-    if (this.hasPaymentPlanFieldsTarget) {
-      this.paymentPlanFieldsTarget.classList.toggle("hidden", !this.templateEnabled() || templateType !== "payment_plan")
-    }
-
-    if (this.hasPayScheduleSecondDayFieldsTarget) {
-      const showSecondDay = this.templateEnabled() && templateType === "pay_schedule" && this.hasTemplateCadenceTarget && this.templateCadenceTarget.value === "semimonthly"
-      this.payScheduleSecondDayFieldsTarget.classList.toggle("hidden", !showSecondDay)
-    }
-  }
-
-  fail(message) {
+  fail(message, target) {
     if (this.hasErrorTarget) {
       this.errorTarget.textContent = message
       this.errorTarget.classList.remove("hidden")
     }
+    target?.focus()
     return false
   }
 
   clearError() {
     if (!this.hasErrorTarget) return
+
     this.errorTarget.textContent = ""
     this.errorTarget.classList.add("hidden")
   }
 
-  updateSubmitButtonState() {
-    if (!this.hasSubmitButtonTarget) return
-
-    const onReviewStep = this.index === this.stepTargets.length - 1
-    const validationMessage = onReviewStep ? this.submitValidationMessage() : null
-    const disabled = this.submitting || !onReviewStep || Boolean(validationMessage)
-
-    this.submitButtonTarget.classList.toggle("hidden", !onReviewStep)
-    this.submitButtonTarget.disabled = disabled
-    this.submitButtonTarget.setAttribute("aria-busy", this.submitting ? "true" : "false")
-    this.submitButtonTarget.setAttribute("aria-disabled", disabled ? "true" : "false")
-    this.submitButtonTarget.classList.toggle("cursor-not-allowed", disabled && !this.submitting)
-    this.submitButtonTarget.classList.toggle("opacity-60", disabled && !this.submitting)
-
-    if (validationMessage && !this.submitting) {
-      this.submitButtonTarget.title = validationMessage
-    } else {
-      this.submitButtonTarget.removeAttribute("title")
-    }
+  existingMode() {
+    return this.sourceModeTargets.find((target) => target.checked)?.value === "existing"
   }
 
-  updateSectionChoices() {
-    if (!this.hasSectionChoiceTarget || !this.hasSectionTarget) return
+  extraOccurrenceRequired() {
+    if (!this.hasRecurringLinkTarget) return false
 
-    const selectedSection = this.sectionTarget.value
-
-    this.sectionChoiceTargets.forEach((choice) => {
-      const active = choice.dataset.sectionValue === selectedSection
-
-      choice.classList.toggle("ta-wizard-choice-active", active)
-      choice.setAttribute("aria-pressed", active ? "true" : "false")
-    })
-  }
-
-  fieldValue(targetName) {
-    const targetAvailable = this[`has${targetName.charAt(0).toUpperCase()}${targetName.slice(1)}Target`]
-    if (!targetAvailable) return ""
-
-    const target = this[`${targetName}Target`]
-    return target.value.trim()
-  }
-
-  humanize(value) {
-    if (!value) return ""
-    return value.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())
-  }
-
-  selectedOptionLabel(select) {
-    if (!select || !select.value) return ""
-
-    const option = select.selectedOptions[0]
-    return option ? option.textContent.trim() : ""
-  }
-
-  formatCurrency(value) {
-    const amount = Number(value)
-    if (!Number.isFinite(amount) || value === "") return "$0.00"
-
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD"
-    }).format(amount)
+    return this.recurringLinkTarget.selectedOptions[0]?.dataset.extraRequired === "true"
   }
 
   templateEnabled() {
-    return this.hasTemplateEnabledTarget && this.templateEnabledTarget.checked
-  }
-
-  supportedTypesForCurrentSection() {
-    const section = this.hasSectionTarget ? this.sectionTarget.value : ""
-    return this.supportedTemplateTypesValue[section] || []
+    return this.hasTemplateEnabledTarget && !this.templateEnabledTarget.disabled && this.templateEnabledTarget.checked
   }
 
   usesDueDayTemplateType() {
-    if (!this.hasTemplateTypeTarget) return false
-    return ["subscription", "monthly_bill", "payment_plan"].includes(this.templateTypeTarget.value)
+    return ["subscription", "monthly_bill", "payment_plan"].includes(this.valueFor("templateType"))
   }
 
-  templateSummary() {
-    if (!this.templateEnabled()) return "One-off entry only"
-    if (!this.hasTemplateTypeTarget || !this.templateTypeTarget.value) return "Save as recurring is on, but the repeat type is not chosen yet"
+  assignValue(targetName, value) {
+    const target = this.targetFor(targetName)
+    if (!target) return
 
-    const templateType = this.templateTypeLabel(this.templateTypeTarget.value)
-
-    if (this.templateTypeTarget.value === "pay_schedule") {
-      const cadence = this.hasTemplateCadenceTarget ? this.humanize(this.templateCadenceTarget.value) : "Monthly"
-      const dayOne = this.hasTemplateDayOneTarget && this.templateDayOneTarget.value ? `Day ${this.templateDayOneTarget.value}` : "first pay date"
-      const dayTwo = this.hasTemplateDayTwoTarget && this.templateDayTwoTarget.value ? ` and day ${this.templateDayTwoTarget.value}` : ""
-      const endsOn = this.hasTemplateEndsOnTarget && this.templateEndsOnTarget.value ? `Ends ${this.formatDate(this.templateEndsOnTarget.value)}` : "No end date"
-      return `${templateType} • ${cadence} • ${dayOne}${dayTwo} • ${endsOn}`
-    }
-
-    if (this.templateTypeTarget.value === "monthly_bill") {
-      const kind = this.hasTemplateKindTarget ? this.humanize(this.templateKindTarget.value) : "Fixed Payment"
-      const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
-      const frequency = this.hasTemplateBillingFrequencyTarget ? this.humanize(this.templateBillingFrequencyTarget.value) : "Monthly"
-      const months = this.selectedBillingMonths().map((month) => this.calendarMonthName(month)).join(", ")
-      return `${templateType} • ${kind} • ${frequency} • ${months || "Months not set"} • ${dueDay}`
-    }
-
-    if (this.templateTypeTarget.value === "payment_plan") {
-      const totalDue = this.hasTemplateTotalDueTarget ? this.formatCurrency(this.templateTotalDueTarget.value) : "$0.00"
-      const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
-      return `${templateType} • Total due ${totalDue} • ${dueDay}`
-    }
-
-    const dueDay = this.hasTemplateDueDayTarget && this.templateDueDayTarget.value ? `Due day ${this.templateDueDayTarget.value}` : "Due day not set"
-    return `${templateType} • ${dueDay}`
+    target.value = value ?? ""
   }
 
-  recurringLinkSummary() {
-    if (!this.hasRecurringLinkTarget || !this.recurringLinkTarget.value) return "No recurring link"
-
-    const selectedOption = this.recurringLinkTarget.selectedOptions[0]
-    const label = selectedOption ? selectedOption.textContent.trim() : "Linked recurring item"
-    return `Linked to ${label}`
+  valueFor(targetName) {
+    const target = this.targetFor(targetName)
+    return target?.value?.trim() || ""
   }
 
-  selectedBillingMonths() {
-    return Array.from(this.element.querySelectorAll('input[name="planning_template[billing_months][]"]:checked'))
-      .map((input) => Number(input.value))
-      .filter((month) => Number.isInteger(month) && month >= 1 && month <= 12)
-      .sort((left, right) => left - right)
+  targetFor(targetName) {
+    const capitalized = `${targetName.charAt(0).toUpperCase()}${targetName.slice(1)}`
+    return this[`has${capitalized}Target`] ? this[`${targetName}Target`] : null
   }
 
-  expectedBillingMonthCount() {
-    if (!this.hasTemplateBillingFrequencyTarget) return 12
+  selectedOptionLabel(select) {
+    if (!select?.value) return ""
 
-    return this.billingMonthCountsValue[this.templateBillingFrequencyTarget.value] || 12
+    return select.selectedOptions?.[0]?.textContent?.trim() || ""
   }
 
-  calendarMonthName(month) {
-    return new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "long" })
+  numberFor(value) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
   }
 
-  formatDate(value) {
-    if (!value) return ""
-
-    const [year, month, day] = value.split("-").map((part) => Number(part))
-    if (!year || !month || !day) return value
-
-    return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    })
-  }
-
-  templateTypeLabel(value) {
-    return {
-      pay_schedule: "Pay schedule",
-      subscription: "Subscription",
-      monthly_bill: "Bill",
-      payment_plan: "Payment plan"
-    }[value] || this.humanize(value)
+  formatCurrency(amount) {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount)
   }
 }

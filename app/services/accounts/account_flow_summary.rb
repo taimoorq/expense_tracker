@@ -43,7 +43,7 @@ module Accounts
         label, bucket = account_bucket_for(entry)
         next if label.blank? || bucket.blank?
 
-        totals[label][bucket] += entry.effective_amount.to_d
+        totals[label][bucket] += entry.contributing_amount.to_d
       end
     end
 
@@ -58,6 +58,8 @@ module Accounts
     end
 
     def account_bucket_for(entry)
+      return [ nil, nil ] if entry.skipped?
+
       return [ payment_destination_label(entry), :paid ] if payment_to_account_entry?(entry)
 
       account_label = normalized_label(entry.account_name)

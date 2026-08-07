@@ -10,9 +10,9 @@ class BudgetMonth < ApplicationRecord
   def income_total
     itemized_income =
       if expense_entries_association_loaded?
-        loaded_expense_entries.select(&:income?).sum(&:effective_amount)
+        loaded_expense_entries.select(&:income?).sum(&:contributing_amount)
       else
-        expense_entries.income.sum(&:effective_amount)
+        expense_entries.income.sum(&:contributing_amount)
       end
 
     return itemized_income if itemized_income.positive?
@@ -22,9 +22,9 @@ class BudgetMonth < ApplicationRecord
 
   def outflow_total
     if expense_entries_association_loaded?
-      loaded_expense_entries.reject(&:income?).sum(&:effective_amount)
+      loaded_expense_entries.reject(&:income?).sum(&:contributing_amount)
     else
-      expense_entries.where.not(section: ExpenseEntry.sections[:income]).sum(&:effective_amount)
+      expense_entries.where.not(section: ExpenseEntry.sections[:income]).sum(&:contributing_amount)
     end
   end
 
@@ -34,9 +34,9 @@ class BudgetMonth < ApplicationRecord
 
   def section_total(section_key)
     if expense_entries_association_loaded?
-      loaded_expense_entries.select { |entry| entry.section == section_key.to_s }.sum(&:effective_amount)
+      loaded_expense_entries.select { |entry| entry.section == section_key.to_s }.sum(&:contributing_amount)
     else
-      expense_entries.where(section: ExpenseEntry.sections[section_key]).sum(&:effective_amount)
+      expense_entries.where(section: ExpenseEntry.sections[section_key]).sum(&:contributing_amount)
     end
   end
 

@@ -52,7 +52,7 @@ RSpec.describe "Entry editor", type: :system do
     expect(page).to have_css("turbo-frame#entry_editor_modal button[data-turbo-submit-target='cancelButton'][disabled]", text: "Cancel")
 
     expect(page).to have_css("turbo-frame#entry_editor_modal")
-    expect(page).to have_content("Source account must belong to the same user")
+    expect(page).to have_content("Money comes from must belong to the same user")
     expect(page).to have_no_css("turbo-frame#entry_editor_modal button[aria-busy='true']")
     expect(page).to have_css("turbo-frame#entry_editor_modal button[data-turbo-submit-target='cancelButton']:not([disabled])", text: "Cancel")
     expect(page).to have_css("turbo-frame#entry_editor_modal button[data-turbo-submit-target='submitButton']:not([disabled])", text: "Update Entry")

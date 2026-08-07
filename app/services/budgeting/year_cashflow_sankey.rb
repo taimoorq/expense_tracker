@@ -73,11 +73,11 @@ module Budgeting
     end
 
     def income_total
-      @income_total ||= income_entries.sum { |entry| entry.effective_amount.to_d }
+      @income_total ||= income_entries.sum { |entry| entry.contributing_amount.to_d }
     end
 
     def outflow_total
-      @outflow_total ||= outflow_entries.sum { |entry| entry.effective_amount.to_d }
+      @outflow_total ||= outflow_entries.sum { |entry| entry.contributing_amount.to_d }
     end
 
     def leftover_total
@@ -162,7 +162,7 @@ module Budgeting
     def aggregate_by_label(scope)
       scope.each_with_object(Hash.new(0.to_d)) do |entry, totals|
         label = yield(entry)
-        totals[label] += entry.effective_amount.to_d
+        totals[label] += entry.contributing_amount.to_d
       end
     end
 

@@ -1,11 +1,10 @@
 module Budgeting
   class EntryWizardPresenter
-    attr_reader :budget_month, :expense_entry, :wizard_steps
+    attr_reader :budget_month, :expense_entry
 
-    def initialize(budget_month:, expense_entry:, params:, wizard_steps:)
+    def initialize(budget_month:, expense_entry:, params:)
       @budget_month = budget_month
       @expense_entry = expense_entry
-      @wizard_steps = wizard_steps
       @params = normalize_params(params)
       @template_params = @params.fetch(:planning_template, {})
     end
@@ -69,6 +68,23 @@ module Budgeting
       @params[:recurring_link].presence || linked_template_token
     end
 
+    def selected_source_mode
+      return "existing" if selected_recurring_link.present?
+
+      @params[:source_mode].presence_in(%w[one_time existing]) || "one_time"
+    end
+
+    def recurring_choice_groups
+      @recurring_choice_groups ||= recurring_group_definitions.filter_map do |label, records|
+        choices = records.map { |record| recurring_choice(record) }
+        [ label, choices ] if choices.any?
+      end
+    end
+
+    def initial_impact
+      Budgeting::EntryComposerImpact.call(expense_entry: expense_entry, budget_month: budget_month)
+    end
+
     def template_type_options
       [
         [ "Choose what should repeat", "" ],
@@ -117,6 +133,35 @@ module Budgeting
     end
 
     private
+
+    def recurring_group_definitions
+      user = budget_month.user
+
+      [
+        [ "Pay schedules", user.pay_schedules.active_during_month(budget_month.month_on).includes(:linked_account).to_a ],
+        [ "Subscriptions", user.subscriptions.active_only.includes(:linked_account).to_a ],
+        [ "Bills", user.monthly_bills.active_only.includes(:linked_account).to_a ],
+        [ "Payment plans", user.payment_plans.active_only.includes(:linked_account).to_a ],
+        [ "Credit cards", user.credit_cards.active_only.includes(:linked_account, :payment_account).to_a ]
+      ]
+    end
+
+    def recurring_choice(record)
+      month_status = Recurring::TemplateMonthStatus.call(
+        template: record,
+        budget_month: budget_month,
+        entries: budget_month.expense_entries.to_a
+      )
+
+      {
+        token: "#{record.class.name}:#{record.id}",
+        name: record.name,
+        status: month_status.status.to_s,
+        status_label: month_status.label,
+        extra_occurrence_required: month_status.extra_occurrence_required?,
+        prefill: month_status.prefill
+      }
+    end
 
     def normalize_params(params)
       source =

@@ -1,59 +1,18 @@
 <%= turbo_frame_tag "entry_wizard_modal" do %>
-  <% wizard = entry_wizard_presenter(budget_month: budget_month, expense_entry: expense_entry) %>
   <div class="ta-dialog-backdrop" data-controller="template-modal" data-template-modal-allow-backdrop-close-value="false" data-action="keydown.esc@window->template-modal#close keydown@window->template-modal#trapFocus">
-    <div class="ta-dialog max-w-3xl" role="dialog" aria-modal="true" aria-labelledby="entry-wizard-title" aria-describedby="entry-wizard-description" tabindex="-1" data-template-modal-target="dialog">
+    <div class="ta-dialog max-w-5xl" role="dialog" aria-modal="true" aria-labelledby="entry-composer-title" aria-describedby="entry-composer-description" tabindex="-1" data-template-modal-target="dialog">
       <div class="ta-dialog-header">
         <div class="ta-ledger-rail">
-          <p class="ta-page-eyebrow inline-flex items-center gap-2"><%= tabler_icon("adjustments", classes: "h-3.5 w-3.5") %> Guided entry flow</p>
-          <h3 id="entry-wizard-title" class="ta-dialog-title">Add Entry with Wizard</h3>
-          <p id="entry-wizard-description" class="ta-dialog-description">Save directly into <span class="font-semibold"><%= budget_month.label %></span>, with the option to make this reusable.</p>
+          <p class="ta-page-eyebrow inline-flex items-center gap-2"><%= tabler_icon("plus", classes: "h-3.5 w-3.5") %> <%= budget_month.label %></p>
+          <h2 id="entry-composer-title" class="ta-dialog-title">Add entry</h2>
+          <p id="entry-composer-description" class="ta-dialog-description">Add it once, start from something recurring, or make it repeat—without leaving the month.</p>
         </div>
-        <button type="button" class="ta-icon-btn" aria-label="Close entry wizard" title="Close" data-modal-initial-focus data-action="click->template-modal#close">
+        <button type="button" class="ta-icon-btn" aria-label="Close add entry" title="Close" data-action="click->template-modal#close">
           <%= tabler_icon("x", classes: "h-4 w-4") %>
         </button>
       </div>
 
-      <div class="ta-dialog-body">
-        <%= form_with model: [budget_month, expense_entry],
-          data: {
-            controller: "entry-wizard entry-preview",
-            action: "submit->entry-wizard#validateSubmit turbo:submit-start->entry-wizard#submitStart turbo:submit-end->entry-wizard#submitEnd",
-            entry_wizard_supported_template_types_value: wizard.supported_template_types_by_section.to_json,
-            entry_wizard_billing_month_counts_value: wizard.billing_month_counts_by_frequency.to_json
-          },
-          class: "space-y-4" do |form| %>
-        <%= hidden_field_tag :wizard_flow, "1" %>
-        <%= hidden_field_tag :timeline_view, params[:timeline_view] if params[:timeline_view].present? %>
-        <%= hidden_field_tag :review, params[:review] if params[:review].present? %>
-
-        <%= render "expense_entries/entry_wizard_progress", wizard_steps: wizard.wizard_steps %>
-
-        <div class="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
-          <div data-entry-wizard-target="error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
-        </div>
-
-        <% if expense_entry.errors.any? %>
-          <div class="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            <%= expense_entry.errors.full_messages.join(", ") %>
-          </div>
-        <% end %>
-
-        <%= render "expense_entries/entry_wizard_step_one", form: form %>
-
-        <%= render "expense_entries/entry_wizard_step_two",
-            form: form,
-            recurring_link_options: recurring_link_options(month_on: budget_month.month_on),
-            selected_recurring_link: wizard.selected_recurring_link %>
-
-        <%= render "expense_entries/entry_wizard_step_three", form: form %>
-
-        <%= render "expense_entries/entry_wizard_review_step",
-            budget_month: budget_month,
-            wizard: wizard %>
-
-        <%= render "expense_entries/entry_wizard_footer", form: form %>
-        <% end %>
-      </div>
+      <%= render "expense_entries/entry_composer_form", budget_month: budget_month, expense_entry: expense_entry, modal: true %>
     </div>
   </div>
 <% end %>

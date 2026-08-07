@@ -12,10 +12,13 @@ module ExpenseEntries
 
     def call
       permitted = normalized_params
-      target_month = target_budget_month_for(permitted[:occurred_on]) if permitted.key?(:occurred_on)
-      return false if target_month == :missing
+      month_result = month_result_for(permitted[:occurred_on]) if permitted.key?(:occurred_on)
+      unless month_result.nil? || month_result.success?
+        expense_entry.errors.add(:occurred_on, month_result.error_message)
+        return false
+      end
 
-      permitted[:budget_month] = target_month if target_month.present?
+      permitted[:budget_month] = month_result.budget_month if month_result.present?
       expense_entry.update(permitted)
     end
 
@@ -33,36 +36,13 @@ module ExpenseEntries
       permitted
     end
 
-    def target_budget_month_for(occurred_on_value)
-      occurred_on = parse_date(occurred_on_value)
-      return nil if occurred_on.blank?
-
-      target_month_on = occurred_on.beginning_of_month
-      current_month_on = expense_entry.budget_month.month_on.to_date.beginning_of_month
-      return nil if target_month_on == current_month_on
-
-      target_month = expense_entry.user.budget_months.find_by(month_on: target_month_on)
-      return target_month if target_month.present?
-
-      expense_entry.errors.add(:occurred_on, missing_month_message(target_month_on))
-      :missing
-    end
-
-    def parse_date(value)
-      return value if value.is_a?(Date)
-      return nil if value.blank?
-
-      Date.iso8601(value.to_s)
-    rescue ArgumentError
-      nil
-    end
-
-    def missing_month_message(target_month_on)
-      current_month_on = expense_entry.budget_month.month_on.to_date.beginning_of_month
-      current_range = "#{current_month_on.strftime("%B %-d")} through #{current_month_on.end_of_month.strftime("%B %-d")}"
-      target_label = target_month_on.strftime("%B %Y")
-
-      "is outside #{expense_entry.budget_month.label}. Create #{target_label} first, or choose a date from #{current_range}."
+    def month_result_for(occurred_on_value)
+      MonthResolver.call(
+        user: expense_entry.user,
+        current_month: expense_entry.budget_month,
+        occurred_on: occurred_on_value,
+        allow_move: true
+      )
     end
   end
 end

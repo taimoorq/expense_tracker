@@ -68,7 +68,8 @@ module ExpenseEntriesResponses
       budget_month: @budget_month,
       expense_entry_params: expense_entry_params,
       planning_template_params: planning_template_params,
-      recurring_link_token: params[:recurring_link]
+      recurring_link_token: params[:recurring_link],
+      recurring_extra_occurrence: params[:recurring_extra_occurrence]
     )
   end
 
@@ -110,7 +111,7 @@ module ExpenseEntriesResponses
       end
       format.html do
         if params[:wizard_flow] == "1"
-          render partial: "expense_entries/entry_wizard_modal", formats: [ :html ], locals: { budget_month: @budget_month, expense_entry: entry }, status: :unprocessable_content
+          render "expense_entries/new_wizard", status: :unprocessable_content
         else
           render "budget_months/show", status: :unprocessable_content
         end

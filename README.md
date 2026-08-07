@@ -73,7 +73,7 @@ Your database stays in the Docker volume. `docker compose down -v` also deletes 
 
 - Create a month from scratch or copy an earlier month.
 - Reuse paychecks, subscriptions, bills, payment plans, and credit-card payments without rebuilding the same plan each month.
-- Add one-off entries by hand or import activity from CSV.
+- Add a one-time entry, start from an existing recurring item, or save a new recurring transaction in one focused composer.
 - Review a month as a full list, grouped budget, calendar, breakdown, or money-flow view.
 - Track manual balances and snapshots for cash, bank, investment, credit-card, loan, and other accounts.
 - Connect budget entries to the accounts money leaves or reaches, then inspect the activity behind balance and movement totals.
@@ -93,21 +93,30 @@ The app includes in-product help for day-to-day workflows. The hosted [user guid
       See the current month, account context, and the next item that needs attention.
     </td>
     <td align="center">
+      <img src="app/assets/images/marketing/add-entry-composer.webp" alt="Add entry composer with the common fields and a preview of the month and account impact" width="100%">
+      <br>
+      <strong>Add entry</strong>
+      <br>
+      Add it once, start from something recurring, or make it repeat without leaving the month.
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
       <img src="app/assets/images/marketing/month-timeline-desktop.webp" alt="Monthly budget grouped into income, bills, spending, and other sections" width="100%">
       <br>
       <strong>Monthly budget</strong>
       <br>
       Filter and review planned and paid entries without leaving the month.
     </td>
-  </tr>
-  <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/overview-money-flow.webp" alt="Money-flow chart tracing income through spending groups and leftover cash" width="100%">
+      <img src="app/assets/images/marketing/overview-money-flow.webp" alt="Month breakdown tracing current-month income through spending groups and leftover cash" width="100%">
       <br>
       <strong>Money flow</strong>
       <br>
-      Trace how income moved through spending groups across saved months.
+      Trace how the current month's income flows through spending groups and leftover cash.
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <img src="app/assets/images/marketing/accounts-overview-desktop.webp" alt="Accounts overview with manual balances, snapshots, and net worth" width="100%">
       <br>
@@ -115,14 +124,21 @@ The app includes in-product help for day-to-day workflows. The hosted [user guid
       <br>
       Keep manual balances, snapshots, and projections beside the budget.
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <img src="app/assets/images/marketing/overview-paid-vs-actual.webp" alt="Account movement chart with links to the entries behind each total" width="100%">
       <br>
       <strong>Account movement</strong>
       <br>
       Open the entries behind bank movement, card charges, and card payments.
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="app/assets/images/marketing/planning-templates.webp" alt="Recurring transactions organized into pay schedules, subscriptions, monthly bills, payment plans, and card payments" width="100%">
+      <br>
+      <strong>Recurring transactions</strong>
+      <br>
+      Keep reusable money movement ready for the next month.
     </td>
     <td align="center">
       <img src="app/assets/images/marketing/backup-and-restore-desktop.webp" alt="Backup page with export, encryption, preview, and restore options" width="100%">
@@ -138,7 +154,7 @@ The app includes in-product help for day-to-day workflows. The hosted [user guid
 
 1. **Set up reusable items.** Add the paychecks, bills, subscriptions, payment plans, and card payments that usually appear each month.
 2. **Build the month.** Start fresh, copy an earlier month, or generate entries from the recurring items you want to use.
-3. **Keep it current.** Add one-off entries, import CSV activity, and confirm planned entries after the activity occurs. Opening a month never marks entries paid for you.
+3. **Keep it current.** Add one-time exceptions with the composer, import CSV activity, and confirm planned entries after the activity occurs. Opening a month never marks entries paid for you.
 4. **Review the result.** Use the budget, breakdown, calendar, account, and money-flow views to compare the plan with actual activity.
 
 Accounts are tracked manually. A balance snapshot provides a known starting point; paid activity explains the current balance, and planned activity contributes to the projected balance.
@@ -177,7 +193,7 @@ Caddy is the only service exposed on ports `80` and `443`. Rails and PostgreSQL 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.1.0
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.2.0
 ```
 
 Then pull and start it without building locally:

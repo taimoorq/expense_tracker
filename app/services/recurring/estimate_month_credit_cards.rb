@@ -38,7 +38,7 @@ module Recurring
     def calculated_available_cash
       non_card_outflow = @budget_month.expense_entries.reject do |entry|
         entry.section == "income" || replaceable_estimate?(entry)
-      end.sum(&:effective_amount)
+      end.sum(&:contributing_amount)
 
       [ @budget_month.income_total - non_card_outflow, 0 ].max
     end
