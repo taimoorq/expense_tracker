@@ -17,6 +17,8 @@ class BudgetMonthsController < ApplicationController
     @expense_entry = month_data.expense_entry
     @previous_budget_month = month_data.previous_budget_month
     @next_budget_month = month_data.next_budget_month
+    @target_period_context = Budgeting::TargetPeriodContext.call(user: current_user, budget_month: @budget_month)
+    @target_period = @target_period_context&.period
   end
 
   def new

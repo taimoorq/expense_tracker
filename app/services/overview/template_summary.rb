@@ -27,6 +27,14 @@ module Overview
     attr_reader :current_month, :current_month_entries, :user
 
     def count_pair_for(template_type)
+      if current_month
+        templates = all_templates_by_type.fetch(template_type)
+        return {
+          total: templates.size,
+          linked: templates.count { |template| template.linked_account_id.present? }
+        }
+      end
+
       total, linked = user.public_send(template_type).unscope(:order).pick(
         Arel.sql("COUNT(*)"),
         Arel.sql("COUNT(linked_account_id)")
@@ -77,21 +85,40 @@ module Overview
       @templates_by_type ||= {}
       return @templates_by_type.fetch(template_type) if @templates_by_type.key?(template_type)
 
-      @templates_by_type[template_type] =
-        case template_type
-        when :pay_schedules
-          user.pay_schedules.active_during_month(current_month.month_on).includes(:linked_account).to_a
-        when :subscriptions
-          user.subscriptions.active_only.includes(:linked_account).to_a
-        when :monthly_bills
-          user.monthly_bills.active_only.includes(:linked_account).select { |bill| bill.scheduled_for_month?(current_month.month_on) }
-        when :payment_plans
-          user.payment_plans.active_only.includes(:linked_account).to_a
-        when :credit_cards
-          user.credit_cards.active_only.includes(:payment_account).to_a
-        else
-          []
+      records = all_templates_by_type.fetch(template_type)
+      @templates_by_type[template_type] = case template_type
+      when :pay_schedules
+        records.select { |template| pay_schedule_active_during_month?(template) }.sort_by(&:name)
+      when :subscriptions, :payment_plans
+        records.select(&:active?).sort_by { |template| [ template.due_day, template.name ] }
+      when :monthly_bills
+        records.select { |template| template.active? && template.scheduled_for_month?(current_month.month_on) }
+          .sort_by { |template| [ template.due_day, template.name ] }
+      when :credit_cards
+        records.select(&:active?).sort_by { |template| [ template.priority, template.name ] }
+      else
+        []
+      end
+    end
+
+    def all_templates_by_type
+      @all_templates_by_type ||= begin
+        records = TEMPLATE_TYPES.to_h do |template_type|
+          [ template_type, user.public_send(template_type).unscope(:order).to_a ]
         end
+        linked_templates = records.values_at(:pay_schedules, :subscriptions, :monthly_bills, :payment_plans).flatten
+        ActiveRecord::Associations::Preloader.new(records: linked_templates, associations: :linked_account).call if linked_templates.any?
+        cards = records.fetch(:credit_cards)
+        ActiveRecord::Associations::Preloader.new(records: cards, associations: :payment_account).call if cards.any?
+        records
+      end
+    end
+
+    def pay_schedule_active_during_month?(template)
+      month_start = current_month.month_on.beginning_of_month
+      month_end = current_month.month_on.end_of_month
+      template.active? && template.first_pay_on <= month_end &&
+        (template.ends_on.blank? || template.ends_on >= month_start)
     end
 
     def template_matches_entry?(template, entry)

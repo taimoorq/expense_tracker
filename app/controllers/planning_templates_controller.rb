@@ -31,9 +31,15 @@ class PlanningTemplatesController < ApplicationController
     TEMPLATE_COLLECTIONS.each do |collection_name, config|
       assign_planning_template(collection_name, **config)
     end
+    @upcoming_commitments = upcoming_commitments
   end
 
   private
+
+  def upcoming_commitments
+    workspace = BudgetWorkspace.find_by(legacy_owner_user_id: current_user.id, target_reads_enabled: true)
+    Planning::UpcomingCommitments.call(workspace: workspace) if workspace.present?
+  end
 
   def assign_planning_template(collection_name, order:, edit_param:, associations:)
     scope = current_user.public_send(collection_name)

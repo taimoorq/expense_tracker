@@ -296,14 +296,7 @@ module Platform
         end
 
         def canonical_generated_entry_key(entry)
-          template = entry.source_template
-          return if template.blank?
-
-          if template.is_a?(CreditCard) && entry.source_file == CreditCard.template_source_file
-            template.estimated_entry_key(month_on: entry.budget_month.month_on)
-          elsif entry.generated_from_template? && template.respond_to?(:generated_entry_key) && entry.occurred_on.present?
-            template.generated_entry_key(month_on: entry.budget_month.month_on, occurred_on: entry.occurred_on)
-          end
+          entry.canonical_generated_entry_key
         end
 
         def portable_exported_generated_key(entry, exported_key)

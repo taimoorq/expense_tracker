@@ -32,10 +32,15 @@ module Budgeting
       budget_month = user.budget_months.new(budget_month_params)
       normalize_budget_month_label(budget_month)
 
-      return Result.new(success?: false, budget_month: budget_month, notice: nil, wizard_step: 1) unless budget_month.save
-
-      generation_summary = generate_applicable_templates_for(budget_month)
-      Result.new(success?: true, budget_month: budget_month, notice: creation_notice("Budget month created.", generation_summary), wizard_step: nil)
+      create_month_atomically(budget_month, wizard_step: 1) do
+        generation_summary = generate_applicable_templates_for(budget_month)
+        Result.new(
+          success?: true,
+          budget_month: budget_month,
+          notice: creation_notice("Budget month created.", generation_summary),
+          wizard_step: nil
+        )
+      end
     end
 
     def create_cloned_month
@@ -47,11 +52,12 @@ module Budgeting
 
       budget_month = user.budget_months.new(clone_month_attributes(source_budget_month))
       normalize_budget_month_label(budget_month)
-      return Result.new(success?: false, budget_month: budget_month, notice: nil, wizard_step: 0) unless budget_month.save
 
-      cloned_entries = clone_source_entries(source_budget_month, budget_month)
-      notice = "Budget month created and #{cloned_entries} entries cloned from #{source_budget_month.label}."
-      Result.new(success?: true, budget_month: budget_month, notice: notice, wizard_step: nil)
+      create_month_atomically(budget_month, wizard_step: 0) do
+        cloned_entries = clone_source_entries(source_budget_month, budget_month)
+        notice = "Budget month created and #{cloned_entries} entries cloned from #{source_budget_month.label}."
+        Result.new(success?: true, budget_month: budget_month, notice: notice, wizard_step: nil)
+      end
     end
 
     def clone_month_attributes(source_month)
@@ -70,6 +76,22 @@ module Budgeting
 
     def normalize_budget_month_label(budget_month)
       budget_month.label = budget_month.month_on.strftime("%B %Y") if budget_month.label.blank? && budget_month.month_on.present?
+    end
+
+    def create_month_atomically(budget_month, wizard_step:)
+      unless budget_month.valid?
+        return Result.new(success?: false, budget_month: budget_month, notice: nil, wizard_step: wizard_step)
+      end
+
+      ApplicationRecord.transaction do
+        budget_month.save!
+        result = yield
+        Platform::TargetSync::BudgetMonthWriter.call(budget_month: budget_month)
+        result
+      end
+    rescue Platform::TargetSync::WriteRejected => error
+      budget_month.errors.add(:base, error.message)
+      Result.new(success?: false, budget_month: budget_month, notice: nil, wizard_step: wizard_step)
     end
 
     def generate_applicable_templates_for(budget_month)

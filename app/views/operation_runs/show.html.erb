@@ -1,0 +1,15 @@
+<% content_for :title, @status.title %>
+<% page_header title: @status.title,
+  eyebrow: "Saved operation status",
+  subtitle: "This status survives refreshes and includes a support reference if you need help." %>
+
+<div class="mx-auto max-w-3xl">
+  <%= turbo_frame_tag "operation_status_#{@status.id}",
+    data: {
+      controller: "operation-poll",
+      operation_poll_active_value: @status.active?,
+      operation_poll_interval_value: 2000
+    } do %>
+    <%= render "operation_runs/status", status: @status %>
+  <% end %>
+</div>

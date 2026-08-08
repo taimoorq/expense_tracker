@@ -1,13 +1,14 @@
 require "rails_helper"
 
 RSpec.describe "Backup & restore", type: :system do
-  it "is available as a top-level navigation link" do
+  it "is available from Settings under data and privacy" do
     user = create(:user, email: "backup@example.com")
 
     sign_in_as(user)
     visit root_path
 
-    find("a[aria-label='Backup & Restore']").click
+    click_link "Settings"
+    click_link "Manage data"
 
     expect(page).to have_current_path(backup_restore_path, ignore_query: false)
     expect(page).to have_content("Backup & Restore")

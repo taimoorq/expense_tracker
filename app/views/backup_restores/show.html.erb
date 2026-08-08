@@ -13,7 +13,8 @@
       </span>
       <div>
         <p class="font-semibold">Backups are designed to be inspectable and reversible before they change data.</p>
-        <p class="mt-1">Exports are versioned JSON, optional passwords encrypt the payload, and imports must be previewed before restore. Account source and destination links are preserved when the backup includes them.</p>
+        <p class="mt-1">Exports are versioned JSON, optional passwords encrypt the payload, and imports must be previewed before restore. Account source and destination links are preserved by stable IDs.</p>
+        <% if @target_backup_v2 %><p class="mt-1 font-semibold">This workspace exports Backup V2 with checksums, currency, provenance, and calculation-version metadata.</p><% end %>
       </div>
     </div>
   </section>
@@ -84,7 +85,7 @@
         </span>
         <div>
           <h2 class="text-lg font-semibold text-slate-900">Import Backup</h2>
-          <p class="mt-1 text-sm text-slate-600">Import restores only the sections you select and replaces existing data in those sections. Preferences are updated when the backup includes them.</p>
+          <p class="mt-1 text-sm text-slate-600">Import validates and previews the selected sections before making one atomic restore. Preferences are updated when the backup includes them.</p>
         </div>
       </div>
 
@@ -131,18 +132,18 @@
               <%= check_box_tag "import_scopes[]", scope_key, Array(@selected_import_scopes).include?(scope_key), class: "mt-1 fb-checkbox" %>
               <span>
                 <span class="block text-sm font-semibold text-slate-900">Restore <%= scope[:title] %></span>
-                <span class="mt-1 block text-sm text-slate-500">Existing <%= scope[:title].downcase %> data will be replaced.</span>
+                <span class="mt-1 block text-sm text-slate-500">V1 replaces this section after an automatic checkpoint. Backup V2 restores financial sections together and can replace an existing budget only after checkpoint confirmation.</span>
               </span>
             </label>
           <% end %>
         </div>
 
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Import is restore-oriented: preview first, then confirm. Selected data sections are replaced inside one transaction, preferences are updated in place, and partial restores are rolled back if validation fails.
+          Import is restore-oriented: preview first, then confirm. Replacement runs in one transaction after the app stores an encrypted recovery checkpoint; validation failures roll back without partial data.
         </div>
 
         <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-          Before restoring, download a current backup from Export Data. That gives you a safe return point if the selected sections are not what you expected.
+          Keep a downloaded backup for disaster recovery. The app also creates a short-lived encrypted checkpoint before replacing saved data so you can roll the application-level restore back.
         </div>
 
         <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
@@ -193,6 +194,13 @@
         <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
           <p class="font-semibold">Reference-only sample backup</p>
           <p class="mt-1"><%= @import_preview[:sample_notice].presence || "This file contains example records. Import it only if you want demo data restored into the selected sections." %></p>
+        </div>
+      <% end %>
+
+      <% if @import_preview[:format_version] == 2 %>
+        <div class="mt-5 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+          <p class="font-semibold">Backup V2 verified</p>
+          <p class="mt-1">Financial sections restore together so stable-ID relationships, currency, evidence, calculations, and closed-report snapshots remain complete. Existing data is replaced only after an encrypted recovery checkpoint is ready.</p>
         </div>
       <% end %>
 
@@ -247,7 +255,13 @@
 
       <div class="mt-5 flex flex-wrap items-center gap-3">
         <div class="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-rose-900">
-          Restore will replace the selected sections. Make sure you have downloaded a current backup before continuing.
+          <% if @import_preview[:replacement_required] %>
+            Backup V2 will replace the current financial graph atomically. An encrypted seven-day recovery checkpoint is created before any current record changes.
+          <% elsif @import_preview[:format_version] == 2 %>
+            Backup V2 will restore into this empty destination and activate the compatible target workflows only after projection succeeds.
+          <% else %>
+            Restore will replace the selected sections after an automatic encrypted recovery checkpoint is ready.
+          <% end %>
         </div>
 
         <%= form_with url: import_backup_restore_path,
@@ -265,6 +279,12 @@
               <span>I understand this is a reference-only sample backup and that restoring it will add example data to the selected sections.</span>
             </label>
           <% end %>
+          <% if @import_preview[:replacement_required] %>
+            <label class="mb-3 flex items-start gap-3 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-700">
+              <%= check_box_tag :confirm_replace_existing, "1", false, class: "mt-1 fb-checkbox" %>
+              <span>I understand this will replace the current financial data after an encrypted recovery checkpoint is created.</span>
+            </label>
+          <% end %>
           <%= button_tag type: :submit,
                          class: "fb-btn-primary ta-action-btn",
                          data: { turbo_submit_target: "submitButton" } do %>
@@ -276,6 +296,20 @@
         <% end %>
 
         <p class="text-sm text-slate-600">This preview stays available for 15 minutes.</p>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @restore_checkpoints.any? %>
+    <section class="ta-section-frame" aria-labelledby="restore-checkpoints-title">
+      <div class="ta-section-header"><p class="ta-page-eyebrow">Recovery</p><h2 id="restore-checkpoints-title" class="ta-section-title mt-1">Available pre-restore checkpoints</h2><p class="mt-1 text-sm text-slate-600">These app-encrypted checkpoints are temporary rollback points, not substitutes for PostgreSQL backups or downloaded exports.</p></div>
+      <div class="divide-y divide-slate-200 border-t border-slate-200">
+        <% @restore_checkpoints.each do |checkpoint| %>
+          <article class="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5">
+            <div><div class="flex flex-wrap items-center gap-2"><h3 class="text-sm font-semibold text-slate-900">Checkpoint <span class="ta-number"><%= checkpoint.id.delete("-").first(12).upcase %></span></h3><span class="ta-status-badge bg-emerald-100 text-emerald-800">Ready</span></div><p class="mt-1 text-xs text-slate-600">Backup V<%= checkpoint.payload_format_version %> · <%= checkpoint.selected_scopes.map(&:humanize).join(", ") %> · expires <%= l(checkpoint.expires_at, format: :long) %></p></div>
+            <%= button_to "Roll back to checkpoint", restore_checkpoint_path(checkpoint), method: :patch, class: "fb-btn-secondary ta-action-btn", data: { turbo_confirm: "Replace the current data with this pre-restore checkpoint? The rollback is audited and cannot be undone from this same checkpoint." } %>
+          </article>
+        <% end %>
       </div>
     </section>
   <% end %>

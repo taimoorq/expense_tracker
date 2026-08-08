@@ -1,4 +1,5 @@
 class CreditCard < ApplicationRecord
+  include LegacyWorkspaceOwned
   include PlanningTemplateMetadata
   include TemplateAccountLinkable
 
@@ -6,6 +7,7 @@ class CreditCard < ApplicationRecord
   ESTIMATE_NOTES = "Estimated from leftover cash".freeze
 
   belongs_to :user
+  belongs_to :budget_workspace, optional: true
   belongs_to :linked_account, class_name: "Account", optional: true
   belongs_to :payment_account, class_name: "Account", optional: true
   template_account_association :linked_account

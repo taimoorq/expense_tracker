@@ -134,6 +134,74 @@
     </div>
   </section>
 
+  <% if @upcoming_commitments.present? %>
+    <section class="ta-section-frame" aria-labelledby="commitment-outlook-title">
+      <div class="ta-section-header flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="ta-page-eyebrow">Planning horizon</p>
+          <h2 id="commitment-outlook-title" class="ta-section-title mt-1">Upcoming 90-day commitments</h2>
+          <p class="mt-1 text-sm text-slate-600">See when saved income, bills, payments, and transfers are concentrated before adding them to a month.</p>
+        </div>
+        <div class="text-right text-xs text-slate-500">
+          <p><%= l(@upcoming_commitments.starts_on, format: :long) %>–<%= l(@upcoming_commitments.ends_on, format: :long) %></p>
+          <p class="mt-1"><%= @upcoming_commitments.currency_code %> · <%= @upcoming_commitments.calculation_version %></p>
+        </div>
+      </div>
+
+      <% if @upcoming_commitments.rows.any? %>
+        <div class="grid gap-3 border-t border-slate-200 p-4 lg:grid-cols-2 xl:grid-cols-3" aria-label="Weekly upcoming planned income and commitments">
+          <% @upcoming_commitments.weeks.each do |week| %>
+            <% next if week.rows.empty? %>
+            <% maximum = @upcoming_commitments.maximum_week_total %>
+            <% income_width = maximum.positive? ? ((week.income / maximum) * 100).round(2) : 0 %>
+            <% outflow_width = maximum.positive? ? ((week.outflow / maximum) * 100).round(2) : 0 %>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4">
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="text-sm font-semibold text-slate-900"><%= week.starts_on.strftime("%b %-d") %>–<%= week.ends_on.strftime("%b %-d") %></h3>
+                <span class="text-xs text-slate-500"><%= pluralize(week.rows.size, "item") %></span>
+              </div>
+              <div class="mt-3 space-y-3">
+                <div>
+                  <div class="flex justify-between gap-2 text-xs"><span class="font-medium text-emerald-800">Planned income</span><span class="ta-number"><%= number_to_currency(week.income) %></span></div>
+                  <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-emerald-500" style="width: <%= income_width %>%"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between gap-2 text-xs"><span class="font-medium text-rose-800">Planned commitments</span><span class="ta-number"><%= number_to_currency(week.outflow) %></span></div>
+                  <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-rose-500" style="width: <%= outflow_width %>%"></div></div>
+                </div>
+                <% if week.transfer.positive? %><p class="text-xs font-medium text-sky-800">Planned transfers: <span class="ta-number"><%= number_to_currency(week.transfer) %></span></p><% end %>
+              </div>
+            </article>
+          <% end %>
+        </div>
+
+        <div class="overflow-x-auto border-t border-slate-200">
+          <table class="ta-table">
+            <caption class="sr-only">Exact upcoming recurring commitment dates, types, accounts, amounts, and materialization state.</caption>
+            <thead class="ta-table-head"><tr><th class="ta-th">Date</th><th class="ta-th">Recurring item</th><th class="ta-th">Type</th><th class="ta-th">Account path</th><th class="ta-th">Month state</th><th class="ta-th text-right">Planned amount</th></tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @upcoming_commitments.rows.each do |row| %>
+                <tr>
+                  <td class="ta-td"><%= l(row.scheduled_on, format: :long) %></td>
+                  <td class="ta-td font-medium text-slate-900"><%= row.name %></td>
+                  <td class="ta-td"><%= row.kind.humanize %> · <%= row.flow_kind.humanize %></td>
+                  <td class="ta-td"><%= [row.source_account&.name, row.destination_account&.name].compact.join(" → ").presence || "No linked account" %></td>
+                  <td class="ta-td"><span class="ta-status-badge <%= row.materialized ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700" %>"><%= row.materialized ? "Added to month" : "Upcoming" %></span></td>
+                  <td class="ta-td ta-number text-right font-semibold"><%= number_to_currency(row.amount) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="border-t border-dashed border-slate-200 px-5 py-8 text-center">
+          <p class="font-semibold text-slate-900">No target commitments in the next 90 days</p>
+          <p class="mt-2 text-sm text-slate-600">Add or activate a recurring item to build the outlook. No sample financial data is shown.</p>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+
   <% recurring_groups.each do |group| %>
     <div
       data-tabs-target="panel"

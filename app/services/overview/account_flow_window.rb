@@ -15,6 +15,8 @@ module Overview
     end
 
     def call
+      return target_call if target_workspace&.target_reads_enabled?
+
       {
         account_flow_month_window: month_window,
         account_flow_months_included: selected_budget_months.count,
@@ -23,13 +25,33 @@ module Overview
         account_movement_payload: Accounts::MonthlyMovementSummary.new(
           budget_months: selected_budget_months,
           expense_entries: selected_expense_entries
-        ).payload
+        ).payload,
+        account_flow_calculation_version: "legacy-compatible-v1"
       }
     end
 
     private
 
     attr_reader :month_window, :user
+
+    def target_call
+      payload = Accounts::TargetMovementWindow.new(
+        workspace: target_workspace,
+        budget_months: selected_budget_months
+      ).call
+      {
+        account_flow_month_window: month_window,
+        account_flow_months_included: selected_budget_months.count,
+        account_flow_month_range_label: month_range_label,
+        account_flow_payload: payload.fetch(:account_flow_payload),
+        account_movement_payload: payload.fetch(:account_movement_payload),
+        account_flow_calculation_version: payload.fetch(:calculation_version)
+      }
+    end
+
+    def target_workspace
+      @target_workspace ||= BudgetWorkspace.find_by(legacy_owner_user_id: user.id)
+    end
 
     def normalized_month_window(raw_value)
       value = raw_value.to_s

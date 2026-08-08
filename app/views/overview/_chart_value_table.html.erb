@@ -1,0 +1,26 @@
+<details class="mt-4 rounded-xl border border-slate-200 bg-white">
+  <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800"><%= summary %></summary>
+  <div class="overflow-x-auto border-t border-slate-100">
+    <table class="min-w-full text-sm">
+      <caption class="sr-only"><%= caption %></caption>
+      <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+        <tr>
+          <th scope="col" class="px-4 py-3"><%= label_heading %></th>
+          <% datasets.each do |dataset| %>
+            <th scope="col" class="px-4 py-3 text-right"><%= dataset.fetch(:label) %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% labels.each_with_index do |label, index| %>
+          <tr>
+            <th scope="row" class="whitespace-nowrap px-4 py-3 text-left font-medium text-slate-900"><%= label %></th>
+            <% datasets.each do |dataset| %>
+              <td class="ta-money whitespace-nowrap px-4 py-3 text-right text-slate-700"><%= number_to_currency(dataset.fetch(:data).fetch(index, 0)) %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</details>

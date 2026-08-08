@@ -78,6 +78,47 @@ RSpec.describe "Accounts CRUD", type: :request do
     expect(response.body).to include("Record balance")
   end
 
+  it "renders target account movement, exact drill-downs, history, and source version after cutover" do
+    checking = create(:account, user: user, name: "Target Checking", kind: :checking)
+    month_on = Date.current.beginning_of_month
+    month = create(:budget_month, user: user, month_on: month_on, label: month_on.strftime("%B %Y"))
+    create(:account_snapshot, account: checking, recorded_on: month_on, balance: 1_000)
+    create(
+      :expense_entry,
+      user: user,
+      budget_month: month,
+      source_account: checking,
+      payee: "Canonical utility",
+      occurred_on: month_on + 2.days,
+      status: :paid,
+      actual_amount: 125
+    )
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+
+    get account_path(checking, view: "overview")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(
+      "target-v1",
+      "Canonical posted activity",
+      "1 posted transaction",
+      "Canonical utility",
+      "Why this balance is $875.00",
+      "Reconciled"
+    )
+    expect(response.body).to include(activity_path(view: "all", account_id: checking.id).split("?").first)
+
+    get account_path(checking, view: "manage")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Trusted observations and canonical posted transactions", "target-v1")
+
+    get account_path(checking, view: "activity")
+
+    expect(response).to redirect_to(activity_path(view: "all", account_id: checking.id))
+  end
+
   it "keeps institution and budget-linked activity separate in exact drilldowns" do
     checking = create(:account, user: user, name: "Checking", kind: :checking)
     month = create(:budget_month, user: user, month_on: Date.new(2026, 7, 1), label: "July 2026")

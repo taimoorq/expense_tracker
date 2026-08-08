@@ -13,6 +13,8 @@ RSpec.describe Accounts::ActivityImports::PreviewBuilder do
     preview = described_class.new(user: user, account: account, file: uploaded_fixture("signed_amounts_with_type.csv")).call
 
     expect(preview).to include(ok: true, rows_count: 472, imported_count: 472, duplicate_count: 0)
+    expect(preview[:file_digest]).to match(/\A[0-9a-f]{64}\z/)
+    expect(preview[:commit_idempotency_key]).to match(/\A[0-9a-f]{64}\z/)
     expect(preview[:amount_strategy]).to eq("type_column")
     expect(preview[:sample_rows].first[:account_delta].to_d).to be_positive
   end
@@ -81,5 +83,40 @@ RSpec.describe Accounts::ActivityImports::PreviewBuilder do
     second_preview = described_class.new(user: user, account: account, file: uploaded_fixture("positive_charges.csv")).call
 
     expect(second_preview).to include(ok: true, rows_count: 318, imported_count: 0, duplicate_count: 318)
+  end
+
+  it "returns the original committed batch when the same preview is submitted again" do
+    user = create(:user)
+    account = create(:account, user: user)
+    preview = described_class.new(user: user, account: account, file: uploaded_fixture("positive_charges.csv")).call
+
+    first_result = Accounts::ActivityImports::Importer.new(user: user, account: account, preview: preview).call
+    second_result = Accounts::ActivityImports::Importer.new(user: user, account: account, preview: preview).call
+
+    expect(first_result).to include(ok: true, imported_count: 318, duplicate_count: 0, replayed: false)
+    expect(second_result).to include(ok: true, imported_count: 318, duplicate_count: 0, replayed: true)
+    expect(second_result[:import]).to eq(first_result[:import])
+    expect(user.account_activity_imports.count).to eq(1)
+    expect(account.account_activities.count).to eq(318)
+  end
+
+  it "treats a row committed after preview as a duplicate without aborting the batch" do
+    user = create(:user)
+    account = create(:account, user: user)
+    preview = described_class.new(user: user, account: account, file: uploaded_fixture("positive_charges.csv")).call
+    row = preview.fetch(:rows).first
+    previous_import = create(:account_activity_import, user: user, account: account)
+    create(
+      :account_activity,
+      user: user,
+      account: account,
+      account_activity_import: previous_import,
+      fingerprint: row.fetch(:fingerprint)
+    )
+
+    result = Accounts::ActivityImports::Importer.new(user: user, account: account, preview: preview).call
+
+    expect(result).to include(ok: true, imported_count: 317, duplicate_count: 1, replayed: false)
+    expect(account.account_activities.count).to eq(318)
   end
 end

@@ -16,5 +16,29 @@ RSpec.describe Budgeting::MonthWorkspaceSummary do
     expect(result.review_count).to be_positive
     expect(result.actual_coverage_count).to eq(1)
     expect(result.outflow_count).to eq(2)
+    expect(result.calculation_version).to eq("legacy-compatible-v1")
+  end
+
+  it "switches all monthly money fields to the target calculation bundle after cutover" do
+    user = create(:user)
+    account = create(:account, user: user)
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 8, 1))
+    create(:expense_entry, user: user, budget_month: month, section: :income, source_account: account, planned_amount: 2_000, actual_amount: 2_100, status: :paid)
+    create(:expense_entry, user: user, budget_month: month, section: :fixed, source_account: account, planned_amount: 500, actual_amount: 475, status: :paid)
+    create(:expense_entry, user: user, budget_month: month, section: :variable, source_account: account, planned_amount: 200, status: :planned)
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+
+    result = described_class.call(budget_month: month, expense_entries: month.expense_entries.to_a)
+
+    expect(result).to have_attributes(
+      income: 2_100.to_d,
+      planned_outflow: 700.to_d,
+      actual_outflow: 475.to_d,
+      leftover: 1_400.to_d,
+      actual_coverage_count: 1,
+      outflow_count: 2,
+      calculation_version: "target-v1"
+    )
   end
 end

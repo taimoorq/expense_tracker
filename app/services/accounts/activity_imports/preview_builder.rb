@@ -1,4 +1,5 @@
 require "set"
+require "digest"
 
 module Accounts
   module ActivityImports
@@ -25,11 +26,19 @@ module Accounts
         importable_count = parsed_rows.count { |row| row[:importable] }
         institution_balance = normalize_institution_balance(reader_result.metadata[:institution_balance])
         institution_balance_as_of = reader_result.metadata[:institution_balance_as_of].presence
+        file_digest = Digest::SHA256.file(file.path).hexdigest
 
         {
           ok: row_errors.empty?,
           account_id: account.id,
           original_filename: file.original_filename,
+          file_digest: file_digest,
+          commit_idempotency_key: commit_idempotency_key(
+            file_digest: file_digest,
+            mapping: mapping_result.mapping,
+            amount_strategy: amount_strategy,
+            rows: parsed_rows
+          ),
           header_row_number: reader_result.header_row_number,
           headers: reader_result.headers,
           column_mapping: mapping_result.mapping,
@@ -159,6 +168,15 @@ module Accounts
         return if direction_header.blank? || direction_header != mapping[:category]
 
         value_for(attributes, direction_header)
+      end
+
+      def commit_idempotency_key(file_digest:, mapping:, amount_strategy:, rows:)
+        mapping_identity = mapping.sort_by { |key, _value| key.to_s }
+        row_identity = rows.map { |row| row[:fingerprint] }
+
+        Digest::SHA256.hexdigest(
+          [ user.id, account.id, file_digest, mapping_identity, amount_strategy, row_identity ].to_json
+        )
       end
 
       def warnings

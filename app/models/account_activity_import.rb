@@ -1,4 +1,7 @@
 class AccountActivityImport < ApplicationRecord
+  include LegacyWorkspaceOwned
+
+  belongs_to :budget_workspace, optional: true
   AMOUNT_STRATEGIES = %w[charges_are_negative charges_are_positive type_column].freeze
 
   belongs_to :user
@@ -8,7 +11,16 @@ class AccountActivityImport < ApplicationRecord
   validates :original_filename, :header_row_number, :amount_strategy, presence: true
   validates :amount_strategy, inclusion: { in: AMOUNT_STRATEGIES }
   validates :rows_count, :imported_count, :duplicate_count, numericality: { greater_than_or_equal_to: 0 }
+  validates :file_digest, :commit_idempotency_key,
+    format: { with: /\A[0-9a-f]{64}\z/, message: "must be a SHA-256 digest" },
+    allow_nil: true
   validate :account_belongs_to_user
+
+  scope :recent_first, -> { order(created_at: :desc, id: :desc) }
+
+  def imported_at
+    created_at
+  end
 
   def institution_balance?
     institution_balance.present?

@@ -4,11 +4,11 @@ module AccountPageSetup
   INDEX_PAGE_ATTRIBUTES = %i[
     accounts account_balance_rows net_worth_accounts assets_total liabilities_total net_worth_total
     latest_snapshot latest_balance_source accounts_with_balance_sources_count accounts_missing_balance_sources_count
-    accounts_with_snapshots_count accounts_missing_snapshots_count trend_labels trend_values
+    accounts_with_snapshots_count accounts_missing_snapshots_count trend_labels trend_values trend_rows calculation_version
   ].freeze
   DETAIL_PAGE_ATTRIBUTES = %i[
     balance_history_rows credit_card_progress connected_templates connected_templates_count
-    activity_insights import_history movement_timeline recent_activity
+    activity_insights import_history movement_timeline reconciliation_bridge recent_activity
   ].freeze
 
   private
@@ -20,7 +20,7 @@ module AccountPageSetup
   end
 
   def load_account_detail_page
-    @account = current_user.accounts.includes(:account_snapshots).find(params[:id])
+    @account ||= current_user.accounts.includes(:account_snapshots).find(params[:id])
     @account_snapshot = AccountSnapshot.new(account: @account, recorded_on: Date.current)
     @account_view = normalized_account_view
     @selected_range = normalized_account_range
@@ -63,6 +63,7 @@ module AccountPageSetup
   def assign_account_detail_data(page_data)
     @balance_summary = page_data.fetch(:balance_summary)
     @account_story = page_data.fetch(:account_story)
+    @calculation_version = page_data.fetch(:calculation_version)
     DETAIL_PAGE_ATTRIBUTES.each { |name| instance_variable_set("@#{name}", page_data[name]) }
   end
 end

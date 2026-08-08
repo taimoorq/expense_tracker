@@ -6,10 +6,10 @@ module PlanningTemplateCrud
   end
 
   def create
-    resource = resource_scope.new(resource_params)
+    resource = Planning::LegacyTemplateWriter.create(scope: resource_scope, attributes: resource_params)
     assign_resource(resource)
 
-    if resource.save
+    if resource.persisted? && resource.errors.none?
       assign_resource(resource_scope.new)
       assign_collection(ordered_resources)
       respond_success(create_success_message)
@@ -22,7 +22,7 @@ module PlanningTemplateCrud
   def update
     resource = resource_scope.find(params[:id])
 
-    if resource.update(resource_params)
+    if Planning::LegacyTemplateWriter.update(resource: resource, attributes: resource_params)
       redirect_to redirect_target, notice: update_success_message
     else
       assign_resource(resource)
@@ -32,7 +32,12 @@ module PlanningTemplateCrud
   end
 
   def destroy
-    resource_scope.find(params[:id]).destroy
+    resource = resource_scope.find(params[:id])
+    unless Planning::LegacyTemplateWriter.destroy(resource: resource)
+      assign_resource(resource)
+      assign_collection(ordered_resources)
+      return respond_error(resource.errors.full_messages.join(", "))
+    end
     assign_resource(resource_scope.new)
     assign_collection(ordered_resources)
     respond_success(destroy_success_message)

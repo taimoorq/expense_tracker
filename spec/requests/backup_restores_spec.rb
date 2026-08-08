@@ -196,6 +196,29 @@ RSpec.describe "Backup & restore", type: :request do
     expect(decoded[:payload].fetch(:data)).to have_key(:planning_templates)
   end
 
+  it "exports the portable V2 relationship bundle after target read cutover" do
+    create(:account, user: user, name: "Checking")
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+
+    post export_backup_restore_path, params: { export_scopes: [ "accounts" ] }
+
+    expect(response).to have_http_status(:ok)
+    payload = JSON.parse(response.body)
+    expect(payload).to include(
+      "format" => "expense_tracker_backup",
+      "version" => 2,
+      "payload_checksum" => match(/\A[0-9a-f]{64}\z/)
+    )
+    expect(payload.fetch("scopes")).to include(*Platform::Backup::V2::Preview::FINANCIAL_SCOPES)
+    expect(payload.dig("workspace", "calculation_version")).to eq("target-v1")
+    expect(payload.dig("data", "accounts", "records").sole).to include(
+      "external_id" => match(Platform::Backup::V2::Importer::UUID_PATTERN)
+    )
+    expect(backfill.workspace.data_transfer_runs.operation_export.state_succeeded).to exist
+    expect(backfill.workspace.audit_events.where(action: "backup_export")).to exist
+  end
+
   it "downloads a sample backup file with the supported structure" do
     get sample_backup_restore_path
 
@@ -1044,5 +1067,79 @@ RSpec.describe "Backup & restore", type: :request do
   ensure
     file.close
     file.unlink
+  end
+
+  it "requires V2 replacement confirmation, exposes the recovery checkpoint, and rolls back" do
+    current_account = create(:account, user: user, name: "Before checking")
+    current_month = create(:budget_month, user: user, month_on: Date.new(2026, 7, 1))
+    create(
+      :expense_entry,
+      user: user,
+      budget_month: current_month,
+      source_account: current_account,
+      payee: "Before rent",
+      status: :paid,
+      planned_amount: 900,
+      actual_amount: 900,
+      occurred_on: Date.new(2026, 7, 5)
+    )
+    workspace = Platform::TargetBackfill::Runner.call(user: user).workspace
+    workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+
+    source_user = create(:user)
+    source_account = create(:account, user: source_user, name: "After checking")
+    source_month = create(:budget_month, user: source_user, month_on: Date.new(2026, 8, 1))
+    create(
+      :expense_entry,
+      user: source_user,
+      budget_month: source_month,
+      source_account: source_account,
+      payee: "After rent",
+      status: :paid,
+      planned_amount: 1_200,
+      actual_amount: 1_200,
+      occurred_on: Date.new(2026, 8, 5)
+    )
+    source_workspace = Platform::TargetBackfill::Runner.call(user: source_user).workspace
+    source_workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+    payload = Platform::Backup::V2::Exporter.new(
+      user: source_user,
+      scopes: Platform::Backup::V2::Preview::FINANCIAL_SCOPES
+    ).as_json
+
+    file = Tempfile.new([ "expense-tracker-v2-backup", ".json" ])
+    file.write(JSON.pretty_generate(payload))
+    file.rewind
+    upload = Rack::Test::UploadedFile.new(file.path, "application/json", original_filename: "target-backup.json")
+
+    post preview_backup_restore_path, params: { file: upload, import_scopes: [ "accounts" ] }
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    expect do
+      post import_backup_restore_path, params: { preview_token: preview_token }
+    end.not_to change { user.accounts.reload.pluck(:name) }
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Confirm replacement")
+
+    post import_backup_restore_path, params: { preview_token: preview_token, confirm_replace_existing: "1" }
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("recoverable checkpoint")
+    expect(user.accounts.reload.pluck(:name)).to eq([ "After checking" ])
+    checkpoint = workspace.restore_checkpoints.available.sole
+    expect(response.body).to include(checkpoint.id.delete("-").first(12).upcase)
+
+    patch restore_checkpoint_path(checkpoint)
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Recovery checkpoint restored")
+    expect(user.accounts.reload.pluck(:name)).to eq([ "Before checking" ])
+    expect(user.expense_entries.reload.pluck(:payee)).to eq([ "Before rent" ])
+    expect(checkpoint.reload).to be_state_restored
+  ensure
+    file&.close
+    file&.unlink
   end
 end

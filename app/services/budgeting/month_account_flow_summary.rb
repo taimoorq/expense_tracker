@@ -1,6 +1,9 @@
 module Budgeting
   class MonthAccountFlowSummary
     def self.cached_payload(budget_month:, expense_entries: nil)
+      target_visuals = Budgeting::TargetPeriodVisuals.for(budget_month: budget_month)
+      return target_visuals.account_flow_payload if target_visuals.present?
+
       expense_entries ||= fresh_expense_entries(budget_month)
 
       Rails.cache.fetch(cache_key_for(budget_month: budget_month, expense_entries: expense_entries), expires_in: 12.hours) do

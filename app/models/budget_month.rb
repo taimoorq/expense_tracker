@@ -1,4 +1,7 @@
 class BudgetMonth < ApplicationRecord
+  include LegacyWorkspaceOwned
+
+  belongs_to :budget_workspace, optional: true
   belongs_to :user
   has_many :expense_entries, dependent: :destroy
 

@@ -80,7 +80,9 @@ module Recurring
         next if active_generated_keys.include?(entry.generated_entry_key)
         next unless replaceable_estimate?(entry)
 
-        entry.destroy!
+        unless ExpenseEntries::Destroyer.call(expense_entry: entry, reason: "Superseded credit-card estimate")
+          raise ActiveRecord::RecordInvalid, entry
+        end
       end
     end
 

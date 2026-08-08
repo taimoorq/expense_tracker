@@ -18,7 +18,7 @@
     </thead>
     <tbody class="divide-y divide-slate-100">
       <% expense_entries.each do |entry| %>
-        <%= render "expense_entries/row", budget_month: budget_month, entry: entry, timeline_view: timeline_view, selected_review: selected_review %>
+        <%= render "expense_entries/row", budget_month: budget_month, entry: entry, timeline_view: timeline_view, selected_review: selected_review, read_only: local_assigns[:read_only] %>
       <% end %>
     </tbody>
   </table>

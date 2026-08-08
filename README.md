@@ -1,6 +1,6 @@
 # FinanceTracking.app
 
-FinanceTracking.app is a self-hosted Rails app for people who plan their money one month at a time. Build a month from recurring paychecks and bills, record what actually happened, and keep account balances close to the budget.
+FinanceTracking.app 2.0 is a self-hosted Rails app for people who plan their money one month at a time. Build the plan, bring in what actually happened, connect it to your accounts, and keep the reports and source records close enough to verify.
 
 The app favors manual planning and CSV imports over live bank sync. It is a good fit if you want a private, hands-on budget that you control and host yourself.
 
@@ -71,13 +71,14 @@ Your database stays in the Docker volume. `docker compose down -v` also deletes 
 
 ## What you can do
 
-- Create a month from scratch or copy an earlier month.
-- Reuse paychecks, subscriptions, bills, payment plans, and credit-card payments without rebuilding the same plan each month.
+- Start on Home with the current month, the exact items that need review, plan-versus-actual totals, and links to the records behind each graph.
+- Create a month from scratch or copy an earlier month, then reuse paychecks, subscriptions, bills, payment plans, and credit-card payments.
 - Add a one-time entry, start from an existing recurring item, or save a new recurring transaction in one focused composer.
-- Review a month as a full list, grouped budget, calendar, breakdown, or money-flow view.
-- Track manual balances and snapshots for cash, bank, investment, credit-card, loan, and other accounts.
-- Connect budget entries to the accounts money leaves or reaches, then inspect the activity behind balance and movement totals.
-- Export versioned JSON backups, optionally encrypt them, preview a restore, and bring the data back into the app.
+- Review imported and manual transactions in Activity, then match or unmatch them from planned items without losing either record.
+- Track trusted balances and observations for cash, bank, investment, credit-card, loan, and other accounts.
+- Compare live monthly trends, categories, and account movement in Reports, with exact-value tables and source-record drilldowns beside the graphs.
+- Close a month to preserve its report evidence, or reopen it before intentionally incorporating late activity.
+- Export a complete version 2 JSON backup, optionally encrypt it, preview a restore, and roll back an in-place restore from its encrypted seven-day checkpoint.
 
 The app includes in-product help for day-to-day workflows. The hosted [user guide](https://financetracking.app/docs/) covers the same features in more detail.
 
@@ -86,76 +87,77 @@ The app includes in-product help for day-to-day workflows. The hosted [user guid
 <table>
   <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/overview-main.webp" alt="Overview showing the current month, account summary, and next actions" width="100%">
+      <img src="app/assets/images/marketing/home-v2.webp" alt="Home showing the current month, exact attention queue, plan and actual totals, and chart-backed financial evidence" width="100%">
       <br>
-      <strong>Overview</strong>
+      <strong>Home</strong>
       <br>
-      See the current month, account context, and the next item that needs attention.
+      See what needs attention, understand the month, and open the records behind every total.
     </td>
     <td align="center">
-      <img src="app/assets/images/marketing/add-entry-composer.webp" alt="Add entry composer with the common fields and a preview of the month and account impact" width="100%">
+      <img src="app/assets/images/marketing/plan-v2.webp" alt="Plan library showing saved months, plan and actual totals, status, and open or clone actions" width="100%">
       <br>
-      <strong>Add entry</strong>
+      <strong>Plan</strong>
       <br>
-      Add it once, start from something recurring, or make it repeat without leaving the month.
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="app/assets/images/marketing/month-timeline-desktop.webp" alt="Monthly budget grouped into income, bills, spending, and other sections" width="100%">
-      <br>
-      <strong>Monthly budget</strong>
-      <br>
-      Filter and review planned and paid entries without leaving the month.
-    </td>
-    <td align="center">
-      <img src="app/assets/images/marketing/overview-money-flow.webp" alt="Month breakdown tracing current-month income through spending groups and leftover cash" width="100%">
-      <br>
-      <strong>Money flow</strong>
-      <br>
-      Trace how the current month's income flows through spending groups and leftover cash.
+      Open history, create the next month, or carry an earlier structure forward.
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/accounts-overview-desktop.webp" alt="Accounts overview with manual balances, snapshots, and net worth" width="100%">
+      <img src="app/assets/images/marketing/month-workspace-v2.webp" alt="Monthly workspace with plan, actual, remaining, and forecast totals plus linked review views" width="100%">
       <br>
-      <strong>Accounts and net worth</strong>
+      <strong>Monthly workspace</strong>
       <br>
-      Keep manual balances, snapshots, and projections beside the budget.
+      Move between budget, breakdown, calendar, and planning views without losing the month.
     </td>
     <td align="center">
-      <img src="app/assets/images/marketing/overview-paid-vs-actual.webp" alt="Account movement chart with links to the entries behind each total" width="100%">
+      <img src="app/assets/images/marketing/activity-v2.webp" alt="Activity workspace listing imported and manual transactions with match state, account, amount, and review controls" width="100%">
       <br>
-      <strong>Account movement</strong>
+      <strong>Activity</strong>
       <br>
-      Open the entries behind bank movement, card charges, and card payments.
+      Review real transactions and connect them to the plan while preserving both sides.
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/planning-templates.webp" alt="Recurring transactions organized into pay schedules, subscriptions, monthly bills, payment plans, and card payments" width="100%">
+      <img src="app/assets/images/marketing/accounts-v2.webp" alt="Accounts overview with trusted balance observations, current and projected balances, and net-worth trend" width="100%">
       <br>
-      <strong>Recurring transactions</strong>
+      <strong>Accounts</strong>
       <br>
-      Keep reusable money movement ready for the next month.
+      Reconcile trusted balances, planned movement, current position, and net worth.
     </td>
     <td align="center">
-      <img src="app/assets/images/marketing/backup-and-restore-desktop.webp" alt="Backup page with export, encryption, preview, and restore options" width="100%">
+      <img src="app/assets/images/marketing/reports-v2.webp" alt="Reports showing monthly trend graphs, category totals, source labels, and exact-value drilldowns" width="100%">
+      <br>
+      <strong>Reports</strong>
+      <br>
+      Compare trends and categories, then open the exact records behind the result.
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="app/assets/images/marketing/month-close-v2.webp" alt="Closed-month review showing frozen report totals, preserved source records, and reopen guidance" width="100%">
+      <br>
+      <strong>Close the month</strong>
+      <br>
+      Preserve the report evidence only after the plan and activity are ready.
+    </td>
+    <td align="center">
+      <img src="app/assets/images/marketing/backup-restore-v2.webp" alt="Backup and Restore showing version 2 export scope, optional encryption, and restore preview guidance" width="100%">
       <br>
       <strong>Backup and restore</strong>
       <br>
-      Preview a versioned backup before restoring it.
+      Preview a complete restore and keep an encrypted rollback checkpoint for replacement restores.
     </td>
   </tr>
 </table>
 
 ## How the monthly workflow fits together
 
-1. **Set up reusable items.** Add the paychecks, bills, subscriptions, payment plans, and card payments that usually appear each month.
-2. **Build the month.** Start fresh, copy an earlier month, or generate entries from the recurring items you want to use.
-3. **Keep it current.** Add one-time exceptions with the composer, import CSV activity, and confirm planned entries after the activity occurs. Opening a month never marks entries paid for you.
-4. **Review the result.** Use the budget, breakdown, calendar, account, and money-flow views to compare the plan with actual activity.
+1. **Set up the workspace.** Add the accounts you want to reconcile and the recurring paychecks, bills, subscriptions, payment plans, and card payments you expect.
+2. **Build the plan.** Start fresh, copy an earlier month, or generate planned items from the recurring records you want to use.
+3. **Bring in reality.** Add a manual transaction or import account activity, then match it to the plan when the records describe the same event.
+4. **Review the evidence.** Use Home, the monthly workspace, Accounts, and Reports to compare the plan, actual activity, remaining plan, forecast, and trusted balances. Graphs include exact-value tables or source drilldowns.
+5. **Close and recover.** Close a ready month to preserve its reporting evidence. Export a version 2 backup before important changes; an in-place restore creates an encrypted seven-day rollback checkpoint.
 
 Accounts are tracked manually. A balance snapshot provides a known starting point; paid activity explains the current balance, and planned activity contributes to the projected balance.
 
@@ -193,7 +195,7 @@ Caddy is the only service exposed on ports `80` and `443`. Rails and PostgreSQL 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v1.2.0
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.0.0
 ```
 
 Then pull and start it without building locally:
@@ -255,6 +257,40 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 The container runs `bin/rails db:prepare` during startup, so migrations are applied automatically. Keep the PostgreSQL volume intact, and do not run `db:seed` during a normal update.
 
 The app also checks GitHub Releases and shows an update notice when a newer release is available. The related overrides are documented in [.env.example](.env.example).
+
+### FinanceTracking.app 2.0 data transition
+
+Version 2 applies additive database migrations during normal startup. It keeps the existing records and compatible reads in place; it does not silently switch every workspace to the new financial model. Self-hosted operators can inspect and move one workspace at a time after taking both a PostgreSQL backup and an application export.
+
+Run the read-only checks and resumable backfill inside the web container:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml exec web bin/rails data_quality:legacy
+docker compose --env-file .env.production -f docker-compose.production.yml exec web env APPLY=1 bin/rails target_backfill:all
+docker compose --env-file .env.production -f docker-compose.production.yml exec web bin/rails target_shadow_reads:all
+docker compose --env-file .env.production -f docker-compose.production.yml exec web bin/rails target_release:rehearse
+docker compose --env-file .env.production -f docker-compose.production.yml exec web bin/rails target_release:status
+```
+
+The rehearsal temporarily enables target reads, runs parity and performance checks, exercises the ordered rollback path, and restores the original flags. It prints redacted counts and timings rather than financial values.
+
+Enable one eligible workspace only after the rehearsal passes. Replace the placeholders with a workspace ID from `target_release:status` and your own deployment or change identifier:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml exec web \
+  env CONFIRM_WORKSPACE_ID=WORKSPACE_ID CHANGE_ID=YOUR_CHANGE_ID \
+  bin/rails 'target_release:enable[WORKSPACE_ID]'
+```
+
+If the new reads need to be withdrawn, use the same explicit confirmation. Rollback disables target reads first and preserves dual writes so the evidence needed for diagnosis is not lost:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml exec web \
+  env CONFIRM_WORKSPACE_ID=WORKSPACE_ID CHANGE_ID=YOUR_INCIDENT_ID \
+  bin/rails 'target_release:rollback[WORKSPACE_ID]'
+```
+
+Do not enable a workspace while `target_release:status` reports an incomplete backfill or unresolved discrepancy. Resolve ambiguous historical data through the application’s explicit review flow rather than assigning an account by guess.
 
 ## Demo and sample data
 

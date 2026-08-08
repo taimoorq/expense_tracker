@@ -6,7 +6,12 @@
       "insights" => ["bulb", "Insights"],
       "manage" => ["settings-2", "Manage"]
     }.each do |view, (icon, label)| %>
-      <%= link_to account_path(account, view: view, range: range),
+      <% destination = if view == "activity" && account.budget_workspace&.target_reads_enabled?
+        activity_path(view: "all", account_id: account.id)
+      else
+        account_path(account, view: view, range: range)
+      end %>
+      <%= link_to destination,
                   class: "ta-tab #{'ta-tab-active' if active_view == view}",
                   aria: { current: ("page" if active_view == view), selected: (active_view == view).to_s } do %>
         <span class="inline-flex items-center gap-2">

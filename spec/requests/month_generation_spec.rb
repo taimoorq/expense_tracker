@@ -43,6 +43,47 @@ RSpec.describe "Month generation actions", type: :request do
     expect(budget_month.expense_entries.last.payee).to eq("Netflix")
   end
 
+  it "atomically generates recurring legacy and target records and remains idempotent" do
+    create(:subscription, user: user, name: "Netflix", due_day: 8, amount: 21.99)
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    workspace = backfill.workspace
+    workspace.update!(target_writes_enabled: true)
+
+    expect do
+      post generate_subscriptions_budget_month_path(budget_month)
+    end.to change(budget_month.expense_entries, :count).by(1)
+      .and change(workspace.budget_items, :count).by(1)
+      .and change(workspace.recurring_occurrences, :count).by(1)
+
+    expect do
+      post generate_subscriptions_budget_month_path(budget_month)
+    end.not_to change(budget_month.expense_entries, :count)
+    expect(workspace.budget_items.count).to eq(1)
+    expect(workspace.recurring_occurrences.count).to eq(1)
+  end
+
+  it "rolls back generated legacy entries when the target period is closed" do
+    create(:subscription, user: user, name: "Netflix", due_day: 8, amount: 21.99)
+    budget_month
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    workspace = backfill.workspace
+    workspace.update!(target_writes_enabled: true)
+    period_mapping = workspace.legacy_record_mappings.find_by!(
+      legacy_record_type: "BudgetMonth",
+      legacy_record_id: budget_month.id,
+      target_record_type: "BudgetPeriod"
+    )
+    BudgetPeriod.find(period_mapping.target_record_id).update!(state: "closed")
+
+    expect do
+      post generate_subscriptions_budget_month_path(budget_month)
+    end.not_to change(budget_month.expense_entries, :count)
+
+    expect(response).to redirect_to(budget_month_path(budget_month))
+    expect(flash[:alert]).to include("Reopen March 2026")
+    expect(workspace.budget_items).to be_empty
+  end
+
   it "generates monthly bills from the current user's templates" do
     create(:monthly_bill, user: user, name: "Mortgage", due_day: 12, default_amount: 1800)
 

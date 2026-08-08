@@ -2,9 +2,9 @@
   <%= chart_library_tags %>
 <% end %>
 
-<% page_header title: "Overview",
-  eyebrow: "Monthly command center",
-  subtitle: "Start here when you want the fastest path back into your budget workflow.",
+<% page_header title: "Home",
+  eyebrow: "Daily financial check-in",
+  subtitle: "See what needs attention, understand this month, and take the next useful action.",
   subtitle_class: "hidden sm:block" %>
 
 <% overview = @overview %>
@@ -15,14 +15,40 @@
       <div class="ta-section-header">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="ta-ledger-rail">
-          <p class="ta-page-eyebrow">New user onboarding</p>
-          <h2 id="onboarding-title" class="ta-section-title mt-1">Set up the month in the right order</h2>
-          <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Start small: add one account, record one trusted balance, save one recurring item, then create the first month.</p>
+          <p class="ta-page-eyebrow">Resumable setup</p>
+          <h2 id="onboarding-title" class="ta-section-title mt-1">Choose how you want to start</h2>
+          <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Begin manually, preview a CSV import, or restore a backup. No bank credentials are required.</p>
         </div>
         <span class="ta-status-badge <%= overview.onboarding_status[:classes] %>">
           <%= overview.onboarding_status[:label] %>
         </span>
       </div>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <div class="min-w-48 flex-1" role="progressbar" aria-label="Financial setup progress" aria-valuemin="0" aria-valuemax="4" aria-valuenow="<%= overview.onboarding_progress.completed_count %>">
+          <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+            <div class="h-full rounded-full bg-indigo-600" style="width: <%= overview.onboarding_progress.completed_count * 25 %>%"></div>
+          </div>
+          <p class="mt-1 text-xs font-semibold text-slate-600"><%= overview.onboarding_progress.completed_count %> of 4 foundations complete</p>
+        </div>
+        <%= button_to "Hide for now", onboarding_preference_path,
+          method: :patch,
+          params: { dismissed: true },
+          class: "text-xs font-semibold text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-900" %>
+      </div>
+      </div>
+
+      <div class="grid gap-3 border-t border-slate-200 bg-slate-50/70 p-4 md:grid-cols-3 sm:p-5" aria-label="Starting paths">
+        <% first_account = overview.accounts.first %>
+        <% starting_paths = [
+          ["Manual setup", "Add one account and confirm an opening balance.", new_account_path, "wallet"],
+          ["Import transactions", (first_account ? "Preview a CSV for #{first_account.name}." : "Add the destination account, then preview its CSV."), (first_account ? new_account_account_activity_import_path(first_account) : new_account_path), "upload"],
+          ["Restore a backup", "Preview scopes, conflicts, and impact before restoring.", backup_restore_path, "shield-lock"]
+        ] %>
+        <% starting_paths.each do |label, description, path, icon| %>
+          <%= link_to path, class: "group rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-indigo-300 hover:shadow-sm" do %>
+            <%= tabler_icon(icon, classes: "h-5 w-5 text-indigo-600") %><h3 class="mt-3 text-sm font-semibold text-slate-900 group-hover:text-indigo-700"><%= label %></h3><p class="mt-1 text-xs leading-5 text-slate-600"><%= description %></p>
+          <% end %>
+        <% end %>
       </div>
 
       <div class="ta-section-body grid gap-0 p-0 md:grid-cols-2 xl:grid-cols-4">
@@ -39,6 +65,31 @@
               <span><%= step[:action_label] %></span><%= tabler_icon("arrow-right", classes: "h-3.5 w-3.5") %>
             <% end %>
           </article>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if overview.recent_operations.any? %>
+    <section class="ta-section-frame" aria-labelledby="recent-operations-title">
+      <div class="ta-section-header flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="ta-page-eyebrow">Saved status</p>
+          <h2 id="recent-operations-title" class="ta-section-title mt-1">Recent imports, restores, and month operations</h2>
+          <p class="mt-1 text-sm text-slate-600">Open an operation to see its durable result and support reference.</p>
+        </div>
+        <% active_count = overview.recent_operations.count(&:active?) %>
+        <span class="ta-status-badge <%= active_count.positive? ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700" %>"><%= active_count.positive? ? "#{active_count} in progress" : "Up to date" %></span>
+      </div>
+      <div class="divide-y divide-slate-200 border-t border-slate-200">
+        <% overview.recent_operations.each do |operation| %>
+          <%= link_to operation_run_path(operation.id), class: "group grid gap-2 px-4 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5" do %>
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2"><h3 class="text-sm font-semibold text-slate-900 group-hover:text-indigo-700"><%= operation.title %></h3><span class="ta-status-badge <%= operation.state_classes %>"><%= operation.state_label %></span></div>
+              <p class="mt-1 text-xs text-slate-600"><%= operation.result_summary.presence || operation.progress_label %></p>
+            </div>
+            <span class="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700">View status <%= tabler_icon("arrow-right", classes: "h-4 w-4 transition group-hover:translate-x-0.5") %></span>
+          <% end %>
         <% end %>
       </div>
     </section>
@@ -117,6 +168,28 @@
     </aside>
   </section>
 
+  <% if overview.monthly_position %>
+    <section class="ta-section-frame" aria-labelledby="monthly-position-title">
+      <div class="ta-section-header flex flex-wrap items-start justify-between gap-3">
+        <div><p class="ta-page-eyebrow">Monthly position</p><h2 id="monthly-position-title" class="ta-section-title mt-1">Plan, actual, and what remains</h2><p class="mt-1 text-sm text-slate-600">Actual activity stays separate from the remaining plan; together they form the forecast.</p></div>
+        <%= link_to "Open Plan", budget_month_path(overview.current_month), class: "text-sm font-semibold text-indigo-700 hover:text-indigo-600" %>
+      </div>
+      <div class="grid gap-0 border-t border-slate-200 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.85fr)]">
+        <div class="grid grid-cols-2 sm:grid-cols-3">
+          <% overview.monthly_position_cards.each do |item| %>
+            <div class="border-b border-r border-slate-200 p-4 last:border-r-0">
+              <p class="ta-ledger-label"><%= item[:label] %></p><p class="ta-number mt-2 text-lg font-semibold <%= item[:tone] %>"><%= number_to_currency(item[:value]) %></p>
+            </div>
+          <% end %>
+        </div>
+        <div class="min-h-56 border-t border-slate-200 p-4 xl:border-l xl:border-t-0">
+          <canvas data-controller="chart" data-chart-type-value="bar" data-chart-title-value="Actual and remaining plan for income and outflow" data-chart-labels-value='<%= ["Income", "Outflow"].to_json %>' data-chart-datasets-value="<%= overview.monthly_position_chart_datasets.to_json %>" data-chart-options-value="<%= { indexAxis: "y", scales: { x: { beginAtZero: true, stacked: true }, y: { stacked: true } } }.to_json %>"></canvas>
+        </div>
+      </div>
+      <div class="border-t border-slate-200 px-4 py-3 text-xs text-slate-600">Chart values are repeated in the six labeled totals and link to the month records behind them.</div>
+    </section>
+  <% end %>
+
   <section class="ta-section-frame" aria-labelledby="check-in-title">
     <div class="ta-section-header">
       <div class="flex flex-wrap items-start justify-between gap-3">
@@ -172,7 +245,7 @@
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Cash Flow</p>
         <h3 class="mt-2 text-xl font-semibold text-slate-900"><%= overview.overview_cashflow_year %> money flow</h3>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This visual combines all saved months in <%= overview.overview_cashflow_year %> so you can see how income has flowed into spending buckets and leftover cash across the year so far.</p>
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This visual combines all saved months in <%= overview.overview_cashflow_year %> so you can see how income has flowed into spending buckets and leftover cash across the year so far. Calculation <%= overview.cashflow_calculation_version %>.</p>
       </div>
       <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
         <%= pluralize(overview.year_budget_months.count, "month") %>
@@ -210,6 +283,21 @@
           <%= render "overview/stat_card", item: item %>
         <% end %>
       </div>
+
+      <details class="mt-4 rounded-xl border border-slate-200 bg-white">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review exact flow values</summary>
+        <div class="overflow-x-auto border-t border-slate-100">
+          <table class="min-w-full text-sm">
+            <caption class="sr-only">Exact source, destination, and amount values for the year cash flow graph</caption>
+            <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th scope="col" class="px-4 py-3">Source</th><th scope="col" class="px-4 py-3">Destination</th><th scope="col" class="px-4 py-3 text-right">Amount</th></tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              <% overview.year_cashflow_payload[:links].each do |flow| %>
+                <tr><td class="px-4 py-3 font-medium text-slate-900"><%= flow[:source] %></td><td class="px-4 py-3 text-slate-700"><%= flow[:target] %></td><td class="ta-money px-4 py-3 text-right text-slate-700"><%= number_to_currency(flow[:value]) %></td></tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </details>
 
       <div class="mt-4 rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">How to read this</p>

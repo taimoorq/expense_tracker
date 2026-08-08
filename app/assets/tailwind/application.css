@@ -400,7 +400,24 @@
 	}
 
 	.ta-main {
-		@apply min-w-0;
+		@apply min-w-0 pb-20 lg:pb-0;
+	}
+
+	.ta-mobile-bottom-nav {
+		@apply fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t px-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur lg:hidden;
+		border-color: color-mix(in srgb, var(--ta-border) 85%, transparent);
+		background-color: color-mix(in srgb, var(--ta-surface) 94%, transparent);
+		box-shadow: 0 -8px 24px rgb(var(--ta-shadow-rgb) / 0.08);
+	}
+
+	.ta-mobile-bottom-link {
+		@apply flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[0.68rem] font-semibold;
+		color: var(--ta-text-muted);
+	}
+
+	.ta-mobile-bottom-link-active {
+		background-color: var(--ta-accent-soft);
+		color: var(--ta-accent);
 	}
 
 	@media (min-width: 1024px) {

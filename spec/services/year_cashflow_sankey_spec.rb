@@ -49,4 +49,30 @@ RSpec.describe YearCashflowSankey do
     expect(refreshed_payload[:outflow_total]).to eq(900.0)
     expect(refreshed_payload[:links]).to include(include(source: "#{Date.current.year} Income", target: "Housing", value: 900.0))
   end
+
+  it "builds the year graph only from target periods after read cutover" do
+    user = create(:user)
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 1, 1), label: "January 2026")
+    income = create(:expense_entry, user: user, budget_month: month, section: :income, payee: "Employer", planned_amount: 4_000, actual_amount: 4_200, status: :paid)
+    create(:expense_entry, user: user, budget_month: month, section: :fixed, category: "Housing", payee: "Landlord", planned_amount: 1_500, actual_amount: 1_600, status: :paid)
+    create(:expense_entry, user: user, budget_month: month, section: :variable, category: "Groceries", payee: "Market", planned_amount: 320, status: :planned)
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+    income.update_columns(planned_amount: 9_999, actual_amount: 9_999)
+
+    payload = Overview::CashflowSummary.new(user: user, year: 2026).call.fetch(:year_cashflow_payload)
+
+    expect(payload).to include(
+      calculation_version: "target-v1",
+      month_count: 1,
+      income_total: 4_200.to_d,
+      outflow_total: 1_920.to_d,
+      leftover_total: 2_280.to_d
+    )
+    expect(payload[:links]).to include(
+      include(source: "Employer", target: "2026 Income", value: 4_200.0),
+      include(source: "2026 Income", target: "Housing", value: 1_600.0),
+      include(source: "2026 Income", target: "Groceries", value: 320.0)
+    )
+  end
 end

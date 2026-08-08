@@ -4,10 +4,12 @@ class ExpenseEntry < ApplicationRecord
   RECURRING_TEMPLATE_SOURCES = Recurring::TemplateCatalog.recurring_source_files.freeze
 
   belongs_to :user
+  belongs_to :budget_workspace, optional: true
   belongs_to :budget_month
   belongs_to :source_account, class_name: "Account", optional: true
   belongs_to :destination_account, class_name: "Account", optional: true
   belongs_to :source_template, polymorphic: true, optional: true
+  has_many :account_activities, dependent: :nullify
 
   enum :section, {
     income: 0,
@@ -36,6 +38,7 @@ class ExpenseEntry < ApplicationRecord
   validate :source_template_matches_user
 
   before_validation :assign_user_from_budget_month
+  before_validation :assign_workspace_from_budget_month
   scope :chronological, -> { order(:occurred_on, :created_at) }
   scope :recurring_templates, -> { where(source_file: RECURRING_TEMPLATE_SOURCES) }
   scope :due_on_or_before, ->(date) { where(occurred_on: ..date) }
@@ -90,10 +93,25 @@ class ExpenseEntry < ApplicationRecord
     auto_completed_at.present?
   end
 
+  def canonical_generated_entry_key
+    template = source_template
+    return if template.blank? || budget_month.blank?
+
+    if template.is_a?(CreditCard) && source_file == CreditCard.template_source_file
+      template.estimated_entry_key(month_on: budget_month.month_on)
+    elsif generated_from_template? && template.respond_to?(:generated_entry_key) && occurred_on.present?
+      template.generated_entry_key(month_on: budget_month.month_on, occurred_on: occurred_on)
+    end
+  end
+
   private
 
   def assign_user_from_budget_month
     self.user ||= budget_month&.user
+  end
+
+  def assign_workspace_from_budget_month
+    self.budget_workspace ||= budget_month&.budget_workspace
   end
 
   def user_matches_budget_month
@@ -122,9 +140,17 @@ class ExpenseEntry < ApplicationRecord
 
     month_on = budget_month.month_on.to_date.beginning_of_month
     return if month_on.all_month.cover?(occurred_on.to_date)
+    return if valid_recurring_boundary_occurrence?(month_on)
 
     current_range = "#{month_on.strftime('%B %-d')} through #{month_on.end_of_month.strftime('%B %-d')}"
     errors.add(:occurred_on, "must be in #{budget_month.label} (#{current_range})")
+  end
+
+  def valid_recurring_boundary_occurrence?(month_on)
+    return false unless source_template.is_a?(PaySchedule)
+    return false unless source_file == source_template.template_source_file
+
+    source_template.pay_dates_for_month(month_on).include?(occurred_on.to_date)
   end
 
   def source_and_destination_accounts_are_distinct

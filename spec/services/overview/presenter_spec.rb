@@ -127,7 +127,7 @@ RSpec.describe Overview::Presenter do
     expect(presenter.account_flow_month_window).to eq("6")
     expect(presenter.account_flow_month_window_options).to include([ "Last 6 months", "6" ])
     expect(presenter.account_flow_available?).to be(true)
-    expect(presenter.account_flow_summary_description).to eq("4 months included: January 2026 to April 2026.")
+    expect(presenter.account_flow_summary_description).to eq("4 months included: January 2026 to April 2026. Calculation legacy-compatible-v1.")
     expect(presenter.account_flow_stat_cards.map { |item| item[:label] }).to eq([ "Charged", "Paid to", "Tracked entries" ])
     expect(presenter.account_flow_summary_title).to eq("Linked account activity")
     expect(presenter.account_flow_chart_title).to eq("Linked Activity by Account")
@@ -136,6 +136,7 @@ RSpec.describe Overview::Presenter do
     expect(presenter.linked_entries_summary).to eq("2 linked month entries in April 2026 (0 paid).")
     expect(presenter.cashflow_available?).to be(true)
     expect(presenter.cashflow_chart_title).to eq("2026 cash flow graph")
+    expect(presenter.cashflow_calculation_version).to eq("legacy-compatible-v1")
     expect(presenter.cashflow_stat_cards.map { |item| item[:label] }).to eq([ "Months Included", "Income", "Outflow", "Leftover" ])
   end
 

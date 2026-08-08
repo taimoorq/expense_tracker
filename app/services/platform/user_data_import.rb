@@ -2,34 +2,41 @@ module Platform
   class UserDataImport
     SCOPES = Platform::UserDataExport::SCOPES
 
-    def initialize(user:, payload:, scopes:)
+    def initialize(user:, payload:, scopes:, replace_existing: false, checkpoint: nil, rollback: false)
       @user = user
       @payload = payload.to_h.deep_symbolize_keys
       @scopes = Array(scopes).map(&:to_s) & SCOPES
+      @replace_existing = replace_existing
+      @checkpoint = checkpoint
+      @rollback = rollback
     end
 
     def call
-      adapter = adapter_for_payload
-      return adapter if adapter.is_a?(Hash)
+      validation = validate_payload
+      return validation if validation
 
-      adapter.call
+      Platform::Backup::RestoreCoordinator.call(
+        user: user,
+        payload: payload,
+        scopes: scopes,
+        replace_existing: replace_existing,
+        checkpoint: checkpoint,
+        rollback: rollback
+      )
     end
 
     private
 
-    attr_reader :payload, :scopes, :user
+    attr_reader :checkpoint, :payload, :replace_existing, :rollback, :scopes, :user
 
-    def adapter_for_payload
+    def validate_payload
       unless payload[:format] == Platform::UserDataExport::FORMAT_NAME
         return failure("This file is not a supported FinanceTracking.app backup.")
       end
 
-      case payload[:version].to_i
-      when 1
-        Platform::Backup::V1::Importer.new(user: user, payload: payload, scopes: scopes)
-      else
-        failure("This backup version is not supported.")
-      end
+      return if payload[:version].to_i.in?([ 1, 2 ])
+
+      failure("This backup version is not supported.")
     end
 
     def failure(message)

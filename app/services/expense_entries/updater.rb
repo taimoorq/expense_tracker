@@ -19,7 +19,15 @@ module ExpenseEntries
       end
 
       permitted[:budget_month] = month_result.budget_month if month_result.present?
-      expense_entry.update(permitted)
+      ApplicationRecord.transaction do
+        return false unless expense_entry.update(permitted)
+
+        Platform::TargetSync::ExpenseEntryWriter.call(entry: expense_entry)
+      end
+      true
+    rescue Platform::TargetSync::WriteRejected => error
+      expense_entry.errors.add(:base, error.message)
+      false
     end
 
     private

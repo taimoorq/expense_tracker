@@ -1,9 +1,9 @@
 class AccountSnapshotsController < ApplicationController
   def create
     @account = current_user.accounts.find(params[:account_id])
-    @account_snapshot = @account.account_snapshots.new(account_snapshot_params)
+    @account_snapshot = Accounts::SnapshotWriter.create(account: @account, attributes: account_snapshot_params)
 
-    if @account_snapshot.save
+    if @account_snapshot.persisted? && @account_snapshot.errors.none?
       redirect_to account_path(@account, view: "manage"), notice: "Balance snapshot recorded."
     else
       assign_manage_page
@@ -20,7 +20,7 @@ class AccountSnapshotsController < ApplicationController
     @account = current_user.accounts.find(params[:account_id])
     @account_snapshot = @account.account_snapshots.find(params[:id])
 
-    if @account_snapshot.update(account_snapshot_params)
+    if Accounts::SnapshotWriter.update(snapshot: @account_snapshot, attributes: account_snapshot_params)
       redirect_to account_path(@account, view: "manage"), notice: "Balance snapshot updated."
     else
       render :edit, status: :unprocessable_content
@@ -30,9 +30,11 @@ class AccountSnapshotsController < ApplicationController
   def destroy
     @account = current_user.accounts.find(params[:account_id])
     @account_snapshot = @account.account_snapshots.find(params[:id])
-    @account_snapshot.destroy!
-
-    redirect_to account_path(@account, view: "manage"), notice: "Balance snapshot deleted."
+    if Accounts::SnapshotWriter.destroy(snapshot: @account_snapshot)
+      redirect_to account_path(@account, view: "manage"), notice: "Balance snapshot deleted."
+    else
+      redirect_to account_path(@account, view: "manage"), alert: @account_snapshot.errors.full_messages.to_sentence
+    end
   end
 
   private

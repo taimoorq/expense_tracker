@@ -32,12 +32,15 @@
     <% overview_active = controller_name == "overview" %>
     <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
-    <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" || controller_name == "account_activity_imports" %>
+    <% plan_active = months_active || templates_active %>
+    <% activity_active = controller_name == "activity" || controller_name == "account_activity_imports" %>
+    <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" %>
+    <% reports_active = controller_name == "reports" %>
     <% backup_restore_active = controller_name == "backup_restores" %>
     <% settings_active = controller_name == "settings" %>
     <% new_month_active = controller_name == "budget_months" && action_name == "new" %>
     <% help_active = controller_name == "help" %>
-    <% months_section_active = months_active || new_month_active %>
+    <% months_section_active = plan_active || new_month_active %>
     <% show_back_nav = !((controller_name == "budget_months" && action_name == "index") || controller_name == "overview") %>
 
     <button type="button" class="ta-sidebar-overlay" aria-label="Close navigation" data-sidebar-target="overlay" data-action="click->sidebar#close"></button>
@@ -59,9 +62,9 @@
             <% end %>
 
             <div class="ta-sidebar-group">
-              <%= link_to budget_months_path, class: ["ta-sidebar-link", (months_section_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Months" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
+              <%= link_to budget_months_path, class: ["ta-sidebar-link", (months_section_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Plan" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
                 <%= tabler_icon("calendar-month", classes: "ta-sidebar-link-icon") %>
-                <span class="ta-sidebar-label">Months</span>
+                <span class="ta-sidebar-label">Plan</span>
               <% end %>
 
               <div class="ta-sidebar-sublinks">
@@ -69,22 +72,26 @@
                   <%= tabler_icon("calendar-plus", classes: "ta-sidebar-sublink-icon") %>
                   <span class="ta-sidebar-label">Add Month</span>
                 <% end %>
+                <%= link_to planning_templates_path, class: ["ta-sidebar-sublink", (templates_active ? "ta-sidebar-sublink-active" : nil)], aria: { label: "Recurring items" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
+                  <%= tabler_icon("repeat", classes: "ta-sidebar-sublink-icon") %>
+                  <span class="ta-sidebar-label">Recurring</span>
+                <% end %>
               </div>
             </div>
 
-            <%= link_to planning_templates_path, class: ["ta-sidebar-link", (templates_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Recurring" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
-              <%= tabler_icon("repeat", classes: "ta-sidebar-link-icon") %>
-              <span class="ta-sidebar-label">Recurring</span>
+            <%= link_to activity_path, class: ["ta-sidebar-link", (activity_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Activity" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
+              <%= tabler_icon("list-check", classes: "ta-sidebar-link-icon") %>
+              <span class="ta-sidebar-label">Activity</span>
             <% end %>
 
             <%= link_to accounts_path, class: ["ta-sidebar-link", (accounts_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Accounts & Net Worth" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("credit-card", classes: "ta-sidebar-link-icon") %>
-              <span class="ta-sidebar-label">Accounts & Net Worth</span>
+              <span class="ta-sidebar-label">Accounts</span>
             <% end %>
 
-            <%= link_to backup_restore_path, class: ["ta-sidebar-link", (backup_restore_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Backup & Restore" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
-              <%= tabler_icon("shield-lock", classes: "ta-sidebar-link-icon") %>
-              <span class="ta-sidebar-label">Backup & Restore</span>
+            <%= link_to reports_path, class: ["ta-sidebar-link", (reports_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Reports" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
+              <%= tabler_icon("chart-bar", classes: "ta-sidebar-link-icon") %>
+              <span class="ta-sidebar-label">Reports</span>
             <% end %>
 
             <%= link_to help_path, class: ["ta-sidebar-link", (help_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Help & Documentation" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
@@ -106,7 +113,7 @@
               <% end %>
             <% end %>
 
-            <%= link_to settings_path, class: ["ta-sidebar-link", (settings_active ? "ta-sidebar-link-active" : nil)], aria: { label: "Settings" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
+            <%= link_to settings_path, class: ["ta-sidebar-link", ((settings_active || backup_restore_active) ? "ta-sidebar-link-active" : nil)], aria: { label: "Settings" }, data: { action: "click->sidebar#closeOnMobile", turbo_frame: "_top" } do %>
               <%= tabler_icon("adjustments", classes: "ta-sidebar-link-icon") %>
               <span class="ta-sidebar-label">Settings</span>
             <% end %>
@@ -228,6 +235,22 @@
         </div>
       </section>
     </main>
+
+    <% if user_signed_in? %>
+      <nav class="ta-mobile-bottom-nav" aria-label="Primary navigation">
+        <% [
+          ["Home", root_path, "home", overview_active],
+          ["Plan", budget_months_path, "calendar-month", plan_active],
+          ["Activity", activity_path, "list-check", activity_active],
+          ["Accounts", accounts_path, "credit-card", accounts_active],
+          ["More", settings_path, "dots", settings_active || reports_active || backup_restore_active || help_active]
+        ].each do |label, path, icon, active| %>
+          <%= link_to path, class: ["ta-mobile-bottom-link", (active ? "ta-mobile-bottom-link-active" : nil)], aria: { current: (active ? "page" : nil) }, data: { turbo_frame: "_top" } do %>
+            <%= tabler_icon(icon, classes: "h-5 w-5") %><span><%= label %></span>
+          <% end %>
+        <% end %>
+      </nav>
+    <% end %>
 
     <% if user_signed_in? %>
       <%= render "expense_entries/template_editor_empty" %>

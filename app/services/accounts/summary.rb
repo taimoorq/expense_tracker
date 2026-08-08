@@ -21,7 +21,9 @@ module Accounts
         accounts_with_snapshots_count: accounts_with_snapshots_count,
         accounts_missing_snapshots_count: accounts.size - accounts_with_snapshots_count,
         trend_labels: include_trend? ? trend_labels : [],
-        trend_values: include_trend? ? trend_values : []
+        trend_values: include_trend? ? trend_values : [],
+        trend_rows: include_trend? ? trend_rows : [],
+        calculation_version: target_reads? ? Budgeting::PeriodSummary::CALCULATION_VERSION : "legacy-compatible-v1"
       }
     end
 
@@ -34,7 +36,7 @@ module Accounts
     end
 
     def accounts
-      @accounts ||= user.accounts.includes(:account_snapshots, :account_activity_imports).active_first.to_a
+      @accounts ||= user.accounts.includes(:budget_workspace, :account_snapshots, :account_activity_imports).active_first.to_a
     end
 
     def net_worth_accounts
@@ -68,8 +70,13 @@ module Accounts
     end
 
     def account_balances
-      @account_balances ||= accounts.index_with do |account|
-        Accounts::BalanceResolver.new(account: account, inputs: balance_inputs).call
+      @account_balances ||= begin
+        target_accounts, legacy_accounts = accounts.partition { |account| account.budget_workspace&.target_reads_enabled? }
+        target = Accounts::TargetBalanceBatch.call(accounts: target_accounts)
+        legacy = legacy_accounts.index_with do |account|
+          Accounts::BalanceResolver.new(account: account, inputs: balance_inputs).call
+        end
+        target.merge(legacy)
       end
     end
 
@@ -135,6 +142,8 @@ module Accounts
 
     def trend_data
       @trend_data ||= begin
+        return target_trend_data if target_reads?
+
         dated_snapshots = net_worth_accounts.index_with { |account| account.account_snapshots.sort_by(&:recorded_on) }
         trend_dates = dated_snapshots.values.flatten.map(&:recorded_on).uniq.sort
 
@@ -148,6 +157,28 @@ module Accounts
 
         [ labels, values ]
       end
+    end
+
+    def trend_rows
+      @trend_rows ||= if target_reads?
+        target_trend_rows
+      else
+        trend_labels.zip(trend_values).map do |label, value|
+          { label: label, value: value, coverage_count: net_worth_accounts.size, account_count: net_worth_accounts.size, complete: true }
+        end
+      end
+    end
+
+    def target_trend_data
+      [ target_trend_rows.map { |row| row.fetch(:label) }, target_trend_rows.map { |row| row[:value] } ]
+    end
+
+    def target_trend_rows
+      @target_trend_rows ||= Accounts::TargetNetWorthTrend.call(accounts: net_worth_accounts)
+    end
+
+    def target_reads?
+      accounts.any? && accounts.all? { |account| account.budget_workspace&.target_reads_enabled? }
     end
   end
 end

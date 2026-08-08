@@ -1,0 +1,60 @@
+<% content_for :title, "Review #{@budget_month.label} close" %>
+<% breadcrumb "Plan", budget_months_path %>
+<% breadcrumb @budget_month.label, budget_month_path(@budget_month) %>
+<% breadcrumb "Month close" %>
+<% page_header title: "Review #{@budget_month.label}", eyebrow: "Month close", subtitle: "Freeze an auditable summary when this month is ready. Reopening preserves the prior close in history." %>
+
+<div class="space-y-6">
+  <section class="ta-section-frame" aria-labelledby="close-summary-title">
+    <div class="ta-section-header flex flex-wrap items-start justify-between gap-3">
+      <div><p class="ta-page-eyebrow"><%= @active_close ? "Frozen evidence" : "Preview" %></p><h2 id="close-summary-title" class="ta-section-title mt-1"><%= @active_close ? "Summary frozen at close" : "Summary that will be frozen" %></h2><p class="mt-1 text-sm text-slate-600">Calculation version <%= @active_close&.calculation_version || Budgeting::PeriodSummary::CALCULATION_VERSION %><%= @active_close ? "; closed #{l(@active_close.closed_at, format: :long)}" : "" %>.</p></div>
+      <span class="ta-status-badge <%= @target_period.state_closed? ? "bg-slate-900 text-white" : @readiness.ready? ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800" %>"><%= @target_period.state_closed? ? @target_period.state.humanize : @readiness.ready? ? "Ready" : pluralize(@readiness.issue_count, "review item") %></span>
+    </div>
+    <dl class="grid grid-cols-2 border-t border-slate-200 sm:grid-cols-3 lg:grid-cols-6">
+      <% [
+        ["Planned income", @summary.planned_income], ["Planned outflow", @summary.planned_outflow],
+        ["Actual income", @summary.actual_income], ["Actual outflow", @summary.actual_outflow],
+        ["Forecast net", @summary.forecast_net], ["Unmatched", @summary.unmatched_count]
+      ].each do |label, value| %>
+        <div class="border-b border-r border-slate-200 p-4"><dt class="ta-ledger-label"><%= label %></dt><dd class="ta-number mt-2 text-lg font-semibold"><%= label == "Unmatched" ? value : number_to_currency(value) %></dd></div>
+      <% end %>
+    </dl>
+  </section>
+
+  <% if @active_close %>
+    <section class="ta-section-frame" aria-labelledby="close-source-lines-title">
+      <div class="ta-section-header"><p class="ta-page-eyebrow">Source drill-down</p><h2 id="close-source-lines-title" class="ta-section-title mt-1">Records frozen with this close</h2><p class="mt-1 text-sm text-slate-600"><%= pluralize(@active_close.item_snapshots.size, "planned item") %> and <%= pluralize(@active_close.transaction_snapshots.size, "posted transaction") %> preserve the report labels and amounts used at close.</p></div>
+      <details class="border-t border-slate-200" open>
+        <summary class="cursor-pointer px-5 py-3 text-sm font-semibold text-slate-900">Planned and fulfilled items</summary>
+        <div class="overflow-x-auto border-t border-slate-200"><table class="min-w-full text-sm"><caption class="sr-only">Plan item values frozen with this month close</caption><thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-4 py-3 sm:px-5">Item</th><th class="px-4 py-3">Category</th><th class="px-4 py-3 text-right">Planned</th><th class="px-4 py-3 text-right">Actual</th><th class="px-4 py-3 text-right sm:px-5">Remaining</th></tr></thead><tbody class="divide-y divide-slate-200"><% @active_close.item_snapshots.sort_by { |item| [item.scheduled_on || Date.new(1970, 1, 1), item.id] }.each do |item| %><tr><td class="px-4 py-3 font-semibold text-slate-900 sm:px-5"><%= item.name_snapshot.presence || "Planned item" %></td><td class="px-4 py-3 text-slate-600"><%= item.category_snapshot.presence || "Uncategorized" %></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(item.planned_amount) %></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(item.actual_amount) %></td><td class="ta-number px-4 py-3 text-right sm:px-5"><%= number_to_currency(item.remaining_amount) %></td></tr><% end %></tbody></table></div>
+      </details>
+      <details class="border-t border-slate-200">
+        <summary class="cursor-pointer px-5 py-3 text-sm font-semibold text-slate-900">Posted transaction sources</summary>
+        <div class="overflow-x-auto border-t border-slate-200"><table class="min-w-full text-sm"><caption class="sr-only">Transaction values frozen with this month close</caption><thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-4 py-3 sm:px-5">Date</th><th class="px-4 py-3">Description</th><th class="px-4 py-3">Category</th><th class="px-4 py-3 text-right sm:px-5">Amount</th></tr></thead><tbody class="divide-y divide-slate-200"><% @active_close.transaction_snapshots.sort_by { |transaction| [transaction.effective_on, transaction.id] }.each do |transaction| %><tr><td class="px-4 py-3 text-slate-600 sm:px-5"><%= l(transaction.effective_on, format: :long) %></td><td class="px-4 py-3 font-semibold text-slate-900"><%= link_to transaction.description_snapshot, activity_path(view: "all", transaction_id: transaction.financial_transaction_id), class: "hover:text-indigo-700" %></td><td class="px-4 py-3 text-slate-600"><%= transaction.category_snapshot.presence || "Uncategorized" %></td><td class="ta-number px-4 py-3 text-right font-semibold sm:px-5"><%= number_to_currency(transaction.gross_amount) %></td></tr><% end %></tbody></table></div>
+      </details>
+    </section>
+  <% end %>
+
+  <% unless @readiness.ready? %>
+    <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5" aria-labelledby="close-warning-title">
+      <h2 id="close-warning-title" class="font-semibold text-amber-950">Review before closing</h2>
+      <ul class="mt-2 space-y-1 text-sm leading-6 text-amber-900">
+        <% if @summary.unmatched_count.positive? %><li><%= pluralize(@summary.unmatched_count, "transaction") %> remain unmatched. <%= link_to "Open Activity", activity_path(view: "unmatched"), class: "font-semibold underline" %>.</li><% end %>
+        <% if @unresolved_account_count.positive? %><li><%= pluralize(@unresolved_account_count, "account") %> do not yet have a trusted balance observation. <%= link_to "Review Accounts", accounts_path, class: "font-semibold underline" %>.</li><% end %>
+      </ul>
+      <p class="mt-3 text-xs text-amber-800">You may still close the month; these counts are stored with the frozen summary.</p>
+    </section>
+  <% end %>
+
+  <section class="ta-section-frame p-5">
+    <% if @target_period.state_closed? %>
+      <h2 class="text-lg font-semibold text-slate-900">This month is closed</h2>
+      <p class="mt-2 text-sm leading-6 text-slate-600">The frozen result remains available in reports and the source tables above. Late transactions stay in Activity but remain unmatched to this plan until you reopen the month.</p>
+      <div class="mt-4 flex flex-wrap gap-3"><%= button_to "Reopen month", reopen_budget_month_month_close_path(@budget_month), method: :patch, class: "fb-btn-secondary ta-action-btn" %><%= link_to "Back to Plan", budget_month_path(@budget_month), class: "text-sm font-semibold text-indigo-700" %></div>
+    <% else %>
+      <h2 class="text-lg font-semibold text-slate-900">Ready to freeze this summary?</h2>
+      <p class="mt-2 text-sm leading-6 text-slate-600">Closing does not start the next month automatically and does not erase transactions or plan items.</p>
+      <div class="mt-4 flex flex-wrap gap-3"><%= button_to "Close #{@budget_month.label}", budget_month_month_close_path(@budget_month), method: :post, class: "fb-btn-primary ta-action-btn" %><%= link_to "Keep month open", budget_month_path(@budget_month), class: "fb-btn-secondary ta-action-btn" %></div>
+    <% end %>
+  </section>
+</div>

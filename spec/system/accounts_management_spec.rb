@@ -155,7 +155,7 @@ RSpec.describe "Accounts management", type: :system do
     visit account_path(account)
 
     expect(page).to have_link("Activity")
-    click_link "Activity"
+    within("nav[aria-label='Account information']") { click_link "Activity" }
     expect(page).to have_content("Budget-linked activity")
     expect(page).to have_content("Acme Payroll")
     expect(page).to have_content("Net +$3,200.00")

@@ -41,6 +41,8 @@ module BudgetMonthFlow
   def run_generation(action)
     result = Recurring::MonthGenerationRunner.call(user: current_user, budget_month_id: params[:id], action: action)
     handle_month_generation(result.budget_month, result.message)
+  rescue Platform::TargetSync::WriteRejected => error
+    redirect_to budget_month_path(params[:id]), alert: error.message
   end
 
   def month_expense_entry_loader

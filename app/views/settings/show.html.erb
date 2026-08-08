@@ -53,6 +53,26 @@
   </section>
 
   <section class="ta-section-frame p-5">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="max-w-xl">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Getting started</p>
+        <h2 class="mt-2 text-lg font-semibold text-slate-900">Financial setup checklist</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">The Home checklist derives progress from your accounts, recurring transactions, month, and review work. Hiding it does not change financial data.</p>
+      </div>
+      <% if @onboarding_membership.onboarding_dismissed_at.present? %>
+        <%= button_to "Show checklist on Home", onboarding_preference_path,
+          method: :patch,
+          params: { dismissed: false },
+          class: "fb-btn-secondary ta-action-btn shrink-0" %>
+      <% elsif @onboarding_membership.onboarding_completed_at.present? %>
+        <span class="ta-status-badge bg-emerald-100 text-emerald-800">Complete</span>
+      <% else %>
+        <span class="ta-status-badge bg-indigo-100 text-indigo-800">Shown on Home</span>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="ta-section-frame p-5">
     <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
       <div class="max-w-xl">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Color Scheme</p>
@@ -66,6 +86,28 @@
       <div class="ta-settings-panel">
         <%= render "shared/theme_picker" %>
       </div>
+    </div>
+  </section>
+
+  <section class="ta-section-frame p-5">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="max-w-xl">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Data and privacy</p>
+        <h2 class="mt-2 inline-flex items-center gap-2 text-lg font-semibold text-slate-900"><%= tabler_icon("shield-lock", classes: "h-5 w-5 text-indigo-600") %><span>Backup and restore</span></h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Export a portable backup or preview a restore before it changes any saved financial data.</p>
+      </div>
+      <%= link_to backup_restore_path, class: "fb-btn-secondary ta-action-btn shrink-0" do %><span>Manage data</span><%= tabler_icon("arrow-right", classes: "ta-action-icon") %><% end %>
+    </div>
+  </section>
+
+  <section class="ta-section-frame p-5">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="max-w-xl">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">More</p>
+        <h2 class="mt-2 text-lg font-semibold text-slate-900">Reports and help</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Review longer-term patterns or get guidance without crowding the daily navigation.</p>
+      </div>
+      <div class="flex flex-wrap gap-2"><%= link_to "Reports", reports_path, class: "fb-btn-secondary ta-action-btn" %><%= link_to "Help", help_path, class: "fb-btn-secondary ta-action-btn" %></div>
     </div>
   </section>
 </div>

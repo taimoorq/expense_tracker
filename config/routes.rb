@@ -10,6 +10,8 @@ Rails.application.routes.draw do
   resource :profile, only: :show
   resource :theme, only: :update
   resource :settings, only: [ :show, :update ]
+  resource :onboarding_preference, only: :update
+  resources :operation_runs, only: :show, path: "operations"
 
   namespace :admin do
     root "dashboard#show"
@@ -22,6 +24,11 @@ Rails.application.routes.draw do
   end
 
   root "overview#show"
+  get "activity", to: "activity#index", as: :activity
+  resources :activity_matches, only: [ :create, :destroy ]
+  resources :migration_discrepancy_resolutions, only: :update
+  get "reports", to: "reports#index", as: :reports
+  get "reports/sources", to: "reports#sources", as: :report_sources
   get "help", to: "help#show", as: :help
   get "help/releases", to: "help#releases", as: :help_releases
   patch "help/release_notes/acknowledge", to: "help#acknowledge_release_notes", as: :acknowledge_help_release_notes
@@ -30,6 +37,7 @@ Rails.application.routes.draw do
   post "backup_restore/export", to: "backup_restores#export", as: :export_backup_restore
   post "backup_restore/preview", to: "backup_restores#preview", as: :preview_backup_restore
   post "backup_restore/import", to: "backup_restores#import", as: :import_backup_restore
+  resources :restore_checkpoints, only: :update
   get "planning_templates", to: "planning_templates#index", as: :planning_templates
   get "planning_templates/pay-schedules/:edit_pay_schedule_id/edit", to: "planning_templates#index", as: :edit_pay_schedule_planning_templates
   get "planning_templates/subscriptions/:edit_subscription_id/edit", to: "planning_templates#index", as: :edit_subscription_planning_templates
@@ -48,6 +56,9 @@ Rails.application.routes.draw do
   get "budget_months/:budget_month_id/account_movement", to: "account_movements#show", as: :budget_month_account_movement
   get "budget_months/:id/:tab", to: "budget_months#show", as: :budget_month_tab, constraints: { tab: /timeline|breakdown|calendar|entries/ }
   resources :budget_months, only: [ :index, :show, :new, :create ] do
+    resource :month_close, only: [ :show, :create ], controller: "budget_month_closes" do
+      patch :reopen, on: :member
+    end
     post :generate_paychecks, on: :member
     post :generate_subscriptions, on: :member
     post :generate_monthly_bills, on: :member

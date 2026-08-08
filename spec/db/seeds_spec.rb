@@ -105,6 +105,11 @@ RSpec.describe "db/seeds" do
       expect(user.expense_entries.where(source_file: "seed:demo:generated_history")).to exist
       expect(user.expense_entries.find_by(payee: "Performance Bonus")).to be_present
       expect(user.expense_entries.find_by(payee: "Emergency Plumber")).to be_present
+
+      buffer_entries = user.expense_entries.where(payee: "Cashflow Buffer")
+      expect(buffer_entries).to exist
+      expect(buffer_entries.pluck(:source_account_id).uniq).to eq([ user.accounts.find_by!(name: "Everyday Checking").id ])
+      expect(buffer_entries.pluck(:account).uniq).to eq([ "Everyday Checking" ])
     end
 
     it "can switch the same user back to users-only mode" do

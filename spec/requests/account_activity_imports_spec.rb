@@ -14,6 +14,8 @@ RSpec.describe "Account activity imports", type: :request do
     expect(response.body).to include('aria-label="Breadcrumb"')
     expect(response.body).to include("Rewards Card")
     expect(response.body).to include("Import Account Activity")
+    expect(response.body).to include("What has already been imported")
+    expect(response.body).to include("No account files imported yet")
     expect(response.body).to include("Building preview...")
     expect(response.body).to include("Preview submitted")
     expect(response.body).to include("imported account balances become the trusted balance source over snapshots")
@@ -45,11 +47,46 @@ RSpec.describe "Account activity imports", type: :request do
     end.to change(AccountActivityImport.where(account: account), :count).by(1)
       .and change(AccountActivity.where(account: account), :count).by(197)
 
-    expect(response).to redirect_to(account_path(account))
+    expect(response).to redirect_to(account_path(account, view: "manage", anchor: "import-history"))
     expect(flash[:notice]).to include("Activity import complete: 197 rows imported.")
+    expect(flash[:notice]).to include("Coverage logged from")
     activity_import = account.account_activity_imports.order(:created_at).last
+    expect(activity_import.imported_at).to be_present
     expect(activity_import.institution_balance).to be_negative
     expect(activity_import.institution_balance_as_of).to eq(Date.new(2026, 6, 30))
+
+    follow_redirect!
+    expect(response.body).to include("What has already been imported")
+    expect(response.body).to include("Safest next export start")
+    expect(response.body).to include("preamble_card_activity.csv")
+  end
+
+  it "shows prior coverage with an exact import time and flags a safe overlapping preview" do
+    prior_import = create(
+      :account_activity_import,
+      account: account,
+      original_filename: "previous-export.csv",
+      started_on: Date.new(2026, 1, 1),
+      ended_on: Date.new(2026, 12, 31),
+      created_at: Time.zone.local(2026, 7, 1, 14, 35)
+    )
+
+    get new_account_account_activity_import_path(account)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("previous-export.csv")
+    expect(response.body).to include(I18n.l(prior_import.imported_at, format: :long))
+    expect(response.body).to include(I18n.l(prior_import.ended_on, format: :long))
+    expect(response.body).to include("Include the last covered day again")
+
+    path = Rails.root.join("test/fixtures/files/account_activity/positive_charges.csv")
+    upload = Rack::Test::UploadedFile.new(path, "text/csv", original_filename: "positive_charges.csv")
+    post preview_account_account_activity_imports_path(account), params: { file: upload }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Compared with your import log")
+    expect(response.body).to include("overlaps 1 earlier import")
+    expect(response.body).to include("will be skipped")
   end
 
   it "explains activity-only imports that do not include a trusted balance" do

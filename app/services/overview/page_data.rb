@@ -14,11 +14,10 @@ module Overview
       data.merge!(account_flow_summary)
       data.merge!(cashflow_summary)
       data[:financial_rhythm] = user.financial_rhythm
-      data[:onboarding_visible] = data[:current_month].nil? ||
-        data[:current_month_entries].empty? ||
-        data[:accounts].empty? ||
-        data[:template_total].zero? ||
-        data[:linked_template_total].zero?
+      onboarding = Overview::OnboardingProgress.call(user: user, data: data)
+      data[:onboarding_visible] = onboarding.visible
+      data[:onboarding_progress] = onboarding
+      data[:recent_operations] = Platform::Operations::Status.recent(user: user)
       data[:next_step] = NextStepPolicy.new(context: data).call
       data
     end
@@ -40,7 +39,20 @@ module Overview
     end
 
     def review_summary
+      if target_period_context.present?
+        return Overview::TargetReviewSummary.call(period: target_period_context.period, today: today)
+      end
+
       @review_summary ||= Overview::ReviewSummary.new(entries: current_month_entries, today: today).call
+    end
+
+    def target_period_context
+      return @target_period_context if defined?(@target_period_context)
+
+      @target_period_context = current_month && Budgeting::TargetPeriodContext.call(
+        user: user,
+        budget_month: current_month
+      )
     end
 
     def template_summary

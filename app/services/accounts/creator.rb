@@ -35,8 +35,13 @@ module Accounts
 
       ApplicationRecord.transaction do
         account.save!
+        Platform::TargetSync::AccountWriter.call(account: account)
         initial_snapshot&.save!
+        Platform::TargetSync::AccountSnapshotWriter.call(snapshot: initial_snapshot) if initial_snapshot.present?
         credit_card_payment_schedule&.save!
+        if credit_card_payment_schedule.present?
+          Platform::TargetSync::PlanningTemplateWriter.call(source: credit_card_payment_schedule)
+        end
       end
 
       Result.new(

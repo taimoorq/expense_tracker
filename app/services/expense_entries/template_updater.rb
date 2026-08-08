@@ -16,7 +16,10 @@ module ExpenseEntries
       template_record = ExpenseEntries::TemplateLookup.call(user: user, entry: entry)
       return Result.new(template_record: nil, success?: false, missing?: true) unless template_record
 
-      success = template_record.update(template_params_for(template_record))
+      success = Planning::LegacyTemplateWriter.update(
+        resource: template_record,
+        attributes: template_params_for(template_record)
+      )
       Result.new(template_record: template_record, success?: success, missing?: false)
     end
 

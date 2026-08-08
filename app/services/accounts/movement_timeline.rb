@@ -1,13 +1,7 @@
 module Accounts
   class MovementTimeline
-    RANGE_OPTIONS = {
-      "30d" => "30 days",
-      "90d" => "90 days",
-      "6m" => "6 months",
-      "12m" => "12 months",
-      "all" => "All"
-    }.freeze
-    DEFAULT_RANGE = "6m"
+    RANGE_OPTIONS = Accounts::MovementWindow::RANGE_OPTIONS
+    DEFAULT_RANGE = Accounts::MovementWindow::DEFAULT_RANGE
 
     def initialize(account:, range: DEFAULT_RANGE, as_of: Date.current, entries: nil, activities: nil, imports: nil)
       @account = account
@@ -22,12 +16,12 @@ module Accounts
     def call
       {
         range: range,
-        range_label: RANGE_OPTIONS.fetch(range),
+        range_label: movement_window.range_label,
         range_options: RANGE_OPTIONS,
-        starts_on: range_start,
+        starts_on: movement_window.starts_on,
         ends_on: as_of,
-        bucket_unit: bucket_unit,
-        buckets: bucket_ranges.map { |bucket_range| build_bucket(bucket_range) }
+        bucket_unit: movement_window.bucket_unit,
+        buckets: movement_window.bucket_ranges.map { |bucket_range| build_bucket(bucket_range) }
       }
     end
 
@@ -166,58 +160,8 @@ module Accounts
       { status: :not_applicable, starts_on: nil, ends_on: nil }
     end
 
-    def bucket_ranges
-      @bucket_ranges ||= case bucket_unit
-      when :day
-        daily_bucket_ranges
-      when :week
-        weekly_bucket_ranges
-      when :quarter
-        quarterly_bucket_ranges
-      else
-        monthly_bucket_ranges
-      end
-    end
-
-    def daily_bucket_ranges
-      (range_start..as_of).map { |date| date..date }
-    end
-
-    def weekly_bucket_ranges
-      ranges = []
-      cursor = range_start
-      while cursor <= as_of
-        week_end = [ cursor.end_of_week, as_of ].min
-        ranges << (cursor..week_end)
-        cursor = week_end.next_day
-      end
-      ranges
-    end
-
-    def monthly_bucket_ranges
-      ranges = []
-      cursor = range_start.beginning_of_month
-      final_month = as_of.beginning_of_month
-      while cursor <= final_month
-        ranges << (cursor..cursor.end_of_month)
-        cursor = cursor.next_month
-      end
-      ranges
-    end
-
-    def quarterly_bucket_ranges
-      ranges = []
-      cursor = range_start.beginning_of_quarter
-      final_quarter = as_of.beginning_of_quarter
-      while cursor <= final_quarter
-        ranges << (cursor..cursor.end_of_quarter)
-        cursor = cursor.next_quarter
-      end
-      ranges
-    end
-
     def bucket_label(starts_on, ends_on)
-      case bucket_unit
+      case movement_window.bucket_unit
       when :day
         starts_on.strftime("%b %-d")
       when :week
@@ -229,27 +173,12 @@ module Accounts
       end
     end
 
-    def bucket_unit
-      @bucket_unit ||= case range
-      when "30d" then :day
-      when "90d" then :week
-      when "all" then all_month_count > 24 ? :quarter : :month
-      else :month
-      end
-    end
-
-    def range_start
-      @range_start ||= case range
-      when "30d" then as_of - 29.days
-      when "90d" then as_of - 89.days
-      when "12m" then (as_of - 11.months).beginning_of_month
-      when "all" then earliest_activity_on
-      else (as_of - 5.months).beginning_of_month
-      end
-    end
-
-    def all_month_count
-      ((as_of.year * 12) + as_of.month) - ((earliest_activity_on.year * 12) + earliest_activity_on.month) + 1
+    def movement_window
+      @movement_window ||= Accounts::MovementWindow.new(
+        range: range,
+        as_of: as_of,
+        earliest_on: earliest_activity_on
+      )
     end
 
     def earliest_activity_on

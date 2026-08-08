@@ -33,7 +33,7 @@
 
       <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs text-slate-600 sm:px-5">
         <span><strong class="ta-ledger-label mr-2 text-slate-800">Account flow</strong><strong class="text-slate-800"><%= pluralize(account_flow[:account_count], "account") %></strong> linked · <span class="ta-money"><%= number_to_currency(account_flow[:charged_total]) %></span> charged · <span class="ta-money"><%= number_to_currency(account_flow[:paid_total]) %></span> paid to</span>
-        <%= link_to "Review account movement", budget_month_account_movement_path(budget_month), class: "font-semibold text-indigo-700 hover:text-indigo-600" %>
+        <span class="inline-flex items-center gap-3"><span>Calculation <%= summary.calculation_version %></span><%= link_to "Review account movement", activity_path(view: "all"), class: "font-semibold text-indigo-700 hover:text-indigo-600" %></span>
       </div>
     </details>
   </section>

@@ -635,6 +635,8 @@ def generate_seed_history_for!(user, accounts_by_name:, months_count:, source_pr
       end
   end
 
+  buffer_account = accounts_by_name["Everyday Checking"] || accounts_by_name["Starter Checking"]
+
   budget_months.each do |budget_month|
     leftover = budget_month.calculated_leftover.to_d
     next if leftover >= target_leftover
@@ -647,7 +649,8 @@ def generate_seed_history_for!(user, accounts_by_name:, months_count:, source_pr
       payee: "Cashflow Buffer",
       planned_amount: buffer_amount,
       actual_amount: buffer_amount,
-      account: accounts_by_name["Everyday Checking"]&.name || accounts_by_name["Starter Checking"]&.name,
+      source_account: buffer_account,
+      account: buffer_account&.name,
       status: :paid,
       need_or_want: "Need",
       notes: "Automatically added so demo seed data shows positive cashflow.",

@@ -1,0 +1,137 @@
+<% content_for :title, "Activity" %>
+<% page_header title: "Activity",
+  eyebrow: "Actual money movement",
+  subtitle: "Review imported and manual transactions, then connect actual activity to the plan." do %>
+  <% first_account = @activity.accounts.first %>
+  <% if first_account %>
+    <%= link_to new_account_account_activity_import_path(first_account), class: "fb-btn-secondary ta-action-btn" do %>
+      <%= tabler_icon("upload", classes: "ta-action-icon") %><span>Import activity</span>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <nav class="ta-section-frame flex gap-1 overflow-x-auto p-1" aria-label="Activity views">
+    <% { "review" => "Needs review", "all" => "All", "unmatched" => "Unmatched", "imports" => "Imports" }.each do |key, label| %>
+      <%= link_to activity_path(view: key, account_id: @activity.account_id, starts_on: @activity.starts_on, ends_on: @activity.ends_on, direction: @activity.direction, transaction_id: @activity.transaction_id),
+        class: ["min-h-11 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold", (@activity.view == key ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900")],
+        aria: { current: (@activity.view == key ? "page" : nil) } do %>
+        <%= label %> <span class="ta-number ml-1 opacity-80"><%= @activity.counts.fetch(key) %></span>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <% if @activity.account_id.present? || @activity.starts_on.present? || @activity.ends_on.present? || @activity.direction.present? || @activity.transaction_id.present? %>
+    <% scoped_account = @activity.accounts.find { |account| account.id.to_s == @activity.account_id.to_s } %>
+    <section class="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <p>
+          Filtered to <%= @activity.transaction_id.present? ? "one source transaction" : scoped_account&.name || "the selected account" %><%= @activity.direction ? ", #{@activity.direction}" : "" %><%= @activity.starts_on ? ", from #{l(@activity.starts_on, format: :long)}" : "" %><%= @activity.ends_on ? " through #{l(@activity.ends_on, format: :long)}" : "" %>.
+        </p>
+        <%= link_to "Clear filters", activity_path(view: @activity.view), class: "font-semibold text-indigo-700 hover:text-indigo-600" %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @activity.view == "imports" %>
+    <section class="ta-section-frame" aria-labelledby="import-history-title">
+      <div class="ta-section-header">
+        <p class="ta-page-eyebrow">Evidence</p>
+        <h2 id="import-history-title" class="ta-section-title mt-1">Import history</h2>
+        <p class="mt-1 text-sm text-slate-600">Each committed file remains traceable to its account, coverage dates, and row counts.</p>
+      </div>
+      <% if @activity.imports.any? %>
+        <div class="divide-y divide-slate-200">
+          <% @activity.imports.each do |activity_import| %>
+            <article class="grid gap-2 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5">
+              <div class="min-w-0">
+                <h3 class="truncate text-sm font-semibold text-slate-900"><%= activity_import.original_filename %></h3>
+                <p class="mt-1 text-xs text-slate-600"><%= activity_import.account.name %> · imported <time datetime="<%= activity_import.imported_at.iso8601 %>"><%= l(activity_import.imported_at, format: :long) %></time></p>
+                <p class="mt-1 text-xs text-slate-500">Covered <%= activity_import.started_on ? l(activity_import.started_on, format: :long) : "unknown start" %> through <%= activity_import.ended_on ? l(activity_import.ended_on, format: :long) : "unknown end" %></p>
+              </div>
+              <p class="ta-number text-sm text-slate-700"><%= activity_import.imported_count %> added · <%= activity_import.duplicate_count %> duplicates skipped</p>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="border-t border-slate-200 px-5 py-10 text-center">
+          <h3 class="text-base font-semibold text-slate-900">No imports yet</h3>
+          <p class="mt-2 text-sm text-slate-600">Choose an account and preview its CSV file before anything is saved.</p>
+        </div>
+      <% end %>
+    </section>
+  <% else %>
+    <section class="ta-section-frame" aria-labelledby="activity-list-title">
+      <div class="ta-section-header flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="ta-page-eyebrow"><%= @activity.view == "review" ? "Action needed" : "Transaction history" %></p>
+          <h2 id="activity-list-title" class="ta-section-title mt-1"><%= @activity.view == "review" ? "Transactions to review" : "Recorded activity" %></h2>
+          <p class="mt-1 text-sm text-slate-600">Amounts are calculated on the server with <%= @activity.calculation_version %>.</p>
+        </div>
+        <span class="ta-status-badge <%= @activity.rows.any? && @activity.view == "review" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800" %>"><%= pluralize(@activity.rows.size, "record") %></span>
+      </div>
+
+      <% if @activity.rows.any? %>
+        <div class="overflow-x-auto border-t border-slate-200">
+          <table class="min-w-full text-left text-sm">
+            <caption class="sr-only">Activity records with date, description, account, source, match state, amount, and available review actions</caption>
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr><th class="px-4 py-3 sm:px-5">Date</th><th class="px-4 py-3">Description</th><th class="px-4 py-3">Account</th><th class="px-4 py-3">Source</th><th class="px-4 py-3">Match</th><th class="px-4 py-3 text-right">Amount</th><% if @activity.actions_available %><th class="px-4 py-3 text-right sm:px-5">Action</th><% end %></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <% @activity.rows.each do |row| %>
+                <tr class="hover:bg-slate-50/80" data-activity-row>
+                  <td class="whitespace-nowrap px-4 py-3 text-slate-600 sm:px-5"><%= row.occurred_on ? l(row.occurred_on, format: :long) : "Date needed" %></td>
+                  <td class="min-w-52 px-4 py-3 font-semibold text-slate-900"><%= row.detail_path ? link_to(row.description, row.detail_path, class: "hover:text-indigo-700") : row.description %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= row.account&.name || "Account needed" %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= row.source %></td>
+                  <td class="px-4 py-3"><span class="ta-status-badge <%= row.migration_discrepancy_id.present? || !row.matched ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800" %>"><%= row.migration_discrepancy_id.present? ? "Account needed" : row.matched ? "Matched" : "Unmatched" %></span></td>
+                  <td class="ta-number whitespace-nowrap px-4 py-3 text-right font-semibold <%= row.direction == "income" ? "text-emerald-700" : "text-slate-900" %>"><%= number_to_currency(row.amount) %></td>
+                  <% if @activity.actions_available %>
+                    <td class="min-w-80 px-4 py-3 text-right sm:px-5">
+                      <% if row.migration_discrepancy_id.present? %>
+                        <% if @activity.accounts.any? %>
+                          <%= form_with url: migration_discrepancy_resolution_path(row.migration_discrepancy_id), method: :patch, class: "ml-auto grid max-w-sm gap-2 text-left sm:grid-cols-[minmax(11rem,1fr)_auto] sm:items-end" do %>
+                            <div><%= label_tag "account_id_#{row.id}", "Account for #{row.description}", class: "sr-only" %><%= select_tag :account_id, options_from_collection_for_select(@activity.accounts, :id, :name), id: "account_id_#{row.id}", class: "fb-select min-h-11", required: true, prompt: "Choose the real account" %></div>
+                            <%= button_tag "Connect account", type: :submit, class: "fb-btn-primary ta-action-btn" %>
+                          <% end %>
+                          <p class="mt-1 text-xs text-slate-500">No account is inferred. Checks rerun after your selection.</p>
+                        <% else %>
+                          <%= link_to "Add an account first", new_account_path, class: "fb-btn-primary ta-action-btn ml-auto" %>
+                          <p class="mt-1 text-xs text-slate-500">Create the real account, then return here to connect this payment.</p>
+                        <% end %>
+                      <% elsif row.allocation_id.present? %>
+                        <%= button_to "Unmatch", activity_match_path(row.allocation_id), method: :delete, class: "fb-btn-secondary ta-action-btn ml-auto" %>
+                      <% elsif row.state == "needs_review" && row.available_amount.to_d.positive? %>
+                        <% options = @activity.matching_options.select { |option| option.flow_kind == row.direction } %>
+                        <% if options.any? %>
+                          <%= form_with url: activity_matches_path, method: :post, class: "ml-auto grid max-w-md gap-2 text-left sm:grid-cols-[minmax(11rem,1fr)_7rem_auto] sm:items-end" do %>
+                            <%= hidden_field_tag :financial_transaction_id, row.transaction_id %>
+                            <div><%= label_tag "budget_item_id_#{row.id}", "Planned item", class: "sr-only" %><%= select_tag :budget_item_id, options_from_collection_for_select(options, :id, :label), id: "budget_item_id_#{row.id}", class: "fb-select min-h-11", required: true, prompt: "Choose plan item" %></div>
+                            <div><%= label_tag "amount_#{row.id}", "Amount to match", class: "sr-only" %><%= number_field_tag :amount, row.available_amount, id: "amount_#{row.id}", class: "fb-input min-h-11", min: 0.01, max: row.available_amount, step: 0.01, required: true %></div>
+                            <%= button_tag "Match", type: :submit, class: "fb-btn-primary ta-action-btn" %>
+                          <% end %>
+                        <% else %>
+                          <span class="text-xs text-slate-500">No compatible open plan item</span>
+                        <% end %>
+                      <% else %>
+                        <span class="text-xs text-slate-500"><%= row.state.humanize %></span>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <% if @activity.limited %><p class="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">Showing the newest <%= Activity::IndexQuery::LIMIT %> records. Use an account detail page for older activity.</p><% end %>
+      <% else %>
+        <div class="border-t border-slate-200 px-5 py-10 text-center">
+          <%= tabler_icon("circle-check", classes: "mx-auto h-8 w-8 text-emerald-600") %>
+          <h3 class="mt-3 text-base font-semibold text-slate-900"><%= @activity.view == "review" ? "Review queue clear" : "No activity recorded" %></h3>
+          <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600"><%= @activity.view == "review" ? "New imported transactions and incomplete manual actuals will appear here." : "Record a transaction or import account activity to begin." %></p>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

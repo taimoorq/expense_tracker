@@ -19,9 +19,12 @@ module Accounts
         projected_debt: projected_debt,
         progress_percent: progress_percent,
         snapshot: snapshot,
+        baseline_recorded_on: snapshot&.recorded_on,
+        baseline_label: snapshot.present? ? "Manual snapshot" : nil,
         snapshot_needed?: snapshot.blank?,
         improved_since_snapshot?: progress_percent.to_i.positive?,
-        planned_payment_remaining_this_month: planned_payment_remaining_this_month
+        planned_payment_remaining_this_month: planned_payment_remaining_this_month,
+        calculation_version: "legacy-compatible-v1"
       }
     end
 

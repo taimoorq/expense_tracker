@@ -1,4 +1,18 @@
 releases:
+  - version: "2.0.0"
+    released_on: "2026-08-07"
+    title: "One financial workspace, end to end"
+    summary: "FinanceTracking.app 2.0 connects planning, real activity, accounts, reporting, period close, and recovery in one traceable monthly workflow."
+    changes:
+      - "Organizes the product around a familiar Home, Plan, Activity, Accounts, and Reports lifecycle, with recurring setup, help, and recovery close at hand."
+      - "Separates the plan, actual activity, remaining plan, and forecast so monthly totals stay understandable as transactions are imported, matched, or edited."
+      - "Adds an Activity workspace for reviewing imported and manual transactions, matching them to planned items, reversing imports, and resolving records that need an explicit account choice."
+      - "Adds report views for month trends, categories, account movement, and exact source records, with readable chart alternatives and calculation-source labels."
+      - "Adds close and reopen controls that freeze a month's report evidence while keeping late activity from silently rewriting a closed period."
+      - "Expands account reconciliation with trusted balance observations, manual transactions, import history, movement drilldowns, and clear current-versus-projected balances."
+      - "Introduces a complete version 2 backup format for the connected financial workspace, plus encrypted seven-day restore checkpoints and an audited rollback path for in-place restores."
+      - "Adds a workspace-based financial model and reversible migration controls so existing self-hosted data can be verified, dual-written, compared, enabled, or rolled back one workspace at a time."
+      - "Keeps financial screens fast and predictable with bounded queries, canary comparisons, query-plan checks, and regression coverage across the full lifecycle."
   - version: "1.2.0"
     released_on: "2026-08-07"
     title: "Faster, clearer month entries"

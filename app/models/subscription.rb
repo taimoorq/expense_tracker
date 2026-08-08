@@ -1,9 +1,11 @@
 class Subscription < ApplicationRecord
+  include LegacyWorkspaceOwned
   include PlanningTemplateMetadata
   include RecurringEntryTemplate
   include TemplateAccountLinkable
 
   belongs_to :user
+  belongs_to :budget_workspace, optional: true
   belongs_to :linked_account, class_name: "Account", optional: true
   template_account_association :linked_account
   planning_template_metadata(

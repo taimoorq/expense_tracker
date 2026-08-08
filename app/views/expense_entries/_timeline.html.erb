@@ -2,6 +2,7 @@
   <% timeline = Budgeting::TimelinePresenter.new(budget_month: budget_month, expense_entries: expense_entries, default_timeline_view: local_assigns[:default_timeline_view]) %>
   <% timeline_leftover = timeline.timeline_leftover %>
   <% default_timeline_view = timeline.default_timeline_view %>
+  <% read_only = local_assigns[:read_only] %>
   <% reason_pills = timeline.reason_pills %>
   <% account_pills = timeline.account_pills %>
   <% timeline_view_urls = timeline.timeline_view_urls %>
@@ -25,9 +26,11 @@
           <% end %>
         </div>
 
-        <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add entry", aria: { label: "Add entry" } do %>
-          <%= tabler_icon("plus", classes: "h-4 w-4") %>
-          <span class="hidden sm:inline">Add entry</span>
+        <% unless read_only %>
+          <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add entry", aria: { label: "Add entry" } do %>
+            <%= tabler_icon("plus", classes: "h-4 w-4") %>
+            <span class="hidden sm:inline">Add entry</span>
+          <% end %>
         <% end %>
       </div>
     </div>
@@ -128,7 +131,10 @@
                         </div>
                       </td>
                       <td class="px-3 py-2">
-                        <div class="flex justify-end gap-2">
+                        <% if read_only %>
+                          <span class="block text-right text-xs font-semibold text-slate-500">Read only</span>
+                        <% else %>
+                          <div class="flex justify-end gap-2">
                           <% unless row[:status] == "paid" %>
                             <%= button_to row[:mark_as_paid_path],
                                           method: :patch,
@@ -171,7 +177,8 @@
                               <span>Template</span>
                             <% end %>
                           <% end %>
-                        </div>
+                          </div>
+                        <% end %>
                       </td>
                     </tr>
                   <% end %>
@@ -185,12 +192,14 @@
     <% else %>
       <div class="rounded-[22px] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center">
         <p class="ta-muted">No entries for this month yet.</p>
-        <div class="mt-4 flex justify-center">
-          <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add first entry", aria: { label: "Add first entry" } do %>
-            <%= tabler_icon("plus", classes: "h-4 w-4") %>
-            <span class="hidden sm:inline">Add First Entry with Wizard</span>
-          <% end %>
-        </div>
+        <% unless read_only %>
+          <div class="mt-4 flex justify-center">
+            <%= link_to new_wizard_budget_month_expense_entries_path(budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" }, title: "Add first entry", aria: { label: "Add first entry" } do %>
+              <%= tabler_icon("plus", classes: "h-4 w-4") %>
+              <span class="hidden sm:inline">Add First Entry with Wizard</span>
+            <% end %>
+          </div>
+        <% end %>
       </div>
     <% end %>
     </div>
@@ -198,14 +207,14 @@
 
     <% if default_timeline_view == "full-list" %>
     <div data-panel-name="full-list" role="tabpanel" class="space-y-4" style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;">
-      <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4", timeline_view: default_timeline_view %>
+      <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4", timeline_view: default_timeline_view, read_only: read_only %>
     </div>
     <% end %>
 
     <% if default_timeline_view == "calendar" %>
     <div data-panel-name="calendar" role="tabpanel" class="space-y-4" style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;">
       <div class="ta-surface-calendar">
-        <%= render "expense_entries/calendar_grid", budget_month: budget_month, expense_entries: expense_entries %>
+        <%= render "expense_entries/calendar_grid", budget_month: budget_month, expense_entries: expense_entries, read_only: read_only %>
       </div>
     </div>
     <% end %>

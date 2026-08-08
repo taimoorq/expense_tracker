@@ -13,10 +13,10 @@
       </div>
       <div class="flex-1 min-w-0">
         <h2 class="text-lg font-semibold text-slate-900">Start here</h2>
-        <p class="mt-1 text-sm leading-6 text-slate-600">The app works best in a simple order: set up your accounts, save your recurring transactions, create the month, then keep it updated as real life happens.</p>
+        <p class="mt-1 text-sm leading-6 text-slate-600">FinanceTracking.app 2.0 follows one monthly loop: set up accounts and recurring items, build the plan, bring in real activity, review the evidence, then close the month when it is ready.</p>
       </div>
     </div>
-    <div class="mt-4 grid gap-3 md:grid-cols-4">
+    <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
       <div class="rounded-lg border border-indigo-100 bg-white/80 p-3">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">1. Accounts</p>
         <p class="mt-1 text-sm leading-6 text-slate-600">Add checking, savings, cards, and other balances you want to track.</p>
@@ -30,8 +30,12 @@
         <p class="mt-1 text-sm leading-6 text-slate-600">Create or clone a month, then pull those recurring transactions into it from Plan and Edit.</p>
       </div>
       <div class="rounded-lg border border-indigo-100 bg-white/80 p-3">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">4. Adjust as you go</p>
-        <p class="mt-1 text-sm leading-6 text-slate-600">Add one-offs, import activity, update actuals, and mark items paid.</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">4. Match activity</p>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Import or record transactions, then match them to the plan when they describe the same event.</p>
+      </div>
+      <div class="rounded-lg border border-indigo-100 bg-white/80 p-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">5. Review and close</p>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Use Reports and source drilldowns, then close the month to preserve its evidence.</p>
       </div>
     </div>
     <div class="mt-4 flex flex-wrap gap-2">
@@ -39,7 +43,10 @@
       <a href="#months" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Months</a>
       <a href="#entries" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Plan and Edit</a>
       <a href="#templates" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Recurring</a>
+      <a href="#activity" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Activity</a>
       <a href="#review" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Review</a>
+      <a href="#reports" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Reports and close</a>
+      <a href="#recovery" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Recovery</a>
       <%= link_to help_releases_path, class: "rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100" do %>
         Release notes
       <% end %>
@@ -54,17 +61,31 @@
       <section id="dashboard" class="ta-section-frame scroll-mt-24 p-5">
         <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("calendar-month", classes: "h-5 w-5 text-indigo-600") %>
-          <span>Home and Months</span>
+          <span>Home and Plan</span>
         </h2>
-        <p class="mt-2 text-sm leading-6 text-slate-600">Home is a lightweight Overview page. The Months screen is where existing months, imports, and month-related actions now live.</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Home is the daily check-in. Plan is the month library, where you open history, start the next month, or carry an earlier structure forward.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-          <li><strong class="text-slate-900">Use Home as a landing page:</strong> the overview is meant to point you toward the next setup step or the month that most needs attention.</li>
+          <li><strong class="text-slate-900">Use Home as the daily check-in:</strong> it points to the month that needs attention and keeps plan, actual, remaining, and forecast totals separate.</li>
           <li><strong class="text-slate-900">Use the weekly check-in:</strong> the Overview check-in card gives you a short list of due items, upcoming plans, missing actuals, and linked activity so you can keep the month current without a long review session.</li>
           <li><strong class="text-slate-900">Tune the guidance:</strong> choose a financial rhythm during signup or in Settings for steady income, variable income, shared household, or debt payoff workflows.</li>
           <li><strong class="text-slate-900">Add accounts first:</strong> linked accounts show up in monthly views, make account filters more useful, and keep account balance rollups accurate.</li>
           <li><strong class="text-slate-900">Save recurring transactions before the first month:</strong> doing that makes Plan and Edit much faster once the month exists.</li>
-          <li><strong class="text-slate-900">Use Months to open a month fast:</strong> jump back into an active month or revisit an older one.</li>
-          <li><strong class="text-slate-900">Use Months for quick import:</strong> drag and drop a CSV there when you want to populate a month faster.</li>
+          <li><strong class="text-slate-900">Use Plan to open a month fast:</strong> jump back into an active month or revisit an older one.</li>
+          <li><strong class="text-slate-900">Follow the evidence:</strong> chart totals repeat as labeled values and link to the month, account, or source records behind them.</li>
+        </ul>
+      </section>
+
+      <section id="activity" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("receipt", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Reviewing real activity</span>
+        </h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Activity keeps imported and manual transactions separate from the plan until you intentionally connect them.</p>
+        <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+          <li><strong class="text-slate-900">Filter by review state:</strong> focus on unmatched, matched, imported, manual, or quarantined records without losing the full history.</li>
+          <li><strong class="text-slate-900">Match without merging records:</strong> matching links a real transaction to a planned item so actuals and remaining plan update while both source records remain traceable.</li>
+          <li><strong class="text-slate-900">Correct the connection:</strong> unmatch when the pair is wrong, or reverse an import when the imported batch itself should be backed out.</li>
+          <li><strong class="text-slate-900">Resolve missing account context:</strong> quarantined migration rows stay visible until you choose the real account; the app does not guess.</li>
         </ul>
       </section>
 
@@ -164,6 +185,33 @@
           </div>
         </div>
       </section>
+
+      <section id="reports" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("chart-line", classes: "h-5 w-5 text-indigo-600") %>
+          <span>Reports, source records, and month close</span>
+        </h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Reports compares monthly trends, categories, and account movement. Every graph has labeled values or a source-record path so the result can be checked without relying on color or hover.</p>
+        <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+          <li><strong class="text-slate-900">Live month:</strong> reports update as the plan and activity change and say which calculation source produced the result.</li>
+          <li><strong class="text-slate-900">Closed month:</strong> closing preserves the report totals, exact transactions, and readiness inputs used at that moment.</li>
+          <li><strong class="text-slate-900">Late activity:</strong> reopen the month before intentionally incorporating a late match; a closed report never changes silently.</li>
+        </ul>
+      </section>
+
+      <section id="recovery" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <%= tabler_icon("database-export", classes: "h-5 w-5 text-emerald-600") %>
+          <span>Backup and recovery</span>
+        </h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Version 2 backups preserve the connected financial workspace, including plans, transactions, allocations, balances, imports, close evidence, and audit history.</p>
+        <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+          <li><strong class="text-slate-900">Preview first:</strong> inspect the backup version, scope, counts, and replacement impact before applying it.</li>
+          <li><strong class="text-slate-900">Protect exports:</strong> optional password encryption protects the portable file; keep the password somewhere separate.</li>
+          <li><strong class="text-slate-900">Recover a replacement restore:</strong> the app creates an encrypted checkpoint before replacing in-place data and keeps its explicit rollback action available for seven days.</li>
+          <li><strong class="text-slate-900">Keep infrastructure backups too:</strong> an application export complements PostgreSQL and host backups; it does not replace them.</li>
+        </ul>
+      </section>
     </div>
 
     <aside class="space-y-6 xl:sticky xl:top-6 xl:self-start">
@@ -191,6 +239,8 @@
           <li><strong class="text-slate-900">Recurring actions:</strong> the Plan and Edit tab includes actions for adding paychecks, subscriptions, bills, and plans from saved recurring transactions.</li>
           <li><strong class="text-slate-900">Payment confirmation:</strong> due recurring entries stay planned until you explicitly mark them paid, so opening a month never changes its financial state.</li>
           <li><strong class="text-slate-900">Card payment estimates:</strong> the app creates minimum-payment entries for active cards and uses leftover cash to increase those estimates when the month has room.</li>
+          <li><strong class="text-slate-900">Exact graph values:</strong> financial charts repeat their data in labeled totals, tables, or record drilldowns for auditability and accessibility.</li>
+          <li><strong class="text-slate-900">Closed-period evidence:</strong> late activity does not rewrite a closed report; reopen the period before incorporating it.</li>
           <li><strong class="text-slate-900">Recurring safeguards:</strong> older months that look complete hide recurring action buttons to reduce accidental duplication.</li>
           <li><strong class="text-slate-900">Private account data:</strong> each signed-in user only sees their own months, entries, imports, and recurring transactions.</li>
         </ul>
@@ -206,8 +256,9 @@
           <li>2. Add recurring transactions for the incoming and outgoing activity you expect.</li>
           <li>3. Create a month or clone the most recent one.</li>
           <li>4. Open Plan and Edit and pull those recurring transactions into the month.</li>
-          <li>5. Import a CSV or add one-off items manually as the real month unfolds.</li>
-          <li>6. Mark items paid, update actual amounts, and review the month in Budget, Breakdown, Calendar, and Plan and Edit.</li>
+          <li>5. Import or record real transactions in Activity, then match them to planned items where appropriate.</li>
+          <li>6. Review Home, Accounts, and Reports, open the source records behind the totals, and close the month when it is ready.</li>
+          <li>7. Export a version 2 backup before an update or important restore.</li>
         </ol>
       </section>
 
@@ -218,7 +269,19 @@
         </h3>
         <div class="mt-4 space-y-2 text-sm">
           <%= link_to budget_months_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
-            <span>Go to Months</span>
+            <span>Go to Plan</span>
+            <%= tabler_icon("arrow-right", classes: "ta-action-icon") %>
+          <% end %>
+          <%= link_to activity_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
+            <span>Review Activity</span>
+            <%= tabler_icon("arrow-right", classes: "ta-action-icon") %>
+          <% end %>
+          <%= link_to reports_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
+            <span>Open Reports</span>
+            <%= tabler_icon("arrow-right", classes: "ta-action-icon") %>
+          <% end %>
+          <%= link_to backup_restore_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>
+            <span>Back Up or Restore</span>
             <%= tabler_icon("arrow-right", classes: "ta-action-icon") %>
           <% end %>
           <%= link_to accounts_path, class: "flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" do %>

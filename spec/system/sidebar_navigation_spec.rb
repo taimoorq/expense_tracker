@@ -25,15 +25,15 @@ RSpec.describe "Sidebar navigation", type: :system, js: true do
       find("button[aria-label='Toggle navigation']", visible: true).click
     end
 
-    months_link = find("a[aria-label='Months']")
-    expect(months_link[:title]).to eq("")
-    expect(page.evaluate_script("Number(getComputedStyle(document.querySelector(\"a[aria-label='Months'] .ta-sidebar-label\")).opacity)")).to eq(0)
+    plan_link = find("a[aria-label='Plan']")
+    expect(plan_link[:title]).to eq("")
+    expect(page.evaluate_script("Number(getComputedStyle(document.querySelector(\"a[aria-label='Plan'] .ta-sidebar-label\")).opacity)")).to eq(0)
 
-    months_link.hover
+    plan_link.hover
 
     label_opacity = page.evaluate_async_script(<<~JS)
       const done = arguments[0]
-      const label = document.querySelector("a[aria-label='Months'] .ta-sidebar-label")
+      const label = document.querySelector("a[aria-label='Plan'] .ta-sidebar-label")
       const startedAt = performance.now()
 
       function checkOpacity() {
@@ -52,7 +52,7 @@ RSpec.describe "Sidebar navigation", type: :system, js: true do
 
     label_extends_past_icon = page.evaluate_script(<<~JS)
       (() => {
-        const link = document.querySelector("a[aria-label='Months']")
+        const link = document.querySelector("a[aria-label='Plan']")
         const label = link.querySelector(".ta-sidebar-label")
         const linkRect = link.getBoundingClientRect()
         const labelRect = label.getBoundingClientRect()

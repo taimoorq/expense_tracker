@@ -21,6 +21,21 @@
       <% end %>
     </div>
 
+    <% if @import_history.latest_import %>
+      <% latest_import = @import_history.latest_import %>
+      <div class="mt-5 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-950">
+        <p class="font-semibold text-slate-900">Compared with your import log</p>
+        <p class="mt-1">
+          The last file was imported <time datetime="<%= latest_import.imported_at.iso8601 %>"><%= l(latest_import.imported_at, format: :long) %></time><% if latest_import.started_on && latest_import.ended_on %> and covered <%= l(latest_import.started_on, format: :long) %> through <%= l(latest_import.ended_on, format: :long) %><% end %>.
+        </p>
+        <% if @import_history.overlap? %>
+          <p class="mt-1 font-medium">This preview overlaps <%= pluralize(@import_history.overlap_count, "earlier import") %>. That is safe: <%= pluralize(@preview[:duplicate_count].to_i, "exact duplicate row") %> will be skipped.</p>
+        <% elsif @import_history.recommended_start_on %>
+          <p class="mt-1">For future exports, include <%= l(@import_history.recommended_start_on, format: :long) %> again so late-posted activity on the boundary day is not missed.</p>
+        <% end %>
+      </div>
+    <% end %>
+
     <div class="mt-5 grid divide-y divide-slate-200 border-y border-slate-200 sm:grid-cols-5 sm:divide-x sm:divide-y-0">
       <div class="p-4">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Rows</p>

@@ -130,11 +130,12 @@ module Budgeting
       }
     }.freeze
 
-    def initialize(budget_month:, expense_entries:, today: Date.current, selected_review: nil)
+    def initialize(budget_month:, expense_entries:, today: Date.current, selected_review: nil, read_only: false)
       @budget_month = budget_month
       @expense_entries = Array(expense_entries)
       @today = today
       @selected_review = selected_review
+      @read_only = read_only
     end
 
     attr_reader :budget_month, :expense_entries, :today, :selected_review
@@ -231,7 +232,11 @@ module Budgeting
     end
 
     def generation_actions_hidden?
-      budget_month.complete_for_generation?
+      read_only? || budget_month.complete_for_generation?
+    end
+
+    def read_only?
+      @read_only
     end
 
     def template_actions_completed

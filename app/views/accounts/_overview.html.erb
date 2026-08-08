@@ -52,6 +52,10 @@
 
   <%= render "accounts/movement_timeline", account: account, story: @account_story, timeline: @movement_timeline %>
 
+  <% if @reconciliation_bridge.present? %>
+    <%= render "accounts/reconciliation_bridge", account: account, bridge: @reconciliation_bridge %>
+  <% end %>
+
   <% if @credit_card_progress.present? %>
     <%= render "accounts/credit_card_progress", credit_card_progress: @credit_card_progress %>
   <% end %>
@@ -60,7 +64,7 @@
     <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 class="ta-section-title">Recent records</h2>
-        <p class="ta-muted mt-1">A short preview of institution records and budget-linked entries, kept as separate sources.</p>
+        <p class="ta-muted mt-1"><%= @recent_activity.key?(:canonical_rows) ? "A short preview of canonical posted account activity." : "A short preview of institution records and budget-linked entries, kept as separate sources." %></p>
       </div>
       <%= link_to account_path(account, view: "activity"), class: "fb-btn-secondary ta-action-btn" do %>
         <%= tabler_icon("list-details", classes: "ta-action-icon text-indigo-600") %>
@@ -68,6 +72,23 @@
       <% end %>
     </div>
 
+    <% if @recent_activity.key?(:canonical_rows) %>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-sm font-semibold text-slate-900">Posted transactions</h3>
+        <% if @recent_activity[:canonical_rows].any? %>
+          <ul class="mt-3 space-y-2">
+            <% @recent_activity[:canonical_rows].each do |row| %>
+              <li class="flex items-start justify-between gap-3 text-sm">
+                <span><%= l(row.effective_on, format: :short) %> · <%= row.description %> · <%= row.origin_kind.humanize %></span>
+                <span class="shrink-0 font-semibold <%= row.amount >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= row.amount >= 0 ? "+" : "" %><%= number_to_currency(row.amount) %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-500">No posted account transactions yet.</p>
+        <% end %>
+      </div>
+    <% else %>
     <div class="grid gap-4 lg:grid-cols-2">
       <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <h3 class="text-sm font-semibold text-slate-900">Institution activity</h3>
@@ -95,6 +116,7 @@
         <% end %>
       </div>
     </div>
+    <% end %>
   </section>
 
   <section class="rounded-2xl border border-sky-100 bg-sky-50/70 px-5 py-4 text-sm leading-6 text-sky-950">
@@ -103,6 +125,8 @@
         <p class="font-semibold text-slate-900">Balance math at a glance</p>
         <% if !balance_available %>
           <p class="mt-1">Recorded rows are retained, but the account needs an institution balance or manual snapshot before balances can be calculated.</p>
+        <% elsif @calculation_version == "target-v1" %>
+          <p class="mt-1">The latest trusted balance observation is the base. Canonical postings roll it forward; remaining planned items are shown only in the projection.</p>
         <% elsif balance_source == :snapshot %>
           <p class="mt-1">No institution activity applies to the current period. The latest manual snapshot plus paid budget-linked activity gives the current balance; planned activity stays separate.</p>
         <% elsif balance_source == :institution_import %>

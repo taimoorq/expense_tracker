@@ -14,4 +14,13 @@ RSpec.describe AdminUser, type: :model do
     expect(admin_user.access_locked?).to be(true)
     expect(admin_user.locked_at).to be_present
   end
+
+  it "retains administrator identity referenced by audit evidence" do
+    admin_user = create(:admin_user)
+    AdminAuditLog.create!(admin_user: admin_user, action: "user.suspended")
+
+    expect(admin_user.destroy).to be(false)
+    expect(admin_user.errors[:base]).to include("Cannot delete record because dependent admin audit logs exist")
+    expect(admin_user.reload).to be_persisted
+  end
 end

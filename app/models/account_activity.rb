@@ -1,4 +1,7 @@
 class AccountActivity < ApplicationRecord
+  include LegacyWorkspaceOwned
+
+  belongs_to :budget_workspace, optional: true
   belongs_to :user
   belongs_to :account
   belongs_to :account_activity_import

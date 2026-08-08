@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "plan_and_edit_panel", class: "block space-y-5", data: { controller: "plan-navigation" } do %>
-  <% plan = Budgeting::PlanAndEditPresenter.new(budget_month: budget_month, expense_entries: expense_entries, selected_review: local_assigns[:selected_review]) %>
+  <% plan = Budgeting::PlanAndEditPresenter.new(budget_month: budget_month, expense_entries: expense_entries, selected_review: local_assigns[:selected_review], read_only: local_assigns[:read_only]) %>
   <% plan_nav_data = { action: "plan-navigation#scroll", turbo: false } %>
 
   <section class="ta-section-frame">
@@ -171,7 +171,13 @@
       <h2 class="ta-section-title mt-1">Add one-off items</h2>
       <p class="mt-1 text-sm text-slate-600">Use this for anything that does not already live in recurring transactions.</p>
     </div></div>
-    <div class="p-4"><%= render "expense_entries/form", budget_month: budget_month, expense_entry: expense_entry %></div>
+    <div class="p-4">
+      <% if plan.read_only? %>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">This month is closed and read-only. Reopen it from Review Close before adding or editing entries.</div>
+      <% else %>
+        <%= render "expense_entries/form", budget_month: budget_month, expense_entry: expense_entry %>
+      <% end %>
+    </div>
   </section>
 
   <section id="plan-review" class="ta-section-frame scroll-mt-24">
@@ -228,7 +234,8 @@
                        expense_entries: plan.review_entries,
                        show_header: false,
                        wrapper_classes: "",
-                       selected_review: plan.review_selected_reason %>
+                       selected_review: plan.review_selected_reason,
+                       read_only: plan.read_only? %>
           <% else %>
             <div class="ta-inset-panel text-center">
               <p class="font-semibold text-slate-900">Nothing matches this review reason.</p>

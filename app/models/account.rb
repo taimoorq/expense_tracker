@@ -1,8 +1,13 @@
 class Account < ApplicationRecord
   belongs_to :user
+  belongs_to :budget_workspace, optional: true
   has_many :account_snapshots, -> { order(recorded_on: :desc, created_at: :desc) }, dependent: :destroy
   has_many :account_activity_imports, dependent: :destroy
   has_many :account_activities, dependent: :destroy
+  has_many :account_postings, dependent: :restrict_with_error
+  has_many :balance_observations, dependent: :restrict_with_error
+  has_many :import_profiles, dependent: :restrict_with_error
+  has_many :import_batches, dependent: :restrict_with_error
 
   enum :kind, {
     checking: 0,
@@ -18,6 +23,10 @@ class Account < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :kind, presence: true
+  validates :currency_code, format: { with: /\A[A-Z]{3}\z/ }, allow_nil: true
+  validate :currency_matches_workspace
+
+  before_validation :assign_workspace_currency
 
   scope :active_first, -> { order(active: :desc, name: :asc) }
   scope :assets, -> { where(kind: [ :checking, :savings, :brokerage, :retirement, :cash, :other_asset ]) }
@@ -44,6 +53,10 @@ class Account < ApplicationRecord
   end
 
   def resolved_balance(as_of: Date.current)
+    if budget_workspace&.target_reads_enabled?
+      return Accounts::TargetBalanceResolver.new(account: self, as_of: as_of).call
+    end
+
     Accounts::BalanceResolver.new(account: self, as_of: as_of).call
   end
 
@@ -80,6 +93,18 @@ class Account < ApplicationRecord
   end
 
   private
+
+  def assign_workspace_currency
+    self.budget_workspace ||= BudgetWorkspace.find_by(legacy_owner_user_id: user_id) if user_id.present?
+    self.currency_code ||= budget_workspace&.default_currency_code
+  end
+
+  def currency_matches_workspace
+    return if budget_workspace.blank? || currency_code.blank?
+    return if currency_code == budget_workspace.default_currency_code
+
+    errors.add(:currency_code, "must match the workspace currency")
+  end
 
   def imported_card_balance_attributes(balance)
     {

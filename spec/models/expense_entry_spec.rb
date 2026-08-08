@@ -10,6 +10,29 @@ RSpec.describe ExpenseEntry, type: :model do
       expect(entry.errors.full_messages).to include("Date must be in March 2026 (March 1 through March 31)")
     end
 
+    it "allows an exact pay-schedule date adjusted across a month boundary" do
+      user = create(:user)
+      budget_month = create(:budget_month, user: user, month_on: Date.new(2026, 2, 1), label: "February 2026")
+      schedule = create(
+        :pay_schedule,
+        user: user,
+        cadence: :monthly,
+        first_pay_on: Date.new(2026, 2, 1),
+        day_of_month_one: 28,
+        weekend_adjustment: :next_monday
+      )
+      entry = build(
+        :expense_entry,
+        user: user,
+        budget_month: budget_month,
+        occurred_on: Date.new(2026, 3, 2),
+        source_file: schedule.template_source_file,
+        source_template: schedule
+      )
+
+      expect(entry).to be_valid
+    end
+
     it "rejects an account movement with the same source and destination" do
       user = create(:user)
       budget_month = create(:budget_month, user: user)

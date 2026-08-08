@@ -37,6 +37,13 @@ class User < ApplicationRecord
   has_many :monthly_bills, dependent: :destroy
   has_many :payment_plans, dependent: :destroy
   has_many :credit_cards, dependent: :destroy
+  has_many :workspace_memberships, dependent: :restrict_with_error
+  has_many :budget_workspaces, through: :workspace_memberships
+  has_many :audit_events, foreign_key: :actor_user_id, dependent: :restrict_with_error
+  has_one :legacy_owned_budget_workspace,
+    class_name: "BudgetWorkspace",
+    foreign_key: :legacy_owner_user_id,
+    dependent: :restrict_with_error
 
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable

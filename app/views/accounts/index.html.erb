@@ -21,7 +21,7 @@
         <div class="hidden items-center px-3 text-2xl text-slate-400 lg:flex" aria-hidden="true">−</div>
         <div class="p-5"><p class="ta-ledger-label">Liabilities</p><p class="ta-money mt-2 text-3xl font-semibold text-rose-700"><%= number_to_currency(@liabilities_total) %></p></div>
         <div class="hidden items-center px-3 text-2xl text-slate-400 lg:flex" aria-hidden="true">=</div>
-        <div class="bg-slate-50/70 p-5"><p class="ta-ledger-label">Net worth</p><p class="ta-money mt-2 text-3xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-950' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p><p class="mt-1 text-xs text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included</p></div>
+        <div class="bg-slate-50/70 p-5"><p class="ta-ledger-label">Net Worth</p><p class="ta-money mt-2 text-3xl font-semibold <%= @net_worth_total >= 0 ? 'text-slate-950' : 'text-rose-700' %>"><%= number_to_currency(@net_worth_total) %></p><p class="mt-1 text-xs text-slate-500"><%= pluralize(@net_worth_accounts.count, "account") %> included</p></div>
       </div>
       <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50/70 px-5 py-3 text-xs text-slate-600"><span><strong class="text-slate-800">Coverage:</strong> <%= @accounts_with_balance_sources_count %> of <%= @accounts.count %> accounts have a trusted source.</span><span><%= pluralize(@accounts_missing_balance_sources_count, "account") %> unresolved</span></div>
     </section>
@@ -46,7 +46,7 @@
               <%= tabler_icon("chart-pie", classes: "h-5 w-5 text-indigo-600") %>
               <span>Net worth trend</span>
             </h2>
-            <p class="ta-muted mt-1">Snapshot-based trend for included accounts. Current totals above use imports when available.</p>
+            <p class="ta-muted mt-1">Resolved values for included accounts using the same source policy as the totals above. Calculation <%= @calculation_version %>.</p>
           </div>
           <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             <%= pluralize(@trend_labels.count, "point") %>
@@ -67,6 +67,22 @@
             <p class="text-lg font-semibold text-slate-900">No trend yet</p>
             <p class="mt-2 text-sm text-slate-500">Record balance snapshots to build a net worth history chart.</p>
           </div>
+        <% end %>
+        <% if @trend_rows.any? %>
+          <details class="mt-4 rounded-xl border border-slate-200 bg-white">
+            <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review exact net worth history</summary>
+            <div class="overflow-x-auto border-t border-slate-100">
+              <table class="min-w-full text-sm">
+                <caption class="sr-only">Exact values and account coverage for the net worth history graph</caption>
+                <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th scope="col" class="px-4 py-3">Date</th><th scope="col" class="px-4 py-3 text-right">Net Worth</th><th scope="col" class="px-4 py-3 text-right">Coverage</th></tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                  <% @trend_rows.reverse_each do |row| %>
+                    <tr><th scope="row" class="px-4 py-3 text-left font-medium text-slate-900"><%= row[:label] %></th><td class="ta-money px-4 py-3 text-right text-slate-700"><%= row[:complete] ? number_to_currency(row[:value]) : "Insufficient coverage" %></td><td class="px-4 py-3 text-right text-slate-600"><%= row[:coverage_count] %> of <%= row[:account_count] %> accounts</td></tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </details>
         <% end %>
       </section>
 

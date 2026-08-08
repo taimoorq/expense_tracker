@@ -27,6 +27,7 @@
         <span><%= story[:chart_title] %></span>
       </h2>
       <p class="ta-muted mt-1"><%= story[:question] %></p>
+      <p class="mt-1 text-xs text-slate-500">Calculated on the server with <%= timeline.fetch(:calculation_version, "legacy-compatible-v1") %>.</p>
     </div>
     <div class="flex flex-wrap gap-2" aria-label="Movement time range">
       <% timeline[:range_options].each do |range_key, range_label| %>
@@ -109,6 +110,8 @@
                 <p class="mt-1 text-xs text-slate-500"><%= pluralize(bucket[:activity_count], "imported row") %></p>
               <% elsif bucket[:source] == :budget_entries %>
                 <p class="mt-1 text-xs text-slate-500"><%= pluralize(bucket[:activity_count], "linked entry") %></p>
+              <% elsif bucket[:source] == :canonical_postings %>
+                <p class="mt-1 text-xs text-slate-500"><%= pluralize(bucket[:activity_count], "posted transaction") %></p>
               <% end %>
               <% if bucket.dig(:coverage, :status) == :partial %>
                 <p class="mt-1 text-xs font-semibold text-amber-700">Partial institution coverage</p>
@@ -119,8 +122,26 @@
                 <% if bucket[direction].nil? %>
                   <span class="text-slate-400">No source</span>
                 <% else %>
+                  <% drilldown_path = if timeline[:target_mode]
+                    activity_path(
+                      view: "all",
+                      account_id: bucket.dig(:drilldown, :account_id),
+                      starts_on: bucket.dig(:drilldown, :starts_on),
+                      ends_on: bucket.dig(:drilldown, :ends_on),
+                      direction: direction
+                    )
+                  else
+                    account_path(
+                      account,
+                      view: "activity",
+                      starts_on: bucket.dig(:drilldown, :starts_on),
+                      ends_on: bucket.dig(:drilldown, :ends_on),
+                      source: bucket.dig(:drilldown, :source),
+                      direction: direction
+                    )
+                  end %>
                   <%= link_to number_to_currency(bucket[direction]),
-                              account_path(account, view: "activity", starts_on: bucket[:drilldown][:starts_on], ends_on: bucket[:drilldown][:ends_on], source: bucket[:drilldown][:source], direction: direction),
+                              drilldown_path,
                               class: "font-semibold text-indigo-700 hover:text-indigo-600",
                               aria: { label: "Review #{label.downcase} for #{bucket[:label]}" } %>
                 <% end %>

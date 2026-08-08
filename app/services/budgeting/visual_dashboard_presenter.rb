@@ -8,14 +8,16 @@ module Budgeting
     attr_reader :budget_month, :entries
 
     def sankey_payload
-      @sankey_payload ||= Budgeting::MonthCashflowSankey.cached_payload(budget_month: budget_month, expense_entries: entries)
+      @sankey_payload ||= target_visuals&.sankey_payload || Budgeting::MonthCashflowSankey.cached_payload(budget_month: budget_month, expense_entries: entries)
     end
 
     def account_flow_payload
-      @account_flow_payload ||= Budgeting::MonthAccountFlowSummary.cached_payload(budget_month: budget_month, expense_entries: entries)
+      @account_flow_payload ||= target_visuals&.account_flow_payload || Budgeting::MonthAccountFlowSummary.cached_payload(budget_month: budget_month, expense_entries: entries)
     end
 
     def section_totals
+      return target_visuals.section_totals if target_visuals
+
       @section_totals ||= outflow_entries
         .group_by(&:section)
         .transform_values { |items| items.sum { |item| item.contributing_amount.to_f } }
@@ -31,35 +33,35 @@ module Budgeting
     end
 
     def line_labels
-      running_balance_points[:labels]
+      target_visuals ? target_visuals.line_points[:labels] : running_balance_points[:labels]
     end
 
     def line_values
-      running_balance_points[:values]
+      target_visuals ? target_visuals.line_points[:values] : running_balance_points[:values]
     end
 
     def cumulative_outflow_labels
-      cumulative_outflow_points[:labels]
+      target_visuals ? target_visuals.cumulative_outflow_points[:labels] : cumulative_outflow_points[:labels]
     end
 
     def cumulative_outflow_values
-      cumulative_outflow_points[:values]
+      target_visuals ? target_visuals.cumulative_outflow_points[:values] : cumulative_outflow_points[:values]
     end
 
     def over_budget_labels
-      over_budget_categories.map(&:first)
+      current_over_budget_categories.map(&:first)
     end
 
     def over_budget_values
-      over_budget_categories.map(&:last)
+      current_over_budget_categories.map(&:last)
     end
 
     def income
-      budget_month.income_total.to_f
+      target_visuals ? target_visuals.summary.forecast_income.to_f : budget_month.income_total.to_f
     end
 
     def leftover
-      budget_month.calculated_leftover.to_f
+      target_visuals ? target_visuals.summary.forecast_net.to_f : budget_month.calculated_leftover.to_f
     end
 
     def savings_pct
@@ -70,7 +72,25 @@ module Budgeting
       section_totals.first
     end
 
+    def target_mode?
+      target_visuals.present?
+    end
+
+    def calculation_version
+      target_visuals&.calculation_version || "legacy-compatible-v1"
+    end
+
     private
+
+    def target_visuals
+      return @target_visuals if defined?(@target_visuals)
+
+      @target_visuals = Budgeting::TargetPeriodVisuals.for(budget_month: budget_month)
+    end
+
+    def current_over_budget_categories
+      target_visuals ? target_visuals.over_budget_categories : over_budget_categories
+    end
 
     def outflow_entries
       @outflow_entries ||= entries.reject(&:income?)

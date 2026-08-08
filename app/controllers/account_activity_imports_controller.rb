@@ -2,6 +2,7 @@ class AccountActivityImportsController < ApplicationController
   before_action :set_account
 
   def new
+    @import_history = import_history
   end
 
   def preview
@@ -12,6 +13,10 @@ class AccountActivityImportsController < ApplicationController
 
     @preview = Accounts::ActivityImports::PreviewBuilder.new(user: current_user, account: @account, file: params[:file]).call
     @preview_token = preview_store.store(@preview) if @preview[:ok]
+    @import_history = import_history(
+      candidate_starts_on: @preview[:started_on],
+      candidate_ends_on: @preview[:ended_on]
+    )
 
     render :preview, status: @preview[:ok] ? :ok : :unprocessable_content
   end
@@ -24,7 +29,7 @@ class AccountActivityImportsController < ApplicationController
 
     if result[:ok]
       preview_store.clear(params[:preview_token])
-      redirect_to account_path(@account), notice: import_success_notice(result)
+      redirect_to account_path(@account, view: "manage", anchor: "import-history"), notice: import_success_notice(result)
     else
       redirect_to new_account_account_activity_import_path(@account), alert: "Import failed: #{result[:error]}"
     end
@@ -68,8 +73,22 @@ class AccountActivityImportsController < ApplicationController
     else
       "Activity rows are saved and will apply once the account has a trusted balance source."
     end
-    return "#{base} #{source_message}" if details.empty?
+    import_record = result[:import]
+    coverage_message = if import_record&.started_on && import_record&.ended_on
+      "Coverage logged from #{I18n.l(import_record.started_on, format: :long)} through #{I18n.l(import_record.ended_on, format: :long)}."
+    else
+      "The import time and available coverage dates were logged."
+    end
+    return "#{base} #{coverage_message} #{source_message}" if details.empty?
 
-    "#{base} #{details.join(', ')}. #{source_message}"
+    "#{base} #{details.join(', ')}. #{coverage_message} #{source_message}"
+  end
+
+  def import_history(candidate_starts_on: nil, candidate_ends_on: nil)
+    Accounts::ActivityImports::History.call(
+      account: @account,
+      candidate_starts_on: candidate_starts_on,
+      candidate_ends_on: candidate_ends_on
+    )
   end
 end

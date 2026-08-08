@@ -25,6 +25,23 @@ RSpec.describe Budgeting::MonthCreator do
       expect(result.wizard_step).to be_nil
     end
 
+    it "rolls back the month when template generation fails" do
+      user = create(:user)
+      allow_any_instance_of(Recurring::GenerateMonthPaychecks).to receive(:call).and_raise("generation failed")
+
+      expect do
+        described_class.call(
+          user: user,
+          budget_month_params: { month_on: Date.new(2026, 6, 1), label: "" },
+          month_workflow: "fresh",
+          source_budget_month: nil,
+          include_applicable_templates: true
+        )
+      end.to raise_error("generation failed")
+
+      expect(user.budget_months.where(month_on: Date.new(2026, 6, 1))).to be_empty
+    end
+
     it "fails clone workflow when no source month is selected" do
       user = create(:user)
 
@@ -84,6 +101,25 @@ RSpec.describe Budgeting::MonthCreator do
       expect(cloned_entry.actual_amount).to be_nil
       expect(cloned_entry.status).to eq("planned")
       expect(result.budget_month.expense_entries.where(payee: "Visa")).to be_empty
+    end
+
+    it "rolls back the cloned month when entry population fails" do
+      user = create(:user)
+      source_month = create(:budget_month, user: user, month_on: Date.new(2026, 3, 1), label: "March 2026")
+      create(:expense_entry, budget_month: source_month, user: user)
+      allow_any_instance_of(described_class).to receive(:clone_source_entries).and_raise("clone failed")
+
+      expect do
+        described_class.call(
+          user: user,
+          budget_month_params: {},
+          month_workflow: "clone",
+          source_budget_month: source_month,
+          include_applicable_templates: false
+        )
+      end.to raise_error("clone failed")
+
+      expect(user.budget_months.where(month_on: Date.new(2026, 4, 1))).to be_empty
     end
   end
 end

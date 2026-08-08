@@ -38,7 +38,12 @@
         <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
           <% day_entries.each do |entry| %>
             <% amount = entry.cashflow_amount %>
-            <%= link_to edit_budget_month_expense_entry_path(budget_month, entry),
+            <% if local_assigns[:read_only] %>
+              <div class="block rounded px-2 py-1 text-xs font-medium <%= chip_style.call(entry) %>" data-expense-entries-filter-target="chip" data-value="<%= reason_for_entry.call(entry).to_s.downcase %>" data-date="<%= entry.occurred_on&.iso8601 %>" data-payee="<%= entry.payee.to_s %>" data-reason="<%= reason_for_entry.call(entry).to_s %>" data-account="<%= entry.account_name.to_s %>" data-status="<%= entry.status %>">
+                <div class="flex items-center justify-between gap-2"><span class="truncate"><%= entry.payee.presence || entry.category.presence || entry.section.humanize %></span><span><%= amount >= 0 ? "+" : "" %><%= number_to_currency(amount, precision: 0) %></span></div>
+              </div>
+            <% else %>
+              <%= link_to edit_budget_month_expense_entry_path(budget_month, entry),
                         class: "block rounded px-2 py-1 text-xs font-medium #{chip_style.call(entry)}",
                         data: {
                           expense_entries_filter_target: "chip",
@@ -54,6 +59,7 @@
                 <span class="truncate"><%= entry.payee.presence || entry.category.presence || entry.section.humanize %></span>
                 <span><%= amount >= 0 ? "+" : "" %><%= number_to_currency(amount, precision: 0) %></span>
               </div>
+            <% end %>
             <% end %>
           <% end %>
 

@@ -18,6 +18,7 @@ RSpec.describe Accounts::DetailPage do
     month = create(:budget_month, user: user, month_on: Date.new(2026, 6, 1), label: "June 2026")
     create(:account_snapshot, account: card, recorded_on: Date.new(2026, 6, 1), balance: -500)
     create(:credit_card, user: user, name: "Rewards Visa", payment_account: checking, linked_account: card)
+    activity_import = create(:account_activity_import, account: card, original_filename: "visa-june.csv")
     create(
       :expense_entry,
       budget_month: month,
@@ -42,6 +43,7 @@ RSpec.describe Accounts::DetailPage do
     expect(manage_page.fetch(:connected_templates_count)).to eq(1)
     expect(manage_page.fetch(:connected_templates).fetch("Credit Cards").first.name).to eq("Rewards Visa")
     expect(manage_page.fetch(:balance_history_rows)).to be_present
+    expect(manage_page.fetch(:import_history).imports).to eq([ activity_import ])
   end
 
   it "batches imported activity across overview timeline buckets" do
@@ -73,5 +75,87 @@ RSpec.describe Accounts::DetailPage do
     end
 
     expect(queries).to be <= 12
+  end
+
+  it "uses one bounded target bundle for balance, movement, history, payoff, and recent rows" do
+    user = create(:user)
+    checking = create(:account, user: user, name: "Checking", kind: :checking)
+    card = create(:account, user: user, name: "Rewards Visa", kind: :credit_card)
+    month = create(:budget_month, user: user, month_on: Date.new(2026, 6, 1), label: "June 2026")
+    create(:account_snapshot, account: card, recorded_on: Date.new(2026, 6, 1), balance: -1_000)
+    create(
+      :expense_entry,
+      budget_month: month,
+      user: user,
+      source_account: card,
+      occurred_on: Date.new(2026, 6, 4),
+      section: :variable,
+      status: :paid,
+      actual_amount: 125
+    )
+    create(
+      :expense_entry,
+      budget_month: month,
+      user: user,
+      source_account: checking,
+      destination_account: card,
+      occurred_on: Date.new(2026, 6, 10),
+      section: :debt,
+      status: :paid,
+      actual_amount: 325
+    )
+    create(
+      :expense_entry,
+      budget_month: month,
+      user: user,
+      source_account: checking,
+      destination_account: card,
+      occurred_on: Date.new(2026, 6, 20),
+      section: :debt,
+      status: :planned,
+      planned_amount: 75
+    )
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+
+    result = nil
+    queries = count_select_queries do
+      result = described_class.new(
+        account: card.reload,
+        as_of: Date.new(2026, 6, 15),
+        view: "overview"
+      ).call
+    end
+
+    bucket = result.fetch(:movement_timeline).fetch(:buckets).last
+    progress = result.fetch(:credit_card_progress)
+    expect(queries).to be <= 14
+    expect(result).to include(calculation_version: "target-v1")
+    expect(result.fetch(:balance_summary)).to include(current_balance: -800.to_d, projected_balance: -725.to_d)
+    expect(bucket).to include(
+      source: :canonical_postings,
+      incoming: 325.to_d,
+      outgoing: 125.to_d,
+      ending_balance: 800.to_d,
+      planned_incoming: 75.to_d
+    )
+    expect(progress).to include(
+      paid_down_this_month: 325.to_d,
+      added_this_month: 125.to_d,
+      current_debt: 800.to_d,
+      projected_debt: 725.to_d,
+      planned_payment_remaining_this_month: 75.to_d,
+      calculation_version: "target-v1"
+    )
+    expect(result.fetch(:reconciliation_bridge)).to include(
+      baseline_balance: 1_000.to_d,
+      incoming: 325.to_d,
+      outgoing: 125.to_d,
+      current_balance: 800.to_d,
+      transaction_count: 2,
+      reconciled: true,
+      calculation_version: "target-v1"
+    )
+    expect(result.dig(:recent_activity, :canonical_rows).size).to eq(2)
   end
 end

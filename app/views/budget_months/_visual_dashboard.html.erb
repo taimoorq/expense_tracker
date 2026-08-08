@@ -26,7 +26,7 @@
       <div class="ta-ledger-rail">
       <p class="ta-page-eyebrow">Financial narrative</p>
       <h2 class="ta-section-title mt-1 inline-flex items-center gap-2"><%= tabler_icon("chart-bar") %> Month Breakdown</h2>
-      <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Start with the audit totals, then use the flow and account views to answer where money moved. Supporting trend charts are optional detail.</p>
+      <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-600">Start with the audit totals, then use the flow and account views to answer where money moved. Supporting trend charts are optional detail. Calculation <%= dashboard.calculation_version %>.</p>
       </div>
       <p class="ta-muted"><%= compact ? "Compact chart view" : "" %></p>
     </div>
@@ -56,7 +56,7 @@
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Cash Flow</p>
             <h4 class="mt-2 text-lg font-semibold text-slate-900">Monthly flow graph</h4>
-            <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">This visual uses current-month entry payees and categories to show how income fans out into spending buckets and leftover cash.</p>
+            <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600"><%= dashboard.target_mode? ? "This visual combines posted allocations with the remaining open plan to show the month forecast." : "This visual uses current-month entry payees and categories to show how income fans out into spending buckets and leftover cash." %></p>
           </div>
           <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             <%= pluralize(sankey_payload[:links].count, "flow") %>
@@ -118,7 +118,7 @@
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Accounts</p>
             <h4 class="mt-2 text-lg font-semibold text-slate-900">Charged vs paid to by account</h4>
             <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Charges come from outflows tied to each account. Payments combine income deposited into an account and credit-card payments sent to a linked card.
+              <%= dashboard.target_mode? ? "Posted account movements are grouped into money out and money in; planned entries do not appear in this actual-only account chart." : "Charges come from outflows tied to each account. Payments combine income deposited into an account and credit-card payments sent to a linked card." %>
             </p>
           </div>
           <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">

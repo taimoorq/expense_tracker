@@ -32,7 +32,8 @@ module Budgeting
         income_total: income_total.round(2),
         outflow_total: outflow_total.round(2),
         leftover_total: leftover_total.round(2),
-        limitations: limitations
+        limitations: limitations,
+        calculation_version: "legacy-compatible-v1"
       }
     end
 

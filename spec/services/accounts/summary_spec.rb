@@ -106,4 +106,23 @@ RSpec.describe Accounts::Summary do
 
     expect(queries).to be <= 15
   end
+
+  it "uses bounded target balance and trend queries after read cutover" do
+    user = create(:user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month)
+    accounts = create_list(:account, 6, user: user, kind: :checking)
+    accounts.each do |account|
+      create(:account_snapshot, account: account, recorded_on: Date.current - 2.days, balance: 100)
+      create(:expense_entry, user: user, budget_month: month, source_account: account, occurred_on: Date.current - 1.day, status: :paid, actual_amount: 10)
+    end
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+
+    payload = nil
+    queries = count_select_queries { payload = described_class.new(user: user.reload, include_trend: true).call }
+
+    expect(queries).to be <= 18
+    expect(payload).to include(calculation_version: "target-v1", net_worth_total: 540.to_d)
+    expect(payload[:trend_rows].last).to include(value: 540.0, coverage_count: 6, account_count: 6, complete: true)
+  end
 end

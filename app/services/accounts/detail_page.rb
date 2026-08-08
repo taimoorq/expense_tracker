@@ -21,7 +21,8 @@ module Accounts
     def common_data
       {
         balance_summary: balance_summary,
-        account_story: account_story
+        account_story: account_story,
+        calculation_version: calculation_version
       }
     end
 
@@ -31,6 +32,7 @@ module Accounts
         {
           credit_card_progress: credit_card_progress,
           movement_timeline: movement_timeline,
+          reconciliation_bridge: target_reads? ? target_bundle.fetch(:reconciliation_bridge) : nil,
           recent_activity: recent_activity
         }
       when "insights"
@@ -52,6 +54,8 @@ module Accounts
     end
 
     def movement_timeline
+      return target_bundle.fetch(:movement_timeline) if target_reads?
+
       @movement_timeline ||= Accounts::MovementTimeline.new(
         account: account,
         range: range,
@@ -63,10 +67,14 @@ module Accounts
     end
 
     def recent_activity
+      return target_bundle.fetch(:recent_activity) if target_reads?
+
       @recent_activity ||= Accounts::ActivityLedgerQuery.new(account: account, limit: 5).call
     end
 
     def balance_history_rows
+      return target_bundle.fetch(:balance_history_rows) if target_reads?
+
       @balance_history_rows ||= Accounts::BalanceHistory.new(
         account: account,
         as_of: as_of,
@@ -75,6 +83,8 @@ module Accounts
     end
 
     def balance_summary
+      return target_bundle.fetch(:balance_summary) if target_reads?
+
       @balance_summary ||= Accounts::BalanceResolver.new(
         account: account,
         as_of: as_of,
@@ -94,6 +104,7 @@ module Accounts
     def credit_card_progress
       return nil unless account.credit_card?
       return nil unless balance_summary.fetch(:balance_available, balance_summary[:balance_source] != :none)
+      return target_bundle.fetch(:credit_card_progress) if target_reads?
 
       @credit_card_progress ||= Accounts::CreditCardProgress.new(
         account: account,
@@ -101,6 +112,22 @@ module Accounts
         as_of: as_of,
         entries: balance_inputs.entries_for(account)
       ).call
+    end
+
+    def calculation_version
+      target_reads? ? target_bundle.fetch(:calculation_version) : "legacy-compatible-v1"
+    end
+
+    def target_bundle
+      @target_bundle ||= Accounts::TargetDetailQuery.call(
+        account: account,
+        as_of: as_of,
+        range: range
+      )
+    end
+
+    def target_reads?
+      account.budget_workspace&.target_reads_enabled?
     end
 
     def connected_templates
@@ -123,7 +150,7 @@ module Accounts
     end
 
     def import_history
-      @import_history ||= account.account_activity_imports.order(created_at: :desc).limit(6).to_a
+      @import_history ||= Accounts::ActivityImports::History.call(account: account, limit: 6)
     end
   end
 end

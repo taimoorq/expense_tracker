@@ -26,6 +26,8 @@ module Platform
       case payload[:version].to_i
       when 1
         Platform::Backup::V1::Preview.new(payload: payload, scopes: scopes)
+      when 2
+        Platform::Backup::V2::Preview.new(payload: payload, scopes: scopes)
       else
         failure("This backup version is not supported.")
       end

@@ -50,7 +50,15 @@ class ExpenseEntriesController < ApplicationController
   end
 
   def destroy
-    @expense_entry.destroy
+    unless ExpenseEntries::Destroyer.call(expense_entry: @expense_entry)
+      return respond_to do |format|
+        format.turbo_stream do
+          flash.now[:alert] = @expense_entry.errors.full_messages.to_sentence
+          render turbo_stream: turbo_stream.replace("flash", partial: "shared/flash"), status: :unprocessable_content
+        end
+        format.html { redirect_to @budget_month, alert: @expense_entry.errors.full_messages.to_sentence }
+      end
+    end
     prepare_month_refresh_state(@budget_month, expense_entry: @budget_month.expense_entries.new, timeline_view: current_timeline_view)
 
     respond_to do |format|

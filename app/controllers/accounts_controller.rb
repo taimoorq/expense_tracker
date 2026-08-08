@@ -7,6 +7,12 @@ class AccountsController < ApplicationController
   end
 
   def show
+    @account = current_user.accounts.includes(:account_snapshots).find(params[:id])
+    if params[:view] == "activity" && @account.budget_workspace&.target_reads_enabled?
+      redirect_to activity_path(view: "all", account_id: @account.id)
+      return
+    end
+
     load_account_detail_page
   end
 
@@ -35,7 +41,7 @@ class AccountsController < ApplicationController
   def update
     @account = current_user.accounts.find(params[:id])
 
-    if @account.update(account_params)
+    if Accounts::Updater.call(account: @account, attributes: account_params)
       redirect_to @account, notice: "Account updated."
     else
       render :edit, status: :unprocessable_content

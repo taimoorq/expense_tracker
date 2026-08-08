@@ -35,15 +35,23 @@ module ExpenseEntries
       template_creator = Recurring::EntryWizardTemplateCreator.new(user: user, expense_entry: expense_entry, params: planning_template_params)
       saved_successfully = false
 
-      ActiveRecord::Base.transaction do
-        if expense_entry.errors.none? && expense_entry.save
-          if template_creator.save && link_created_template(expense_entry, template_creator)
-            saved_successfully = true
-          else
-            template_creator.error_messages.each { |message| expense_entry.errors.add(:base, message) }
-            raise ActiveRecord::Rollback
+      begin
+        ActiveRecord::Base.transaction do
+          if expense_entry.errors.none? && expense_entry.save
+            if template_creator.save && link_created_template(expense_entry, template_creator)
+              if template_creator.requested?
+                Platform::TargetSync::PlanningTemplateWriter.call(source: template_creator.template_record)
+              end
+              Platform::TargetSync::ExpenseEntryWriter.call(entry: expense_entry)
+              saved_successfully = true
+            else
+              template_creator.error_messages.each { |message| expense_entry.errors.add(:base, message) }
+              raise ActiveRecord::Rollback
+            end
           end
         end
+      rescue Platform::TargetSync::WriteRejected => error
+        expense_entry.errors.add(:base, error.message)
       end
 
       expense_entry = rebuilt_failed_entry(expense_entry) unless saved_successfully

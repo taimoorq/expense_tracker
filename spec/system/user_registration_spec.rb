@@ -12,7 +12,8 @@ RSpec.describe "User registration", type: :system do
 
     expect(page).to have_content("Welcome! You have signed up successfully")
     expect(page).to have_content("newuser@example.com")
-    expect(page).to have_content("Overview")
+    expect(page).to have_content("Daily financial check-in")
+    expect(page).to have_content("Home")
     expect(User.find_by!(email: "newuser@example.com").financial_rhythm).to eq("debt_payoff")
   end
 end

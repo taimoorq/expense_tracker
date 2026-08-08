@@ -29,4 +29,28 @@ RSpec.describe Overview::PageData do
     expect(payload[:year_cashflow_payload]).to include(:nodes, :links, :income_total, :outflow_total, :leftover_total)
     expect(payload[:next_step]).to include(:title, :primary_label, :primary_path)
   end
+
+  it "keeps Home attention counts on target facts after read cutover" do
+    user = create(:user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month)
+    entry = create(
+      :expense_entry,
+      user: user,
+      budget_month: month,
+      occurred_on: Date.current,
+      category: "Utilities",
+      payee: "Power",
+      planned_amount: 100,
+      status: :planned
+    )
+    backfill = Platform::TargetBackfill::Runner.call(user: user)
+    backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
+
+    first = described_class.new(user: user, today: Date.current).call
+    entry.update_columns(status: ExpenseEntry.statuses.fetch("paid"), actual_amount: 100)
+    second = described_class.new(user: user.reload, today: Date.current).call
+
+    expect(first).to include(due_planned_count: 1, review_attention_count: 1)
+    expect(second).to include(due_planned_count: 1, review_attention_count: 1)
+  end
 end

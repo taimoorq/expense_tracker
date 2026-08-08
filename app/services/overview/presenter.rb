@@ -1,6 +1,7 @@
 module Overview
   class Presenter
     def initialize(user:, today: Date.current, data: nil, account_flow_month_window: Overview::AccountFlowWindow::DEFAULT_MONTH_WINDOW)
+      @user = user
       @today = today
       @data = data || Overview::PageData.new(
         user: user,
@@ -219,6 +220,53 @@ module Overview
       ]
     end
 
+    def monthly_position
+      return unless current_month_data
+
+      @monthly_position ||= begin
+        period = target_period_for(current_month_data)
+        if target_reads? && period.present?
+          Budgeting::PeriodSummary.call(period: period)
+        else
+          Budgeting::LegacyPeriodSummary.call(budget_month: current_month_data)
+        end
+      end
+    end
+
+    def monthly_position_cards
+      return [] unless monthly_position
+
+      [
+        { label: "Planned income", value: monthly_position.planned_income, tone: "text-slate-900" },
+        { label: "Actual income", value: monthly_position.actual_income, tone: "text-emerald-700" },
+        { label: "Planned outflow", value: monthly_position.planned_outflow, tone: "text-slate-900" },
+        { label: "Actual outflow", value: monthly_position.actual_outflow, tone: "text-rose-700" },
+        { label: "Remaining plan", value: monthly_position.remaining_outflow, tone: "text-amber-700" },
+        { label: "Forecast net", value: monthly_position.forecast_net, tone: monthly_position.forecast_net >= 0 ? "text-emerald-700" : "text-rose-700" }
+      ]
+    end
+
+    def monthly_position_chart_datasets
+      return [] unless monthly_position
+
+      [
+        {
+          label: "Actual",
+          data: [ monthly_position.actual_income.to_f, monthly_position.actual_outflow.to_f ],
+          backgroundColor: "rgba(15, 118, 110, 0.65)",
+          borderColor: "#0f766e",
+          borderWidth: 1
+        },
+        {
+          label: "Remaining planned",
+          data: [ monthly_position.remaining_income.to_f, monthly_position.remaining_outflow.to_f ],
+          backgroundColor: "rgba(217, 119, 6, 0.45)",
+          borderColor: "#b45309",
+          borderWidth: 1
+        }
+      ]
+    end
+
     def next_step_badge
       next_step.fetch(:badge)
     end
@@ -253,6 +301,14 @@ module Overview
 
     def cashflow_chart_title
       "#{overview_cashflow_year_value} cash flow graph"
+    end
+
+    def cashflow_calculation_version
+      year_cashflow_payload_data.fetch(:calculation_version, "legacy-compatible-v1")
+    end
+
+    def account_flow_target_mode?
+      account_flow_calculation_version_value == Budgeting::PeriodSummary::CALCULATION_VERSION
     end
 
     def cashflow_stat_cards
@@ -397,7 +453,7 @@ module Overview
     def account_flow_summary_description
       return "Select saved months to compare where entries happen and where payments or deposits land." if account_flow_months_included_value.zero?
 
-      "#{pluralized_word(account_flow_months_included_value, "month")} included: #{account_flow_month_range_label_value}."
+      "#{pluralized_word(account_flow_months_included_value, "month")} included: #{account_flow_month_range_label_value}. Calculation #{account_flow_calculation_version_value}."
     end
 
     def account_flow_stat_cards
@@ -461,7 +517,24 @@ module Overview
 
     private
 
-    attr_reader :data, :today
+    attr_reader :data, :today, :user
+
+    def target_period_for(month)
+      mapping = target_workspace&.legacy_record_mappings&.find_by(
+        legacy_record_type: "BudgetMonth",
+        legacy_record_id: month.id,
+        target_record_type: "BudgetPeriod"
+      )
+      BudgetPeriod.find_by(id: mapping&.target_record_id)
+    end
+
+    def target_workspace
+      @target_workspace ||= BudgetWorkspace.find_by(legacy_owner_user_id: user.id)
+    end
+
+    def target_reads?
+      target_workspace&.target_reads_enabled?
+    end
 
     def accounts_data
       data.fetch(:accounts)
@@ -558,40 +631,74 @@ module Overview
     def account_flow_month_range_label_value
       data.fetch(:account_flow_month_range_label)
     end
+
+    def account_flow_calculation_version_value
+      data.fetch(:account_flow_calculation_version, "legacy-compatible-v1")
+    end
     def onboarding_complete?
+      return onboarding_progress.complete if onboarding_progress
+
       step1_done? && step2_done? && step3_done? && step4_done?
     end
 
     def onboarding_in_progress?
+      return onboarding_progress.completed_count.positive? if onboarding_progress
+
       step1_done? || step2_started? || step3_started? || step4_started?
     end
 
     def step1_done?
-      accounts_data.any?
+      onboarding_state(:accounts) == :done
     end
 
     def step2_done?
-      template_total_value.positive? && linked_template_total_value == template_total_value
+      onboarding_state(:recurring) == :done
     end
 
     def step2_started?
-      template_total_value.positive? || linked_template_total_value.positive?
+      onboarding_state(:recurring) == :in_progress
     end
 
     def step3_done?
-      current_month_data.present? && current_month_entries_data.any?
+      onboarding_state(:month) == :done
     end
 
     def step3_started?
-      current_month_data.present?
+      onboarding_state(:month).in?([ :in_progress, :done ])
     end
 
     def step4_done?
-      current_month_entries_data.any? && (review_attention_count_value.zero? || linked_paid_entries_count_value.positive?)
+      onboarding_state(:review) == :done
     end
 
     def step4_started?
-      current_month_entries_data.any?
+      onboarding_state(:review).in?([ :in_progress, :done ])
+    end
+
+    def onboarding_progress
+      data[:onboarding_progress]
+    end
+
+    def onboarding_state(step)
+      return onboarding_progress.states.fetch(step) if onboarding_progress
+
+      case step
+      when :accounts
+        accounts_data.any? ? :done : :next
+      when :recurring
+        return :done if template_total_value.positive? && linked_template_total_value == template_total_value
+        return :in_progress if template_total_value.positive? || linked_template_total_value.positive?
+
+        :next
+      when :month
+        return :next if current_month_data.blank?
+
+        current_month_entries_data.any? ? :done : :in_progress
+      when :review
+        return :next if current_month_entries_data.empty?
+
+        review_attention_count_value.zero? || linked_paid_entries_count_value.positive? ? :done : :in_progress
+      end
     end
 
     def build_step(number:, title:, description:, metric:, action_label:, action_path:, state:)

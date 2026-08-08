@@ -2,42 +2,48 @@
 
 ## Project Overview
 
-This repository contains the main FinanceTracking.app application, a self-hosted monthly budgeting app built with Rails.
+This repository contains the main FinanceTracking.app 2.0 application, a self-hosted monthly financial workspace built with Rails.
 
 The app helps users:
 
 - plan budgets one month at a time
 - reuse recurring transactions such as paychecks, bills, subscriptions, payment plans, and credit cards
-- import CSV activity and track real spending against planned entries
-- manage manual account balances and net worth snapshots
-- back up and restore user data with versioned JSON exports
+- keep manual and imported Activity distinct from the plan, then match records explicitly
+- reconcile account balances from observations, transactions, postings, and planned movement
+- verify accessible reports through exact values and source-record drilldowns
+- close a month with frozen report evidence and reopen it explicitly
+- back up and restore the connected workspace through Backup v2 and recovery checkpoints
 
 The hosted marketing site and user documentation live in a separate frontend repository at `../financetrackingapp`.
 
 ## Business Context
 
-FinanceTracking.app is designed for people who budget by month and want one place to plan, review, and maintain that budget over time.
+FinanceTracking.app is designed for people who budget by month and want one place to move from setup and planning through real activity, reporting, close, and recovery.
 
 The product is intentionally opinionated around a month-based workflow:
 
 - users build or roll forward a month
 - recurring transactions provide the starting structure
-- manual and imported entries fill in the month as reality changes
-- account context helps budgeting and balances stay connected
-- overview, help, and backup flows reduce setup friction for self-hosted users
+- manual and imported transactions preserve what happened and match to the plan explicitly
+- account observations and postings keep balances tied to evidence
+- reports keep exact values and source records close to each graph
+- close freezes the period evidence; Backup v2 and restore checkpoints protect recovery
 
 This is not a bank-sync-first app. Manual planning, recurring reuse, account context, privacy, and self-hosting are the core value proposition.
 
 ## Core Features
 
-- Overview page with current-month status, recurring progress, account summaries, and quick actions
+- Home with onboarding progress, current-month status, attention queues, chart evidence, and one next action
 - Month-by-month budgeting with support for cloning or generating from recurring templates
 - Recurring transaction management for pay schedules, subscriptions, monthly bills, payment plans, and credit cards
-- Guided entry wizard for fast manual entry creation with optional recurring-template creation
+- Focused entry composer with optional recurring-template creation
 - Multiple month review surfaces including grouped timeline, full list, calendar, breakdown, and money-flow views
-- CSV import flows for bringing historical or current month activity into the app
-- Manual accounts and balance snapshots for account coverage and net worth tracking
-- Backup and restore flows with preview support and versioned JSON export/import
+- Activity ledger with manual transactions, import batches, matching, unmatching, quarantine, and reversal
+- Manual accounts with balance observations, financial postings, reconciliation evidence, and net-worth tracking
+- Reports with accessible chart alternatives, exact values, and source-record drilldowns
+- Month close with frozen item and transaction evidence plus an explicit reopen path
+- Backup v2 with scoped export, optional encryption, restore preview, and seven-day checkpoints
+- Controlled 2.0 workspace migration with quality, backfill, shadow-read, rehearsal, enable, and rollback controls
 - In-app help and release notes so product guidance stays visible inside the app
 
 ## Target Audience
@@ -65,7 +71,7 @@ Budgeting UX should make money movement explainable: keep history, drilldowns, a
 
 ## Important Directories
 
-- `app/models` domain models such as `BudgetMonth`, `ExpenseEntry`, `Account`, and recurring transaction types
+- `app/models` legacy compatibility models plus target workspace, planning, ledger, account, evidence, and operation records
 - `app/services` business logic for budgeting, recurring generation, accounts, overview, backups, and platform concerns
 - `app/controllers` user-facing controllers plus admin and auth flows
 - `app/helpers` view-oriented helper methods shared by ERB templates
@@ -79,13 +85,15 @@ Budgeting UX should make money movement explainable: keep history, drilldowns, a
 
 ## Architecture Notes
 
-- The app now leans on domain-oriented services under areas such as `Budgeting`, `Recurring`, `Accounts`, `Overview`, and `Platform`
-- `ExpenseEntry` is the main month-instance record; recurring template models describe reusable planning definitions
-- Recurring transaction types stay in separate models because their rules differ, but they share common concerns and catalog metadata
+- Domain-oriented services live under areas such as `Budgeting`, `Planning`, `Accounts`, `Reports`, `Overview`, `Audit`, `Identity`, and `Platform`
+- The target model separates planning (`BudgetPeriod`, `BudgetItem`, `PlanningTemplate`) from observed ledger activity (`FinancialTransaction`, `AccountPosting`)
+- Legacy month, entry, and recurring models remain compatibility inputs during the explicit workspace transition
 - Overview behavior is assembled through `app/services/overview` and exposed to the page through a presenter
-- Backup/restore logic is service-driven and namespaced under platform services rather than buried in controllers
+- Backup/restore logic is service-driven under platform services, including the v2 exporter/importer and encrypted restore checkpoints
 - Account-aware linking logic lives in dedicated services and model concerns
-- Account balance work treats snapshots as reconciliation points, paid entries as current activity, planned entries as projections, and source/destination accounts as the canonical money-flow links
+- Account balance work treats observations as reconciliation evidence, postings as observed movement, and budget items as planned movement
+- Month close snapshots calculation inputs and source records; reopening restores live calculation without hiding the prior operation history
+- Target migrations use auditable legacy mappings, discrepancies, operation runs, shadow reads, rehearsals, and workspace-scoped enable/rollback flags
 - Release notes are backed by release services and `config/releases.yml`
 - Cloudflare Turnstile support exists in the auth flow through `turnstile` concerns, controllers, and verification services
 - Public Devise entry points are rate limited through `DeviseRateLimited` and Rails controller `rate_limit`; production counters use Solid Cache and email-based keys use an app-secret-backed HMAC rather than raw addresses

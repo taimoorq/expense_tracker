@@ -23,7 +23,11 @@ module Recurring
     def call
       definition = ACTIONS.fetch(action)
       budget_month = user.budget_months.find(budget_month_id)
-      created_count = definition.fetch(:generator).new(budget_month: budget_month).call
+      created_count = ApplicationRecord.transaction do
+        count = definition.fetch(:generator).new(budget_month: budget_month).call
+        Platform::TargetSync::BudgetMonthWriter.call(budget_month: budget_month)
+        count
+      end
       verb = definition.fetch(:verb, "Generated")
       label = definition.fetch(:label)
       Result.new(budget_month: budget_month, message: "#{verb} #{created_count} #{label} entr#{created_count == 1 ? 'y' : 'ies'}.")

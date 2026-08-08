@@ -3,7 +3,7 @@
 <% breadcrumb @budget_month.label %>
 
 <div class="space-y-6" style="view-transition-name: month-page-content; view-transition-class: ta-vt-shell;">
-  <% generation_actions_hidden = @budget_month.complete_for_generation? %>
+  <% generation_actions_hidden = @target_period&.state_closed? || @budget_month.complete_for_generation? %>
   <% requested_tab = params[:tab].presence_in(%w[timeline breakdown calendar entries]) %>
   <% requested_timeline_view = params[:view].presence_in(%w[sections full-list]) %>
   <% preferred_tab = current_user.preferred_month_view.presence_in(%w[timeline breakdown calendar entries]) %>
@@ -70,14 +70,24 @@
             <% end %>
           <% end %>
         </div>
-        <% if generation_actions_hidden %>
+        <% if @target_period&.state_closed? %>
+          <p class="ta-muted mt-1">This month is closed. Reopen it before changing the plan or generating recurring entries.</p>
+        <% elsif generation_actions_hidden %>
           <p class="ta-muted mt-1">This month looks complete, so template generation actions are hidden to avoid unnecessary changes.</p>
         <% end %>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <%= link_to new_wizard_budget_month_expense_entries_path(@budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
-          <%= tabler_icon("plus", classes: "ta-action-icon") %>
-          <span>Add Entry</span>
+        <% if @target_period %>
+          <%= link_to budget_month_month_close_path(@budget_month), class: "fb-btn-secondary ta-action-btn" do %>
+            <%= tabler_icon(@target_period.state_closed? ? "lock" : "lock-open", classes: "ta-action-icon") %>
+            <span><%= @target_period.state_closed? ? "Review Close" : "Review & Close" %></span>
+          <% end %>
+        <% end %>
+        <% unless @target_period&.state_closed? %>
+          <%= link_to new_wizard_budget_month_expense_entries_path(@budget_month, timeline_view: default_timeline_view), class: "fb-btn-primary ta-action-btn", data: { turbo_frame: "entry_wizard_modal" } do %>
+            <%= tabler_icon("plus", classes: "ta-action-icon") %>
+            <span>Add Entry</span>
+          <% end %>
         <% end %>
         <%= link_to new_budget_month_from_path(@budget_month), class: "fb-btn-secondary ta-action-btn" do %>
           <%= tabler_icon("copy", classes: "ta-action-icon text-slate-600") %>
@@ -108,7 +118,7 @@
       class="<%= timeline_tab_active ? "space-y-5 p-3 sm:p-5" : "hidden space-y-5 p-3 sm:p-5" %>"
       <%= %(style="view-transition-name: month-page-panel; view-transition-class: ta-vt-panel;") if timeline_tab_active %>>
       <%= render "summary_cards", budget_month: @budget_month, expense_entries: @expense_entries if timeline_tab_active %>
-      <%= render "expense_entries/timeline", expense_entries: @expense_entries, budget_month: @budget_month, default_timeline_view: default_timeline_view, timeline_view: default_timeline_view if timeline_tab_active %>
+      <%= render "expense_entries/timeline", expense_entries: @expense_entries, budget_month: @budget_month, default_timeline_view: default_timeline_view, timeline_view: default_timeline_view, read_only: @target_period&.state_closed? if timeline_tab_active %>
     </div>
 
     <div
@@ -124,7 +134,7 @@
       role="tabpanel"
       class="<%= active_navigation_tab == "entries" ? "space-y-4 p-3 sm:p-5" : "hidden space-y-4 p-3 sm:p-5" %>"
       <%= %(style="view-transition-name: month-page-panel; view-transition-class: ta-vt-panel;") if active_navigation_tab == "entries" %>>
-      <%= render "plan_and_edit_panel", budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry, selected_review: params[:review] if active_navigation_tab == "entries" %>
+      <%= render "plan_and_edit_panel", budget_month: @budget_month, expense_entries: @expense_entries, expense_entry: @expense_entry, selected_review: params[:review], read_only: @target_period&.state_closed? if active_navigation_tab == "entries" %>
     </div>
   </section>
 </div>

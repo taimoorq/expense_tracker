@@ -28,7 +28,10 @@
   <td class="px-3 py-2 text-right"><%= number_to_currency(entry.actual_amount || 0) %></td>
   <td class="px-3 py-2"><%= entry.status.humanize %></td>
   <td class="px-3 py-2">
-    <div class="flex items-center gap-2">
+    <% if local_assigns[:read_only] %>
+      <span class="text-xs font-semibold text-slate-500">Read only</span>
+    <% else %>
+      <div class="flex items-center gap-2">
       <% unless entry.paid? %>
         <%= button_to budget_month_expense_entry_path(budget_month, entry),
                       method: :patch,
@@ -62,6 +65,7 @@
                     form: { data: { turbo_confirm: "Delete this entry?" } } do %>
         <%= tabler_icon("trash", classes: "h-4 w-4 text-rose-600") %>
       <% end %>
-    </div>
+      </div>
+    <% end %>
   </td>
 </tr>
