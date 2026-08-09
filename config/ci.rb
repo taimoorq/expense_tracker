@@ -1,7 +1,8 @@
 # Run using bin/ci
 
 CI.run do
-  step "Setup", "env RAILS_ENV=test bin/setup --skip-server"
+  step "Setup: Dependencies", "bundle check"
+  step "Setup: Test database", "env RAILS_ENV=test bin/rails db:test:prepare"
 
   step "Style: Ruby", "bin/rubocop"
 
