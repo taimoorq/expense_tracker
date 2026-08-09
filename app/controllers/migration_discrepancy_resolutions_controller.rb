@@ -2,8 +2,8 @@ class MigrationDiscrepancyResolutionsController < ApplicationController
   def update
     workspace = current_user.legacy_owned_budget_workspace || raise(ActiveRecord::RecordNotFound)
     membership = workspace.workspace_memberships.status_active.find_by!(user: current_user)
-    discrepancy = workspace.migration_discrepancies.find(params[:id])
-    account = current_user.accounts.find(params.require(:account_id))
+    discrepancy = workspace.migration_discrepancies.find(params.expect(:id))
+    account = current_user.accounts.find(params.expect(:account_id))
 
     Platform::TargetBackfill::ResolveMissingAccount.call(
       workspace: workspace,

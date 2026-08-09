@@ -1,4 +1,16 @@
 releases:
+  - version: "2.1.0"
+    released_on: "2026-08-08"
+    title: "Durable imports, backups, and recovery"
+    summary: "FinanceTracking.app 2.1 moves long-running account imports and Backup v2 work into durable background operations, with safer retries, visible progress, and stronger self-hosted recovery controls."
+    changes:
+      - "Commits reviewed account activity in the background so the work can continue safely after you leave the page or restart a worker."
+      - "Validates Backup v2 checksums, relationships, duplicate identifiers, selected scopes, and capacity limits before changing destination financial data."
+      - "Runs Backup v2 restores as resumable, workspace-serialized operations and creates an encrypted seven-day recovery checkpoint before replacement restores."
+      - "Builds Backup v2 exports from a consistent database snapshot in the background, encrypts generated artifacts at rest, and limits downloads to their owner and retention window."
+      - "Adds durable operation progress, idempotent replay, retry handling, and automatic reconciliation when the application database commits before the queue is available."
+      - "Strengthens financial state and ownership constraints, adds privacy-safe operational telemetry, and makes the complete local CI manifest authoritative for hosted checks."
+      - "Adds a dedicated production worker, correct primary/cache/queue database connectivity, Ruby 4.0.6 container verification, and removes unused media and cable dependencies."
   - version: "2.0.0"
     released_on: "2026-08-07"
     title: "One financial workspace, end to end"

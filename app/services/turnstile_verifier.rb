@@ -28,7 +28,12 @@ class TurnstileVerifier
 
     payload.fetch("success", false)
   rescue StandardError => error
-    Rails.logger.warn("Turnstile verification failed: #{error.class}: #{error.message}")
+    Platform::OperationalEvents.notify(
+      "external_dependency.failed",
+      dependency: "cloudflare_turnstile",
+      operation: "verify_token",
+      error_class: error.class.name
+    )
     false
   end
 

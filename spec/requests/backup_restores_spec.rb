@@ -1,9 +1,17 @@
 require "rails_helper"
 
 RSpec.describe "Backup & restore", type: :request do
+  include ActiveJob::TestHelper
+
   let(:user) { create(:user) }
 
   before { sign_in user }
+
+  it "rejects a nested restore preview token" do
+    post import_backup_restore_path, params: { preview_token: { value: "invalid" } }
+
+    expect(response).to have_http_status(:bad_request)
+  end
 
   it "exports the selected scopes as versioned JSON" do
     checking = create(:account, user: user, name: "Checking")
@@ -201,8 +209,17 @@ RSpec.describe "Backup & restore", type: :request do
     backfill = Platform::TargetBackfill::Runner.call(user: user)
     backfill.workspace.update!(target_writes_enabled: true, target_reads_enabled: true)
 
-    post export_backup_restore_path, params: { export_scopes: [ "accounts" ] }
+    expect do
+      post export_backup_restore_path, params: { export_scopes: [ "accounts" ] }
+    end.to have_enqueued_job(Platform::Backup::V2::ExportJob)
 
+    operation = backfill.workspace.operation_runs.find_by!(operation_type: "backup_v2_export")
+    expect(response).to redirect_to(operation_run_path(operation))
+
+    perform_enqueued_jobs(only: Platform::Backup::V2::ExportJob)
+
+    artifact = user.backup_export_artifacts.available.sole
+    get backup_export_artifact_path(artifact)
     expect(response).to have_http_status(:ok)
     payload = JSON.parse(response.body)
     expect(payload).to include(
@@ -215,6 +232,7 @@ RSpec.describe "Backup & restore", type: :request do
     expect(payload.dig("data", "accounts", "records").sole).to include(
       "external_id" => match(Platform::Backup::V2::Importer::UUID_PATTERN)
     )
+    expect(operation.reload).to be_state_succeeded
     expect(backfill.workspace.data_transfer_runs.operation_export.state_succeeded).to exist
     expect(backfill.workspace.audit_events.where(action: "backup_export")).to exist
   end
@@ -1121,11 +1139,18 @@ RSpec.describe "Backup & restore", type: :request do
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Confirm replacement")
 
-    post import_backup_restore_path, params: { preview_token: preview_token, confirm_replace_existing: "1" }
-    follow_redirect!
+    expect do
+      post import_backup_restore_path, params: { preview_token: preview_token, confirm_replace_existing: "1" }
+    end.to have_enqueued_job(Platform::Backup::V2::RestoreJob)
+    operation = workspace.operation_runs.find_by!(operation_type: "backup_v2_restore")
+    expect(response).to redirect_to(operation_run_path(operation))
+    expect(user.accounts.reload.pluck(:name)).to eq([ "Before checking" ])
 
+    perform_enqueued_jobs(only: Platform::Backup::V2::RestoreJob)
+
+    expect(operation.reload).to be_state_succeeded
+    get backup_restore_path
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("recoverable checkpoint")
     expect(user.accounts.reload.pluck(:name)).to eq([ "After checking" ])
     checkpoint = workspace.restore_checkpoints.available.sole
     expect(response.body).to include(checkpoint.id.delete("-").first(12).upcase)

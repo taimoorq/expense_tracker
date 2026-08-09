@@ -3,6 +3,7 @@ class OperationRunsController < ApplicationController
 
   def show
     @status = Platform::Operations::Status.build(@operation)
+    @backup_export_artifact = current_user.backup_export_artifacts.available.find_by(operation_run: @operation)
     render :show, layout: false if request.headers["Turbo-Frame"] == "operation_status_#{@operation.id}"
   end
 

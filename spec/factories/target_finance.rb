@@ -102,4 +102,64 @@ FactoryBot.define do
     request_digest { Digest::SHA256.hexdigest(idempotency_key) }
     state { "pending" }
   end
+
+  factory :data_transfer_run do
+    association :budget_workspace
+    operation { "restore" }
+    payload_format_version { "2" }
+    sequence(:payload_checksum) { |number| Digest::SHA256.hexdigest("transfer-#{number}") }
+    state { "pending" }
+  end
+
+  factory :import_batch do
+    association :budget_workspace
+    import_kind { "account_activity" }
+    sequence(:original_filename) { |number| "activity-#{number}.csv" }
+    sequence(:file_digest) { |number| Digest::SHA256.hexdigest("import-#{number}") }
+    sequence(:idempotency_key) { |number| "activity-import-#{number}" }
+    parser_version { "1" }
+    mapping_version { "1" }
+    fingerprint_version { "1" }
+    status { "previewed" }
+  end
+
+  factory :account_activity_import_draft do
+    association :user
+    budget_workspace { association :budget_workspace, legacy_owner_user: user }
+    account do
+      association :account,
+        user: user,
+        budget_workspace: budget_workspace,
+        currency_code: budget_workspace.default_currency_code
+    end
+    sequence(:token_digest) { |number| Digest::SHA256.hexdigest("draft-token-#{number}") }
+    sequence(:commit_idempotency_key) { |number| Digest::SHA256.hexdigest("activity-commit-#{number}") }
+    file_digest { Digest::SHA256.hexdigest("activity-file") }
+    rows_count { 0 }
+    imported_count { 0 }
+    duplicate_count { 0 }
+    preview_payload do
+      {
+        "ok" => true,
+        "account_id" => account.id,
+        "file_digest" => file_digest,
+        "commit_idempotency_key" => commit_idempotency_key,
+        "rows_count" => rows_count,
+        "imported_count" => imported_count,
+        "duplicate_count" => duplicate_count,
+        "original_filename" => "activity.csv",
+        "header_row_number" => 1,
+        "column_mapping" => {
+          "transaction_on" => "Date",
+          "description" => "Description",
+          "raw_amount" => "Amount"
+        },
+        "amount_strategy" => "charges_are_negative",
+        "warnings" => [],
+        "rows" => []
+      }
+    end
+    state { "previewed" }
+    expires_at { 15.minutes.from_now }
+  end
 end

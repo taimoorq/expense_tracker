@@ -26,7 +26,7 @@ module Platform
         POSTING_FIELDS = %i[amount currency_code role sequence_number created_at updated_at].freeze
         ALLOCATION_FIELDS = %i[amount currency_code match_kind match_confidence matched_at created_at updated_at].freeze
 
-        def initialize(user:, payload:, scopes:, replace_existing: false, checkpoint: nil)
+        def initialize(user:, payload:, scopes:, replace_existing: false, checkpoint: nil, operation_run: nil, transfer: nil)
           @user = user
           @payload = payload.to_h.deep_symbolize_keys
           @scopes = Array(scopes).map(&:to_s) & SCOPES
@@ -34,6 +34,8 @@ module Platform
           @counts = Hash.new(0)
           @replace_existing = replace_existing
           @checkpoint = checkpoint
+          @managed_operation = operation_run
+          @supplied_transfer = transfer
         end
 
         def call
@@ -44,25 +46,30 @@ module Platform
           prior = prior_success
           return { success: true, counts: prior.result_counts } if prior.present?
 
-          @transfer = start_transfer!
+          @transfer = prepare_transfer!
           outcome = execute_restore
-          { success: true, counts: outcome.value.result_counts }
+          result = { success: true, counts: outcome.value.result_counts, transfer: outcome.value }
+          report_success(outcome)
+          result
         rescue ActiveRecord::RecordInvalid => error
           record_failure(error)
+          report_failure(error)
           failure(error.record.errors.full_messages.to_sentence.presence || "The backup contains an invalid record.")
         rescue RelationshipError, Platform::Backup::V2::LegacyProjection::ProjectionError, ArgumentError, KeyError => error
           record_failure(error)
+          report_failure(error)
           failure(error.message)
         rescue StandardError => error
           record_failure(error)
-          Rails.logger.error("[backup_v2_restore] #{error.full_message}")
+          report_failure(error)
+          Rails.error.report(error, handled: true, context: { operation: "backup_v2_restore" })
           failure("Backup V2 restore failed safely (#{error.class.name}).")
         end
 
         private
 
-        attr_reader :checkpoint, :counts, :maps, :membership, :payload, :replace_existing,
-          :scopes, :transfer, :user, :workspace
+        attr_reader :checkpoint, :counts, :managed_operation, :maps, :membership, :payload,
+          :replace_existing, :scopes, :supplied_transfer, :transfer, :user, :workspace
 
         def bootstrap_workspace!
           metadata = payload.fetch(:workspace)
@@ -88,6 +95,15 @@ module Platform
         end
 
         def execute_restore
+          if managed_operation
+            completion = execute_restore_command(managed_operation)
+            return Platform::Operations::Executor::Outcome.new(
+              operation_run: managed_operation,
+              value: completion.value,
+              replayed: false
+            )
+          end
+
           Platform::Operations::Executor.call(
             workspace: workspace,
             actor_membership: membership,
@@ -97,20 +113,22 @@ module Platform
             redacted_parameters: { "format_version" => 2, "scopes" => scopes },
             retryable: true,
             on_replay: ->(reference) { DataTransferRun.find(reference.fetch("id")) }
-          ) do |operation|
-            transfer.update!(operation_run: operation)
-            prepare_destination! if financial_restore?
-            import_financial_bundle if financial_restore?
-            project_legacy_compatibility!(operation) if financial_restore?
-            import_preferences if scopes.include?("preferences")
-            mark_workspace_restore_ready! if financial_restore?
-            finish_transfer!(operation)
-            Platform::Operations::Executor::Completion.new(
-              value: transfer,
-              result_counts: counts,
-              result_reference: { "type" => "DataTransferRun", "id" => transfer.id }
-            )
-          end
+          ) { |operation| execute_restore_command(operation) }
+        end
+
+        def execute_restore_command(operation)
+          transfer.update!(operation_run: operation)
+          prepare_destination! if financial_restore?
+          import_financial_bundle if financial_restore?
+          project_legacy_compatibility!(operation) if financial_restore?
+          import_preferences if scopes.include?("preferences")
+          mark_workspace_restore_ready! if financial_restore?
+          finish_transfer!(operation)
+          Platform::Operations::Executor::Completion.new(
+            value: transfer,
+            result_counts: counts,
+            result_reference: { "type" => "DataTransferRun", "id" => transfer.id }
+          )
         end
 
         def import_financial_bundle
@@ -466,7 +484,22 @@ module Platform
           counts.merge!(projected_counts)
         end
 
-        def start_transfer!
+        def prepare_transfer!
+          if supplied_transfer
+            unless supplied_transfer.budget_workspace_id == workspace.id && supplied_transfer.payload_checksum == payload.fetch(:payload_checksum)
+              raise RelationshipError, "The staged transfer does not match this backup."
+            end
+            supplied_transfer.update!(
+              actor_membership: membership,
+              checkpoint_reference: checkpoint&.id&.to_s || "empty-target",
+              state: "running",
+              started_at: Time.current,
+              completed_at: nil,
+              error_code: nil
+            )
+            return supplied_transfer
+          end
+
           workspace.data_transfer_runs.create!(
             actor_membership: membership,
             operation: "restore",
@@ -522,6 +555,27 @@ module Platform
 
         def failure(message)
           { success: false, error: message }
+        end
+
+        def report_success(outcome)
+          Platform::OperationalEvents.notify(
+            "backup_restore.succeeded",
+            workspace_id: workspace.id,
+            transfer_id: transfer.id,
+            operation_id: outcome.operation_run.id,
+            result_count: transfer.result_counts.values.grep(Numeric).sum,
+            replacement: replace_existing
+          )
+        end
+
+        def report_failure(error)
+          Platform::OperationalEvents.notify(
+            "backup_restore.failed",
+            workspace_id: workspace&.id,
+            transfer_id: transfer&.id,
+            error_class: error.class.name,
+            replacement: replace_existing
+          )
         end
 
         class RelationshipError < StandardError; end

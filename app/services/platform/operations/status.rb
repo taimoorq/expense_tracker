@@ -3,6 +3,7 @@ module Platform
     class Status
       VISIBLE_TYPES = {
         "backup_v2_restore" => [ "Backup restore", "Restoring the selected backup into this budget." ],
+        "backup_v2_export" => [ "Backup export", "Building a consistent portable backup file." ],
         "commit_legacy_account_activity_import" => [ "Account activity import", "Saving the reviewed transaction rows." ],
         "reverse_import_batch" => [ "Import reversal", "Reversing transactions created by an import." ],
         "generate_budget_period" => [ "Month generation", "Creating planned items from recurring transactions." ],

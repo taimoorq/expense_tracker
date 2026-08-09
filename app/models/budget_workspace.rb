@@ -28,6 +28,8 @@ class BudgetWorkspace < ApplicationRecord
   has_many :audit_events, dependent: :restrict_with_error
   has_many :data_transfer_runs, dependent: :restrict_with_error
   has_many :restore_checkpoints, dependent: :restrict_with_error
+  has_many :backup_restore_drafts, dependent: :restrict_with_error
+  has_many :backup_export_artifacts, dependent: :restrict_with_error
   has_many :legacy_record_mappings, dependent: :restrict_with_error
   has_many :migration_discrepancies, dependent: :restrict_with_error
   belongs_to :legacy_owner_user, class_name: "User", optional: true

@@ -1,5 +1,3 @@
-require "digest"
-
 module Platform
   module Operations
     class Executor
@@ -28,15 +26,16 @@ module Platform
         @actor_membership = actor_membership
         @operation_type = operation_type
         @idempotency_key = idempotency_key
-        @request_digest = Digest::SHA256.hexdigest(Platform::CanonicalJson.dump(request))
+        @request_digest = RequestDigest.for(request)
         @redacted_parameters = redacted_parameters
         @retryable = retryable
         @on_replay = on_replay
       end
 
       def call
+        monotonic_started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         operation = nil
-        ApplicationRecord.transaction do
+        outcome = ApplicationRecord.transaction do
           operation = find_or_create_operation
           operation.lock!
           verify_request!(operation)
@@ -50,6 +49,7 @@ module Platform
           end
 
           operation.update!(state: "running", started_at: Time.current, completed_at: nil, error_code: nil)
+          report_started(operation)
           completion = yield(operation)
           operation.update!(
             state: "succeeded",
@@ -60,10 +60,13 @@ module Platform
           )
           Outcome.new(operation_run: operation, value: completion.value, replayed: false)
         end
+        report_outcome(outcome, duration_ms(monotonic_started_at))
+        outcome
       rescue IdempotencyConflict
         raise
       rescue StandardError => error
-        record_failure(error)
+        failed_operation = record_failure(error)
+        report_failure(failed_operation || operation, error, duration_ms(monotonic_started_at))
         raise
       end
 
@@ -104,8 +107,48 @@ module Platform
             error_code: error.class.name.underscore.tr("/", "_")
           )
         end
+        operation
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
         nil
+      end
+
+      def report_started(operation)
+        Platform::OperationalEvents.notify(
+          "operation.started",
+          workspace_id: workspace.id,
+          operation_id: operation.id,
+          operation_type: operation_type,
+          retryable: operation.retryable?
+        )
+      end
+
+      def report_outcome(outcome, elapsed_ms)
+        operation = outcome.operation_run
+        event_name = outcome.replayed? ? "operation.replayed" : "operation.succeeded"
+        payload = {
+          workspace_id: workspace.id,
+          operation_id: operation.id,
+          operation_type: operation_type,
+          duration_ms: elapsed_ms
+        }
+        payload[:result_count] = operation.result_counts.values.grep(Numeric).sum unless outcome.replayed?
+        Platform::OperationalEvents.notify(event_name, **payload)
+      end
+
+      def report_failure(operation, error, elapsed_ms)
+        Platform::OperationalEvents.notify(
+          "operation.failed",
+          workspace_id: workspace.id,
+          operation_id: operation&.id,
+          operation_type: operation_type,
+          duration_ms: elapsed_ms,
+          error_class: error.class.name,
+          retryable: operation&.retryable? || retryable
+        )
+      end
+
+      def duration_ms(monotonic_started_at)
+        ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - monotonic_started_at) * 1_000).round
       end
 
       class IdempotencyConflict < StandardError; end

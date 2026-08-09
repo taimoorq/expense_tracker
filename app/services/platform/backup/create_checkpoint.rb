@@ -43,7 +43,7 @@ module Platform
             payload_checksum: checksum,
             encryption_version: CheckpointCodec::VERSION,
             selected_scopes: checkpoint_scopes,
-            result_counts: payload_counts(payload),
+            result_counts: PayloadCounts.call(payload.fetch(:data, {})),
             encrypted_payload: CheckpointCodec.encode(payload),
             expires_at: Time.current + RETENTION
           )
@@ -77,20 +77,6 @@ module Platform
             Platform::UserDataExport.new(user: user, scopes: requested_scopes).as_json
           end
           [ payload, requested_scopes ]
-        end
-      end
-
-      def payload_counts(payload)
-        payload.fetch(:data, {}).each_with_object({}) do |(scope, value), counts|
-          counts[scope.to_s] = count_records(value)
-        end
-      end
-
-      def count_records(value)
-        case value
-        when Array then value.size
-        when Hash then value.values.sum { |nested| count_records(nested) }
-        else 0
         end
       end
     end

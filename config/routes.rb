@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   resource :settings, only: [ :show, :update ]
   resource :onboarding_preference, only: :update
   resources :operation_runs, only: :show, path: "operations"
+  resources :backup_export_artifacts, only: :show, path: "backup_exports"
 
   namespace :admin do
     root "dashboard#show"

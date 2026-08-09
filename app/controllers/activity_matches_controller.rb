@@ -2,9 +2,10 @@ class ActivityMatchesController < ApplicationController
   before_action :load_target_context
 
   def create
-    transaction = @workspace.financial_transactions.find(params[:financial_transaction_id])
-    budget_item = @workspace.budget_items.find(params[:budget_item_id])
-    amount = params[:amount].presence || transaction.available_to_allocate
+    match_parameters = activity_match_parameters
+    transaction = @workspace.financial_transactions.find(match_parameters.fetch(:financial_transaction_id))
+    budget_item = @workspace.budget_items.find(match_parameters.fetch(:budget_item_id))
+    amount = match_parameters[:amount].presence || transaction.available_to_allocate
     Accounts::LegacyMatchBridge.match(
       workspace: @workspace,
       actor_membership: @membership,
@@ -21,7 +22,7 @@ class ActivityMatchesController < ApplicationController
   end
 
   def destroy
-    allocation = @workspace.budget_allocations.find(params[:id])
+    allocation = @workspace.budget_allocations.find(params.expect(:id))
     Accounts::LegacyMatchBridge.unmatch(
       workspace: @workspace,
       actor_membership: @membership,
@@ -35,6 +36,15 @@ class ActivityMatchesController < ApplicationController
   end
 
   private
+
+  def activity_match_parameters
+    financial_transaction_id, budget_item_id = params.expect(:financial_transaction_id, :budget_item_id)
+    {
+      financial_transaction_id: financial_transaction_id,
+      budget_item_id: budget_item_id,
+      amount: params.permit(:amount)[:amount]
+    }
+  end
 
   def load_target_context
     @workspace = BudgetWorkspace.find_by(legacy_owner_user_id: current_user.id, target_reads_enabled: true)

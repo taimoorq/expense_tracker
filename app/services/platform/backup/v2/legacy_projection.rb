@@ -299,7 +299,8 @@ module Platform
             legacy_import = legacy_imports[row.import_batch_id]
             next if transaction.blank? || legacy_import.blank?
 
-            posting = transaction.account_postings.find_by(account_id: legacy_import.account_id) || transaction.account_postings.first
+            posting = transaction.account_postings.find_by(account_id: legacy_import.account_id) ||
+              transaction.account_postings.order(:sequence_number).first
             next if posting.blank?
 
             entry = allocated_legacy_entry(transaction)

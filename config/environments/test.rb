@@ -41,6 +41,12 @@ Rails.application.configure do
 
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
+  config.active_support.disallowed_deprecation = :raise
+  config.active_support.disallowed_deprecation_warnings = [ /Calling order dependent finder methods/ ]
+
+  config.after_initialize do
+    ActiveRecord.raise_on_missing_required_finder_order_columns = true
+  end
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true

@@ -4,6 +4,7 @@ class RestoreCheckpoint < ApplicationRecord
   belongs_to :budget_workspace
   belongs_to :actor_membership, class_name: "WorkspaceMembership", optional: true
   belongs_to :checkpoint_operation, class_name: "OperationRun", optional: true
+  has_many :backup_restore_drafts, dependent: :restrict_with_error
 
   validates :payload_format_version, :encryption_version, :expires_at, presence: true
   validates :payload_checksum, format: { with: /\A[0-9a-f]{64}\z/ }

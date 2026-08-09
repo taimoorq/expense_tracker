@@ -126,6 +126,23 @@ RSpec.describe "Activity", type: :request do
     expect(response).to have_http_status(:not_found)
   end
 
+  it "rejects malformed target reconciliation parameter shapes" do
+    workspace = create(
+      :budget_workspace,
+      legacy_owner_user: user,
+      target_writes_enabled: true,
+      target_reads_enabled: true
+    )
+    create(:workspace_membership, budget_workspace: workspace, user: user)
+
+    post activity_matches_path, params: {
+      financial_transaction_id: [ SecureRandom.uuid ],
+      budget_item_id: SecureRandom.uuid
+    }
+
+    expect(response).to have_http_status(:bad_request)
+  end
+
   it "keeps target account movement drill-downs scoped to exact dates and direction" do
     account = create(:account, user: user, name: "Checking")
     month = create(:budget_month, user: user, month_on: Date.new(2026, 8, 1))

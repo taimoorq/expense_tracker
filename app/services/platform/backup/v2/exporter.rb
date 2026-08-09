@@ -281,7 +281,7 @@ module Platform
             payload_checksum: payload.fetch(:payload_checksum),
             selected_scopes: scopes,
             state: "succeeded",
-            result_counts: export_counts(payload.fetch(:data)),
+            result_counts: Platform::Backup::PayloadCounts.call(payload.fetch(:data)),
             started_at: Time.current,
             completed_at: Time.current
           )
@@ -293,16 +293,6 @@ module Platform
             action: "backup_export",
             changed_fields: %i[state selected_scopes payload_format_version]
           )
-        end
-
-        def export_counts(data)
-          data.each_with_object({}) do |(scope, value), counts|
-            counts[scope.to_s] = if value.is_a?(Hash)
-              value.values.sum { |records| records.is_a?(Array) ? records.size : 0 }
-            else
-              value.respond_to?(:size) ? value.size : 0
-            end
-          end
         end
       end
     end

@@ -92,4 +92,106 @@ RSpec.describe "target financial database constraints" do
       )
     end.to raise_error(ActiveRecord::StatementInvalid, /postings_amount_nonzero/)
   end
+
+  it "rejects cross-owner durable import drafts below Active Record" do
+    draft = create(:account_activity_import_draft)
+    other_user = create(:user)
+
+    expect do
+      AccountActivityImportDraft.where(id: draft.id).update_all(user_id: other_user.id)
+    end.to raise_error(ActiveRecord::InvalidForeignKey, /fk_activity_import_drafts_account_owner/)
+  end
+
+  it "requires terminal durable import draft timestamps below Active Record" do
+    draft = create(:account_activity_import_draft)
+
+    expect do
+      AccountActivityImportDraft.where(id: draft.id).update_all(state: "consumed", consumed_at: nil)
+    end.to raise_error(ActiveRecord::StatementInvalid, /activity_import_drafts_consumed_coherent/)
+  end
+
+  it "requires terminal staged backup timestamps below Active Record" do
+    source = create(:user)
+    token = Platform::BackupRestorePreviewStore.new(user: source).store(
+      payload: {
+        format: Platform::UserDataExport::FORMAT_NAME,
+        version: 1,
+        data: { preferences: { default_landing_page: "overview" } }
+      },
+      scopes: [ "preferences" ],
+      encrypted: false
+    )
+    draft = Platform::BackupRestorePreviewStore.new(user: source).load_draft(token)
+
+    expect do
+      BackupRestoreDraft.where(id: draft.id).update_all(state: "consumed", consumed_at: nil)
+    end.to raise_error(ActiveRecord::StatementInvalid, /backup_restore_drafts_consumed_coherent/)
+  end
+
+  invalid_state_updates = [
+    [
+      "requires void evidence for voided budget items",
+      :budget_item,
+      { state: "voided", voided_at: nil, void_reason: nil },
+      "budget_items_void_state_coherent"
+    ],
+    [
+      "rejects void evidence on open budget items",
+      :budget_item,
+      { state: "open", voided_at: Time.current, void_reason: "duplicate" },
+      "budget_items_void_state_coherent"
+    ],
+    [
+      "requires void evidence for voided transactions",
+      :financial_transaction,
+      { state: "voided", voided_at: nil, void_reason: nil },
+      "transactions_void_state_coherent"
+    ],
+    [
+      "requires closed workspaces to record when they closed",
+      :budget_workspace,
+      { status: "closed", closed_at: nil },
+      "workspaces_closed_state_coherent"
+    ],
+    [
+      "rejects removal timestamps on active memberships",
+      :workspace_membership,
+      { status: "active", removed_at: Time.current },
+      "memberships_removed_state_coherent"
+    ],
+    [
+      "rejects completion timestamps on pending operations",
+      :operation_run,
+      { state: "pending", completed_at: Time.current },
+      "operations_completion_state_coherent"
+    ],
+    [
+      "requires terminal transfer runs to record completion",
+      :data_transfer_run,
+      { state: "succeeded", completed_at: nil },
+      "transfer_runs_completion_state_coherent"
+    ],
+    [
+      "rejects commit timestamps on previewed import batches",
+      :import_batch,
+      { status: "previewed", committed_at: Time.current },
+      "import_batches_terminal_state_coherent"
+    ],
+    [
+      "requires failed import batches to record failure time",
+      :import_batch,
+      { status: "failed", failed_at: nil },
+      "import_batches_terminal_state_coherent"
+    ]
+  ]
+
+  invalid_state_updates.each do |description, factory_name, attributes, constraint_name|
+    it "#{description} below Active Record" do
+      record = create(factory_name)
+
+      expect do
+        record.class.where(id: record.id).update_all(attributes)
+      end.to raise_error(ActiveRecord::StatementInvalid, /#{constraint_name}/)
+    end
+  end
 end

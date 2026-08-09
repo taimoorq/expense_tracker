@@ -163,12 +163,11 @@ module Platform
       def normalized_category(entry)
         return if entry.category.blank?
 
-        category = workspace.categories.where("lower(name) = ?", entry.category.strip.downcase).first
-        category ||= workspace.categories.create!(
+        category = Platform::TargetSync::CategoryResolver.call(
+          workspace: workspace,
           name: entry.category.strip,
           flow_kind: Platform::TargetTranslation::ExpenseEntry.flow_kind(entry),
-          budget_group: Platform::TargetTranslation::ExpenseEntry.budget_group(entry),
-          display_order: workspace.categories.maximum(:display_order).to_i + 1
+          budget_group: Platform::TargetTranslation::ExpenseEntry.budget_group(entry)
         )
         return category if category.flow_kind == Platform::TargetTranslation::ExpenseEntry.flow_kind(entry)
 

@@ -25,6 +25,16 @@ module Platform
         raise GateFailed, "Open migration discrepancies block target reads." if workspace.migration_discrepancies.status_open.exists?
 
         results = SHADOW_GATES.map { |gate| gate.call(workspace: workspace, persist: false) }
+        results.zip(SHADOW_GATES).each do |result, gate|
+          next if result.matched?
+
+          Platform::OperationalEvents.notify(
+            "shadow_read.mismatch",
+            workspace_id: workspace.id,
+            comparison_type: gate.name,
+            mismatch_count: result.comparisons.count { |comparison| !comparison.matched? }
+          )
+        end
         raise GateFailed, "A target shadow-read comparison failed." if results.any? { |result| !result.matched? }
 
         Result.new(

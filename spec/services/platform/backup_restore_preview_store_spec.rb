@@ -1,22 +1,26 @@
 require "rails_helper"
 
 RSpec.describe Platform::BackupRestorePreviewStore do
-  it "stores preview tokens in the configured Rails cache" do
+  it "stores encrypted preview payloads behind a one-way token digest" do
     user = create(:user)
-    configured_store = ActiveSupport::Cache::MemoryStore.new
-
-    allow(Rails).to receive(:cache).and_return(configured_store)
+    payload = {
+      format: Platform::UserDataExport::FORMAT_NAME,
+      version: 1,
+      data: { preferences: { default_landing_page: "accounts" } }
+    }
 
     token = described_class.new(user: user).store(
-      payload: { format: "expense_tracker_backup" },
-      scopes: [ "accounts" ],
+      payload: payload,
+      scopes: [ "preferences" ],
       encrypted: false
     )
+    draft = BackupRestoreDraft.sole
 
-    expect(configured_store.exist?("backup_restore_preview:#{user.id}:#{token}")).to be(true)
+    expect(draft.token_digest).to eq(Digest::SHA256.hexdigest(token))
+    expect(draft.encrypted_payload).not_to include("default_landing_page", "accounts")
     expect(described_class.new(user: user).load(token)).to include(
-      payload: { format: "expense_tracker_backup" },
-      scopes: [ "accounts" ],
+      payload: include(format: Platform::UserDataExport::FORMAT_NAME, version: 1),
+      scopes: [ "preferences" ],
       encrypted: false
     )
   end

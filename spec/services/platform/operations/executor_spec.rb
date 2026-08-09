@@ -83,4 +83,33 @@ RSpec.describe Platform::Operations::Executor do
     expect(operation.error_code).to eq("argument_error")
     expect(operation.redacted_parameters).to eq("field_names" => [ "name" ])
   end
+
+  it "emits structured lifecycle events without request or result payloads" do
+    workspace = create(:budget_workspace)
+    membership = create(:workspace_membership, budget_workspace: workspace)
+    command = lambda do |_operation|
+      category = create(:category, budget_workspace: workspace)
+      described_class::Completion.new(
+        value: category,
+        result_counts: { "created" => 1 },
+        result_reference: { "type" => "Category", "id" => category.id }
+      )
+    end
+
+    events = capture_rails_events do
+      execute(workspace: workspace, membership: membership, &command)
+      execute(workspace: workspace, membership: membership, &command)
+    end
+
+    operation_events = events.select { |event| event[:name].start_with?("finance_tracking.operation.") }
+    expect(operation_events.map { |event| event[:name] }).to eq(
+      %w[
+        finance_tracking.operation.started
+        finance_tracking.operation.succeeded
+        finance_tracking.operation.replayed
+      ]
+    )
+    expect(operation_events.second[:payload]).to include(result_count: 1)
+    expect(operation_events.flat_map { |event| event[:payload].keys }).not_to include(:request, :result_reference)
+  end
 end

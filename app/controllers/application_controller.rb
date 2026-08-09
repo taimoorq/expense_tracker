@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!, unless: :devise_controller?
   before_action :enforce_current_user_access_state, unless: :devise_controller?
+  before_action :set_operational_event_context
   before_action :set_current_theme
 
   # Changes to the importmap will invalidate the etag for HTML responses
@@ -88,6 +89,13 @@ class ApplicationController < ActionController::Base
 
     sign_out(current_user)
     redirect_to new_user_session_path, alert: "Your access has been suspended. Contact an administrator for help."
+  end
+
+  def set_operational_event_context
+    Rails.event.set_context(
+      request_id: request.request_id,
+      user_id: user_signed_in? ? current_user.id : nil
+    )
   end
 
   def set_current_theme

@@ -3,9 +3,9 @@ class BudgetMonthClosesController < ApplicationController
 
   def show
     @readiness = Budgeting::CloseReadiness.call(period: @target_period)
-    @active_close = @target_period.month_closes.state_closed
+    @active_close = @target_period.month_closes
       .includes(:item_snapshots, :transaction_snapshots)
-      .first
+      .find_by(state: "closed")
     @summary = @active_close&.report_summary || @readiness.summary
     @unresolved_account_count = @active_close&.unresolved_count || @readiness.unresolved_account_count
   end

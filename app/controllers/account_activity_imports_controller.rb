@@ -22,66 +22,41 @@ class AccountActivityImportsController < ApplicationController
   end
 
   def create
-    preview_data = preview_data_for_import
-    return if preview_data.blank?
+    draft = preview_draft_for_import
+    return if draft.blank?
 
-    result = Accounts::ActivityImports::Importer.new(user: current_user, account: @account, preview: preview_data).call
-
-    if result[:ok]
-      preview_store.clear(params[:preview_token])
-      redirect_to account_path(@account, view: "manage", anchor: "import-history"), notice: import_success_notice(result)
-    else
-      redirect_to new_account_account_activity_import_path(@account), alert: "Import failed: #{result[:error]}"
-    end
+    operation = Accounts::ActivityImports::Dispatch.call(draft: draft)
+    redirect_to operation_run_path(operation), notice: "Activity import queued. You can safely leave this page."
+  rescue Accounts::ActivityImports::Dispatch::InvalidDraft
+    redirect_for_expired_preview
   end
 
   private
 
   def set_account
-    @account = current_user.accounts.find(params[:account_id])
+    @account = current_user.accounts.find(params.expect(:account_id))
   end
 
   def preview_store
     @preview_store ||= Accounts::ActivityImports::PreviewStore.new(user: current_user)
   end
 
-  def preview_data_for_import
-    preview_data = preview_store.load(params[:preview_token])
-    return redirect_for_expired_preview unless preview_data
-
-    preview_data = preview_data.deep_symbolize_keys
-    return preview_data if preview_data[:account_id].to_s == @account.id
+  def preview_draft_for_import
+    draft = preview_store.load_draft(preview_token)
+    return redirect_for_expired_preview unless draft
+    return draft if draft.account_id == @account.id
 
     redirect_to new_account_account_activity_import_path(@account), alert: "Activity preview does not match this account."
     nil
   end
 
+  def preview_token
+    @preview_token ||= params.expect(:preview_token)
+  end
+
   def redirect_for_expired_preview
     redirect_to new_account_account_activity_import_path(@account), alert: "Activity preview expired. Preview the file again before importing."
     nil
-  end
-
-  def import_success_notice(result)
-    details = []
-    duplicate_count = result[:duplicate_count].to_i
-    warning_count = Array(result[:warnings]).size
-    details << "#{duplicate_count} duplicate row#{'s' unless duplicate_count == 1} skipped" if duplicate_count.positive?
-    details << "#{warning_count} import warning#{'s' unless warning_count == 1}" if warning_count.positive?
-    base = "Activity import complete: #{result[:imported_count]} row#{'s' unless result[:imported_count] == 1} imported."
-    source_message = if result[:import]&.institution_balance?
-      "Institution balance is now the trusted balance source."
-    else
-      "Activity rows are saved and will apply once the account has a trusted balance source."
-    end
-    import_record = result[:import]
-    coverage_message = if import_record&.started_on && import_record&.ended_on
-      "Coverage logged from #{I18n.l(import_record.started_on, format: :long)} through #{I18n.l(import_record.ended_on, format: :long)}."
-    else
-      "The import time and available coverage dates were logged."
-    end
-    return "#{base} #{coverage_message} #{source_message}" if details.empty?
-
-    "#{base} #{details.join(', ')}. #{coverage_message} #{source_message}"
   end
 
   def import_history(candidate_starts_on: nil, candidate_ends_on: nil)

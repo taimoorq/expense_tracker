@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Account activity imports", type: :request do
+  include ActiveJob::TestHelper
+
   let(:user) { create(:user) }
   let(:account) { create(:account, user: user, name: "Rewards Card", kind: :credit_card) }
 
@@ -44,18 +46,31 @@ RSpec.describe "Account activity imports", type: :request do
 
     expect do
       post account_account_activity_imports_path(account), params: { preview_token: preview_token }
-    end.to change(AccountActivityImport.where(account: account), :count).by(1)
-      .and change(AccountActivity.where(account: account), :count).by(197)
+    end.to change(OperationRun.where(operation_type: "commit_legacy_account_activity_import"), :count).by(1)
+      .and change(AccountActivityImportDraft.where(account: account, state: "queued"), :count).by(1)
+      .and have_enqueued_job(Accounts::ActivityImports::CommitJob)
 
-    expect(response).to redirect_to(account_path(account, view: "manage", anchor: "import-history"))
-    expect(flash[:notice]).to include("Activity import complete: 197 rows imported.")
-    expect(flash[:notice]).to include("Coverage logged from")
+    expect(AccountActivityImport.where(account: account)).to be_empty
+    expect(AccountActivity.where(account: account)).to be_empty
+
+    operation = OperationRun.find_by!(operation_type: "commit_legacy_account_activity_import")
+    expect(response).to redirect_to(operation_run_path(operation))
+    expect(flash[:notice]).to eq("Activity import queued. You can safely leave this page.")
+
+    perform_enqueued_jobs(only: Accounts::ActivityImports::CommitJob)
+
+    expect(operation.reload).to be_state_succeeded
+    expect(operation).to have_attributes(progress_current: 3, progress_total: 3)
+    expect(AccountActivityImport.where(account: account).count).to eq(1)
+    expect(AccountActivity.where(account: account).count).to eq(197)
+    expect(operation.account_activity_import_draft.reload).to be_state_consumed
+    expect(operation.account_activity_import_draft.preview_payload).to eq({})
     activity_import = account.account_activity_imports.order(:created_at).last
     expect(activity_import.imported_at).to be_present
     expect(activity_import.institution_balance).to be_negative
     expect(activity_import.institution_balance_as_of).to eq(Date.new(2026, 6, 30))
 
-    follow_redirect!
+    get account_path(account, view: "manage", anchor: "import-history")
     expect(response.body).to include("What has already been imported")
     expect(response.body).to include("Safest next export start")
     expect(response.body).to include("preamble_card_activity.csv")
@@ -106,14 +121,25 @@ RSpec.describe "Account activity imports", type: :request do
     preview = {
       ok: true,
       account_id: other_account.id,
+      file_digest: Digest::SHA256.hexdigest("other-user-import"),
+      commit_idempotency_key: Digest::SHA256.hexdigest("other-user-commit"),
+      rows_count: 0,
+      imported_count: 0,
+      duplicate_count: 0,
       rows: [],
       warnings: []
     }
-    token = Accounts::ActivityImports::PreviewStore.new(user: user).store(preview)
+    token = Accounts::ActivityImports::PreviewStore.new(user: other_user).store(preview)
 
     post account_account_activity_imports_path(account), params: { preview_token: token }
 
     expect(response).to redirect_to(new_account_account_activity_import_path(account))
-    expect(flash[:alert]).to eq("Activity preview does not match this account.")
+    expect(flash[:alert]).to eq("Activity preview expired. Preview the file again before importing.")
+  end
+
+  it "rejects a nested preview token" do
+    post account_account_activity_imports_path(account), params: { preview_token: { value: "invalid" } }
+
+    expect(response).to have_http_status(:bad_request)
   end
 end

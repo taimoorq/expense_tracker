@@ -85,11 +85,11 @@ module Activity
           posting = if account_id.present?
             transaction.account_postings.find { |candidate| candidate.account_id.to_s == account_id.to_s }
           else
-            transaction.account_postings.first
+            transaction.account_postings.min_by(&:sequence_number)
           end
           account = posting&.account
           matched = transaction.budget_allocations.any?
-          allocation = transaction.budget_allocations.first
+          allocation = transaction.budget_allocations.min_by { |candidate| [ candidate.matched_at, candidate.id ] }
           available_amount = [ transaction.gross_amount - transaction.budget_allocations.sum(&:amount), 0 ].max
           needs_review = transaction.state_pending? ||
             (transaction.state_posted? && transaction.origin_kind_institution_import? && !matched)

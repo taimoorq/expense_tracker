@@ -31,7 +31,12 @@ module Platform
           fetch_latest_release
         end
       rescue StandardError => error
-        Rails.logger.warn("GitHub release check failed: #{error.class}: #{error.message}")
+        Platform::OperationalEvents.notify(
+          "external_dependency.failed",
+          dependency: "github",
+          operation: "latest_release",
+          error_class: error.class.name
+        )
         nil
       end
 

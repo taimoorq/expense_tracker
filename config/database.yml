@@ -88,8 +88,10 @@ production:
   primary: &primary_production
     <<: *default
     database: expense_tracker_production
-    username: expense_tracker
+    username: <%= ENV.fetch("EXPENSE_TRACKER_DATABASE_USERNAME", "expense_tracker") %>
     password: <%= ENV["EXPENSE_TRACKER_DATABASE_PASSWORD"] %>
+    host: <%= ENV["EXPENSE_TRACKER_DATABASE_HOST"] %>
+    port: <%= ENV.fetch("EXPENSE_TRACKER_DATABASE_PORT", 5432) %>
   cache:
     <<: *primary_production
     database: expense_tracker_production_cache
@@ -98,7 +100,3 @@ production:
     <<: *primary_production
     database: expense_tracker_production_queue
     migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: expense_tracker_production_cable
-    migrations_paths: db/cable_migrate

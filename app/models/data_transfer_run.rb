@@ -10,6 +10,8 @@ class DataTransferRun < ApplicationRecord
   belongs_to :budget_workspace
   belongs_to :actor_membership, class_name: "WorkspaceMembership", optional: true
   belongs_to :operation_run, optional: true
+  has_one :backup_restore_draft, dependent: :restrict_with_error
+  has_one :backup_export_artifact, dependent: :restrict_with_error
 
   validates :payload_format_version, presence: true
   validates :payload_checksum, format: { with: /\A[0-9a-f]{64}\z/ }

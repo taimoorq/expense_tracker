@@ -1,48 +1,67 @@
+require "digest"
+
 module Accounts
   module ActivityImports
     class PreviewStore
       DEFAULT_EXPIRATION = 15.minutes
 
-      def initialize(user:, store: nil, expires_in: DEFAULT_EXPIRATION)
+      def initialize(user:, expires_in: DEFAULT_EXPIRATION)
         @user = user
-        @store = store || default_store
         @expires_in = expires_in
       end
 
       def store(preview)
-        token = SecureRandom.uuid
-        @store.write(cache_key(token), preview, expires_in: @expires_in)
+        attributes = preview.deep_symbolize_keys
+        account = user.accounts.find(attributes.fetch(:account_id))
+        provisioned = ensure_workspace!(account)
+        token = SecureRandom.urlsafe_base64(32)
+        AccountActivityImportDraft.create!(
+          user: user,
+          account: account,
+          budget_workspace: provisioned.workspace,
+          token_digest: token_digest(token),
+          commit_idempotency_key: attributes.fetch(:commit_idempotency_key),
+          file_digest: attributes.fetch(:file_digest),
+          rows_count: attributes.fetch(:rows_count),
+          imported_count: attributes.fetch(:imported_count),
+          duplicate_count: attributes.fetch(:duplicate_count),
+          preview_payload: attributes.deep_stringify_keys,
+          expires_at: @expires_in.from_now
+        )
         token
       end
 
       def load(token)
-        return nil if token.blank?
+        load_draft(token)&.preview
+      end
 
-        @store.read(cache_key(token))
+      def load_draft(token)
+        return if token.blank?
+
+        draft = user.account_activity_import_drafts.find_by(token_digest: token_digest(token))
+        draft if draft&.dispatchable?
       end
 
       def clear(token)
-        return if token.blank?
-
-        @store.delete(cache_key(token))
+        draft = load_draft(token)
+        draft&.expire! if draft&.state_previewed?
       end
 
       private
 
-      attr_reader :user
+      attr_reader :expires_in, :user
 
-      def cache_key(token)
-        "account_activity_import_preview:#{user.id}:#{token}"
+      def ensure_workspace!(account)
+        provisioned = Identity::PersonalWorkspaceProvisioner.call(user: user)
+        account.update!(
+          budget_workspace: provisioned.workspace,
+          currency_code: provisioned.workspace.default_currency_code
+        ) if account.budget_workspace_id.blank?
+        provisioned
       end
 
-      def default_store
-        return Rails.cache unless Rails.cache.is_a?(ActiveSupport::Cache::NullStore)
-
-        self.class.null_store_fallback
-      end
-
-      def self.null_store_fallback
-        @null_store_fallback ||= ActiveSupport::Cache.lookup_store(:memory_store)
+      def token_digest(token)
+        Digest::SHA256.hexdigest(token.to_s)
       end
     end
   end

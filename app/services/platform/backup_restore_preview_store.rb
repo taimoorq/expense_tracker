@@ -1,47 +1,59 @@
+require "digest"
+
 module Platform
   class BackupRestorePreviewStore
     DEFAULT_EXPIRATION = 15.minutes
 
-    def initialize(user:, store: nil, expires_in: DEFAULT_EXPIRATION)
+    def initialize(user:, expires_in: DEFAULT_EXPIRATION)
       @user = user
-      @store = store || default_store
       @expires_in = expires_in
     end
 
     def store(payload:, scopes:, encrypted:)
-      token = SecureRandom.uuid
-      @store.write(cache_key(token), { payload: payload, scopes: scopes, encrypted: encrypted }, expires_in: @expires_in)
+      payload = payload.to_h.deep_symbolize_keys
+      validation = Platform::UserDataImportPreview.new(payload: payload, scopes: scopes).call
+      raise InvalidPreview, validation.fetch(:error) unless validation[:success]
+
+      provisioned = Identity::PersonalWorkspaceProvisioner.call(user: user)
+      token = SecureRandom.urlsafe_base64(32)
+      user.backup_restore_drafts.create!(
+        budget_workspace: provisioned.workspace,
+        token_digest: token_digest(token),
+        payload_checksum: payload[:payload_checksum].presence || Digest::SHA256.hexdigest(Platform::CanonicalJson.dump(payload)),
+        payload_format_version: payload.fetch(:version).to_s,
+        encrypted_payload: Platform::Backup::RestoreDraftCodec.encode(payload),
+        selected_scopes: Array(scopes).map(&:to_s),
+        validation_manifest: validation.fetch(:manifest, {}),
+        source_encrypted: encrypted,
+        expires_at: expires_in.from_now
+      )
       token
     end
 
     def load(token)
-      return nil if token.blank?
+      load_draft(token)&.preview_data
+    end
 
-      @store.read(cache_key(token))
+    def load_draft(token)
+      return if token.blank?
+
+      draft = user.backup_restore_drafts.find_by(token_digest: token_digest(token))
+      draft if draft&.dispatchable?
     end
 
     def clear(token)
-      return if token.blank?
-
-      @store.delete(cache_key(token))
+      draft = load_draft(token)
+      draft&.expire! if draft&.state_previewed?
     end
 
     private
 
-    attr_reader :user
+    attr_reader :expires_in, :user
 
-    def cache_key(token)
-      "backup_restore_preview:#{user.id}:#{token}"
+    def token_digest(token)
+      Digest::SHA256.hexdigest(token.to_s)
     end
 
-    def default_store
-      return Rails.cache unless Rails.cache.is_a?(ActiveSupport::Cache::NullStore)
-
-      self.class.null_store_fallback
-    end
-
-    def self.null_store_fallback
-      @null_store_fallback ||= ActiveSupport::Cache.lookup_store(:memory_store)
-    end
+    class InvalidPreview < StandardError; end
   end
 end

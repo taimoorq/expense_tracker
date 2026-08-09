@@ -98,18 +98,15 @@ module Platform
         return if entry.category.blank?
 
         normalized_name = entry.category.strip
-        category = workspace.categories.where("lower(name) = ?", normalized_name.downcase).first
-        category ||= workspace.categories.create!(
+        category = CategoryResolver.call(
+          workspace: workspace,
           name: normalized_name,
           flow_kind: flow_kind,
-          budget_group: budget_group,
-          display_order: workspace.categories.maximum(:display_order).to_i + 1
+          budget_group: budget_group
         )
         return category if category.flow_kind == flow_kind
 
         raise CategorySemanticsConflict, "Category #{normalized_name.inspect} is already used for another flow"
-      rescue ActiveRecord::RecordNotUnique
-        retry
       end
 
       def sync_occurrence(item, period)

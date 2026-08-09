@@ -1,4 +1,10 @@
 class ImportBatch < ApplicationRecord
+  STATUSES_BY_COMPLETION_TIMESTAMP = {
+    committed_at: %w[committed reverting reverted],
+    failed_at: %w[failed],
+    reverted_at: %w[reverted]
+  }.freeze
+
   enum :import_kind, {
     account_activity: "account_activity",
     budget_plan: "budget_plan",
@@ -46,15 +52,15 @@ class ImportBatch < ApplicationRecord
   end
 
   def terminal_state_is_coherent
-    timestamp = if status_committed?
-      committed_at
-    elsif status_reverted?
-      reverted_at
-    elsif status_failed?
-      failed_at
-    else
-      return
+    STATUSES_BY_COMPLETION_TIMESTAMP.each do |timestamp_attribute, applicable_statuses|
+      should_be_present = status.in?(applicable_statuses)
+      is_present = public_send(timestamp_attribute).present?
+      next if should_be_present == is_present
+
+      errors.add(
+        timestamp_attribute,
+        should_be_present ? "is required when #{status}" : "must be blank before #{applicable_statuses.first}"
+      )
     end
-    errors.add(:status, "requires its completion timestamp") if timestamp.blank?
   end
 end

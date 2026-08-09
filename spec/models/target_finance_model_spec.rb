@@ -48,4 +48,25 @@ RSpec.describe "target financial model" do
     expect(operation).not_to be_valid
     expect(operation.errors[:completed_at]).to include("is required when complete")
   end
+
+  it "rejects completion timestamps on nonterminal operation runs" do
+    operation = build(:operation_run, state: "running", completed_at: Time.current)
+
+    expect(operation).not_to be_valid
+    expect(operation.errors[:completed_at]).to include("must be blank before completion")
+  end
+
+  it "keeps every import completion timestamp aligned with its terminal state" do
+    import_batch = build(:import_batch, status: "previewed", committed_at: Time.current)
+
+    expect(import_batch).not_to be_valid
+    expect(import_batch.errors[:committed_at]).to include("must be blank before committed")
+
+    import_batch.assign_attributes(status: "failed", committed_at: nil, failed_at: nil)
+    expect(import_batch).not_to be_valid
+    expect(import_batch.errors[:failed_at]).to include("is required when failed")
+
+    import_batch.assign_attributes(status: "reverting", committed_at: Time.current)
+    expect(import_batch).to be_valid
+  end
 end

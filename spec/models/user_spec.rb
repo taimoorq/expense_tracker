@@ -21,4 +21,15 @@ RSpec.describe User, type: :model do
     expect(user.access_locked?).to be(true)
     expect(user.locked_at).to be_present
   end
+
+  it "reports legacy association access when migration telemetry is enabled" do
+    user = create(:user)
+
+    events = capture_rails_events { user.budget_months.load }
+    event = events.find { |candidate| candidate[:name] == "finance_tracking.legacy_association.accessed" }
+
+    expect(event).to be_present
+    expect(event[:payload]).to include(owner_type: "User", association: :budget_months)
+    expect(event[:payload].keys).to contain_exactly(:owner_type, :association, :source_location)
+  end
 end

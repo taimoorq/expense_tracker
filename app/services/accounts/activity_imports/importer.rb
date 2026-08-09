@@ -5,10 +5,11 @@ module Accounts
     class Importer
       INSERT_BATCH_SIZE = 1_000
 
-      def initialize(user:, account:, preview:)
+      def initialize(user:, account:, preview:, operation_run: nil)
         @user = user
         @account = account
         @preview = preview.deep_symbolize_keys
+        @operation_run = operation_run
       end
 
       def call
@@ -18,7 +19,7 @@ module Accounts
         import_record = nil
         replayed = false
 
-        ApplicationRecord.transaction do
+        target_completion = ApplicationRecord.transaction do
           import_record = find_or_create_import_record
           replayed = !import_record.previously_new_record?
 
@@ -31,27 +32,53 @@ module Accounts
               duplicate_count: counts[:duplicate_count]
             )
           end
-          Platform::TargetSync::AccountActivityImportWriter.call(legacy_import: import_record)
+          Platform::TargetSync::AccountActivityImportWriter.call(
+            legacy_import: import_record,
+            operation_run: operation_run
+          )
         end
 
-        {
+        result = {
           ok: true,
           import: import_record,
           imported_count: counts[:imported_count],
           duplicate_count: counts[:duplicate_count],
           replayed: replayed,
+          target_completion: target_completion,
           warnings: Array(preview[:warnings]),
           errors: []
         }
+        Platform::OperationalEvents.notify(
+          "import.completed",
+          workspace_id: account.budget_workspace_id,
+          import_id: import_record.id,
+          account_id: account.id,
+          imported_count: counts[:imported_count],
+          duplicate_count: counts[:duplicate_count],
+          warning_count: Array(preview[:warnings]).size,
+          replayed: replayed
+        )
+        result
       rescue ActiveRecord::RecordInvalid => error
+        report_failure(error)
         { ok: false, error: error.record.errors.full_messages.to_sentence.presence || error.message, warnings: Array(preview[:warnings]), errors: [] }
       rescue Platform::TargetSync::WriteRejected => error
+        report_failure(error)
         { ok: false, error: error.message, warnings: Array(preview[:warnings]), errors: [] }
       end
 
       private
 
-      attr_reader :account, :preview, :user
+      attr_reader :account, :operation_run, :preview, :user
+
+      def report_failure(error)
+        Platform::OperationalEvents.notify(
+          "import.failed",
+          workspace_id: account.budget_workspace_id,
+          account_id: account.id,
+          error_class: error.class.name
+        )
+      end
 
       def find_or_create_import_record
         user.account_activity_imports.create_or_find_by!(

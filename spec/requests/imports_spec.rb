@@ -22,7 +22,7 @@ RSpec.describe "CSV imports", type: :request do
 
     expect(response).to redirect_to(budget_months_path)
     expect(flash[:notice]).to include("Import complete")
-    expect(BudgetMonth.last.user).to eq(user)
+    expect(user.budget_months.sole.month_on).to eq(Date.new(2026, 3, 1))
   ensure
     file.close
     file.unlink

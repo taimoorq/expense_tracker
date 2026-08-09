@@ -3,6 +3,7 @@ class Account < ApplicationRecord
   belongs_to :budget_workspace, optional: true
   has_many :account_snapshots, -> { order(recorded_on: :desc, created_at: :desc) }, dependent: :destroy
   has_many :account_activity_imports, dependent: :destroy
+  has_many :account_activity_import_drafts, dependent: :destroy
   has_many :account_activities, dependent: :destroy
   has_many :account_postings, dependent: :restrict_with_error
   has_many :balance_observations, dependent: :restrict_with_error

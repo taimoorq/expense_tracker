@@ -1,6 +1,6 @@
 # FinanceTracking.app
 
-FinanceTracking.app 2.0 is a self-hosted Rails app for people who plan their money one month at a time. Build the plan, bring in what actually happened, connect it to your accounts, and keep the reports and source records close enough to verify.
+FinanceTracking.app is a self-hosted app for people who plan their money one month at a time. Build the plan, record what actually happened, check account balances, and open the transactions behind every report total.
 
 The app favors manual planning and CSV imports over live bank sync. It is a good fit if you want a private, hands-on budget that you control and host yourself.
 
@@ -10,10 +10,10 @@ The app favors manual planning and CSV imports over live bank sync. It is a good
 
 - [Quick start](#quick-start)
 - [What you can do](#what-you-can-do)
-- [Screenshots](#screenshots)
+- [Product tour](#product-tour)
 - [How the monthly workflow fits together](#how-the-monthly-workflow-fits-together)
 - [Self-hosting](#self-hosting)
-- [Demo and sample data](#demo-and-sample-data)
+- [Try it without entering your finances](#try-it-without-entering-your-finances)
 - [Local development](#local-development)
 - [Authentication and configuration](#authentication-and-configuration)
 - [Security and support](#security-and-support)
@@ -22,7 +22,7 @@ The app favors manual planning and CSV imports over live bank sync. It is a good
 
 ## Quick start
 
-Docker is the shortest path to a working local install. It starts the Rails app and PostgreSQL together.
+Docker is the shortest path to a working local install. It starts the app and its database together.
 
 ### 1. Start the app
 
@@ -37,9 +37,9 @@ docker compose up --build
 
 Open [http://localhost:4287](http://localhost:4287) and create an account at `/users/sign_up`.
 
-If the Overview page loads after sign-in, the app and database are ready.
+If Home opens after sign-in, the app and database are ready.
 
-### 2. Optional: load a complete demo budget
+### 2. Optional: try a complete budget without entering your finances
 
 In another terminal, run:
 
@@ -52,7 +52,7 @@ Then sign in with:
 - Email: `demo@example.com`
 - Password: `password123!`
 
-These credentials are for local evaluation only. Change them before exposing the app to anyone else.
+These credentials are only for a private trial on your computer. Never reuse them on a server or expose them to anyone else.
 
 ### 3. Stop the app
 
@@ -71,30 +71,30 @@ Your database stays in the Docker volume. `docker compose down -v` also deletes 
 
 ## What you can do
 
-- Start on Home with the current month, the exact items that need review, plan-versus-actual totals, and links to the records behind each graph.
+- Start on Home with the current month, items that need review, plan-versus-actual totals, and links to the transactions behind each graph.
 - Create a month from scratch or copy an earlier month, then reuse paychecks, subscriptions, bills, payment plans, and credit-card payments.
-- Add a one-time entry, start from an existing recurring item, or save a new recurring transaction in one focused composer.
-- Review imported and manual transactions in Activity, then match or unmatch them from planned items without losing either record.
-- Track trusted balances and observations for cash, bank, investment, credit-card, loan, and other accounts.
-- Compare live monthly trends, categories, and account movement in Reports, with exact-value tables and source-record drilldowns beside the graphs.
-- Close a month to preserve its report evidence, or reopen it before intentionally incorporating late activity.
-- Export a complete version 2 JSON backup, optionally encrypt it, preview a restore, and roll back an in-place restore from its encrypted seven-day checkpoint.
+- Add a one-time item, reuse a regular item, or save new income, bills, and payments for future months.
+- Review imported and manual transactions in Activity, match them to the plan, and correct a match without losing history.
+- Track confirmed balances for cash, bank, investment, credit-card, loan, and other accounts.
+- Compare monthly trends, categories, and account movement in Reports, with exact values and the transactions behind each total.
+- Close a month to save the final totals you reviewed, or reopen it when a late transaction needs to be added.
+- Download a password-protected backup, preview what a restore would change, and use the seven-day safety copy if you need to undo a replacement restore.
 
 The app includes in-product help for day-to-day workflows. The hosted [user guide](https://financetracking.app/docs/) covers the same features in more detail.
 
-## Screenshots
+## Product tour
 
 <table>
   <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/home-v2.webp" alt="Home showing the current month, exact attention queue, plan and actual totals, and chart-backed financial evidence" width="100%">
+      <img src="app/assets/images/marketing/home-v2.webp" alt="Home showing the current month, items that need review, planned and actual totals, and a chart with exact values" width="100%">
       <br>
       <strong>Home</strong>
       <br>
-      See what needs attention, understand the month, and open the records behind every total.
+      See what needs attention, understand the month, and open the transactions behind every total.
     </td>
     <td align="center">
-      <img src="app/assets/images/marketing/plan-v2.webp" alt="Plan library showing saved months, plan and actual totals, status, and open or clone actions" width="100%">
+      <img src="app/assets/images/marketing/plan-v2.webp" alt="Plan showing saved months, planned and actual totals, month status, and actions to open or copy a month" width="100%">
       <br>
       <strong>Plan</strong>
       <br>
@@ -103,67 +103,67 @@ The app includes in-product help for day-to-day workflows. The hosted [user guid
   </tr>
   <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/month-workspace-v2.webp" alt="Monthly workspace with plan, actual, remaining, and forecast totals plus linked review views" width="100%">
+      <img src="app/assets/images/marketing/month-workspace-v2.webp" alt="Monthly view comparing planned spending, actual spending, what remains, and the forecast" width="100%">
       <br>
-      <strong>Monthly workspace</strong>
+      <strong>Monthly view</strong>
       <br>
       Move between budget, breakdown, calendar, and planning views without losing the month.
     </td>
     <td align="center">
-      <img src="app/assets/images/marketing/activity-v2.webp" alt="Activity workspace listing imported and manual transactions with match state, account, amount, and review controls" width="100%">
+      <img src="app/assets/images/marketing/activity-v2.webp" alt="Activity listing imported and manual transactions, their accounts and amounts, and whether they match the plan" width="100%">
       <br>
       <strong>Activity</strong>
       <br>
-      Review real transactions and connect them to the plan while preserving both sides.
+      Review transactions, match them to the plan, and correct a match without losing history.
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/accounts-v2.webp" alt="Accounts overview with trusted balance observations, current and projected balances, and net-worth trend" width="100%">
+      <img src="app/assets/images/marketing/accounts-v2.webp" alt="Accounts showing confirmed balance dates, current and projected balances, and net-worth history" width="100%">
       <br>
       <strong>Accounts</strong>
       <br>
-      Reconcile trusted balances, planned movement, current position, and net worth.
+      Check confirmed balances, planned spending, current account positions, and net worth.
     </td>
     <td align="center">
-      <img src="app/assets/images/marketing/reports-v2.webp" alt="Reports showing monthly trend graphs, category totals, source labels, and exact-value drilldowns" width="100%">
+      <img src="app/assets/images/marketing/reports-v2.webp" alt="Reports showing monthly trends, category totals, exact values, and links to the transactions behind each total" width="100%">
       <br>
       <strong>Reports</strong>
       <br>
-      Compare trends and categories, then open the exact records behind the result.
+      Compare trends and categories, then open the transactions behind a total.
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="app/assets/images/marketing/month-close-v2.webp" alt="Closed-month review showing frozen report totals, preserved source records, and reopen guidance" width="100%">
+      <img src="app/assets/images/marketing/month-close-v2.webp" alt="Closed-month review showing saved totals, the transactions included at month-end, and how to reopen the month" width="100%">
       <br>
       <strong>Close the month</strong>
       <br>
-      Preserve the report evidence only after the plan and activity are ready.
+      Review the final numbers before closing, and reopen the month if something arrives late.
     </td>
     <td align="center">
-      <img src="app/assets/images/marketing/backup-restore-v2.webp" alt="Backup and Restore showing version 2 export scope, optional encryption, and restore preview guidance" width="100%">
+      <img src="app/assets/images/marketing/backup-restore-v2.webp" alt="Backup and Restore showing what a backup includes, optional password protection, and a preview before data is replaced" width="100%">
       <br>
       <strong>Backup and restore</strong>
       <br>
-      Preview a complete restore and keep an encrypted rollback checkpoint for replacement restores.
+      Protect a backup with a password and see what a restore would change before applying it.
     </td>
   </tr>
 </table>
 
 ## How the monthly workflow fits together
 
-1. **Set up the workspace.** Add the accounts you want to reconcile and the recurring paychecks, bills, subscriptions, payment plans, and card payments you expect.
-2. **Build the plan.** Start fresh, copy an earlier month, or generate planned items from the recurring records you want to use.
-3. **Bring in reality.** Add a manual transaction or import account activity, then match it to the plan when the records describe the same event.
-4. **Review the evidence.** Use Home, the monthly workspace, Accounts, and Reports to compare the plan, actual activity, remaining plan, forecast, and trusted balances. Graphs include exact-value tables or source drilldowns.
-5. **Close and recover.** Close a ready month to preserve its reporting evidence. Export a version 2 backup before important changes; an in-place restore creates an encrypted seven-day rollback checkpoint.
+1. **Add accounts and regular items.** Enter the balances you want to check and save the paychecks, bills, subscriptions, payment plans, and card payments you expect.
+2. **Build the plan.** Start fresh, copy an earlier month, or add the regular income and bills you want to use.
+3. **Record what happened.** Add a transaction yourself or import account activity, then match it to the plan when both describe the same event.
+4. **Check balances and reports.** Use Home, the monthly view, Accounts, and Reports to compare the plan, actual spending, what remains, the forecast, and confirmed balances. Graphs keep exact values and transaction details within reach.
+5. **Close and back up.** Close a ready month to save its final totals. Download a backup before important changes; a replacement restore keeps an encrypted seven-day safety copy.
 
-Accounts are tracked manually. A balance snapshot provides a known starting point; paid activity explains the current balance, and planned activity contributes to the projected balance.
+Accounts are tracked manually. A confirmed balance provides a known starting point; completed transactions explain the current balance, and planned transactions contribute to the projected balance.
 
 ## Self-hosting
 
-The quick start is intended for local evaluation and development. For a public deployment, use the production Compose stack behind the included Caddy reverse proxy.
+The quick start is for a private trial or local development. Before making the app available on the internet, use the production Compose setup and finish the security and recovery checklist below.
 
 ### Public HTTPS deployment
 
@@ -195,7 +195,7 @@ Caddy is the only service exposed on ports `80` and `443`. Rails and PostgreSQL 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.0.0
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.1.0
 ```
 
 Then pull and start it without building locally:
@@ -258,11 +258,11 @@ The container runs `bin/rails db:prepare` during startup, so migrations are appl
 
 The app also checks GitHub Releases and shows an update notice when a newer release is available. The related overrides are documented in [.env.example](.env.example).
 
-### FinanceTracking.app 2.0 data transition
+### Upgrade an existing installation safely
 
-Version 2 applies additive database migrations during normal startup. It keeps the existing records and compatible reads in place; it does not silently switch every workspace to the new financial model. Self-hosted operators can inspect and move one workspace at a time after taking both a PostgreSQL backup and an application export.
+The update keeps existing budgets available while you run its safety checks. Before switching an existing budget to the new calculations, take both a PostgreSQL backup and an application backup, then complete the checks one budget at a time.
 
-Run the read-only checks and resumable backfill inside the web container:
+Run the required upgrade checks inside the web container:
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.production.yml exec web bin/rails data_quality:legacy
@@ -272,9 +272,9 @@ docker compose --env-file .env.production -f docker-compose.production.yml exec 
 docker compose --env-file .env.production -f docker-compose.production.yml exec web bin/rails target_release:status
 ```
 
-The rehearsal temporarily enables target reads, runs parity and performance checks, exercises the ordered rollback path, and restores the original flags. It prints redacted counts and timings rather than financial values.
+The rehearsal compares the old and new results, checks performance, practices the rollback, and returns the budget to its original state. It prints redacted counts and timings rather than financial values.
 
-Enable one eligible workspace only after the rehearsal passes. Replace the placeholders with a workspace ID from `target_release:status` and your own deployment or change identifier:
+Switch one eligible budget only after the rehearsal passes. Replace `WORKSPACE_ID` with the identifier shown by `target_release:status`, and use your own deployment or change identifier:
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.production.yml exec web \
@@ -282,7 +282,7 @@ docker compose --env-file .env.production -f docker-compose.production.yml exec 
   bin/rails 'target_release:enable[WORKSPACE_ID]'
 ```
 
-If the new reads need to be withdrawn, use the same explicit confirmation. Rollback disables target reads first and preserves dual writes so the evidence needed for diagnosis is not lost:
+If a verification check fails after the switch, use the same explicit confirmation to roll back while keeping the information needed to diagnose the problem:
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.production.yml exec web \
@@ -290,13 +290,13 @@ docker compose --env-file .env.production -f docker-compose.production.yml exec 
   bin/rails 'target_release:rollback[WORKSPACE_ID]'
 ```
 
-Do not enable a workspace while `target_release:status` reports an incomplete backfill or unresolved discrepancy. Resolve ambiguous historical data through the application’s explicit review flow rather than assigning an account by guess.
+Do not switch a budget while `target_release:status` reports unfinished work or an unresolved difference. Review uncertain history in the app instead of guessing which account it belongs to.
 
-## Demo and sample data
+## Try it without entering your finances
 
-`bin/rails db:seed` creates or refreshes a demo user. By default it adds recurring transactions, linked accounts, and balance snapshots without creating month history.
+`bin/rails db:seed` creates or refreshes a local example user. By default it adds regular transactions, linked accounts, and confirmed balances without creating month history.
 
-Add six months of sample history with:
+Add six months of example history with:
 
 ```bash
 SEED_MODE=users_with_transactions bin/rails db:seed
@@ -304,7 +304,7 @@ SEED_MODE=users_with_transactions bin/rails db:seed
 
 For Docker, prefix the command with `docker compose exec web env`.
 
-### Seed profiles
+### Choose an example profile
 
 Set `SEED_PROFILE` to choose the data shape you need:
 
@@ -314,7 +314,7 @@ Set `SEED_PROFILE` to choose the data shape you need:
 | `new_user` | Onboarding and empty-state testing |
 | `recurring_heavy` | A large recurring library without month history |
 | `month_history_heavy` | Twelve months of budget history |
-| `account_heavy` | More account types, snapshots, and linked activity |
+| `account_heavy` | More account types, confirmed balances, and linked activity |
 | `manual_adjustments` | Skipped items, exceptions, and manual entries |
 | `all_test_users` | Every profile in one seed run |
 
@@ -324,9 +324,9 @@ Example:
 SEED_PROFILE=all_test_users SEED_MODE=users_with_transactions bin/rails db:seed
 ```
 
-You can override the primary demo credentials with `SEED_USER_EMAIL` and `SEED_USER_PASSWORD`.
+You can change the example sign-in credentials with `SEED_USER_EMAIL` and `SEED_USER_PASSWORD`.
 
-Sample import files live in [`public/samples/`](public/samples/):
+Example import files live in [`public/samples/`](public/samples/):
 
 - [`monthly_transactions_template.csv`](public/samples/monthly_transactions_template.csv)
 - [`sample_month_common_payments.csv`](public/samples/sample_month_common_payments.csv)
@@ -409,7 +409,7 @@ Common settings are documented in:
 
 ## Security and support
 
-Read [SECURITY.md](SECURITY.md) before reporting a suspected vulnerability, and keep security reports out of public issues. The public [trust center](https://financetracking.app/trust/) documents data storage, external requests, included controls, backups, and operator responsibilities.
+Read [SECURITY.md](SECURITY.md) before reporting a suspected vulnerability, and keep security reports out of public issues. The public [trust center](https://financetracking.app/trust/) explains where data lives, which outside services the app contacts, how backups work, and what you need to protect.
 
 For installation help, reproducible bugs, workflow feedback, and support boundaries, read [SUPPORT.md](SUPPORT.md). Never publish credentials, complete environment files, database dumps, bank exports, or real financial screenshots.
 

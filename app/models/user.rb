@@ -1,4 +1,8 @@
 class User < ApplicationRecord
+  LEGACY_ASSOCIATION_OPTIONS = {
+    deprecated: Rails.configuration.x.legacy_association_telemetry_enabled
+  }.freeze
+
   enum :access_state, {
     active: 0,
     suspended: 1
@@ -27,16 +31,19 @@ class User < ApplicationRecord
   }, default: :steady_income, prefix: true
 
   has_many :accounts, dependent: :destroy
-  has_many :account_activity_imports, dependent: :destroy
-  has_many :account_activities, dependent: :destroy
-  has_many :budget_months, dependent: :destroy
+  has_many :account_activity_imports, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
+  has_many :account_activity_import_drafts, dependent: :destroy
+  has_many :backup_restore_drafts, dependent: :destroy
+  has_many :backup_export_artifacts, dependent: :destroy
+  has_many :account_activities, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
+  has_many :budget_months, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
   has_many :account_snapshots, through: :accounts
-  has_many :expense_entries, dependent: :destroy
-  has_many :pay_schedules, dependent: :destroy
-  has_many :subscriptions, dependent: :destroy
-  has_many :monthly_bills, dependent: :destroy
-  has_many :payment_plans, dependent: :destroy
-  has_many :credit_cards, dependent: :destroy
+  has_many :expense_entries, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
+  has_many :pay_schedules, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
+  has_many :subscriptions, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
+  has_many :monthly_bills, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
+  has_many :payment_plans, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
+  has_many :credit_cards, dependent: :destroy, **LEGACY_ASSOCIATION_OPTIONS
   has_many :workspace_memberships, dependent: :restrict_with_error
   has_many :budget_workspaces, through: :workspace_memberships
   has_many :audit_events, foreign_key: :actor_user_id, dependent: :restrict_with_error

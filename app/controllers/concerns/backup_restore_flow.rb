@@ -10,6 +10,16 @@ module BackupRestoreFlow
     return redirect_to backup_restore_path, alert: "Choose at least one section to export." if exporter.scopes.empty?
     return redirect_to backup_restore_path, alert: "Use an export password with at least 8 characters." if export_password.present? && export_password.length < 8
 
+    if exporter.is_a?(Platform::Backup::V2::Exporter)
+      dispatched = Platform::Backup::V2::ExportDispatch.call(
+        user: current_user,
+        scopes: exporter.scopes,
+        password: export_password.presence
+      )
+      redirect_to operation_run_path(dispatched.operation), notice: "Backup export queued. The download will appear when it is ready."
+      return
+    end
+
     send_data exporter.backup_json(password: export_password.presence),
       filename: exporter.filename(password: export_password.presence),
       type: "application/json; charset=utf-8",
@@ -37,10 +47,21 @@ module BackupRestoreFlow
   end
 
   def render_backup_import
-    preview_data = preview_store.load(params[:preview_token])
+    preview_token = restore_commit_parameters.fetch(:preview_token)
+    restore_draft = preview_store.load_draft(preview_token)
+    preview_data = restore_draft&.preview_data
     return redirect_to backup_restore_path, alert: "Import preview expired. Preview the backup again before restoring." unless preview_data
     return render_sample_backup_confirmation(preview_data) if sample_backup_confirmation_required?(preview_data)
     return render_v2_replacement_confirmation(preview_data) if v2_replacement_confirmation_required?(preview_data)
+
+    if preview_data.fetch(:payload).fetch(:version).to_i == 2
+      operation = Platform::Backup::V2::Dispatch.call(
+        draft: restore_draft,
+        replace_existing: confirmed_v2_replacement?(preview_data)
+      )
+      redirect_to operation_run_path(operation), notice: "Backup restore queued. You can safely leave this page."
+      return
+    end
 
     result = Platform::UserDataImport.new(
       user: current_user,
@@ -50,16 +71,18 @@ module BackupRestoreFlow
     ).call
 
     if result[:success]
-      preview_store.clear(params[:preview_token])
+      preview_store.clear(preview_token)
       checkpoint_notice = result[:checkpoint_id].present? ? " A recoverable checkpoint is available below for seven days." : ""
       redirect_to backup_restore_path, notice: "#{Platform::BackupRestoreImportNotice.build(counts: result[:counts])}#{checkpoint_notice}"
     else
       redirect_to backup_restore_path, alert: "Import failed: #{result[:error]}"
     end
+  rescue Platform::Backup::V2::Dispatch::InvalidDraft
+    redirect_to backup_restore_path, alert: "Import preview expired. Preview the backup again before restoring."
   end
 
   def sample_backup_confirmation_required?(preview_data)
-    preview_data.fetch(:payload)[:sample_backup] == true && params[:confirm_sample_backup] != "1"
+    preview_data.fetch(:payload)[:sample_backup] == true && restore_commit_parameters[:confirm_sample_backup] != "1"
   end
 
   def render_sample_backup_confirmation(preview_data)
@@ -68,14 +91,14 @@ module BackupRestoreFlow
       payload: preview_data.fetch(:payload),
       scopes: preview_data.fetch(:scopes),
       encrypted: preview_data.fetch(:encrypted),
-      token: params[:preview_token]
+      token: restore_commit_parameters.fetch(:preview_token)
     )
     flash.now[:alert] = "Confirm that you want to import the reference-only sample backup before restoring it."
     render :show, status: :unprocessable_content
   end
 
   def v2_replacement_confirmation_required?(preview_data)
-    v2_replacement_required?(preview_data) && params[:confirm_replace_existing] != "1"
+    v2_replacement_required?(preview_data) && restore_commit_parameters[:confirm_replace_existing] != "1"
   end
 
   def render_v2_replacement_confirmation(preview_data)
@@ -84,14 +107,14 @@ module BackupRestoreFlow
       payload: preview_data.fetch(:payload),
       scopes: preview_data.fetch(:scopes),
       encrypted: preview_data.fetch(:encrypted),
-      token: params[:preview_token]
+      token: restore_commit_parameters.fetch(:preview_token)
     )
     flash.now[:alert] = "Confirm replacement. The app will create an encrypted recovery checkpoint before changing financial data."
     render :show, status: :unprocessable_content
   end
 
   def selected_scopes(param_key)
-    Array(params[param_key]).reject(&:blank?)
+    Array(params.permit(param_key => [])[param_key]).reject(&:blank?)
   end
 
   def dependency_safe_import_scopes(scopes, payload:)
@@ -137,7 +160,13 @@ module BackupRestoreFlow
   def confirmed_v2_replacement?(preview_data)
     return false unless v2_replacement_required?(preview_data)
 
-    params[:confirm_replace_existing] == "1"
+    restore_commit_parameters[:confirm_replace_existing] == "1"
+  end
+
+  def restore_commit_parameters
+    @restore_commit_parameters ||= params.permit(:confirm_sample_backup, :confirm_replace_existing).to_h.symbolize_keys.merge(
+      preview_token: params.expect(:preview_token)
+    )
   end
 
 

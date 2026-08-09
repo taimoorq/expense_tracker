@@ -3,17 +3,19 @@ module Platform
     class AccountActivityImportWriter
       MAPPING_VERSION = "target-live-v1".freeze
 
-      def self.call(legacy_import:)
-        new(legacy_import: legacy_import).call
+      def self.call(legacy_import:, operation_run: nil)
+        new(legacy_import: legacy_import, operation_run: operation_run).call
       end
 
-      def initialize(legacy_import:)
+      def initialize(legacy_import:, operation_run: nil)
         @legacy_import = legacy_import
+        @operation_run = operation_run
       end
 
       def call
         @context = Context.for(legacy_import)
         return if context.blank?
+        return sync(operation_run) if operation_run
 
         Platform::Operations::Executor.call(
           workspace: workspace,
@@ -28,36 +30,42 @@ module Platform
           },
           retryable: true,
           on_replay: ->(reference) { ImportBatch.find(reference.fetch("id")) }
-        ) do |operation|
-          @mapping_store = TargetBackfill::MappingStore.new(
-            workspace: workspace,
-            operation_run: operation,
-            version: MAPPING_VERSION
-          )
-          batch = sync_batch(operation)
-          sync_balance_observation(batch)
-          counts = sync_rows(batch)
-          Audit::Recorder.call(
-            workspace: workspace,
-            actor_membership: membership,
-            operation_run: operation,
-            entity: batch,
-            action: "import",
-            changed_fields: %i[row_count imported_count duplicate_count coverage_starts_on coverage_ends_on]
-          )
-          Platform::Operations::Executor::Completion.new(
-            value: batch,
-            result_counts: counts.merge("import_batches" => 1),
-            result_reference: { "type" => "ImportBatch", "id" => batch.id }
-          )
-        end
+        ) { |operation| sync(operation) }
       end
 
       private
 
-      attr_reader :context, :legacy_import, :mapping_store
+      attr_reader :context, :legacy_import, :mapping_store, :operation_run
 
       delegate :membership, :workspace, to: :context
+
+      def sync(operation)
+        unless operation.budget_workspace_id == workspace.id
+          raise WriteRejected, "The import operation belongs to another workspace"
+        end
+
+        @mapping_store = TargetBackfill::MappingStore.new(
+          workspace: workspace,
+          operation_run: operation,
+          version: MAPPING_VERSION
+        )
+        batch = sync_batch(operation)
+        sync_balance_observation(batch)
+        counts = sync_rows(batch)
+        Audit::Recorder.call(
+          workspace: workspace,
+          actor_membership: membership,
+          operation_run: operation,
+          entity: batch,
+          action: "import",
+          changed_fields: %i[row_count imported_count duplicate_count coverage_starts_on coverage_ends_on]
+        )
+        Platform::Operations::Executor::Completion.new(
+          value: batch,
+          result_counts: counts.merge("import_batches" => 1),
+          result_reference: { "type" => "ImportBatch", "id" => batch.id }
+        )
+      end
 
       def sync_batch(operation)
         batch = mapping_store.target_for(source: legacy_import, target_class: ImportBatch) ||

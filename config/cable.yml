@@ -9,9 +9,7 @@ test:
   adapter: test
 
 production:
-  adapter: solid_cable
-  connects_to:
-    database:
-      writing: cable
-  polling_interval: 0.1.seconds
-  message_retention: 1.day
+  # The application currently uses request-delivered Turbo Streams and has no
+  # channel subscriptions or model broadcasts. Keep Cable process-local until
+  # a real-time cross-process workflow is introduced and tested.
+  adapter: async
