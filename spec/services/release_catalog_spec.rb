@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe ReleaseCatalog do
   describe ".current_version" do
     it "uses the newest release entry as the app version" do
-      expect(described_class.current_version).to eq("2.1.0")
+      expect(described_class.current_version).to eq("2.1.1")
     end
   end
 
@@ -21,11 +21,11 @@ RSpec.describe ReleaseCatalog do
       expect(described_class.unread_for(user).map(&:version)).to eq(described_class.releases[0...-1].map(&:version))
     end
 
-    it "alerts users on 2.0.0 about the durable operations release" do
-      user = build(:user, last_seen_release_version: "2.0.0")
+    it "alerts users on 2.1.0 about the maintenance release" do
+      user = build(:user, last_seen_release_version: "2.1.0")
 
-      expect(described_class.latest_unread_for(user)&.version).to eq("2.1.0")
-      expect(described_class.latest_unread_for(user)&.title).to eq("Durable imports, backups, and recovery")
+      expect(described_class.latest_unread_for(user)&.version).to eq("2.1.1")
+      expect(described_class.latest_unread_for(user)&.title).to eq("Dependency and CI maintenance")
     end
   end
 end

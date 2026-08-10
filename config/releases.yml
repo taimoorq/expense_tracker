@@ -1,4 +1,12 @@
 releases:
+  - version: "2.1.1"
+    released_on: "2026-08-10"
+    title: "Dependency and CI maintenance"
+    summary: "FinanceTracking.app 2.1.1 refreshes supporting Ruby dependencies and makes CI and release setup more predictable without changing budgeting behavior."
+    changes:
+      - "Updates Bootsnap, RBS, Reline, and IO Console to current compatible releases for startup, typing, and console maintenance."
+      - "Splits CI dependency verification and test-database preparation into explicit steps so setup failures are easier to diagnose and have fewer side effects."
+      - "Updates the release workflow to the current GitHub checkout action generation."
   - version: "2.1.0"
     released_on: "2026-08-08"
     title: "Durable imports, backups, and recovery"
