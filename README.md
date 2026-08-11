@@ -195,7 +195,7 @@ Caddy is the only service exposed on ports `80` and `443`. Rails and PostgreSQL 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.1.1
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.2.0
 ```
 
 Then pull and start it without building locally:

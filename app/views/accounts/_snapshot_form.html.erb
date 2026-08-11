@@ -1,4 +1,8 @@
-<%= form_with model: [account, account_snapshot], class: "space-y-4" do |form| %>
+<% compact = local_assigns.fetch(:compact, false) %>
+<%= form_with model: [account, account_snapshot],
+  namespace: local_assigns[:form_namespace],
+  class: compact ? "space-y-3" : "space-y-4",
+  aria: (local_assigns[:labelledby].present? ? { labelledby: local_assigns[:labelledby] } : {}) do |form| %>
   <% if account_snapshot.errors.any? %>
     <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
       <p class="font-semibold">Fix the snapshot details.</p>
@@ -10,7 +14,7 @@
     </div>
   <% end %>
 
-  <div class="grid gap-4 md:grid-cols-2">
+  <div class="grid <%= compact ? "gap-3 sm:grid-cols-3" : "gap-4 md:grid-cols-2" %>">
     <div>
       <%= form.label :recorded_on, class: "fb-label" %>
       <%= form.date_field :recorded_on, class: "fb-input" %>
@@ -28,14 +32,19 @@
     </div>
   </div>
 
-  <div>
+  <div class="<%= "sm:col-span-3" if compact %>">
     <%= form.label :notes, class: "fb-label" %>
     <%= form.text_area :notes, rows: 2, class: "fb-input", placeholder: "Optional note about this balance" %>
   </div>
 
   <div class="flex flex-wrap items-center gap-3">
     <%= form.submit(account_snapshot.persisted? ? "Update Balance" : "Record Balance", class: "fb-btn-primary") %>
-    <% if account_snapshot.persisted? %>
+    <% if local_assigns[:cancel_path].present? %>
+      <%= link_to local_assigns[:cancel_path], class: "fb-btn-secondary ta-action-btn" do %>
+        <%= tabler_icon("x", classes: "ta-action-icon text-slate-600") %>
+        <span>Cancel</span>
+      <% end %>
+    <% elsif account_snapshot.persisted? %>
       <%= link_to account_path(account, view: "manage"), class: "fb-btn-secondary ta-action-btn" do %>
         <%= tabler_icon("arrow-left", classes: "ta-action-icon text-slate-600") %>
         <span>Back to Account</span>

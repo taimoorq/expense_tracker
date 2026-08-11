@@ -130,6 +130,42 @@ RSpec.describe "Accounts management", type: :system do
     expect { snapshot.reload }.to raise_error(ActiveRecord::RecordNotFound)
   end
 
+  it "resolves and corrects an account balance inline from the accounts page", js: true do
+    user = create(:user)
+    card = create(:account, user: user, name: "Store Card", kind: :credit_card)
+    activity_import = create(:account_activity_import, account: card)
+    create(:account_activity, account: card, account_activity_import: activity_import, transaction_on: Date.current, account_delta: -25)
+
+    sign_in_as(user)
+    visit accounts_path
+
+    card_dom_id = ActionView::RecordIdentifier.dom_id(card)
+    within("##{card_dom_id}") { click_link "Add balance" }
+
+    frame_id = ActionView::RecordIdentifier.dom_id(card, "desktop_snapshot_editor")
+    within("turbo-frame##{frame_id}") do
+      expect(page).to have_content("Add a balance for Store Card")
+      fill_in "Balance", with: "-450.00"
+      fill_in "Notes", with: "Current card balance"
+      expect { click_button "Record Balance" }.to change { card.account_snapshots.reload.count }.by(1)
+    end
+
+    expect(page).to have_content("Balance snapshot recorded.")
+    within("##{card_dom_id}") do
+      expect(page).to have_content("-$450.00")
+      click_link "Edit balance"
+    end
+
+    within("turbo-frame##{frame_id}") do
+      expect(page).to have_field("Balance", with: "-450.0")
+      fill_in "Balance", with: "-525.00"
+      click_button "Update Balance"
+    end
+
+    expect(page).to have_content("Balance snapshot updated.")
+    within("##{card_dom_id}") { expect(page).to have_content("-$525.00") }
+  end
+
   it "shows linked entry activity and connected templates on the account page" do
     user = create(:user)
     account = create(:account, user: user, name: "Checking")

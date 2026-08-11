@@ -4,7 +4,7 @@ This folder is for documentation that is safe to publish with the source-availab
 repository.
 
 The GitHub README and the hosted documentation in `../financetrackingapp` describe
-the current stable release, FinanceTracking.app 2.1. Keep their version labels,
+the current stable release, FinanceTracking.app 2.2. Keep their version labels,
 feature names, setup commands, screenshots, captions, and recovery guidance aligned
 with `config/releases.yml` and the running application.
 

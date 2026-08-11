@@ -27,6 +27,49 @@ RSpec.describe "Account snapshots", type: :request do
     expect(snapshot.notes).to eq("After")
   end
 
+  it "creates a missing balance source from the account row Turbo Frame" do
+    account = create(:account, user: user, name: "Store Card", kind: :credit_card)
+    activity_import = create(:account_activity_import, account: account)
+    create(:account_activity, account: account, account_activity_import: activity_import, transaction_on: Date.current, account_delta: -25)
+    frame_id = ActionView::RecordIdentifier.dom_id(account, "desktop_snapshot_editor")
+
+    get new_account_account_snapshot_path(account), headers: { "Turbo-Frame" => frame_id }
+
+    expect(response).to have_http_status(:ok)
+    document = Nokogiri::HTML5.fragment(response.body)
+    frame = document.at_css("turbo-frame##{frame_id}")
+    expect(frame).to be_present
+    expect(frame.text).to include("Add a balance for Store Card", "Imported rows are saved")
+
+    expect do
+      post account_account_snapshots_path(account),
+        params: { account_snapshot: { recorded_on: Date.current.to_s, balance: "-450.00", notes: "Current card balance" } },
+        headers: { "Turbo-Frame" => frame_id, "Accept" => Mime[:turbo_stream].to_s }
+    end.to change(account.account_snapshots, :count).by(1)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect(response.body).to include('action="refresh"')
+    expect(response.body).not_to include("request-id")
+    expect(account.account_snapshots.last.balance.to_d).to eq(-450.to_d)
+  end
+
+  it "renders inline snapshot validation errors in the requesting frame" do
+    account = create(:account, user: user)
+    snapshot = create(:account_snapshot, account: account, balance: 1200)
+    frame_id = ActionView::RecordIdentifier.dom_id(account, "mobile_snapshot_editor")
+
+    patch account_account_snapshot_path(account, snapshot),
+      params: { account_snapshot: { recorded_on: "", balance: "" } },
+      headers: { "Turbo-Frame" => frame_id, "Accept" => Mime[:turbo_stream].to_s }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    document = Nokogiri::HTML5.fragment(response.body)
+    frame = document.at_css("turbo-frame##{frame_id}")
+    expect(frame).to be_present
+    expect(frame.text).to include("Fix the snapshot details.", "Recorded on can't be blank", "Balance can't be blank")
+  end
+
   it "deletes an owned snapshot" do
     account = create(:account, user: user)
     snapshot = create(:account_snapshot, account: account)

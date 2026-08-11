@@ -1,4 +1,13 @@
 releases:
+  - version: "2.2.0"
+    released_on: "2026-08-11"
+    title: "Broader account imports and clearer balances"
+    summary: "FinanceTracking.app 2.2 accepts more institution statement formats and makes imported account balances easier to resolve, correct, and understand."
+    changes:
+      - "Imports tab-delimited and headerless Citi card exports, including Best Buy statements, and supports statements with separate Debit and Credit columns."
+      - "Shows the latest imported transaction date when an account has saved activity but still needs a trusted balance source."
+      - "Lets users add a missing balance snapshot or correct an existing snapshot directly from the Accounts page on desktop and mobile."
+      - "Makes completed import and operation status dismissible while keeping active work visible and showing new activity when it arrives."
   - version: "2.1.1"
     released_on: "2026-08-10"
     title: "Dependency and CI maintenance"

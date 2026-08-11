@@ -39,6 +39,9 @@ RSpec.describe "Accounts CRUD", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Needs source")
     expect(response.body).to include("Imported rows need a balance source")
+    expect(response.body).to include("July 03, 2026")
+    expect(response.body).to include(new_account_account_snapshot_path(card))
+    expect(response.body).to include("Add balance")
     expect(response.body).not_to include("$650.00")
   end
 

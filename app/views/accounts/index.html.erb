@@ -1,3 +1,4 @@
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
 <% content_for :title, "Accounts" %>
 <% breadcrumb "Accounts" %>
 
@@ -132,6 +133,9 @@
         <div class="space-y-3 md:hidden">
           <% @account_balance_rows.each do |row| %>
             <% account = row.fetch(:account) %>
+            <% editable_snapshot = account.latest_snapshot %>
+            <% snapshot_action_visible = !row.fetch(:balance_available) || editable_snapshot.present? %>
+            <% mobile_snapshot_frame_id = dom_id(account, "mobile_snapshot_editor") %>
             <article id="mobile_<%= dom_id(account) %>" class="ta-ledger-row ta-ledger-rail bg-white">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -175,6 +179,15 @@
               </dl>
 
               <div class="mt-4 flex flex-wrap gap-2">
+                <% if snapshot_action_visible %>
+                  <% snapshot_path = editable_snapshot ? edit_account_account_snapshot_path(account, editable_snapshot) : new_account_account_snapshot_path(account) %>
+                  <%= link_to snapshot_path,
+                    class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm",
+                    data: { turbo_frame: mobile_snapshot_frame_id } do %>
+                    <%= tabler_icon(editable_snapshot ? "edit" : "cash", classes: "ta-action-icon text-amber-700") %>
+                    <span><%= editable_snapshot ? (row.fetch(:balance_available) ? "Edit balance" : "Fix balance") : "Add balance" %></span>
+                  <% end %>
+                <% end %>
                 <%= link_to account_path(account), class: "fb-btn-secondary ta-action-btn !px-3 !py-2 !text-sm" do %>
                   <%= tabler_icon("cash", classes: "ta-action-icon text-emerald-600") %>
                   <span>View</span>
@@ -188,6 +201,9 @@
                   <span>Edit</span>
                 <% end %>
               </div>
+              <% if snapshot_action_visible %>
+                <%= turbo_frame_tag mobile_snapshot_frame_id, class: "mt-3 block" %>
+              <% end %>
             </article>
           <% end %>
         </div>
@@ -207,6 +223,9 @@
             <tbody class="divide-y divide-slate-100">
               <% @account_balance_rows.each do |row| %>
                 <% account = row.fetch(:account) %>
+                <% editable_snapshot = account.latest_snapshot %>
+                <% snapshot_action_visible = !row.fetch(:balance_available) || editable_snapshot.present? %>
+                <% desktop_snapshot_frame_id = dom_id(account, "desktop_snapshot_editor") %>
                 <tr id="<%= dom_id(account) %>">
                   <td class="ta-td">
                     <div>
@@ -242,6 +261,15 @@
                   </td>
                   <td class="ta-td">
                     <div class="flex justify-end gap-2">
+                      <% if snapshot_action_visible %>
+                        <% snapshot_path = editable_snapshot ? edit_account_account_snapshot_path(account, editable_snapshot) : new_account_account_snapshot_path(account) %>
+                        <%= link_to snapshot_path,
+                          class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
+                          data: { turbo_frame: desktop_snapshot_frame_id } do %>
+                          <%= tabler_icon(editable_snapshot ? "edit" : "cash", classes: "ta-action-icon text-amber-700") %>
+                          <span><%= editable_snapshot ? (row.fetch(:balance_available) ? "Edit balance" : "Fix balance") : "Add balance" %></span>
+                        <% end %>
+                      <% end %>
                       <%= link_to account_path(account), class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" do %>
                         <%= tabler_icon("cash", classes: "ta-action-icon text-emerald-600") %>
                         <span>View</span>
@@ -257,6 +285,11 @@
                     </div>
                   </td>
                 </tr>
+                <% if snapshot_action_visible %>
+                  <tr>
+                    <td colspan="6" class="!p-0"><%= turbo_frame_tag desktop_snapshot_frame_id, class: "block" %></td>
+                  </tr>
+                <% end %>
               <% end %>
             </tbody>
           </table>

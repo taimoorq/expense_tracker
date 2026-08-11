@@ -87,6 +87,8 @@ RSpec.describe Accounts::Summary do
       source_label: "No balance source",
       source_type: :none,
       imported_activity_count: 1,
+      imported_activity_through_on: Date.new(2026, 7, 4),
+      last_updated_on: Date.new(2026, 7, 4),
       balance_available: false
     )
   end

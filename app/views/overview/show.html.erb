@@ -79,7 +79,16 @@
           <p class="mt-1 text-sm text-slate-600">Open an operation to see its durable result and support reference.</p>
         </div>
         <% active_count = overview.recent_operations.count(&:active?) %>
-        <span class="ta-status-badge <%= active_count.positive? ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700" %>"><%= active_count.positive? ? "#{active_count} in progress" : "Up to date" %></span>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <span class="ta-status-badge <%= active_count.positive? ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700" %>"><%= active_count.positive? ? "#{active_count} in progress" : "Up to date" %></span>
+          <%= button_to recent_operations_preference_path,
+            method: :patch,
+            class: "fb-btn-secondary ta-action-btn !min-h-9 !px-3 !py-1.5 !text-xs",
+            aria: { label: active_count.positive? ? "Dismiss completed operation status" : "Dismiss recent operation status" } do %>
+            <%= tabler_icon("x", classes: "h-4 w-4 text-slate-600") %>
+            <span><%= active_count.positive? ? "Dismiss completed" : "Dismiss" %></span>
+          <% end %>
+        </div>
       </div>
       <div class="divide-y divide-slate-200 border-t border-slate-200">
         <% overview.recent_operations.each do |operation| %>

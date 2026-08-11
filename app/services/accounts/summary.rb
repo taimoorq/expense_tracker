@@ -87,6 +87,7 @@ module Accounts
     def account_balance_rows
       @account_balance_rows ||= accounts.map do |account|
         balance = account_balance_for(account)
+        imported_activity = imported_activity_summary_for(account)
         {
           account: account,
           current_balance: balance.current_balance,
@@ -95,27 +96,29 @@ module Accounts
           source_type: balance.balance_source,
           source_date: balance.balance_source_recorded_on,
           activity_through_on: balance.activity_through_on,
-          last_updated_on: balance.activity_through_on || balance.balance_source_recorded_on,
+          last_updated_on: balance.activity_through_on || balance.balance_source_recorded_on || imported_activity.fetch(:through_on),
           source_record: balance.balance_source_record,
           activity_delta: balance.paid_delta,
           planned_delta: balance.planned_delta,
           activity_count: balance.paid_entries_count,
           planned_entries_count: balance.planned_entries_count,
-          imported_activity_count: imported_activity_count_for(account),
+          imported_activity_count: imported_activity.fetch(:count),
+          imported_activity_through_on: imported_activity.fetch(:through_on),
           balance_available: balance.balance_available
         }
       end
     end
 
-    def imported_activity_count_for(account)
-      imported_activity_counts.fetch(account.id, 0)
+    def imported_activity_summary_for(account)
+      imported_activity_summaries.fetch(account.id, { count: 0, through_on: nil })
     end
 
-    def imported_activity_counts
-      @imported_activity_counts ||= user.account_activities
+    def imported_activity_summaries
+      @imported_activity_summaries ||= user.account_activities
         .where(account_id: accounts.map(&:id))
         .group(:account_id)
-        .count
+        .pluck(:account_id, Arel.sql("COUNT(*)"), Arel.sql("MAX(transaction_on)"))
+        .to_h { |account_id, count, through_on| [ account_id, { count: count.to_i, through_on: through_on } ] }
     end
 
     def account_balance_for(account)

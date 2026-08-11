@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   resource :theme, only: :update
   resource :settings, only: [ :show, :update ]
   resource :onboarding_preference, only: :update
+  resource :recent_operations_preference, only: :update
   resources :operation_runs, only: :show, path: "operations"
   resources :backup_export_artifacts, only: :show, path: "backup_exports"
 
@@ -46,7 +47,7 @@ Rails.application.routes.draw do
   get "planning_templates/payment-plans/:edit_payment_plan_id/edit", to: "planning_templates#index", as: :edit_payment_plan_planning_templates
   get "planning_templates/credit-cards/:edit_credit_card_id/edit", to: "planning_templates#index", as: :edit_credit_card_planning_templates
   resources :accounts, except: [ :destroy ] do
-    resources :account_snapshots, only: [ :create, :edit, :update, :destroy ]
+    resources :account_snapshots, only: [ :new, :create, :edit, :update, :destroy ]
     resources :account_activity_imports, only: [ :new, :create ] do
       post :preview, on: :collection
     end

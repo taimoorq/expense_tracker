@@ -27,9 +27,20 @@ module Platform
         workspace = user.legacy_owned_budget_workspace
         return [] if workspace.blank?
 
-        workspace.operation_runs
+        scope = workspace.operation_runs
           .where(operation_type: VISIBLE_TYPES.keys)
           .order(created_at: :desc)
+
+        dismissed_through_at = workspace.workspace_memberships.find_by(user_id: user.id)&.recent_operations_dismissed_through_at
+        if dismissed_through_at.present?
+          scope = scope.where(
+            "created_at > :dismissed_through_at OR state IN (:active_states)",
+            dismissed_through_at: dismissed_through_at,
+            active_states: %w[pending running]
+          )
+        end
+
+        scope
           .limit(limit)
           .map { |operation| build(operation) }
       end

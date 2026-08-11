@@ -1,0 +1,13 @@
+<% content_for :title, "Record Balance Snapshot" %>
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb @account.name, account_path(@account) %>
+<% breadcrumb "Record Balance Snapshot" %>
+
+<% page_header title: "Record Balance Snapshot",
+  eyebrow: @account.name,
+  subtitle: "Add a trusted balance and date so account activity can be resolved.",
+  icon: "cash" %>
+
+<div class="mx-auto max-w-3xl ta-section-frame p-5 sm:p-6">
+  <%= render "accounts/snapshot_form", account: @account, account_snapshot: @account_snapshot %>
+</div>
