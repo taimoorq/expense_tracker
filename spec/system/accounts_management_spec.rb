@@ -143,14 +143,16 @@ RSpec.describe "Accounts management", type: :system do
     within("##{card_dom_id}") { click_link "Add balance" }
 
     frame_id = ActionView::RecordIdentifier.dom_id(card, "desktop_snapshot_editor")
+    snapshot_count = card.account_snapshots.count
     within("turbo-frame##{frame_id}") do
       expect(page).to have_content("Add a balance for Store Card")
       fill_in "Balance", with: "-450.00"
       fill_in "Notes", with: "Current card balance"
-      expect { click_button "Record Balance" }.to change { card.account_snapshots.reload.count }.by(1)
+      click_button "Record Balance"
     end
 
     expect(page).to have_content("Balance snapshot recorded.")
+    expect(card.account_snapshots.reload.count).to eq(snapshot_count + 1)
     within("##{card_dom_id}") do
       expect(page).to have_content("-$450.00")
       click_link "Edit balance"
