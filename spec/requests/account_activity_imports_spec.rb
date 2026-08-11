@@ -76,6 +76,65 @@ RSpec.describe "Account activity imports", type: :request do
     expect(response.body).to include("preamble_card_activity.csv")
   end
 
+  it "previews and imports Citibank activity with separate Debit and Credit columns" do
+    path = Rails.root.join("test/fixtures/files/account_activity/citibank_costco_activity.csv")
+    upload = Rack::Test::UploadedFile.new(path, "text/csv", original_filename: "citibank_costco_activity.csv")
+
+    post preview_account_account_activity_imports_path(account), params: { file: upload }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Activity Import Preview")
+    expect(response.body).to include("Debit and credit columns")
+    expect(response.body).to include("3", "SAMPLE WAREHOUSE PURCHASE", "-$42.15", "+$125.00")
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+
+    expect do
+      post account_account_activity_imports_path(account), params: { preview_token: preview_token }
+    end.to change(OperationRun.where(operation_type: "commit_legacy_account_activity_import"), :count).by(1)
+      .and have_enqueued_job(Accounts::ActivityImports::CommitJob)
+
+    perform_enqueued_jobs(only: Accounts::ActivityImports::CommitJob)
+
+    rows = account.account_activities.order(:transaction_on)
+    expect(rows.count).to eq(3)
+    expect(rows.find_by!(description: "SAMPLE WAREHOUSE PURCHASE").account_delta).to eq(-42.15)
+    expect(rows.find_by!(description: "SAMPLE CARD PAYMENT").account_delta).to eq(125.0)
+  end
+
+  it "previews and imports headerless Best Buy Citibank activity" do
+    path = Rails.root.join("test/fixtures/files/account_activity/citibank_best_buy_activity.csv")
+    upload = Rack::Test::UploadedFile.new(path, "text/csv", original_filename: "citibank_best_buy_activity.csv")
+
+    post preview_account_account_activity_imports_path(account), params: { file: upload }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Activity Import Preview")
+    expect(response.body).to include("Charges are positive")
+    expect(response.body).to include("5", "SAMPLE CARD PAYMENT", "+$100.00", "-$12.34")
+    preview_token = response.body[/name="preview_token"[^>]*value="([^"]+)"/, 1]
+    expect(preview_token).to be_present
+
+    expect do
+      post account_account_activity_imports_path(account), params: { preview_token: preview_token }
+    end.to change(OperationRun.where(operation_type: "commit_legacy_account_activity_import"), :count).by(1)
+      .and have_enqueued_job(Accounts::ActivityImports::CommitJob)
+
+    perform_enqueued_jobs(only: Accounts::ActivityImports::CommitJob)
+
+    rows = account.account_activities.order(:transaction_on)
+    expect(rows.count).to eq(5)
+    expect(rows.find_by!(description: "SAMPLE CARD PAYMENT").account_delta).to eq(100.0)
+    expect(rows.find_by!(description: "SAMPLE STORE PURCHASE").account_delta).to eq(-12.34)
+    expect(rows.find_by!(description: "SAMPLE ZERO ACTIVITY").account_delta).to be_zero
+    activity_import = account.account_activity_imports.sole
+    expect(activity_import).to have_attributes(header_row_number: 1, amount_strategy: "charges_are_positive")
+    expect(activity_import.metadata).to include(
+      "headerless" => true,
+      "delimiter" => "tab",
+      "source_format" => "best_buy_citibank_headerless_tsv"
+    )
+  end
+
   it "shows prior coverage with an exact import time and flags a safe overlapping preview" do
     prior_import = create(
       :account_activity_import,

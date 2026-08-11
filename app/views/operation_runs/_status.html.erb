@@ -1,4 +1,10 @@
-<section class="ta-section-frame" aria-labelledby="operation-status-title" aria-live="polite">
+<section
+  class="ta-section-frame"
+  aria-labelledby="operation-status-title"
+  aria-live="polite"
+  data-controller="operation-poll"
+  data-operation-poll-active-value="<%= status.active? %>"
+  data-operation-poll-interval-value="2000">
   <div class="ta-section-header flex flex-wrap items-start justify-between gap-3">
     <div>
       <p class="ta-page-eyebrow">Operation</p>
@@ -23,8 +29,8 @@
       <div><dt class="ta-ledger-label">Last state change</dt><dd class="mt-1 text-slate-700"><%= l(status.completed_at || status.started_at || Time.current, format: :long) %></dd></div>
     </dl>
     <div class="mt-5 flex flex-wrap gap-3">
-      <% if @backup_export_artifact %><%= link_to "Download backup", backup_export_artifact_path(@backup_export_artifact), class: "fb-btn-primary ta-action-btn" %><% end %>
-      <%= link_to "Back to Home", root_path, class: "fb-btn-secondary ta-action-btn" %>
+      <% if @backup_export_artifact %><%= link_to "Download backup", backup_export_artifact_path(@backup_export_artifact), class: "fb-btn-primary ta-action-btn", data: { turbo: false } %><% end %>
+      <%= link_to "Back to Home", root_path, class: "fb-btn-secondary ta-action-btn", data: { turbo_frame: "_top" } %>
       <% if status.state == "failed" && status.retryable %><span class="text-sm text-slate-600">Return to the original import, restore, or month screen to retry safely.</span><% end %>
     </div>
   </div>

@@ -15,7 +15,11 @@ export default class extends Controller {
     if (!this.activeValue) return
 
     this.timeout = window.setTimeout(() => {
-      if (this.element.isConnected && typeof this.element.reload === "function") this.element.reload()
+      if (!this.element.isConnected) return
+
+      const frame = this.element.closest("turbo-frame")
+      if (typeof frame?.reload === "function") frame.reload()
+      this.schedule()
     }, this.intervalValue)
   }
 }

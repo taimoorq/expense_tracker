@@ -19,8 +19,9 @@ module Accounts
         mapping_result = ColumnMapper.call(reader_result.headers)
         return failed("Missing required columns: #{mapping_result.missing_fields.map(&:to_s).to_sentence}.") if mapping_result.missing_fields.any?
 
-        amount_strategy = AmountNormalizer.infer_strategy(rows: reader_result.rows, mapping: mapping_result.mapping)
-        direction_header = AmountNormalizer.direction_header(rows: reader_result.rows, mapping: mapping_result.mapping)
+        split_amount_mapping = ColumnMapper.split_amount_mapping?(mapping_result.mapping)
+        amount_strategy = split_amount_mapping ? "type_column" : AmountNormalizer.infer_strategy(rows: reader_result.rows, mapping: mapping_result.mapping)
+        direction_header = AmountNormalizer.direction_header(rows: reader_result.rows, mapping: mapping_result.mapping) unless split_amount_mapping
         parsed_rows = parse_rows(reader_result.rows, mapping_result.mapping, amount_strategy, direction_header)
         duplicate_count = parsed_rows.count { |row| row[:duplicate] }
         importable_count = parsed_rows.count { |row| row[:importable] }
@@ -43,6 +44,7 @@ module Accounts
           headers: reader_result.headers,
           column_mapping: mapping_result.mapping,
           amount_strategy: amount_strategy,
+          amount_strategy_label: split_amount_mapping ? "Debit and credit columns" : nil,
           rows_count: parsed_rows.size,
           imported_count: importable_count,
           duplicate_count: duplicate_count,
@@ -84,11 +86,15 @@ module Accounts
       def normalize_row(row, mapping, amount_strategy, direction_header)
         row_errors = []
         attributes = row.attributes
-        return nil if attributes[mapping[:raw_amount]].to_s.strip.blank?
+        amount_input = amount_input_for(attributes, mapping, direction_header, row.row_number, row_errors)
+        if amount_input.blank?
+          row_errors.each { |error| self.row_errors << error }
+          return nil
+        end
 
         transaction_on = parse_date(attributes[mapping[:transaction_on]], row_number: row.row_number, column: mapping[:transaction_on], errors: row_errors)
         posted_on = parse_date(attributes[mapping[:posted_on]], row_number: row.row_number, column: mapping[:posted_on], errors: row_errors) if mapping[:posted_on].present?
-        normalized_amount = normalize_amount(attributes, mapping, amount_strategy, direction_header, row.row_number, row_errors)
+        normalized_amount = normalize_amount(amount_input, amount_strategy, row.row_number, row_errors)
         description = attributes[mapping[:description]].to_s.strip
         row_errors << "Row #{row.row_number}: Description is required." if description.blank?
 
@@ -103,7 +109,7 @@ module Accounts
           posted_on: posted_on,
           description: description,
           category: value_for(attributes, mapping[:category]),
-          activity_type: value_for(attributes, mapping[:activity_type]) || activity_type_from_direction_header(attributes, mapping, direction_header),
+          activity_type: value_for(attributes, mapping[:activity_type]) || amount_input[:activity_type] || activity_type_from_direction_header(attributes, mapping, direction_header),
           memo: value_for(attributes, mapping[:memo]),
           raw_amount: normalized_amount.raw_amount.to_s("F"),
           amount: normalized_amount.amount.to_s("F"),
@@ -112,10 +118,29 @@ module Accounts
         }
       end
 
-      def normalize_amount(attributes, mapping, amount_strategy, direction_header, row_number, errors)
+      def amount_input_for(attributes, mapping, direction_header, row_number, errors)
+        unless ColumnMapper.split_amount_mapping?(mapping)
+          raw_amount = attributes[mapping[:raw_amount]]
+          return if raw_amount.to_s.strip.blank?
+
+          return { raw_amount: raw_amount, activity_type: attributes[direction_header] }
+        end
+
+        debit_amount = attributes[mapping[:debit_amount]].to_s.strip.presence
+        credit_amount = attributes[mapping[:credit_amount]].to_s.strip.presence
+        if debit_amount.present? && credit_amount.present?
+          errors << "Row #{row_number}: Debit and Credit cannot both have amounts."
+          return
+        end
+        return if debit_amount.blank? && credit_amount.blank?
+
+        debit_amount.present? ? { raw_amount: debit_amount, activity_type: "Debit" } : { raw_amount: credit_amount, activity_type: "Credit" }
+      end
+
+      def normalize_amount(amount_input, amount_strategy, row_number, errors)
         AmountNormalizer.normalize(
-          raw_amount: attributes[mapping[:raw_amount]],
-          activity_type: attributes[direction_header],
+          raw_amount: amount_input[:raw_amount],
+          activity_type: amount_input[:activity_type],
           strategy: amount_strategy
         )
       rescue ArgumentError => error
@@ -192,6 +217,7 @@ module Accounts
           ok: false,
           account_id: account.id,
           original_filename: file&.original_filename,
+          amount_strategy_label: nil,
           rows_count: 0,
           imported_count: 0,
           duplicate_count: 0,
