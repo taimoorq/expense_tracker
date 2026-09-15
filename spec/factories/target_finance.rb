@@ -111,6 +111,61 @@ FactoryBot.define do
     state { "pending" }
   end
 
+  factory :backup_schedule do
+    association :budget_workspace
+    creator_membership do
+      association :workspace_membership,
+        budget_workspace: budget_workspace,
+        role: "owner",
+        status: "active"
+    end
+    state { "paused" }
+    cadence { "daily" }
+    time_zone { "UTC" }
+    local_minute_of_day { 120 }
+    retention_count { 14 }
+
+    trait :enabled do
+      state { "enabled" }
+      next_run_at { 1.day.from_now.change(hour: 2, min: 0) }
+    end
+  end
+
+  factory :backup_archive do
+    association :budget_workspace
+    actor_membership do
+      association :workspace_membership,
+        budget_workspace: budget_workspace,
+        role: "owner",
+        status: "active"
+    end
+    operation_run { association :operation_run, budget_workspace: budget_workspace }
+    data_transfer_run do
+      association :data_transfer_run,
+        budget_workspace: budget_workspace,
+        actor_membership: actor_membership,
+        operation_run: operation_run,
+        operation: "export"
+    end
+    trigger { "manual" }
+    state { "pending" }
+    storage_adapter { "local" }
+    sequence(:storage_key) { |number| "workspaces/#{budget_workspace.id}/archive-#{number}.json" }
+    sequence(:filename) { |number| "finance-tracking-automatic-backup-#{number}.json" }
+    payload_format_version { "2" }
+    envelope_version { "installation-key-v1" }
+    encryption_key_id { "primary" }
+
+    trait :ready do
+      state { "ready" }
+      payload_checksum { "a" * 64 }
+      archive_checksum { "b" * 64 }
+      byte_size { 42 }
+      stored_at { Time.current }
+      verified_at { Time.current }
+    end
+  end
+
   factory :import_batch do
     association :budget_workspace
     import_kind { "account_activity" }

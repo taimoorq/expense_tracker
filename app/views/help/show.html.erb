@@ -204,10 +204,11 @@
           <%= tabler_icon("database-export", classes: "h-5 w-5 text-emerald-600") %>
           <span>Backup and recovery</span>
         </h2>
-        <p class="mt-2 text-sm leading-6 text-slate-600">Version 2 backups preserve the connected financial workspace, including plans, transactions, allocations, balances, imports, close evidence, and audit history.</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">Version 2 backups preserve the restorable financial workspace, including plans, transactions, allocations, balances, imports, and close evidence. Operational audit history remains protected by your PostgreSQL backup.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Preview first:</strong> inspect the backup version, scope, counts, and replacement impact before applying it.</li>
           <li><strong class="text-slate-900">Protect exports:</strong> optional password encryption protects the portable file; keep the password somewhere separate.</li>
+          <li><strong class="text-slate-900">Schedule protection:</strong> when your self-hosting operator configures durable archive storage, workspace owners can keep encrypted daily, weekly, or monthly backups and download a verified archive for restore.</li>
           <li><strong class="text-slate-900">Recover a replacement restore:</strong> the app creates an encrypted checkpoint before replacing in-place data and keeps its explicit rollback action available for seven days.</li>
           <li><strong class="text-slate-900">Keep infrastructure backups too:</strong> an application export complements PostgreSQL and host backups; it does not replace them.</li>
         </ul>

@@ -14,6 +14,10 @@ Rails.application.routes.draw do
   resource :recent_operations_preference, only: :update
   resources :operation_runs, only: :show, path: "operations"
   resources :backup_export_artifacts, only: :show, path: "backup_exports"
+  resource :backup_schedule, only: :update do
+    post :run_now, on: :member
+  end
+  resources :backup_archives, only: :show
 
   namespace :admin do
     root "dashboard#show"

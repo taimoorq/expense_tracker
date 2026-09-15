@@ -4,7 +4,8 @@ module Platform
       JOBS = {
         "Accounts::ActivityImports::CommitJob" => -> { Accounts::ActivityImports::CommitJob },
         "Platform::Backup::V2::RestoreJob" => -> { Platform::Backup::V2::RestoreJob },
-        "Platform::Backup::V2::ExportJob" => -> { Platform::Backup::V2::ExportJob }
+        "Platform::Backup::V2::ExportJob" => -> { Platform::Backup::V2::ExportJob },
+        "Platform::Backup::ArchiveJob" => -> { Platform::Backup::ArchiveJob }
       }.freeze
 
       def self.fetch(job_class)

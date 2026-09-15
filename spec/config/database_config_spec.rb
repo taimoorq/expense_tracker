@@ -22,6 +22,24 @@ RSpec.describe "production database configuration" do
     end
   end
 
+  it "gives local Solid Queue its own development database on the same server" do
+    configured = with_database_environment do
+      path = Rails.root.join("config/database.yml")
+      yaml = ERB.new(path.read).result
+      YAML.safe_load(yaml, aliases: true).fetch("development")
+    end
+
+    aggregate_failures do
+      expect(configured.keys).to contain_exactly("primary", "queue")
+      expect(configured.fetch("primary").fetch("database")).to eq("expense_tracker_development")
+      expect(configured.fetch("queue")).to include(
+        "database" => "expense_tracker_development_queue",
+        "migrations_paths" => "db/queue_migrate",
+        "host" => "db.internal"
+      )
+    end
+  end
+
   def with_database_environment
     values = {
       "EXPENSE_TRACKER_DATABASE_HOST" => "db.internal",

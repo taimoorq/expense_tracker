@@ -190,12 +190,66 @@ The quick start is for a private trial or local development. Before making the a
 
 Caddy is the only service exposed on ports `80` and `443`. Rails and PostgreSQL remain on the internal Docker network.
 
+### Automatic workspace backups
+
+Workspace owners can schedule encrypted daily, weekly, or monthly backups from **Backup and Restore**. Automatic backups contain the portable financial workspace data supported by Backup v2; they do not replace a full PostgreSQL backup for accounts, administration, audit history, or complete disaster recovery.
+
+The app supports an S3-compatible bucket or a shared filesystem. Before enabling the feature:
+
+1. Choose durable storage. A dedicated disk or NAS/NFS mount is preferable to the application server's system disk. The directory must be writable by container user ID `1000`, and web and worker containers must see the same files.
+2. Generate an installation key and store it with your other deployment secrets, separately from the backup files.
+
+   ```bash
+   openssl rand -base64 32
+   ```
+
+3. Set these values in `.env.production`:
+
+   ```dotenv
+   BACKUP_STORAGE_DRIVER=local
+   BACKUP_HOST_PATH=/srv/expense_tracker/backups
+   BACKUP_LOCAL_ROOT=/rails/backups
+   BACKUP_ENCRYPTION_KEY=the-base64-key-from-openssl
+   BACKUP_ENCRYPTION_KEY_ID=primary
+   ```
+
+4. Restart the web and worker services, then configure a schedule from **Backup and Restore**.
+
+For S3, give the application workload permission to read, write, inspect, and delete objects only beneath its configured prefix, then use:
+
+```dotenv
+BACKUP_STORAGE_DRIVER=s3
+BACKUP_S3_BUCKET=your-private-backup-bucket
+BACKUP_S3_PREFIX=finance-tracking/backups
+BACKUP_S3_REGION=us-east-1
+BACKUP_ENCRYPTION_KEY=the-base64-key-from-openssl
+BACKUP_ENCRYPTION_KEY_ID=primary
+```
+
+AWS credentials come from the standard SDK credential chain. Local Docker can mount the host's AWS CLI configuration using `AWS_CONFIG_HOST_PATH`; production should use a workload role instead of long-lived access keys. `BACKUP_S3_ENDPOINT` and `BACKUP_S3_FORCE_PATH_STYLE` support compatible providers such as MinIO when needed. Keep the bucket private, block public access, enable versioning and default encryption, and add lifecycle rules for abandoned multipart uploads and obsolete noncurrent versions.
+
+Files are encrypted before they reach the mounted directory. Keep the encryption key off-host; losing it makes the archives unrecoverable. To rotate keys, change `BACKUP_ENCRYPTION_KEY_ID` and `BACKUP_ENCRYPTION_KEY`, then set `BACKUP_ENCRYPTION_PREVIOUS_KEYS` to a JSON object mapping each old key ID to its Base64 key until every retained archive using it has expired. Do not remove an old key while an archive still names it.
+
+For bare-metal or Kamal installs using local storage, mount a durable directory at `BACKUP_LOCAL_ROOT` for every process that runs the web app or jobs. Multi-host deployments should use S3-compatible storage or a shared filesystem with normal filesystem consistency semantics.
+
+### Operator disaster recovery
+
+Treat the automatic archive directory, PostgreSQL, Rails credentials, and backup encryption keys as separate recovery assets. Back up PostgreSQL on an independent schedule, encrypt it, copy it off the application host, and retain the matching secrets. For the bundled Compose database, one portable dump command is:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml \
+  exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
+  > expense_tracker.dump
+```
+
+Periodically restore a PostgreSQL dump and one automatic workspace archive into an isolated test deployment. Verify sign-in, workspace ownership, financial totals, archive download, and a subsequent backup before treating the rehearsal as successful. Never rehearse a destructive restore against production.
+
 ### Use a published image
 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.2.0
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.3.0
 ```
 
 Then pull and start it without building locally:

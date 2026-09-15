@@ -33,9 +33,16 @@ module Platform
       )
     end
 
-    def self.decode(source:, password: nil)
+    def self.decode(source:, password: nil, archive_configuration: Platform::Backup::ArchiveConfiguration.current)
       raw_json = source.respond_to?(:read) ? source.read : source.to_s
       parsed = JSON.parse(raw_json).deep_symbolize_keys
+
+      if parsed[:format] == Platform::Backup::ArchiveCodec::FORMAT_NAME
+        return Platform::Backup::ArchiveCodec.decode_envelope(
+          envelope: parsed,
+          configuration: archive_configuration
+        )
+      end
 
       if parsed[:format] == Platform::UserDataExport::FORMAT_NAME
         validation = validate_plain_payload(parsed)

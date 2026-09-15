@@ -42,10 +42,20 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    # Add BACKUP_ENCRYPTION_KEY here after defining it in .kamal/secrets and
+    # changing BACKUP_STORAGE_DRIVER below to local or s3.
+    # - BACKUP_ENCRYPTION_KEY
+    # - BACKUP_ENCRYPTION_PREVIOUS_KEYS
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
+    BACKUP_STORAGE_DRIVER: disabled
+    BACKUP_LOCAL_ROOT: /rails/backups
+    # BACKUP_S3_BUCKET: your-private-backup-bucket
+    # BACKUP_S3_PREFIX: finance-tracking/backups
+    # BACKUP_S3_REGION: us-east-1
+    BACKUP_ENCRYPTION_KEY_ID: primary
 
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3
@@ -72,6 +82,9 @@ aliases:
 # Recommended to change this to a mounted volume path that is backed up off server.
 volumes:
   - "expense_tracker_storage:/rails/storage"
+  # Replace this named volume with a host path backed up off server when
+  # enabling automatic backups, for example /srv/expense_tracker/backups:/rails/backups.
+  - "expense_tracker_backups:/rails/backups"
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old

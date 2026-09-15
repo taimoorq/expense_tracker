@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -254,6 +254,61 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
     t.check_constraint "action::text = ANY (ARRAY['create'::character varying, 'edit'::character varying, 'void'::character varying, 'reverse'::character varying, 'archive'::character varying, 'import'::character varying, 'import_reversal'::character varying, 'match'::character varying, 'unmatch'::character varying, 'generate'::character varying, 'trust_observation'::character varying, 'supersede_observation'::character varying, 'close'::character varying, 'reopen'::character varying, 'backup_export'::character varying, 'backup_restore'::character varying, 'access_change'::character varying, 'resolve_migration_discrepancy'::character varying, 'restore_checkpoint'::character varying, 'restore_rollback'::character varying]::text[])", name: "audit_events_action_valid"
   end
 
+  create_table "backup_archives", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "actor_membership_id", null: false
+    t.string "archive_checksum"
+    t.uuid "backup_schedule_id"
+    t.uuid "budget_workspace_id", null: false
+    t.bigint "byte_size"
+    t.string "content_type", default: "application/json; charset=utf-8", null: false
+    t.datetime "created_at", null: false
+    t.uuid "data_transfer_run_id", null: false
+    t.datetime "deleted_at"
+    t.datetime "deleting_at"
+    t.string "encryption_key_id", null: false
+    t.string "envelope_version", null: false
+    t.string "error_code"
+    t.datetime "failed_at"
+    t.string "filename", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.uuid "operation_run_id", null: false
+    t.string "payload_checksum"
+    t.string "payload_format_version", default: "2", null: false
+    t.datetime "scheduled_for"
+    t.datetime "started_at"
+    t.string "state", default: "pending", null: false
+    t.string "storage_adapter", null: false
+    t.string "storage_key", null: false
+    t.datetime "stored_at"
+    t.string "trigger", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "verified_at"
+    t.index ["actor_membership_id"], name: "index_backup_archives_on_actor_membership_id"
+    t.index ["backup_schedule_id", "scheduled_for"], name: "uidx_backup_archives_schedule_slot", unique: true, where: "(backup_schedule_id IS NOT NULL)"
+    t.index ["backup_schedule_id"], name: "index_backup_archives_on_backup_schedule_id"
+    t.index ["budget_workspace_id", "state", "created_at"], name: "idx_backup_archives_workspace_state"
+    t.index ["budget_workspace_id"], name: "index_backup_archives_on_budget_workspace_id"
+    t.index ["budget_workspace_id"], name: "uidx_backup_archives_active_workspace", unique: true, where: "((state)::text = ANY ((ARRAY['pending'::character varying, 'writing'::character varying])::text[]))"
+    t.index ["data_transfer_run_id"], name: "index_backup_archives_on_data_transfer_run_id"
+    t.index ["data_transfer_run_id"], name: "uidx_backup_archives_transfer", unique: true
+    t.index ["id", "budget_workspace_id"], name: "uidx_backup_archives_id_workspace", unique: true
+    t.index ["operation_run_id"], name: "index_backup_archives_on_operation_run_id"
+    t.index ["operation_run_id"], name: "uidx_backup_archives_operation", unique: true
+    t.index ["storage_adapter", "storage_key"], name: "uidx_backup_archives_storage_effect", unique: true
+    t.check_constraint "(state::text <> ALL (ARRAY['ready'::character varying, 'deleting'::character varying, 'deleted'::character varying]::text[])) OR stored_at IS NOT NULL AND payload_checksum IS NOT NULL AND archive_checksum IS NOT NULL AND byte_size IS NOT NULL", name: "backup_archives_stored_metadata_coherent"
+    t.check_constraint "(state::text = 'deleted'::text) = (deleted_at IS NOT NULL)", name: "backup_archives_deleted_coherent"
+    t.check_constraint "(state::text = 'deleting'::text) = (deleting_at IS NOT NULL)", name: "backup_archives_deleting_coherent"
+    t.check_constraint "(state::text = 'failed'::text) = (failed_at IS NOT NULL)", name: "backup_archives_failed_coherent"
+    t.check_constraint "(state::text = 'ready'::text) = (verified_at IS NOT NULL)", name: "backup_archives_ready_coherent"
+    t.check_constraint "archive_checksum IS NULL OR archive_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "backup_archives_archive_checksum_valid"
+    t.check_constraint "byte_size IS NULL OR byte_size >= 0", name: "backup_archives_byte_size_nonnegative"
+    t.check_constraint "lock_version >= 0", name: "backup_archives_lock_version_nonnegative"
+    t.check_constraint "payload_checksum IS NULL OR payload_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "backup_archives_payload_checksum_valid"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'writing'::character varying, 'ready'::character varying, 'failed'::character varying, 'deleting'::character varying, 'deleted'::character varying]::text[])", name: "backup_archives_state_valid"
+    t.check_constraint "trigger::text = 'manual'::text AND backup_schedule_id IS NULL AND scheduled_for IS NULL OR trigger::text = 'scheduled'::text AND backup_schedule_id IS NOT NULL AND scheduled_for IS NOT NULL", name: "backup_archives_schedule_slot_coherent"
+    t.check_constraint "trigger::text = ANY (ARRAY['manual'::character varying, 'scheduled'::character varying]::text[])", name: "backup_archives_trigger_valid"
+  end
+
   create_table "backup_export_artifacts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "budget_workspace_id", null: false
     t.string "content_type", default: "application/json; charset=utf-8", null: false
@@ -333,6 +388,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
     t.check_constraint "payload_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "backup_restore_drafts_checksum_valid"
     t.check_constraint "state::text = ANY (ARRAY['previewed'::character varying, 'queued'::character varying, 'consumed'::character varying, 'failed'::character varying, 'expired'::character varying]::text[])", name: "backup_restore_drafts_state_valid"
     t.check_constraint "token_digest::text ~ '^[0-9a-f]{64}$'::text", name: "backup_restore_drafts_token_valid"
+  end
+
+  create_table "backup_schedules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "budget_workspace_id", null: false
+    t.string "cadence", default: "daily", null: false
+    t.datetime "created_at", null: false
+    t.uuid "creator_membership_id", null: false
+    t.integer "day_of_month"
+    t.datetime "last_attempted_at"
+    t.string "last_error_code"
+    t.datetime "last_failed_at"
+    t.datetime "last_succeeded_at"
+    t.integer "local_minute_of_day", default: 120, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "next_run_at"
+    t.integer "retention_count", default: 14, null: false
+    t.string "state", default: "paused", null: false
+    t.string "time_zone", default: "UTC", null: false
+    t.datetime "updated_at", null: false
+    t.integer "weekday"
+    t.index ["budget_workspace_id"], name: "index_backup_schedules_on_budget_workspace_id"
+    t.index ["budget_workspace_id"], name: "uidx_backup_schedules_workspace", unique: true
+    t.index ["creator_membership_id"], name: "index_backup_schedules_on_creator_membership_id"
+    t.index ["id", "budget_workspace_id"], name: "uidx_backup_schedules_id_workspace", unique: true
+    t.index ["state", "next_run_at"], name: "idx_backup_schedules_due", where: "((state)::text = 'enabled'::text)"
+    t.check_constraint "(state::text = 'enabled'::text) = (next_run_at IS NOT NULL)", name: "backup_schedules_next_run_coherent"
+    t.check_constraint "cadence::text = 'daily'::text AND weekday IS NULL AND day_of_month IS NULL OR cadence::text = 'weekly'::text AND weekday >= 0 AND weekday <= 6 AND day_of_month IS NULL OR cadence::text = 'monthly'::text AND weekday IS NULL AND day_of_month >= 1 AND day_of_month <= 28", name: "backup_schedules_cadence_fields_coherent"
+    t.check_constraint "cadence::text = ANY (ARRAY['daily'::character varying, 'weekly'::character varying, 'monthly'::character varying]::text[])", name: "backup_schedules_cadence_valid"
+    t.check_constraint "local_minute_of_day >= 0 AND local_minute_of_day <= 1439", name: "backup_schedules_local_time_valid"
+    t.check_constraint "lock_version >= 0", name: "backup_schedules_lock_version_nonnegative"
+    t.check_constraint "retention_count >= 1 AND retention_count <= 365", name: "backup_schedules_retention_valid"
+    t.check_constraint "state::text = ANY (ARRAY['enabled'::character varying, 'paused'::character varying]::text[])", name: "backup_schedules_state_valid"
   end
 
   create_table "balance_observations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1285,6 +1372,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
   add_foreign_key "audit_events", "operation_runs", column: ["operation_run_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "audit_events", "users", column: "actor_user_id"
   add_foreign_key "audit_events", "workspace_memberships", column: ["actor_membership_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "backup_archives", "backup_schedules"
+  add_foreign_key "backup_archives", "backup_schedules", column: ["backup_schedule_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_archives_schedule_workspace"
+  add_foreign_key "backup_archives", "budget_workspaces"
+  add_foreign_key "backup_archives", "data_transfer_runs", column: ["data_transfer_run_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_archives_transfer_workspace"
+  add_foreign_key "backup_archives", "operation_runs", column: ["operation_run_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_archives_operation_workspace"
+  add_foreign_key "backup_archives", "workspace_memberships", column: "actor_membership_id"
+  add_foreign_key "backup_archives", "workspace_memberships", column: ["actor_membership_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_archives_actor_workspace"
   add_foreign_key "backup_export_artifacts", "budget_workspaces"
   add_foreign_key "backup_export_artifacts", "data_transfer_runs", column: ["data_transfer_run_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_export_artifacts_transfer_workspace"
   add_foreign_key "backup_export_artifacts", "operation_runs", column: ["operation_run_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_export_artifacts_operation_workspace"
@@ -1294,6 +1388,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
   add_foreign_key "backup_restore_drafts", "operation_runs", column: ["operation_run_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_restore_drafts_operation_workspace"
   add_foreign_key "backup_restore_drafts", "restore_checkpoints", column: ["restore_checkpoint_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_restore_drafts_checkpoint_workspace"
   add_foreign_key "backup_restore_drafts", "users"
+  add_foreign_key "backup_schedules", "budget_workspaces"
+  add_foreign_key "backup_schedules", "workspace_memberships", column: "creator_membership_id"
+  add_foreign_key "backup_schedules", "workspace_memberships", column: ["creator_membership_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"], name: "fk_backup_schedules_creator_workspace"
   add_foreign_key "balance_observations", "accounts", column: ["account_id", "budget_workspace_id", "currency_code"], primary_key: ["id", "budget_workspace_id", "currency_code"], name: "fk_observations_account_currency"
   add_foreign_key "balance_observations", "accounts", column: ["account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "balance_observations", "budget_workspaces"

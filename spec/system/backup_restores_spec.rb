@@ -1,16 +1,17 @@
 require "rails_helper"
 
 RSpec.describe "Backup & restore", type: :system do
-  it "is available from Settings under data and privacy" do
+  it "is a first-level destination in the sidebar" do
     user = create(:user, email: "backup@example.com")
 
     sign_in_as(user)
     visit root_path
 
-    click_link "Settings"
-    click_link "Manage data"
+    within("aside.ta-sidebar") { click_link "Backup & Restore" }
 
     expect(page).to have_current_path(backup_restore_path, ignore_query: false)
+    expect(page).to have_css("aside.ta-sidebar a.ta-sidebar-link-active[aria-current='page']", text: "Backup & Restore")
+    expect(page).to have_no_css("aside.ta-sidebar a[aria-label='Settings'].ta-sidebar-link-active")
     expect(page).to have_content("Backup & Restore")
     expect(page).to have_content("Export Data")
     expect(page).to have_content("Import Backup")

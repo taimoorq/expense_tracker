@@ -11,6 +11,10 @@ module Platform
       "import.failed" => %i[workspace_id account_id error_class],
       "backup_restore.succeeded" => %i[workspace_id transfer_id operation_id result_count replacement],
       "backup_restore.failed" => %i[workspace_id transfer_id error_class replacement],
+      "backup_schedule.dispatched" => %i[workspace_id schedule_id archive_id scheduled_for],
+      "backup_archive.succeeded" => %i[workspace_id archive_id operation_id byte_size trigger],
+      "backup_archive.failed" => %i[workspace_id archive_id operation_id error_class trigger],
+      "backup_archive.deleted" => %i[workspace_id archive_id],
       "shadow_read.mismatch" => %i[workspace_id comparison_type mismatch_count],
       "external_dependency.failed" => %i[dependency operation error_class],
       "legacy_association.accessed" => %i[owner_type association source_location]

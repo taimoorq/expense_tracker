@@ -21,7 +21,7 @@ module Platform
           return failure("The backup file does not include #{missing_scope.humanize.downcase}.") if missing_scope
 
           selected_financial_scopes = scopes & FINANCIAL_SCOPES
-          if selected_financial_scopes.any? && selected_financial_scopes != FINANCIAL_SCOPES
+          if selected_financial_scopes.any? && selected_financial_scopes.sort != FINANCIAL_SCOPES.sort
             return failure("Backup V2 restores the financial sections together so relationships remain complete.")
           end
 

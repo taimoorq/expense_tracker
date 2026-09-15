@@ -1,9 +1,12 @@
 module Platform
   module Operations
     class Status
+      AUTOMATIC_BACKUP_TYPES = %w[backup_archive backup_v2_archive].freeze
       VISIBLE_TYPES = {
         "backup_v2_restore" => [ "Backup restore", "Restoring the selected backup into this budget." ],
         "backup_v2_export" => [ "Backup export", "Building a consistent portable backup file." ],
+        "backup_archive" => [ "Automatic backup", "Encrypting and verifying a durable workspace archive." ],
+        "backup_v2_archive" => [ "Automatic backup", "Encrypting and verifying a durable workspace archive." ],
         "commit_legacy_account_activity_import" => [ "Account activity import", "Saving the reviewed transaction rows." ],
         "reverse_import_batch" => [ "Import reversal", "Reversing transactions created by an import." ],
         "generate_budget_period" => [ "Month generation", "Creating planned items from recurring transactions." ],
@@ -28,7 +31,7 @@ module Platform
         return [] if workspace.blank?
 
         scope = workspace.operation_runs
-          .where(operation_type: VISIBLE_TYPES.keys)
+          .where(operation_type: VISIBLE_TYPES.keys - AUTOMATIC_BACKUP_TYPES)
           .order(created_at: :desc)
 
         dismissed_through_at = workspace.workspace_memberships.find_by(user_id: user.id)&.recent_operations_dismissed_through_at
@@ -67,6 +70,10 @@ module Platform
 
       def self.visible_type?(operation_type)
         VISIBLE_TYPES.key?(operation_type)
+      end
+
+      def self.automatic_backup_type?(operation_type)
+        operation_type.in?(AUTOMATIC_BACKUP_TYPES)
       end
 
       def self.state_label(operation)

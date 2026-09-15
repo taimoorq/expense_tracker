@@ -144,6 +144,27 @@ module BackupRestoreFlow
     @selected_import_scopes = selected_import_scopes
     @target_backup_v2 = target_backup_workspace&.target_reads_enabled?
     @restore_checkpoints = target_backup_workspace&.restore_checkpoints&.available&.order(created_at: :desc)&.limit(5) || []
+    prepare_automatic_backups
+  end
+
+  def prepare_automatic_backups
+    @archive_configuration = Platform::Backup::ArchiveConfiguration.current
+    @automatic_backup_membership = target_backup_workspace&.workspace_memberships&.status_active&.role_owner&.find_by(user: current_user)
+    @automatic_backups_owner = @automatic_backup_membership.present?
+    @automatic_backups_eligible = @automatic_backups_owner && @archive_configuration.ready?
+    @backup_schedule = target_backup_workspace&.backup_schedule || target_backup_workspace&.build_backup_schedule(
+      creator_membership: @automatic_backup_membership,
+      cadence: "daily",
+      state: "paused",
+      time_zone: "UTC",
+      local_minute_of_day: 120,
+      retention_count: 14
+    )
+    @backup_archives = if @automatic_backups_owner
+      target_backup_workspace.backup_archives.where.not(state: "deleted").order(created_at: :desc).limit(10)
+    else
+      []
+    end
   end
 
   def build_import_preview(payload:, scopes:, encrypted:, token: nil)

@@ -1,4 +1,13 @@
 releases:
+  - version: "2.3.0"
+    released_on: "2026-08-26"
+    title: "Scheduled, encrypted workspace backups"
+    summary: "Workspace owners can now automate complete portable financial backups to durable storage chosen by their self-hosting operator."
+    changes:
+      - "Adds daily, weekly, and monthly backup schedules in a selected time zone, plus an immediate Back up now action and visible run history."
+      - "Encrypts every automatic archive with an installation-managed key, verifies its checksum and restorable structure after storage, and makes ready archives available only to the active workspace owner."
+      - "Makes scheduling, archive publication, retry reconciliation, and retention safe under duplicate delivery, interruption, and partial storage failures."
+      - "Adds shared filesystem and S3-compatible storage, key-rotation support, local scheduled-job processing, and an operator recovery runbook that keeps PostgreSQL and deployment secrets in the disaster-recovery boundary."
   - version: "2.2.0"
     released_on: "2026-08-11"
     title: "Broader account imports and clearer balances"

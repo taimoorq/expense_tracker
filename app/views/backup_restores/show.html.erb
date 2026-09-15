@@ -19,6 +19,118 @@
     </div>
   </section>
 
+  <% if @automatic_backups_owner %>
+    <section class="ta-section-frame" aria-labelledby="automatic-backups-title">
+      <div class="ta-section-header flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="max-w-3xl">
+          <p class="ta-page-eyebrow">Automatic protection</p>
+          <h2 id="automatic-backups-title" class="ta-section-title mt-1">Scheduled workspace backups</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600">Choose when every restorable financial section is encrypted and saved to storage configured by your host. Server paths and credentials are never exposed here.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span class="ta-status-badge <%= @archive_configuration.ready? ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800" %>"><%= @archive_configuration.safe_label %></span>
+          <span class="ta-status-badge <%= @backup_schedule&.state_enabled? ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700" %>"><%= @backup_schedule&.state_enabled? ? "Schedule enabled" : "Schedule paused" %></span>
+        </div>
+      </div>
+
+      <div class="grid gap-6 border-t border-slate-200 p-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.65fr)]">
+        <div>
+          <% unless @archive_configuration.ready? %>
+            <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><%= @archive_configuration.error %> Manual browser downloads remain available.</div>
+          <% end %>
+          <% unless @target_backup_v2 %>
+            <div class="mb-5 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">Automatic backups will protect this workspace in its current compatible format. After the workspace moves to Backup V2, future archives will include V2 currency, provenance, and calculation metadata.</div>
+          <% end %>
+
+          <%= form_with model: @backup_schedule, url: backup_schedule_path, method: :patch, class: "space-y-5" do |form| %>
+            <%= form.hidden_field :lock_version %>
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div>
+                <%= form.label :state, "Schedule", class: "fb-label" %>
+                <%= form.select :state, options_for_select([["Enabled", "enabled"], ["Paused", "paused"]], @backup_schedule.state), {}, class: "fb-select" %>
+              </div>
+              <div>
+                <%= form.label :cadence, "Frequency", class: "fb-label" %>
+                <%= form.select :cadence, options_for_select([["Every day", "daily"], ["Every week", "weekly"], ["Every month", "monthly"]], @backup_schedule.cadence), {}, class: "fb-select" %>
+              </div>
+              <div>
+                <%= label_tag "backup_schedule_local_time", "Local time", class: "fb-label" %>
+                <%= time_field_tag "backup_schedule[local_time]", format("%02d:%02d", @backup_schedule.local_hour, @backup_schedule.local_minute), class: "fb-input", required: true %>
+              </div>
+              <div class="sm:col-span-2">
+                <%= form.label :time_zone, "Time zone", class: "fb-label" %>
+                <%= form.select :time_zone, options_for_select(ActiveSupport::TimeZone.all.map { |zone| [zone.to_s, zone.name] }, @backup_schedule.time_zone), {}, class: "fb-select" %>
+              </div>
+              <div>
+                <%= form.label :retention_count, "Keep newest", class: "fb-label" %>
+                <%= form.select :retention_count, options_for_select(BackupSchedule::RETENTION_OPTIONS.map { |count| ["#{count} backups", count] }, @backup_schedule.retention_count), {}, class: "fb-select" %>
+              </div>
+              <div>
+                <%= form.label :weekday, "Weekly day", class: "fb-label" %>
+                <%= form.select :weekday, options_for_select(Date::DAYNAMES.each_with_index.map { |name, index| [name, index] }, @backup_schedule.weekday || 0), {}, class: "fb-select" %>
+                <p class="mt-1 text-xs text-slate-500">Used only for weekly backups.</p>
+              </div>
+              <div>
+                <%= form.label :day_of_month, "Monthly day", class: "fb-label" %>
+                <%= form.select :day_of_month, options_for_select((1..28).map { |day| [day.ordinalize, day] }, @backup_schedule.day_of_month || 1), {}, class: "fb-select" %>
+                <p class="mt-1 text-xs text-slate-500">Used only for monthly backups.</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <%= form.button type: :submit, class: "fb-btn-primary ta-action-btn" do %><%= tabler_icon("calendar-cog", classes: "ta-action-icon") %><span>Save backup schedule</span><% end %>
+              <% if @backup_schedule.persisted? && @backup_schedule.next_run_at.present? %>
+                <span class="text-sm text-slate-600">Next run <%= l(@backup_schedule.next_run_at, format: :long) %></span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <aside class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <h3 class="font-semibold text-slate-900">Back up now</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">Uses the same encrypted, verified archive path without changing the next scheduled run.</p>
+          <%= button_to run_now_backup_schedule_path,
+            method: :post,
+            class: "fb-btn-secondary ta-action-btn mt-4",
+            disabled: !@automatic_backups_eligible do %>
+            <%= tabler_icon("database-export", classes: "ta-action-icon") %><span>Start backup</span>
+          <% end %>
+          <dl class="mt-5 space-y-3 border-t border-slate-200 pt-4 text-sm">
+            <div><dt class="ta-ledger-label">Last success</dt><dd class="mt-1 text-slate-700"><%= @backup_schedule&.last_succeeded_at ? l(@backup_schedule.last_succeeded_at, format: :long) : "No scheduled success yet" %></dd></div>
+            <% if @backup_schedule&.last_failed_at %><div><dt class="ta-ledger-label">Last failure</dt><dd class="mt-1 text-rose-700"><%= l(@backup_schedule.last_failed_at, format: :long) %> · <%= @backup_schedule.last_error_code.to_s.humanize %></dd></div><% end %>
+          </dl>
+        </aside>
+      </div>
+
+      <div class="border-t border-slate-200 p-5">
+        <h3 class="font-semibold text-slate-900">Recent automatic backups</h3>
+        <% if @backup_archives.any? %>
+          <div class="mt-4 overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+              <thead class="text-xs uppercase tracking-wide text-slate-500"><tr><th class="pb-3 pr-4">Created</th><th class="pb-3 pr-4">Trigger</th><th class="pb-3 pr-4">Status</th><th class="pb-3 pr-4">Size</th><th class="pb-3 text-right">Action</th></tr></thead>
+              <tbody class="divide-y divide-slate-200">
+                <% @backup_archives.each do |archive| %>
+                  <tr>
+                    <td class="py-3 pr-4 text-slate-700"><%= l(archive.created_at, format: :long) %></td>
+                    <td class="py-3 pr-4 text-slate-700"><%= archive.trigger.humanize %></td>
+                    <td class="py-3 pr-4"><span class="ta-status-badge <%= archive.state_ready? ? "bg-emerald-100 text-emerald-800" : archive.state_failed? ? "bg-rose-100 text-rose-800" : "bg-sky-100 text-sky-800" %>"><%= archive.state.humanize %></span></td>
+                    <td class="py-3 pr-4 text-slate-700"><%= archive.byte_size ? number_to_human_size(archive.byte_size) : "—" %></td>
+                    <td class="py-3 text-right">
+                      <% if archive.state_ready? %><%= link_to "Download", backup_archive_path(archive), class: "font-semibold text-indigo-600 hover:text-indigo-700", data: { turbo: false } %>
+                      <% elsif archive.operation_run %><%= link_to "View status", operation_run_path(archive.operation_run), class: "font-semibold text-indigo-600 hover:text-indigo-700" %><% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-600">No automatic backups have been created yet.</p>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
   <section class="ta-section-frame grid divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5" aria-label="Current backup scope">
     <% @scope_cards.each do |scope_key, scope| %>
       <article class="p-5">

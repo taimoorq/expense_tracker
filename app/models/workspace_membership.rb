@@ -10,6 +10,8 @@ class WorkspaceMembership < ApplicationRecord
   belongs_to :budget_workspace
   belongs_to :user
   has_many :restore_checkpoints, foreign_key: :actor_membership_id, dependent: :restrict_with_error
+  has_many :created_backup_schedules, foreign_key: :creator_membership_id, dependent: :restrict_with_error
+  has_many :backup_archives, foreign_key: :actor_membership_id, dependent: :restrict_with_error
 
   validates :user_id, uniqueness: { scope: :budget_workspace_id }
   validate :removed_state_is_coherent

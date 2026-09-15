@@ -14,6 +14,7 @@ class OperationRun < ApplicationRecord
   has_one :account_activity_import_draft, dependent: :restrict_with_error
   has_one :backup_restore_draft, dependent: :restrict_with_error
   has_one :backup_export_artifact, dependent: :restrict_with_error
+  has_one :backup_archive, dependent: :restrict_with_error
 
   validates :operation_type, :idempotency_key, presence: true
   validates :idempotency_key, uniqueness: { scope: %i[budget_workspace_id operation_type] }

@@ -1,3 +1,47 @@
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  depends_on:
+    db:
+      condition: service_healthy
+  environment: &app-environment
+    DATABASE_URL: postgres://postgres:postgres@db:5432/expense_tracker_development
+    EXPENSE_TRACKER_DATABASE_HOST: db
+    EXPENSE_TRACKER_DATABASE_PORT: 5432
+    EXPENSE_TRACKER_DATABASE_USERNAME: postgres
+    EXPENSE_TRACKER_DATABASE_PASSWORD: postgres
+    RAILS_ENV: development
+    SOLID_QUEUE_ENABLED: "true"
+    ALLOW_ALL_HOSTS: "true"
+    PORT: 3000
+    SEED_MODE: ${SEED_MODE:-users}
+    SEED_USER_EMAIL: ${SEED_USER_EMAIL:-demo@example.com}
+    SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-password123!}
+    ADMIN_USER_EMAIL: ${ADMIN_USER_EMAIL:-}
+    ADMIN_USER_PASSWORD: ${ADMIN_USER_PASSWORD:-}
+    BACKUP_STORAGE_DRIVER: ${BACKUP_STORAGE_DRIVER:-disabled}
+    BACKUP_LOCAL_ROOT: ${BACKUP_LOCAL_ROOT:-/rails/backups}
+    BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+    BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-finance-tracking/backups}
+    BACKUP_S3_REGION: ${BACKUP_S3_REGION:-us-east-1}
+    BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+    BACKUP_S3_FORCE_PATH_STYLE: ${BACKUP_S3_FORCE_PATH_STYLE:-false}
+    BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+    BACKUP_ENCRYPTION_KEY_ID: ${BACKUP_ENCRYPTION_KEY_ID:-primary}
+    BACKUP_ENCRYPTION_PREVIOUS_KEYS: ${BACKUP_ENCRYPTION_PREVIOUS_KEYS:-}
+    AWS_REGION: ${AWS_REGION:-us-east-1}
+    AWS_PROFILE: ${AWS_PROFILE:-default}
+    AWS_SDK_LOAD_CONFIG: "true"
+    AWS_CONFIG_FILE: /home/rails/.aws/config
+    AWS_SHARED_CREDENTIALS_FILE: /home/rails/.aws/credentials
+    AWS_LOGIN_CACHE_DIRECTORY: /home/rails/.aws/login/cache
+  volumes:
+    - .:/rails
+    - bundle_data:/usr/local/bundle
+    - ${BACKUP_HOST_PATH:-./backups}:/rails/backups
+    - ${AWS_CONFIG_HOST_PATH:-./tmp/aws-config}:/home/rails/.aws:ro
+
 services:
   db:
     image: postgres:16
@@ -14,32 +58,29 @@ services:
       retries: 10
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    depends_on:
-      db:
-        condition: service_healthy
+    <<: *app
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/expense_tracker_development
-      RAILS_ENV: development
-      ALLOW_ALL_HOSTS: "true"
-      PORT: 3000
+      <<: *app-environment
       RUBY_DEBUG_OPEN: "true"
       RUBY_DEBUG_LAZY: "true"
-      SEED_MODE: ${SEED_MODE:-users}
-      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-demo@example.com}
-      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-password123!}
-      ADMIN_USER_EMAIL: ${ADMIN_USER_EMAIL:-}
-      ADMIN_USER_PASSWORD: ${ADMIN_USER_PASSWORD:-}
     ports:
       - "${APP_PORT:-4287}:3000"
-    volumes:
-      - .:/rails
-      - bundle_data:/usr/local/bundle
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:3000/up >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
     stdin_open: true
     tty: true
     command: bin/dev
+
+  worker:
+    <<: *app
+    depends_on:
+      web:
+        condition: service_healthy
+    command: bin/jobs start
 
 volumes:
   postgres_data:
