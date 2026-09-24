@@ -191,6 +191,9 @@ module Platform
         transaction.assign_attributes(
           budget_workspace: workspace,
           effective_on: activity.transaction_on,
+          transacted_at: activity.transacted_at,
+          posted_at: activity.posted_at,
+          timing_time_zone: activity.timing_time_zone,
           posted_on: activity.posted_on,
           description: activity.description,
           memo: activity.memo,
@@ -258,6 +261,8 @@ module Platform
           transaction.assign_attributes(
             budget_workspace: workspace,
             effective_on: entry.occurred_on || entry.budget_month.month_on,
+            transacted_at: entry.occurred_at,
+            timing_time_zone: entry.timing_time_zone,
             description: entry.payee.presence || entry.category.presence || "Migrated actual",
             payee: entry.payee,
             memo: entry.notes,

@@ -1,0 +1,51 @@
+<section class="ta-section-frame p-5" id="bank-transaction-review">
+  <div class="flex flex-wrap justify-between gap-3"><h2 class="ta-section-title"><%= @activity&.view == "pending" ? "Pending at bank" : "Review bank activity" %> · <%= @transactions.size %></h2><%= link_to "Open Activity", activity_path(view: "bank"), class: "underline" unless @activity %></div>
+  <p class="ta-muted mt-2">Choose a matching plan when this movement is already recorded. For transfers, select the other account or pair the other bank transaction. Accepting activity never sends a payment. Pending items do not affect posted totals. If you already entered or imported this movement, attach it to the existing transaction below.</p>
+  <%= render "bank_connections/ledger_notice" %>
+  <% if @transactions.empty? %><p class="ta-muted mt-4">No new transactions to review. Enable recent transactions on a mapped account to fetch its history on the next refresh.</p><% end %>
+  <div class="divide-y divide-slate-200">
+    <% @transactions.each do |source| %>
+      <article class="py-4" id="<%= dom_id(source) %>">
+        <div class="flex flex-wrap justify-between gap-3"><div><p class="font-semibold"><%= source.description %></p><p class="ta-muted text-sm"><%= source.connected_account.name %> · <%= source.effective_at&.in_time_zone(@workspace.time_zone)&.strftime("%b %-d at %-I:%M %p") || "Time not provided" %> · <%= source.pending? ? "Pending" : source.state == "changed" ? "Bank correction needs review" : "Posted" %></p></div><strong class="ta-money"><%= number_to_currency(source.amount) %></strong></div>
+        <% unless source.pending? %>
+          <details class="ta-account-disclosure mt-2">
+            <summary>Review transaction</summary>
+          <%= form_with url: provider_transaction_path(source), method: :patch, class: "mt-3 space-y-3" do |form| %>
+            <%= form.hidden_field :digest, value: source.content_digest %>
+            <% if @activity %><%= form.hidden_field :return_to, value: "activity" %><%= form.hidden_field :view, value: @activity.view %><%= form.hidden_field :account_id, value: @activity.account_id %><% end %>
+            <div><%= form.label :expense_entry_id, "Match a plan or recorded payment", class: "fb-label", for: "entry_#{source.id}" %><%= form.select :expense_entry_id, @entries.select { |entry| [entry.source_account_id, entry.destination_account_id].include?(source.connected_account.account_id) }.map { |entry| ["#{entry.occurred_on} · #{entry.payee.presence || entry.category} · #{number_to_currency(entry.effective_amount)}", entry.id] }, { include_blank: "New activity — no existing plan" }, id: "entry_#{source.id}", class: "fb-select" %></div>
+            <details><summary class="cursor-pointer text-sm">Transfer between accounts</summary><div class="mt-2"><%= form.label :transfer_account_id, "Other account (if its bank side has not arrived)", class: "fb-label", for: "transfer_#{source.id}" %><%= form.select :transfer_account_id, @accounts.reject { |account| account.id == source.connected_account.account_id }.map { |account| [account.name, account.id] }, { include_blank: "Not a transfer" }, id: "transfer_#{source.id}", class: "fb-select" %></div><div class="mt-2"><%= form.label :counterpart_id, "Pair the other posted bank side", class: "fb-label", for: "counterpart_#{source.id}" %><%= form.select :counterpart_id, @transfer_candidates.select { |candidate| candidate.connected_account.account_id != source.connected_account.account_id && candidate.amount == -source.amount }.map { |candidate| ["#{candidate.connected_account.name} · #{candidate.description} · #{number_to_currency(candidate.amount)}", candidate.id] }, { include_blank: "Not yet paired" }, id: "counterpart_#{source.id}", class: "fb-select" %></div></details>
+            <% existing = Activity::BankReviewQuery.existing_candidates(source) %>
+            <% if existing.any? && !source.financial_transaction_id %>
+              <fieldset class="rounded-xl border border-slate-200 p-3"><legend class="px-1 font-semibold text-sm">Already recorded or imported?</legend>
+                <p class="ta-muted mb-2 text-sm">Same amounts are suggestions only. Confirm this is the same movement. Attaching evidence keeps one transaction and retains its original date.</p>
+                <%= form.label :financial_transaction_id, "Existing transaction", for: "existing_#{source.id}", class: "fb-label" %>
+                <%= form.select :financial_transaction_id, existing.map { |row| ["#{row.effective_on} · #{row.description} · #{number_to_currency(row.gross_amount)}", row.id] }, { include_blank: "Choose the same movement" }, id: "existing_#{source.id}", class: "fb-select" %>
+                <%= form.button "Attach to existing transaction", name: :choice, value: "existing", class: "fb-btn-secondary mt-2" %>
+              </fieldset>
+            <% end %>
+            <div class="flex flex-wrap gap-2"><%= form.button "Accept into Activity", class: "fb-btn-primary", disabled: !bank_ledger_enabled? %><%= form.button(source.state == "ignored" ? "Return to review" : "Ignore", name: :choice, value: source.state == "ignored" ? "restore" : "ignore", class: "fb-btn-secondary") %></div>
+          <% end %>
+          </details>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+  <% if @bank_review %>
+    <nav class="mt-4 flex flex-wrap items-center gap-3" aria-label="Bank review pages">
+      <% if @bank_review.page > 1 %><%= link_to "Previous bank items", activity_path(request.query_parameters.merge(bank_page: @bank_review.page - 1)), class: "fb-btn-secondary" %><% end %>
+      <span class="text-sm">Page <%= @bank_review.page %> · <%= pluralize(@bank_review.total, "item") %></span>
+      <% if @bank_review.total > @bank_review.page * Activity::BankReviewQuery::PER_PAGE %><%= link_to "More bank items", activity_path(request.query_parameters.merge(bank_page: @bank_review.page + 1)), class: "fb-btn-secondary" %><% end %>
+    </nav>
+  <% end %>
+  <% if @transactions.size == 100 %><p class="ta-muted text-sm">Showing the latest 100 review items. Reviewed rows leave this list so you can continue.</p><% end %>
+</section>
+
+<% if @accepted_transactions.any? %>
+  <details class="ta-section-frame p-5"><summary class="cursor-pointer font-semibold">Accepted bank activity</summary>
+    <p class="ta-muted mt-2">Detaching evidence keeps the existing manual or CSV transaction. Undo reverses the accepted ledger effect and restores any payment reservation. You can then review the bank transaction again. Paired transfers are undone together.</p>
+    <% @accepted_transactions.each do |source| %>
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b py-3"><span><%= source.description %> · <%= number_to_currency(source.amount) %></span><%= button_to (source.resolution_kind == "existing" ? "Detach bank evidence" : "Undo acceptance"), provider_transaction_path(source), method: :patch, params: { choice: "undo", return_to: (@activity ? "activity" : nil), view: @activity&.view, account_id: @activity&.account_id }, class: "fb-btn-secondary", form: { data: { turbo_confirm: "Undo this accepted activity and its matches?" } } %></div>
+    <% end %>
+  </details>
+<% end %>

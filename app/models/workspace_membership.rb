@@ -14,6 +14,7 @@ class WorkspaceMembership < ApplicationRecord
   has_many :backup_archives, foreign_key: :actor_membership_id, dependent: :restrict_with_error
 
   validates :user_id, uniqueness: { scope: :budget_workspace_id }
+  validates :onboarding_path, inclusion: { in: %w[simplefin manual import] }, allow_nil: true
   validate :removed_state_is_coherent
 
   private

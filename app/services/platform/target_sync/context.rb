@@ -5,7 +5,7 @@ module Platform
 
       def self.for(record)
         user = record.respond_to?(:user) ? record.user : nil
-        workspace = record.try(:budget_workspace)
+        workspace = record.try(:budget_workspace) if !record.respond_to?(:budget_workspace_id) || record.budget_workspace_id.present? || record.association(:budget_workspace).loaded?
         workspace ||= BudgetWorkspace.find_by(legacy_owner_user_id: user&.id)
         return if workspace.blank? || !workspace.target_writes_enabled?
 

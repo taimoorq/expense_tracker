@@ -7,9 +7,9 @@ class AccountsController < ApplicationController
   end
 
   def show
-    @account = current_user.accounts.includes(:account_snapshots).find(params[:id])
+    @account = current_user.accounts.find(params[:id])
     if params[:view] == "activity" && @account.budget_workspace&.target_reads_enabled?
-      redirect_to activity_path(view: "all", account_id: @account.id)
+      redirect_to activity_path(view: "all", account_id: @account.id, starts_on: params[:starts_on].presence, ends_on: params[:ends_on].presence, direction: params[:direction].presence)
       return
     end
 

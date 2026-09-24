@@ -14,16 +14,16 @@ module Platform
         RULE_FIELDS = %i[cadence interval_count anchor_on day_one day_two starts_on ends_on weekend_policy created_at updated_at].freeze
         TERM_FIELDS = %i[total_due opening_paid_adjustment monthly_target target_completion_on created_at updated_at].freeze
         POLICY_FIELDS = %i[due_day minimum_payment priority estimate_policy created_at updated_at].freeze
-        ITEM_FIELDS = %i[flow_kind budget_group planned_amount currency_code scheduled_on state origin_kind name_snapshot payee_snapshot category_snapshot priority_classification notes voided_at void_reason created_at updated_at].freeze
+        ITEM_FIELDS = %i[flow_kind budget_group planned_amount currency_code scheduled_on scheduled_at timing_time_zone state origin_kind name_snapshot payee_snapshot category_snapshot priority_classification notes voided_at void_reason created_at updated_at].freeze
         OCCURRENCE_FIELDS = %i[scheduled_on slot_key state created_at updated_at].freeze
-        CLOSE_FIELDS = %i[state calculation_version planned_income planned_outflow planned_net actual_income actual_outflow actual_net remaining_income remaining_outflow forecast_income forecast_outflow forecast_net income_variance outflow_variance unresolved_count unmatched_count calculation_input_digest closed_at created_at updated_at].freeze
-        CLOSE_ITEM_FIELDS = %i[flow_kind budget_group name_snapshot category_snapshot scheduled_on planned_amount actual_amount remaining_amount currency_code created_at updated_at].freeze
-        CLOSE_TRANSACTION_FIELDS = %i[flow_kind origin_kind description_snapshot category_snapshot effective_on gross_amount allocated_amount currency_code created_at updated_at].freeze
+        CLOSE_FIELDS = %i[state calculation_version planned_income planned_outflow planned_net actual_income actual_outflow actual_net remaining_income remaining_outflow forecast_income forecast_outflow forecast_net income_variance outflow_variance unresolved_count unmatched_count recorded_totals calculation_input_digest closed_at created_at updated_at].freeze
+        CLOSE_ITEM_FIELDS = %i[flow_kind budget_group name_snapshot category_snapshot scheduled_on scheduled_at timing_time_zone planned_amount actual_amount remaining_amount currency_code created_at updated_at].freeze
+        CLOSE_TRANSACTION_FIELDS = %i[flow_kind origin_kind description_snapshot category_snapshot effective_on transacted_at timing_time_zone gross_amount allocated_amount currency_code created_at updated_at].freeze
         PROFILE_FIELDS = %i[name parser_name parser_version header_row_number column_mapping amount_strategy fingerprint_version active created_at updated_at].freeze
         BATCH_FIELDS = %i[import_kind original_filename file_digest idempotency_key parser_version mapping_version fingerprint_version coverage_starts_on coverage_ends_on status row_count imported_count duplicate_count error_count redacted_metadata warnings committed_at failed_at failure_code reverted_at created_at updated_at].freeze
         ROW_FIELDS = %i[row_number provider_transaction_id fingerprint fingerprint_version raw_payload normalized_payload normalization_result status error_code error_message created_at updated_at].freeze
-        TRANSACTION_FIELDS = %i[effective_on posted_on description payee memo gross_amount currency_code flow_kind state origin_kind provider_transaction_id idempotency_key voided_at void_reason created_at updated_at].freeze
-        POSTING_FIELDS = %i[amount currency_code role sequence_number created_at updated_at].freeze
+        TRANSACTION_FIELDS = %i[effective_on transacted_at posted_on posted_at timing_time_zone description payee memo gross_amount currency_code flow_kind state origin_kind provider_transaction_id idempotency_key voided_at void_reason reviewed_at created_at updated_at].freeze
+        POSTING_FIELDS = %i[amount currency_code role sequence_number effective_at created_at updated_at].freeze
         ALLOCATION_FIELDS = %i[amount currency_code match_kind match_confidence matched_at created_at updated_at].freeze
 
         def initialize(user:, payload:, scopes:, replace_existing: false, checkpoint: nil, operation_run: nil, transfer: nil)
@@ -83,6 +83,7 @@ module Platform
           workspace.assign_attributes(
             name: metadata[:name].presence || "Restored budget",
             default_currency_code: currency,
+            time_zone: metadata[:time_zone].presence || workspace.time_zone || "UTC",
             status: "active",
             closed_at: nil
           )
@@ -121,6 +122,8 @@ module Platform
           prepare_destination! if financial_restore?
           import_financial_bundle if financial_restore?
           project_legacy_compatibility!(operation) if financial_restore?
+          bank_data.restore_entry_links! if financial_restore?
+          CandidateDecisions.restore_v2(user: user, workspace: workspace, records: payload.dig(:data, :recurring_candidate_decisions), lookup: method(:lookup!)) if financial_restore?
           import_preferences if scopes.include?("preferences")
           mark_workspace_restore_ready! if financial_restore?
           finish_transfer!(operation)
@@ -149,7 +152,12 @@ module Platform
           import_postings(data.fetch(:account_activity).fetch(:account_postings))
           import_allocations(data.fetch(:account_activity).fetch(:budget_allocations))
           import_month_close_snapshots(data.fetch(:budget_months))
+          bank_data.restore!
           import_observations(data.fetch(:accounts).fetch(:balance_observations))
+        end
+
+        def bank_data
+          @bank_data ||= BankData.new(data: payload.dig(:data, :accounts, :bank_data), workspace: workspace, membership: membership, lookup: method(:lookup!), register: method(:register!))
         end
 
         def import_accounts(data)
@@ -381,7 +389,9 @@ module Platform
                 account: lookup!(:account, record[:account_external_id]),
                 actor_membership: membership,
                 source_import_batch: lookup(:import_batch, record[:source_import_batch_external_id]),
-                source_import_row: lookup(:import_row, record[:source_import_row_external_id])
+                source_import_row: lookup(:import_row, record[:source_import_row_external_id]),
+                provider_balance: lookup(:provider_balance, record[:provider_balance_external_id]),
+                transaction_coverage: record.fetch(:transaction_coverage, {}).to_h.to_h { |id, disposition| [ lookup!(:transaction, id).id, disposition ] }
               )
             )
             counts["balance_observations"] += 1
@@ -395,6 +405,10 @@ module Platform
             :financial_rhythm
           ).compact
           user.update!(values)
+          onboarding = payload.dig(:data, :preferences, :onboarding)
+          if onboarding.is_a?(Hash)
+            membership.update!(onboarding.slice(:onboarding_path, :onboarding_recurring_skipped_at, :onboarding_balance_deferred_at, :onboarding_reviewed_at, :onboarding_completed_at, :onboarding_dismissed_at, :onboarding_version))
+          end
           counts["preferences"] = values.size
         end
 

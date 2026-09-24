@@ -37,6 +37,8 @@ RSpec.describe "Authentication", type: :request do
 
     expect(response).to redirect_to(root_path)
     expect(User.order(:created_at).last.financial_rhythm).to eq("variable_income")
+    workspace = User.order(:created_at).last.legacy_owned_budget_workspace
+    expect(workspace).to have_attributes(target_reads_enabled: true, target_writes_enabled: true)
   end
 
   context "when turnstile is enabled" do

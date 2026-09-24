@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Accounts management", type: :system do
   include ActiveSupport::Testing::TimeHelpers
 
-  it "lets a signed in user create an account with an initial balance snapshot" do
+  it "lets a signed in user create an account with an initial balance snapshot", js: true do
     user = create(:user)
 
     sign_in_as(user)
@@ -12,14 +12,23 @@ RSpec.describe "Accounts management", type: :system do
     fill_in "Name", with: "Brokerage"
     fill_in "Institution", with: "Vanguard"
     select "Brokerage", from: "Account type"
+    expect(page).not_to have_field("Balance", visible: true)
+    find("summary", text: "Add a starting balance (optional)").click
     fill_in "Balance", with: "15250.75"
     fill_in "Available balance", with: "800.25"
     fill_in "Opening balance notes", with: "Opening balance"
+    fill_in "Recorded on", with: ""
+    click_button "Create Account"
+
+    expect(page).to have_content("Fix the initial balance details")
+    expect(page).to have_field("Balance", with: "15250.75", visible: true)
+    fill_in "Recorded on", with: Date.current
     click_button "Create Account"
 
     expect(page).to have_content("Account created and initial balance recorded.")
     expect(page).to have_content("$15,250.75")
     click_link "Manage"
+    find("#manual-snapshots > summary").click
     expect(page).to have_content("$800.25")
     expect(page).to have_content("Opening balance")
   end
@@ -93,8 +102,8 @@ RSpec.describe "Accounts management", type: :system do
     expect(page).to have_content("$10,000.00")
     expect(page).to have_content("$2,500.00")
     expect(page).to have_content("$7,500.00")
-    expect(page).to have_content("Imports and paid linked entries are reflected from their trusted sources.")
-    expect(page).to have_content("Latest updated")
+    expect(page).to have_content("Tracked accounts")
+    find("#account-balance-help > summary").click
     expect(page).to have_content("Latest trusted source")
     expect(page).to have_content("March 01, 2026")
     expect(page).to have_css("canvas[data-controller='chart']", visible: :all)
@@ -109,6 +118,7 @@ RSpec.describe "Accounts management", type: :system do
     visit account_path(account)
     click_link "Manage"
 
+    find("#manual-snapshots > summary").click
     within("tr", text: "Starting point") do
       click_link "Edit"
     end
@@ -147,6 +157,7 @@ RSpec.describe "Accounts management", type: :system do
     within("turbo-frame##{frame_id}") do
       expect(page).to have_content("Add a balance for Store Card")
       fill_in "Balance", with: "-450.00"
+      find("summary", text: "Available balance and notes").click
       fill_in "Notes", with: "Current card balance"
       click_button "Record Balance"
     end
@@ -155,6 +166,7 @@ RSpec.describe "Accounts management", type: :system do
     expect(card.account_snapshots.reload.count).to eq(snapshot_count + 1)
     within("##{card_dom_id}") do
       expect(page).to have_content("-$450.00")
+      find("summary[aria-label='Actions for Store Card']").click
       click_link "Edit balance"
     end
 
@@ -200,7 +212,8 @@ RSpec.describe "Accounts management", type: :system do
 
     click_link "Manage"
     expect(page).to have_content("Connected recurring templates")
-    expect(page).to have_content("How balance is calculated")
+    expect(page).to have_content("Account settings")
+    find("summary", text: "Connected recurring templates").click
     expect(page).to have_content("Acme Payroll")
     expect(page).to have_link("Edit account", href: edit_account_path(account))
     expect(page).to have_no_link("Back to Accounts")
@@ -236,6 +249,7 @@ RSpec.describe "Accounts management", type: :system do
       sign_in_as(user)
       visit account_path(card)
 
+      find("#account-movement > summary").click
       expect(page).to have_content("Credit card payoff progress")
       expect(page).to have_content("Paid down this month")
       expect(page).to have_content("$325.00")
@@ -259,6 +273,7 @@ RSpec.describe "Accounts management", type: :system do
       sign_in_as(user)
       visit account_path(card)
 
+      find("#account-movement > summary").click
       expect(page).to have_content("Charges and payments over time")
       expect(page).to have_content("Payments & credits")
       expect(page).to have_css("canvas[data-controller='chart']", visible: :all)
@@ -282,6 +297,7 @@ RSpec.describe "Accounts management", type: :system do
       sign_in_as(user)
       visit account_path(checking)
 
+      find("#account-movement > summary").click
       expect(page).to have_content("Money in and money out over time")
       expect(page).to have_content("Money in")
       expect(page).to have_content("Money out")

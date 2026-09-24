@@ -5,39 +5,25 @@ module Overview
     end
 
     def call
+      workflow = context[:workflow_status]
+      if workflow&.bank_review_count.to_i.positive?
+        return {
+          badge: "Needs review", title: "Review new bank activity",
+          description: "Review posted transactions before adding them to your recorded activity. Pending transactions can wait.",
+          primary_label: "Review Activity", primary_path: Rails.application.routes.url_helpers.activity_path(view: "bank"),
+          secondary_label: "Bank connections", secondary_path: Rails.application.routes.url_helpers.bank_connections_path
+        }
+      end
+
       if context.fetch(:accounts).empty?
         return {
           badge: "Start here",
           title: "Add your first account",
-          description: "Start with the real accounts you expect to use so templates and month entries have somewhere to link later.",
+          description: "Connect with SimpleFIN or add an account manually. You can combine both approaches.",
           primary_label: "Set up Accounts",
           primary_path: Rails.application.routes.url_helpers.accounts_path,
           secondary_label: "Create Account",
           secondary_path: Rails.application.routes.url_helpers.new_account_path
-        }
-      end
-
-      if context.fetch(:template_total).zero?
-        return {
-          badge: "Recommended",
-          title: "Set up recurring transactions",
-          description: "Add the incoming and outgoing items you expect each month first, then your first month can pull that recurring structure in immediately.",
-          primary_label: "Open Recurring",
-          primary_path: Rails.application.routes.url_helpers.planning_templates_path,
-          secondary_label: "Open Accounts",
-          secondary_path: Rails.application.routes.url_helpers.accounts_path
-        }
-      end
-
-      if context.fetch(:linked_template_total).zero?
-        return {
-          badge: "Recommended",
-          title: "Link templates to accounts",
-          description: "Link the templates you just set up so generated month entries and account views stay aligned from the start.",
-          primary_label: "Manage Recurring",
-          primary_path: Rails.application.routes.url_helpers.planning_templates_path,
-          secondary_label: "Open Accounts",
-          secondary_path: Rails.application.routes.url_helpers.accounts_path
         }
       end
 
@@ -47,7 +33,7 @@ module Overview
         return {
           badge: "Next step",
           title: "Create your first month",
-          description: "Once accounts and recurring transactions are ready, create the month and import those recurring items into it.",
+          description: "Start with one planned item or reuse recurring transactions. You can add more as you go.",
           primary_label: "Create Month",
           primary_path: Rails.application.routes.url_helpers.new_budget_month_path,
           secondary_label: "Open Recurring",
@@ -58,8 +44,8 @@ module Overview
       if context.fetch(:current_month_entries).empty?
         return {
           badge: "Next step",
-          title: "Import recurring transactions into #{current_month.label}",
-          description: "Start the month by pulling in the recurring transactions you already saved, then adjust the entries from there.",
+          title: "Build #{current_month.label}",
+          description: "Add a planned item or bring in saved recurring transactions. Recorded activity stays separate from your plan.",
           primary_label: "Open Budget",
           primary_path: Rails.application.routes.url_helpers.budget_month_tab_path(current_month, "timeline"),
           secondary_label: "Open Plan and Edit",

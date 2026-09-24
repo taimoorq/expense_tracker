@@ -97,7 +97,7 @@ module Budgeting
     end
 
     def ordered_entries
-      @ordered_entries ||= entries.sort_by { |entry| [ entry.occurred_on || Date.new(9999, 12, 31), entry.created_at ] }
+      @ordered_entries ||= entries.sort_by(&:chronological_key)
     end
 
     def running_balance_points
@@ -111,7 +111,7 @@ module Budgeting
     def cumulative_outflow_points
       @cumulative_outflow_points ||= begin
         spending_entries = outflow_entries.select { |entry| entry.occurred_on.present? }
-        spending_entries.sort_by { |entry| [ entry.occurred_on, entry.created_at ] }.each_with_object({ labels: [], values: [], running: 0.0 }) do |entry, memo|
+        spending_entries.sort_by(&:chronological_key).each_with_object({ labels: [], values: [], running: 0.0 }) do |entry, memo|
           memo[:running] += entry.contributing_amount.to_f
           memo[:labels] << entry.occurred_on.strftime("%b %-d")
           memo[:values] << memo[:running].round(2)

@@ -1,4 +1,5 @@
 class Subscription < ApplicationRecord
+  include CandidateReviewable
   include LegacyWorkspaceOwned
   include PlanningTemplateMetadata
   include RecurringEntryTemplate

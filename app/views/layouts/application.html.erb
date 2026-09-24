@@ -30,10 +30,10 @@
   <body class="ta-shell ta-shell-collapsed <%= current_theme_class %>" style="<%= current_theme_css_variables %>" data-rails-env="<%= Rails.env %>" data-controller="help-modal sidebar" data-action="keydown.esc->help-modal#closeOnEsc keydown.esc->sidebar#close click@window->sidebar#closeFromOutside resize@window->sidebar#syncMode" data-sidebar-target="shell">
     <%= link_to "Skip to main content", "#main-content", class: "ta-skip-link" %>
     <% overview_active = controller_name == "overview" %>
-    <% months_active = controller_name == "budget_months" || controller_name == "expense_entries" || controller_name == "imports" %>
+    <% months_active = controller_name.in?(%w[budget_months expense_entries imports]) %>
     <% templates_active = controller_name == "planning_templates" || %w[pay_schedules subscriptions monthly_bills payment_plans credit_cards].include?(controller_name) %>
     <% plan_active = months_active || templates_active %>
-    <% activity_active = controller_name == "activity" || controller_name == "account_activity_imports" %>
+    <% activity_active = controller_name.in?(%w[activity activity_transactions activity_matches payment_settlements account_activity_imports]) %>
     <% accounts_active = controller_name == "accounts" || controller_name == "account_snapshots" %>
     <% reports_active = controller_name == "reports" %>
     <% backup_restore_active = controller_name == "backup_restores" %>

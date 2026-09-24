@@ -280,7 +280,12 @@ module Budgeting
     end
 
     def review_entries
-      review_result.entries
+      @review_entries ||= begin
+        rows = review_result.entries
+        with_source = rows.select { |entry| entry.source_account_id.present? }
+        ActiveRecord::Associations::Preloader.new(records: with_source, associations: :source_account).call if with_source.any?
+        rows
+      end
     end
 
     def review_cards

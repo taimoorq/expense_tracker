@@ -74,7 +74,10 @@ module Accounts
     end
 
     def payment_destination_label(entry)
-      return normalized_label(entry.destination_account&.name) if entry.destination_account.present?
+      if entry.destination_account_id.present? || entry.association(:destination_account).loaded?
+        destination = entry.destination_account
+        return normalized_label(destination.name) if destination.present?
+      end
 
       template = entry.source_template
       return normalized_label(template.linked_account&.name) if template.is_a?(CreditCard) && template.linked_account.present?

@@ -17,6 +17,8 @@ module Recurring
       @budget_month.with_lock do
         @available_cash = calculated_available_cash
         allocations = allocate(@available_cash)
+        payable_cards = allocations.filter_map { |card, amount| card if amount.positive? }
+        ActiveRecord::Associations::Preloader.new(records: payable_cards, associations: [ :payment_account, :linked_account ]).call if payable_cards.any?
         @created_count = 0
         allocation_keys = allocations.keys.map { |card| card.estimated_entry_key(month_on: @budget_month.month_on) }.compact
 

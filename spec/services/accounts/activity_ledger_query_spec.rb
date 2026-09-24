@@ -36,6 +36,8 @@ RSpec.describe Accounts::ActivityLedgerQuery do
 
     expect(ledger_activity.association(:account_activity_import)).to be_loaded
     expect(ledger_entry.association(:budget_month)).to be_loaded
+    expect(ledger_activity.account_activity_import).to be_present
+    expect(ledger_entry.budget_month).to be_present
     expect(ledger_entry.association(:source_account)).not_to be_loaded
     expect(ledger_entry.association(:destination_account)).not_to be_loaded
     expect(ledger_entry.association(:source_template)).not_to be_loaded

@@ -128,7 +128,7 @@ module Budgeting
       @active_items ||= period.budget_items
         .where.not(state: %w[skipped cancelled voided])
         .includes(:category)
-        .order(:scheduled_on, :created_at)
+        .order(Arel.sql(Accounts::TransactionTiming.sql(table: "budget_items", date: "scheduled_on", timestamp: "scheduled_at", incoming: "budget_items.flow_kind = 'income'")))
         .to_a
     end
 

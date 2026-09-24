@@ -33,6 +33,8 @@ module Accounts
     def self.link_legacy_records!(workspace:, transaction:, budget_item:)
       activity = legacy_record(workspace, transaction, AccountActivity)
       entry = legacy_record(workspace, budget_item, ExpenseEntry)
+      return if BankConnections::PlanLink.call(workspace: workspace, transaction: transaction, item: budget_item, entry: entry)
+      return if Accounts::ManualPlanLink.call(workspace: workspace, transaction: transaction, item: budget_item, entry: entry)
       return if activity.blank? && entry.blank?
       raise MissingLegacyPair, "This match is missing its rollback-compatible source record" if activity.blank? || entry.blank?
       if activity.expense_entry_id.present? && activity.expense_entry_id != entry.id
@@ -46,6 +48,8 @@ module Accounts
     def self.unlink_legacy_records!(workspace:, transaction:, budget_item:)
       activity = legacy_record(workspace, transaction, AccountActivity)
       entry = legacy_record(workspace, budget_item, ExpenseEntry)
+      return if BankConnections::PlanLink.call(workspace: workspace, transaction: transaction, item: budget_item, entry: entry, unlink: true)
+      return if Accounts::ManualPlanLink.call(workspace: workspace, transaction: transaction, item: budget_item, entry: entry, unlink: true)
       return if activity.blank? && entry.blank?
       raise MissingLegacyPair, "This unmatch is missing its rollback-compatible source record" if activity.blank? || entry.blank?
 

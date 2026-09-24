@@ -18,6 +18,8 @@ module Platform
           budget_period: period,
           category: category,
           scheduled_on: entry.occurred_on,
+          scheduled_at: entry.occurred_at,
+          timing_time_zone: entry.timing_time_zone,
           flow_kind: flow_kind,
           budget_group: budget_group,
           planned_amount: entry.planned_amount || 0,

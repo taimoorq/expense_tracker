@@ -13,7 +13,7 @@
     <dl class="grid grid-cols-2 border-t border-slate-200 sm:grid-cols-3 lg:grid-cols-6">
       <% [
         ["Planned income", @summary.planned_income], ["Planned outflow", @summary.planned_outflow],
-        ["Actual income", @summary.actual_income], ["Actual outflow", @summary.actual_outflow],
+        ["Matched income", @summary.actual_income], ["Matched outflow", @summary.actual_outflow],
         ["Forecast net", @summary.forecast_net], ["Unmatched", @summary.unmatched_count]
       ].each do |label, value| %>
         <div class="border-b border-r border-slate-200 p-4"><dt class="ta-ledger-label"><%= label %></dt><dd class="ta-number mt-2 text-lg font-semibold"><%= label == "Unmatched" ? value : number_to_currency(value) %></dd></div>
@@ -21,6 +21,9 @@
     </dl>
   </section>
 
+  <% if @recorded_totals %>
+    <section class="ta-section-frame p-5"><h2 class="ta-section-title">Recorded actuals for this month</h2><p class="ta-muted mt-2">Income <%= number_to_currency(@recorded_totals.fetch("income").to_d) %> · Outflow <%= number_to_currency(@recorded_totals.fetch("outflow").to_d) %> · Unallocated outflow <%= number_to_currency(@recorded_totals.fetch("unallocated_outflow").to_d) %>.</p><p class="ta-muted mt-2 text-sm">These totals include all posted activity dated in this month. Matched totals above follow this month's plan; cross-month matches can differ. Transfers are separate.</p></section>
+  <% end %>
   <% if @active_close %>
     <section class="ta-section-frame" aria-labelledby="close-source-lines-title">
       <div class="ta-section-header"><p class="ta-page-eyebrow">Source drill-down</p><h2 id="close-source-lines-title" class="ta-section-title mt-1">Records frozen with this close</h2><p class="mt-1 text-sm text-slate-600"><%= pluralize(@active_close.item_snapshots.size, "planned item") %> and <%= pluralize(@active_close.transaction_snapshots.size, "posted transaction") %> preserve the report labels and amounts used at close.</p></div>
@@ -35,14 +38,18 @@
     </section>
   <% end %>
 
-  <% unless @readiness.ready? %>
+  <% unless @active_close || @readiness.ready? %>
     <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5" aria-labelledby="close-warning-title">
       <h2 id="close-warning-title" class="font-semibold text-amber-950">Review before closing</h2>
       <ul class="mt-2 space-y-1 text-sm leading-6 text-amber-900">
+        <% if @readiness.reserved_count.positive? %><li><%= @readiness.reserved_count %> payments still reserved through this month. <%= link_to "Clear recorded payments", activity_path(view: "payments"), class: "underline" %>.</li><% end %>
+        <% if @readiness.correction_count.positive? %><li><%= @readiness.correction_count %> accepted bank transactions changed. <%= link_to "Review corrections", activity_path(view: "bank"), class: "underline" %>.</li><% end %>
+        <% if @readiness.reconciliation_count.positive? %><li><%= @readiness.reconciliation_count %> account balances have uncertain coverage. <%= link_to "Reconcile accounts", accounts_path, class: "underline" %>.</li><% end %>
+        <% if @readiness.pending_count.positive? || @readiness.bank_review_count.positive? %><li><%= @readiness.pending_count %> pending bank items and <%= @readiness.bank_review_count %> unaccepted bank items are excluded from this close. <%= link_to "Review bank activity", activity_path(view: "bank", starts_on: @target_period.starts_on, ends_on: @target_period.starts_on.end_of_month), class: "underline" %>.</li><% end %>
         <% if @summary.unmatched_count.positive? %><li><%= pluralize(@summary.unmatched_count, "transaction") %> remain unmatched. <%= link_to "Open Activity", activity_path(view: "unmatched"), class: "font-semibold underline" %>.</li><% end %>
         <% if @unresolved_account_count.positive? %><li><%= pluralize(@unresolved_account_count, "account") %> do not yet have a trusted balance observation. <%= link_to "Review Accounts", accounts_path, class: "font-semibold underline" %>.</li><% end %>
       </ul>
-      <p class="mt-3 text-xs text-amber-800">You may still close the month; these counts are stored with the frozen summary.</p>
+      <p class="mt-3 text-xs text-amber-800"><%= @readiness.can_close? ? "You may close with these coverage warnings. Only accepted posted activity is frozen; unmatched activity does not need an artificial plan." : "Resolve the blocking items above before closing. The same checks run again when you submit." %></p>
     </section>
   <% end %>
 
@@ -54,7 +61,7 @@
     <% else %>
       <h2 class="text-lg font-semibold text-slate-900">Ready to freeze this summary?</h2>
       <p class="mt-2 text-sm leading-6 text-slate-600">Closing does not start the next month automatically and does not erase transactions or plan items.</p>
-      <div class="mt-4 flex flex-wrap gap-3"><%= button_to "Close #{@budget_month.label}", budget_month_month_close_path(@budget_month), method: :post, class: "fb-btn-primary ta-action-btn" %><%= link_to "Keep month open", budget_month_path(@budget_month), class: "fb-btn-secondary ta-action-btn" %></div>
+      <div class="mt-4 flex flex-wrap gap-3"><%= button_to "Close #{@budget_month.label}", budget_month_month_close_path(@budget_month), method: :post, disabled: !@readiness.can_close?, class: "fb-btn-primary ta-action-btn" %><%= link_to "Keep month open", budget_month_path(@budget_month), class: "fb-btn-secondary ta-action-btn" %></div>
     <% end %>
   </section>
 </div>

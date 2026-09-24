@@ -69,11 +69,13 @@ module Platform
 
       def probes
         @probes ||= begin
+          # Recorded totals add two batched queries; Activity adds bounded source
+          # status and reservation counts, independent of the number of rows.
           values = [
             Probe.new("home", 500, 50, -> { Overview::PageData.new(user: user, today: as_of).call }),
-            Probe.new("reports", 250, 22, -> { Reports::OverviewQuery.call(user: user) }),
+            Probe.new("reports", 250, 24, -> { Reports::OverviewQuery.call(user: user) }),
             Probe.new("accounts_summary", 250, 18, -> { Accounts::Summary.new(user: user, include_trend: true).call }),
-            Probe.new("activity", 250, 15, -> { Activity::IndexQuery.call(user: user, view: "all") }),
+            Probe.new("activity", 250, 17, -> { Activity::IndexQuery.call(user: user, view: "all") }),
             Probe.new("period_summaries", 150, 10, -> { Budgeting::PeriodSummaryBatch.call(periods: recent_periods) })
           ]
           if account.present?

@@ -28,6 +28,9 @@
       <div><dt class="ta-ledger-label">Support reference</dt><dd class="ta-number mt-1 font-semibold text-slate-900"><%= status.support_reference %></dd></div>
       <div><dt class="ta-ledger-label">Last state change</dt><dd class="mt-1 text-slate-700"><%= l(status.completed_at || status.started_at || Time.current, format: :long) %></dd></div>
     </dl>
+    <% if @operation&.operation_type == "backup_v2_restore" && status.state == "succeeded" %>
+      <div class="mt-4 rounded-xl bg-indigo-50 p-4"><h3 class="font-semibold">Choose how to continue</h3><p class="ta-muted mt-2 text-sm">Your financial history is restored. Bank access and automatic refresh stay disconnected until you reconnect.</p><div class="mt-3 flex flex-wrap gap-3"><%= link_to "Reconnect SimpleFIN", bank_connections_path, class: "fb-btn-secondary" %><%= link_to "Continue manually", activity_path(view: "all"), class: "fb-btn-secondary" %></div></div>
+    <% end %>
     <div class="mt-5 flex flex-wrap gap-3">
       <% if @backup_export_artifact %><%= link_to "Download backup", backup_export_artifact_path(@backup_export_artifact), class: "fb-btn-primary ta-action-btn", data: { turbo: false } %><% end %>
       <% if @backup_archive %><%= link_to "Download automatic backup", backup_archive_path(@backup_archive), class: "fb-btn-primary ta-action-btn", data: { turbo: false } %><% end %>

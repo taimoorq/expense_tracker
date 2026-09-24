@@ -50,16 +50,20 @@ module Planning
 
     def generate_templates(operation)
       counts = { "occurrences" => 0, "budget_items" => 0 }
-      workspace.planning_templates
-        .active
-        .includes(:recurrence_rule, :payment_plan_term, :credit_card_payment_policy)
-        .find_each do |template|
-        occurrences_for(template).each do |scheduled|
-          next unless template_active_on?(template, scheduled.scheduled_on)
+      workspace.planning_templates.active.includes(:recurrence_rule).find_in_batches do |templates|
+        payment_plans = templates.select(&:kind_payment_plan?)
+        credit_cards = templates.select(&:kind_credit_card_payment?)
+        ActiveRecord::Associations::Preloader.new(records: payment_plans, associations: :payment_plan_term).call if payment_plans.any?
+        ActiveRecord::Associations::Preloader.new(records: credit_cards, associations: :credit_card_payment_policy).call if credit_cards.any?
 
-          created = materialize(template, scheduled, operation)
-          counts["occurrences"] += 1 if created[:occurrence]
-          counts["budget_items"] += 1 if created[:item]
+        templates.each do |template|
+          occurrences_for(template).each do |scheduled|
+            next unless template_active_on?(template, scheduled.scheduled_on)
+
+            created = materialize(template, scheduled, operation)
+            counts["occurrences"] += 1 if created[:occurrence]
+            counts["budget_items"] += 1 if created[:item]
+          end
         end
       end
       counts

@@ -1,0 +1,21 @@
+<% content_for :title, "Record activity" %>
+<% page_header title: "Record activity", eyebrow: "Actual money movement", subtitle: "Record money that has already moved. Planned bills and income belong in your month." %>
+<section class="ta-section-frame mx-auto max-w-2xl p-5 sm:p-6">
+  <% if @error %><p role="alert" class="mb-4 rounded-xl bg-rose-50 p-3 text-rose-800"><%= @error %></p><% end %>
+  <% if @accounts.any? %>
+    <%= form_with url: activity_transactions_path, scope: :transaction, class: "space-y-4", data: { controller: "transaction-form" } do |form| %>
+      <%= form.hidden_field :idempotency_key, value: @values[:idempotency_key] %>
+      <div><%= form.label :flow_kind, "Money movement", class: "fb-label" %><%= form.select :flow_kind, [["Money spent", "outflow"], ["Income received", "income"], ["Transfer between accounts", "transfer"]], { selected: @values[:flow_kind] }, class: "fb-select", data: { transaction_form_target: "flow", action: "transaction-form#sync" } %></div>
+      <div><%= form.label :account_id, "Activity account (money leaves this account for a transfer)", class: "fb-label" %><%= form.select :account_id, @accounts.map { |account| [account.name, account.id] }, { selected: @values[:account_id], prompt: "Choose an account" }, required: true, class: "fb-select" %></div>
+      <div data-transaction-form-target="destination"><%= form.label :destination_account_id, "Money goes to (transfers only)", class: "fb-label" %><%= form.select :destination_account_id, @accounts.map { |account| [account.name, account.id] }, { selected: @values[:destination_account_id], include_blank: "Not a transfer" }, class: "fb-select", data: { transaction_form_target: "destinationAccount" } %></div>
+      <div><%= form.label :description, "Description", class: "fb-label" %><%= form.text_field :description, value: @values[:description], required: true, maxlength: 255, class: "fb-input", placeholder: "Groceries, paycheck, or savings transfer" %></div>
+      <div class="grid gap-4 sm:grid-cols-2"><div><%= form.label :amount, "Amount", class: "fb-label" %><%= form.number_field :amount, value: @values[:amount], required: true, min: "0.01", step: "0.01", class: "fb-input" %></div><div><%= form.label :effective_on, "Recorded date", class: "fb-label" %><%= form.date_field :effective_on, value: @values[:effective_on], required: true, class: "fb-input" %></div></div>
+      <details class="space-y-3"><summary class="cursor-pointer text-sm font-semibold">Optional time and notes</summary>
+      <div><%= form.label :transaction_time, "Time (optional)", class: "fb-label" %><%= form.time_field :transaction_time, value: @values[:transaction_time], class: "fb-input" %><p class="ta-muted mt-1 text-xs">Times use <%= @workspace.time_zone %>. Change this in Settings.</p></div>
+      <div><%= form.label :memo, "Notes (optional)", class: "fb-label" %><%= form.text_area :memo, value: @values[:memo], rows: 2, class: "fb-input" %></div>
+      </details>
+      <p class="ta-muted text-sm">Already recorded this payment in a month? Match its bank or statement activity to the existing plan, or clear its reserved payment. Recording it again here would duplicate it.</p>
+      <div class="flex gap-3"><%= form.submit "Record transaction", class: "fb-btn-primary" %><%= link_to "Cancel", activity_path, class: "fb-btn-secondary" %></div>
+    <% end %>
+  <% else %><p class="ta-muted mb-4">Add the account this activity belongs to first.</p><%= link_to "Add an account", new_account_path, class: "fb-btn-primary" %><% end %>
+</section>

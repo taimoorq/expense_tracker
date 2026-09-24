@@ -1,5 +1,13 @@
 module Overview
   class Presenter
+    def workflow_status
+      data[:workflow_status]
+    end
+
+    def initial_setup_only?
+      data[:onboarding_visible] && accounts_data.empty? && current_month_data.nil?
+    end
+
     def initialize(user:, today: Date.current, data: nil, account_flow_month_window: Overview::AccountFlowWindow::DEFAULT_MONTH_WINDOW)
       @user = user
       @today = today
@@ -21,17 +29,17 @@ module Overview
       [
         build_step(
           number: 1,
-          title: "Add accounts",
-          description: "Create checking, savings, card, or debt accounts first, and optionally add opening balance snapshots.",
+          title: "Add accounts and a balance",
+          description: "Map a connected account or add one manually. Review a dated balance, or leave projections unavailable for now.",
           metric: "#{pluralized_word(accounts_data.count, "account")} set up",
-          action_label: step1_done? ? "Review Accounts" : "Add First Account",
-          action_path: step1_done? ? routes.accounts_path : routes.new_account_path,
-          state: step1_done? ? :done : :next
+          action_label: accounts_data.any? ? "Review Accounts" : "Add First Account",
+          action_path: accounts_data.any? ? routes.accounts_path : routes.new_account_path,
+          state: onboarding_state(:accounts)
         ),
         build_step(
           number: 2,
-          title: "Set up recurring transactions",
-          description: "Save the incoming and outgoing items you expect, then link them to accounts where possible.",
+          title: "Reuse recurring transactions",
+          description: "Save regular income and bills, review suggestions, or skip this optional step.",
           metric: "#{linked_template_total_value} of #{template_total_value} recurring transactions linked",
           action_label: step2_done? ? "Review Recurring" : "Set Up Recurring",
           action_path: routes.planning_templates_path,
@@ -45,8 +53,8 @@ module Overview
         ),
         build_step(
           number: 3,
-          title: "Create a month and import recurring",
-          description: "Create the month, then use Plan and Edit to pull the saved recurring transactions into it.",
+          title: "Build your first month",
+          description: "Add one planned item, record activity, or bring in recurring transactions.",
           metric: current_month_data ? "#{pluralized_word(current_month_entries_data.count, "entry")} in #{current_month_data.label}" : "No month created yet",
           action_label: step3_started? ? "Open Plan and Edit" : "Create Month",
           action_path: step3_started? ? routes.budget_month_tab_path(current_month_data, "entries") : routes.new_budget_month_path,
@@ -60,9 +68,9 @@ module Overview
         ),
         build_step(
           number: 4,
-          title: "Adjust as the month unfolds",
-          description: "Add one-off items, update amounts, and confirm entries as paid when the activity occurs.",
-          metric: current_month_data ? "#{review_attention_count_value} items still need review" : "Review starts after month setup",
+          title: "Review your first result",
+          description: "Check the plan and recorded activity. New items will appear in your regular check-in after setup.",
+          metric: step4_done? ? "First review complete" : "Open the month to check your first result",
           action_label: current_month_data ? "Review Month" : "Create Month",
           action_path: current_month_data ? routes.budget_month_tab_path(current_month_data, "entries") : routes.new_budget_month_path,
           state: if step4_done?
@@ -94,7 +102,7 @@ module Overview
       elsif current_month_data
         "A short pass through these items keeps the month current without turning budgeting into a long session."
       else
-        "You do not need to model everything today. Add one account, one balance, and one recurring item to make the app useful."
+        "Start with one account and a useful month. Add a dated balance when you are ready; recurring setup is optional."
       end
     end
 
@@ -226,10 +234,19 @@ module Overview
       @monthly_position ||= begin
         period = target_period_for(current_month_data)
         if target_reads? && period.present?
-          Budgeting::PeriodSummary.call(period: period)
+          period.month_closes.state_closed.first&.report_summary || Budgeting::PeriodSummary.call(period: period)
         else
           Budgeting::LegacyPeriodSummary.call(budget_month: current_month_data)
         end
+      end
+    end
+
+    def monthly_recorded_totals
+      return unless current_month_data && target_reads?
+      @monthly_recorded_totals ||= begin
+        period = target_period_for(current_month_data)
+        close = period&.month_closes&.state_closed&.first
+        close ? close.recorded_totals : period && Budgeting::RecordedActuals.call(period: period)
       end
     end
 
@@ -238,9 +255,9 @@ module Overview
 
       [
         { label: "Planned income", value: monthly_position.planned_income, tone: "text-slate-900" },
-        { label: "Actual income", value: monthly_position.actual_income, tone: "text-emerald-700" },
+        { label: target_reads? ? "Matched income" : "Actual income", value: monthly_position.actual_income, tone: "text-emerald-700" },
         { label: "Planned outflow", value: monthly_position.planned_outflow, tone: "text-slate-900" },
-        { label: "Actual outflow", value: monthly_position.actual_outflow, tone: "text-rose-700" },
+        { label: target_reads? ? "Matched outflow" : "Actual outflow", value: monthly_position.actual_outflow, tone: "text-rose-700" },
         { label: "Remaining plan", value: monthly_position.remaining_outflow, tone: "text-amber-700" },
         { label: "Forecast net", value: monthly_position.forecast_net, tone: monthly_position.forecast_net >= 0 ? "text-emerald-700" : "text-rose-700" }
       ]
@@ -251,7 +268,7 @@ module Overview
 
       [
         {
-          label: "Actual",
+          label: target_reads? ? "Matched to plan" : "Actual",
           data: [ monthly_position.actual_income.to_f, monthly_position.actual_outflow.to_f ],
           backgroundColor: "rgba(15, 118, 110, 0.65)",
           borderColor: "#0f766e",
@@ -420,7 +437,7 @@ module Overview
     def account_snapshot_cards
       [
         {
-          label: "Net worth",
+          label: data.fetch(:net_worth_complete, true) ? "Net worth" : "Known balance subtotal",
           value: helpers.number_to_currency(net_worth_total_value),
           value_classes: net_worth_value_class
         },
@@ -703,7 +720,7 @@ module Overview
 
     def build_step(number:, title:, description:, metric:, action_label:, action_path:, state:)
       {
-        number: number,
+        number: number, state: state,
         title: title,
         description: description,
         metric: metric,

@@ -494,7 +494,7 @@ RSpec.describe "Budget month management", type: :system do
     expect(page).to have_text("Rent")
     expect(page).not_to have_text("Streaming")
 
-    click_button "Mark as paid", match: :first
+    click_button "Record payment", match: :first
 
     expect(page).to have_content("Entry updated.")
     expect(page).to have_select("timeline_account_filter", selected: "Checking (1)")
@@ -575,9 +575,9 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit edit_budget_month_expense_entry_path(month, entry)
 
-    expect(page).to have_button("Mark as Paid")
+    expect(page).to have_button("Record payment")
 
-    click_button "Mark as Paid"
+    click_button "Record payment"
 
     expect(page).to have_content("Entry updated.")
     expect(entry.reload.status).to eq("paid")
@@ -592,7 +592,7 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit budget_month_path(month)
 
-    expect(page).to have_button("Mark as paid", visible: :all)
+    expect(page).to have_button("Record payment", visible: :all)
   end
 
   it "renders a mark as paid action in timeline rows" do
@@ -604,7 +604,7 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_path(month)
 
     expect(page).to have_content("Budget")
-    expect(page).to have_button("Mark as paid", visible: :all)
+    expect(page).to have_button("Record payment", visible: :all)
     expect(page).to have_css("[data-collapsible-groups-storage-key-value='timeline-groups-#{month.id}']")
   end
 
@@ -624,7 +624,7 @@ RSpec.describe "Budget month management", type: :system do
     within("[data-panel-name='full-list']") do
       expect(page).to have_content("Phone")
       expect(page).to have_content("Utilities")
-      expect(page).to have_text(/actual/i)
+      expect(page).to have_css("th", text: /amount/i)
     end
     expect(page).not_to have_button("Expand all")
     expect(page).not_to have_button("Collapse all")
@@ -650,37 +650,20 @@ RSpec.describe "Budget month management", type: :system do
     end
   end
 
-  it "sorts full list table columns", js: true do
-    user = create(:user, email: "tablesort@example.com")
-    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
-    create(:expense_entry, budget_month: month, user: user, payee: "Zed Market", category: "Groceries", planned_amount: 100, occurred_on: Date.current.beginning_of_month + 1.day)
-    create(:expense_entry, budget_month: month, user: user, payee: "Alpha Power", category: "Utilities", planned_amount: 12, occurred_on: Date.current.beginning_of_month + 2.days)
-    create(:expense_entry, budget_month: month, user: user, payee: "Middle Fuel", category: "Auto", planned_amount: 5, occurred_on: Date.current.beginning_of_month + 3.days)
+  it "keeps full list rows in date order with static headers", js: true do
+    user = create(:user)
+    month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month)
+    create(:expense_entry, budget_month: month, payee: "Middle Fuel", planned_amount: 5, occurred_on: month.month_on + 3.days)
+    create(:expense_entry, budget_month: month, payee: "Zed Market", planned_amount: 100, occurred_on: month.month_on + 1.day)
+    create(:expense_entry, budget_month: month, payee: "Alpha Power", planned_amount: 12, occurred_on: month.month_on + 2.days)
 
     sign_in_as(user)
     visit budget_month_tab_path(month, "timeline", view: "full-list")
 
     within("[data-panel-name='full-list']") do
-      click_button "Payee"
-      expect(all("tbody tr", visible: :visible).map { |row| row.all("td", visible: :visible)[3].text }).to eq([
-        "Alpha Power",
-        "Middle Fuel",
-        "Zed Market"
-      ])
-
-      click_button "Payee"
-      expect(all("tbody tr", visible: :visible).map { |row| row.all("td", visible: :visible)[3].text }).to eq([
-        "Zed Market",
-        "Middle Fuel",
-        "Alpha Power"
-      ])
-
-      click_button "Planned"
-      expect(all("tbody tr", visible: :visible).map { |row| row.all("td", visible: :visible)[5].text }).to eq([
-        "$5.00",
-        "$12.00",
-        "$100.00"
-      ])
+      expect(page).to have_no_css("thead button")
+      expect(all("[data-full-list-payee]").map(&:text)).to eq([ "Zed Market", "Alpha Power", "Middle Fuel" ])
+      expect(all("[data-full-list-amount]").map(&:text)).to eq([ "−$100.00", "−$12.00", "−$5.00" ])
     end
   end
 
@@ -693,7 +676,7 @@ RSpec.describe "Budget month management", type: :system do
     visit budget_month_tab_path(month, "timeline")
 
     expect(page).to have_current_path(budget_month_tab_path(month, "timeline"), ignore_query: false)
-    click_button "Mark as paid", match: :first
+    click_button "Record payment", match: :first
 
     expect(page).to have_content("Entry updated.")
     expect(page).to have_current_path(budget_month_tab_path(month, "timeline"), ignore_query: false)
@@ -888,8 +871,9 @@ RSpec.describe "Budget month management", type: :system do
     sign_in_as(user)
     visit root_path
 
-    click_link "Accounts & Net Worth"
+    within("aside.ta-sidebar") { click_link "Accounts" }
 
-    expect(page).to have_content("Track savings, investment, cash, and debt balances from the latest trusted source")
+    expect(page).to have_current_path(accounts_path)
+    expect(page).to have_css("h1", text: "Accounts")
   end
 end

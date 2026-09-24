@@ -1,0 +1,2 @@
+<% if turbo_frame_request? && flash[:notice].present? %><p class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900" role="status" data-turbo-temporary><%= flash[:notice] %></p><% end %>
+<% if @error.present? %><p class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900" role="alert"><%= @error %></p><% end %>

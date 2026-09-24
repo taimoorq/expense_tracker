@@ -28,12 +28,7 @@ module Overview
 
     def current_month_entries
       @current_month_entries ||= begin
-        entries = current_month ? user.expense_entries.where(budget_month_id: current_month.id).to_a : []
-        entries_with_source_accounts = entries.select { |entry| entry.source_account_id.present? }
-        if entries_with_source_accounts.any?
-          ActiveRecord::Associations::Preloader.new(records: entries_with_source_accounts, associations: :source_account).call
-        end
-        entries
+        current_month ? user.expense_entries.where(budget_month_id: current_month.id).to_a : []
       end
     end
   end

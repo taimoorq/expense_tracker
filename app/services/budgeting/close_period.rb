@@ -2,6 +2,8 @@ require "digest"
 
 module Budgeting
   class ClosePeriod
+    CALCULATION_VERSION = "target-v2-recorded".freeze
+
     def self.call(workspace:, actor_membership:, budget_period:, idempotency_key:)
       new(
         workspace: workspace,
@@ -27,15 +29,19 @@ module Budgeting
         actor_membership: actor_membership,
         operation_type: "close_budget_period",
         idempotency_key: idempotency_key,
-        request: { budget_period_id: budget_period.id, calculation_version: PeriodSummary::CALCULATION_VERSION },
+        request: { budget_period_id: budget_period.id, calculation_version: CALCULATION_VERSION },
         redacted_parameters: { "field_names" => [ "budget_period_id" ] },
         retryable: true,
         on_replay: ->(reference) { MonthClose.find(reference.fetch("id")) }
       ) do |operation|
+        workspace.lock!
         budget_period.lock!
         raise InvalidState, "only an open or reopened period can be closed" unless budget_period.state_open? || budget_period.state_reopened?
 
         readiness = CloseReadiness.call(period: budget_period)
+        unless readiness.can_close?
+          raise InvalidState, "Resolve reserved payments, bank corrections, and uncertain balance coverage before closing this month."
+        end
         close = MonthClose.create!(close_attributes(readiness, operation))
         snapshots = MonthCloseSnapshotWriter.call(month_close: close)
         budget_period.update!(state: "closed")
@@ -71,7 +77,8 @@ module Budgeting
         closed_by_membership: actor_membership,
         close_operation: operation,
         state: "closed",
-        calculation_version: PeriodSummary::CALCULATION_VERSION,
+        calculation_version: CALCULATION_VERSION,
+        recorded_totals: Platform::CanonicalJson.normalize(RecordedActuals.call(period: budget_period)),
         planned_income: summary.planned_income,
         planned_outflow: summary.planned_outflow,
         planned_net: summary.planned_net,

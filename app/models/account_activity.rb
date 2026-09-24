@@ -17,7 +17,7 @@ class AccountActivity < ApplicationRecord
   validate :import_belongs_to_account_and_user
   validate :expense_entry_belongs_to_user
 
-  scope :recent_first, -> { order(transaction_on: :desc, created_at: :desc) }
+  scope :recent_first, -> { order(Arel.sql(Accounts::TransactionTiming.sql(table: "account_activities", date: "transaction_on", timestamp: "transacted_at", incoming: "account_activities.account_delta > 0", descending: true))) }
 
   private
 

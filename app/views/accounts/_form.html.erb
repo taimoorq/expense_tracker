@@ -42,10 +42,13 @@
     </div>
   </div>
 
+  <details class="ta-account-disclosure" <%= "open" if account.notes.present? || account.errors[:notes].any? %>>
+    <summary>Account notes</summary>
   <div>
     <%= form.label :notes, class: "fb-label" %>
     <%= form.text_area :notes, rows: 3, class: "fb-input", placeholder: "Optional notes about this account" %>
   </div>
+  </details>
 
   <% if local_assigns[:credit_card_payment_schedule] %>
     <% schedule_enabled = local_assigns.fetch(:credit_card_payment_schedule_enabled, false) %>
@@ -75,7 +78,7 @@
       <% end %>
 
       <%= fields_for "account[credit_card_payment_schedule]", credit_card_payment_schedule do |schedule_fields| %>
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2 <%= "hidden" unless schedule_enabled %>" data-account-form-target="scheduleFields">
           <div>
             <%= schedule_fields.label :payment_account_id, "Money leaves account", class: "fb-label" %>
             <%= schedule_fields.collection_select :payment_account_id, payment_accounts, :id, :name, { include_blank: "Select checking, savings, or cash" }, class: "fb-select", disabled: !schedule_enabled, data: { account_form_target: "scheduleInput" } %>
@@ -112,11 +115,10 @@
   <% end %>
 
   <% if local_assigns[:initial_snapshot] %>
-    <section class="ta-section-frame p-5">
-      <div class="mb-4">
-        <h3 class="text-base font-semibold text-slate-900">Optional first balance snapshot</h3>
-        <p class="mt-1 text-sm text-slate-500">This is a reconciliation point you control. Leave the balance blank if you only want to create the account for now.</p>
-      </div>
+    <details class="ta-section-frame ta-account-disclosure" <%= "open" if initial_snapshot.balance.present? || initial_snapshot.errors.any? %>>
+      <summary>Add a starting balance (optional)</summary>
+      <div class="ta-disclosure-body">
+        <p class="ta-muted mb-4">Enter a balance you have checked, or add one after creating the account. Use a negative balance for debt.</p>
 
       <% if initial_snapshot.errors.any? %>
         <div class="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -152,7 +154,8 @@
           <%= snapshot_fields.text_area :notes, rows: 2, class: "fb-input", placeholder: "Optional note about the opening balance" %>
         </div>
       <% end %>
-    </section>
+      </div>
+    </details>
   <% end %>
 
   <div class="flex flex-wrap items-center gap-3">

@@ -9,7 +9,9 @@ module Accounts
       amount = attributes.fetch(:amount).to_d
       raise ArgumentError, "amount must be positive" unless amount.positive?
 
-      transaction = FinancialTransaction.create!(transaction_attributes(amount).merge(budget_workspace: workspace))
+      values = transaction_attributes(amount).merge(budget_workspace: workspace)
+      values[:transaction_time] = attributes[:transaction_time] if attributes.key?(:transaction_time)
+      transaction = FinancialTransaction.create!(values)
       posting_attributes(amount).each_with_index do |posting, sequence_number|
         transaction.account_postings.create!(
           posting.merge(
@@ -30,6 +32,9 @@ module Accounts
       {
         effective_on: attributes.fetch(:effective_on),
         posted_on: attributes[:posted_on],
+        transacted_at: attributes[:transacted_at],
+        posted_at: attributes[:posted_at],
+        timing_time_zone: attributes[:timing_time_zone] || workspace.time_zone,
         description: attributes.fetch(:description),
         payee: attributes[:payee],
         memo: attributes[:memo],

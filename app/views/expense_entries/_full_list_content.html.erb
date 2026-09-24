@@ -1,0 +1,25 @@
+<div class="overflow-x-auto">
+  <table class="ta-table ta-full-list" id="month-entry-balances-<%= budget_month.id %>">
+    <caption class="sr-only"><%= budget_month.label %> transactions in date order</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="ta-th">Date</th>
+        <th scope="col" class="ta-th">Payee</th>
+        <th scope="col" class="ta-th">Status</th>
+        <th scope="col" class="ta-th text-right">Amount</th>
+        <th scope="col" class="ta-th text-center">Actions</th>
+        <% if running_balances %>
+          <th scope="col" class="ta-th text-right whitespace-nowrap hidden" data-balance-column-target="column">Balance after</th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% expense_entries.each do |entry| %>
+        <%= render "expense_entries/full_list_row", budget_month: budget_month, entry: entry, timeline_view: timeline_view, selected_review: selected_review, read_only: read_only, running_balances: running_balances %>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+<p class="py-8 text-center ta-muted <%= 'hidden' if expense_entries.any? %>" role="status" data-expense-entries-filter-target="listEmpty">
+  <%= expense_entries.any? ? "No entries match these filters. Change or clear your filters to see more entries." : "No entries yet. Add an entry to start this month." %>
+</p>

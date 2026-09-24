@@ -58,17 +58,25 @@ module Accounts
     def posting_rows
       @posting_rows ||= account.account_postings
         .joins(financial_transaction: :budget_workspace)
-        .where(financial_transactions: { state: "posted", effective_on: ..as_of })
-        .order("financial_transactions.effective_on DESC", "financial_transactions.created_at DESC")
+        .where(financial_transactions: { state: "posted" })
+        .where(Arel.sql(posting_date_sql).lteq(as_of))
+        .order(Arel.sql(TransactionTiming.sql(table: "financial_transactions", date: "effective_on", timestamp: "transacted_at",
+          incoming: "account_postings.amount > 0", descending: true, date_expression: posting_date_sql,
+          timestamp_expression: "COALESCE(account_postings.effective_at, financial_transactions.transacted_at)")))
         .pluck(
           :financial_transaction_id,
-          "financial_transactions.effective_on",
+          Arel.sql(posting_date_sql),
           :amount,
           "financial_transactions.description",
           "financial_transactions.flow_kind",
           "financial_transactions.origin_kind"
         )
         .map { |attributes| PostingRow.new(*attributes) }
+    end
+
+    def posting_date_sql
+      timezone = AccountPosting.connection.quote(workspace.time_zone)
+      "COALESCE((account_postings.effective_at AT TIME ZONE 'UTC' AT TIME ZONE #{timezone})::date, financial_transactions.effective_on)"
     end
 
     def chronological_postings
@@ -192,6 +200,10 @@ module Accounts
 
     def period_balance(month_on)
       period_end = [ month_on.end_of_month, as_of ].min
+      if account.connected_account&.use_bank_balance?
+        bank = bank_position(period_end).result
+        return bank.to_h.merge(month_on: month_on, starting_balance: bank.base_balance) if bank
+      end
       observation = observation_on(period_end)
       return unavailable_period(month_on, period_end) if observation.blank?
 
@@ -222,7 +234,16 @@ module Accounts
       }
     end
 
+    def bank_position(date)
+      @bank_evidence ||= BankEvidence.new(accounts: [ account ], through_on: as_of)
+      BankPosition.new(account: account, as_of: date, evidence: @bank_evidence)
+    end
+
     def balance_on(date)
+      if account.connected_account&.use_bank_balance?
+        bank = bank_position(date).result
+        return bank.balance_available ? bank.to_h : unavailable_balance if bank
+      end
       observation = observation_on(date)
       return unavailable_balance if observation.blank?
 
@@ -279,6 +300,16 @@ module Accounts
       return unless balance_summary.fetch(:balance_available)
 
       baseline = balance_summary.fetch(:balance_source_record)
+      if baseline.source_kind_bank_sync?
+        position = bank_position(as_of)
+        outside = position.postings.select { |posting| position.policy.disposition(posting) == "outside" }
+        incoming = outside.select { |posting| posting.amount.positive? }.sum(&:amount)
+        outgoing = -outside.select { |posting| posting.amount.negative? }.sum(&:amount)
+        outgoing += position.commitments.select { |payment| position.policy.payment_disposition(payment) == "outside" }.sum(&:outstanding_amount)
+        return { baseline_on: baseline.effective_through_at.to_date, through_on: as_of, baseline_label: balance_summary[:balance_source_label],
+          baseline_balance: balance_summary[:base_balance], incoming: incoming, outgoing: outgoing, current_balance: balance_summary[:current_balance],
+          transaction_count: outside.size, reconciled: true, calculation_version: Budgeting::PeriodSummary::CALCULATION_VERSION }
+      end
       actuals = postings_between(baseline.effective_through_at.to_date.next_day, as_of)
       incoming = actuals.select { |row| row.amount.positive? }.sum { |row| row.amount.abs }
       outgoing = actuals.select { |row| row.amount.negative? }.sum { |row| row.amount.abs }
@@ -298,7 +329,7 @@ module Accounts
     end
 
     def observation_on(date)
-      observations.reverse.find { |observation| observation.effective_through_at.to_date <= date }
+      observations.reverse.find { |observation| !observation.source_kind_bank_sync? && observation.effective_through_at.to_date <= date }
     end
 
     def postings_between(starts_on, ends_on)

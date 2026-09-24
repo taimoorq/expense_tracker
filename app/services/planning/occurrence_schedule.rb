@@ -64,7 +64,7 @@ module Planning
     end
 
     def custom_month_occurrences
-      return [] unless rule.recurrence_months.exists?(month_number: period.starts_on.month)
+      return [] unless rule.recurrence_months.any? { |month| month.month_number == period.starts_on.month }
       return [] unless interval_month?
 
       monthly_occurrences

@@ -1,0 +1,26 @@
+<h2 class="text-xl font-semibold">Set up recurring</h2>
+<p class="ta-muted mt-2 text-sm">Review the suggested amount and charge day. Imported activity does not establish a billing schedule.</p>
+<%= form_with model: @form, scope: :candidate_template, url: account_recurring_candidate_path(@account, @candidate[:key]), method: :patch, class: "mt-5 space-y-4" do |form| %>
+  <%= candidate_decision_fields(@candidate) %><%= hidden_field_tag :decision_action, "create", id: nil %>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><%= form.label :name, "Name", class: "fb-label" %><%= form.text_field :name, required: true, class: "fb-input" %></div>
+    <div><%= form.label :template_kind, "Recurring type", class: "fb-label" %><%= form.select :template_kind, [["Subscription (monthly)", "subscription"], ["Monthly bill", "monthly_bill"]], {}, class: "fb-select", data: { recurring_review_target: "type", action: "change->recurring-review#updateSchedule" } %></div>
+    <div><%= form.label :amount, "Expected amount", class: "fb-label" %><%= form.number_field :amount, min: "0.01", step: "0.01", required: true, class: "fb-input" %></div>
+    <div><%= form.label :due_day, "Charge / due day", class: "fb-label" %><%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", aria: { describedby: "candidate-day-hint" } %><p id="candidate-day-hint" class="ta-muted mt-1 text-xs">Suggested from the latest charge; confirm the usual day.</p></div>
+  </div>
+  <div><%= form.label :linked_account_id, "Money leaves / activity account", class: "fb-label" %><%= form.collection_select :linked_account_id, @accounts, :id, :name, {}, class: "fb-select w-full" %></div>
+  <details data-recurring-review-target="billSchedule" <%= "open" if @form.template_kind == "monthly_bill" %>>
+    <summary class="cursor-pointer text-sm font-semibold">Bill schedule (for Monthly bill)</summary>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <div><%= form.label :kind, "Bill type", class: "fb-label" %><%= form.select :kind, [["Fixed payment", "fixed_payment"], ["Variable bill", "variable_bill"]], {}, class: "fb-select" %></div>
+      <div><%= form.label :billing_frequency, "Frequency", class: "fb-label" %><%= form.select :billing_frequency, MonthlyBill.billing_frequencies.keys.map { |value| [value.humanize, value] }, {}, class: "fb-select" %></div>
+    </div>
+    <fieldset class="mt-3"><legend class="fb-label">Billing months</legend><p class="ta-muted mb-2 text-xs">For non-monthly bills, choose 4, 2, or 1 months for quarterly, semiannual, or annual billing. Leave blank for the standard schedule.</p>
+      <%= hidden_field_tag "candidate_template[billing_months][]", "" %>
+      <div class="flex flex-wrap gap-3"><% (1..12).each do |month| %><label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "candidate_template[billing_months][]", month, Array(@form.billing_months).map(&:to_i).include?(month), id: "candidate_billing_month_#{month}", class: "fb-checkbox" %><%= Date::ABBR_MONTHNAMES[month] %></label><% end %></div>
+    </fieldset>
+  </details>
+  <details><summary class="cursor-pointer text-sm font-semibold">Notes and active state</summary><div class="mt-3 space-y-3"><div><%= form.label :notes, "Notes", class: "fb-label" %><%= form.text_area :notes, rows: 2, class: "fb-input" %></div><label class="flex items-center gap-2"><%= form.check_box :active, class: "fb-checkbox" %>Active recurring transaction</label></div></details>
+  <div class="flex flex-wrap items-center gap-3"><%= form.submit "Save recurring transaction", class: "fb-btn-primary" %><%= link_to "Cancel", account_recurring_candidates_path(@account), class: "fb-btn-secondary" %></div>
+  <p class="ta-muted text-xs">Saves the template first. You can optionally add it to a month afterward.</p>
+<% end %>

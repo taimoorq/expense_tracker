@@ -13,7 +13,9 @@ module Platform
       def call
         raise ArgumentError, "The workspace does not belong to this user." unless workspace.legacy_owner_user_id == user.id
 
-        workspace.update!(target_reads_enabled: false, target_writes_enabled: false)
+        workspace.lock!
+        workspace.update!(target_reads_enabled: false, target_writes_enabled: false, bank_sync_epoch: workspace.bank_sync_epoch + 1)
+        user.recurring_candidate_decisions.delete_all
         clear_target_data
         clear_legacy_data
       end
@@ -23,6 +25,14 @@ module Platform
       attr_reader :user, :workspace
 
       def clear_target_data
+        delete_workspace_records(PaymentSettlement)
+        delete_workspace_records(PaymentCommitment)
+        delete_workspace_records(ProviderTransaction)
+        delete_workspace_records(BalanceObservation)
+        delete_workspace_records(ProviderBalance)
+        delete_workspace_records(ConnectedAccount)
+        delete_workspace_records(BankRefresh)
+        delete_workspace_records(BankConnection)
         delete_workspace_records(MonthCloseItemSnapshot)
         delete_workspace_records(MonthCloseTransactionSnapshot)
         delete_workspace_records(BudgetAllocation)

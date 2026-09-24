@@ -10,12 +10,9 @@
   eyebrow: @account.kind.humanize,
   subtitle: @account.institution_name.presence || "Manual account",
   icon: "building-library" do %>
-    <%= link_to new_account_account_activity_import_path(@account), class: "fb-btn-primary ta-action-btn" do %>
-      <%= tabler_icon("upload", classes: "ta-action-icon text-indigo-100") %>
-      <span>Import Institution CSV</span>
-    <% end %>
+    <%= render "accounts/detail_actions", account: @account %>
 <% end %>
 
-<%= render "accounts/account_navigation", account: @account, active_view: @account_view, range: @selected_range %>
+<%= render "accounts/account_navigation", account: @account, active_view: @account_view, range: params[:range].presence %>
 
 <%= render "accounts/#{@account_view}", account: @account %>

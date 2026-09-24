@@ -31,8 +31,8 @@
 	--ta-warning-soft: #fff7ed;
 	--ta-danger: #be123c;
 	--ta-danger-soft: #fff1f2;
-	--ta-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-	--ta-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+	--ta-font-body: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+	--ta-font-display: var(--ta-font-body);
 	--ta-font-numeric: "SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace;
 	--ta-canvas: var(--ta-app-bg);
 	--ta-canvas-strong: var(--ta-app-bg-strong);
@@ -670,6 +670,280 @@
 
 	.ta-table-head {
 		background-color: color-mix(in srgb, var(--ta-surface-alt) 92%, var(--ta-surface));
+	}
+
+	.ta-accounts-section {
+		overflow: visible;
+	}
+
+	.ta-account-metrics {
+		@apply grid grid-cols-2 sm:grid-cols-none sm:grid-flow-col sm:auto-cols-fr;
+	}
+
+	.ta-account-metrics-primary > div:first-child {
+		@apply col-span-2 sm:col-span-1;
+	}
+
+	.ta-account-metrics > div {
+		@apply min-w-0 p-5;
+	}
+
+	.ta-account-metrics > div + div {
+		border-top: 1px solid var(--ta-border);
+	}
+
+	@media (min-width: 640px) {
+		.ta-account-metrics > div + div {
+			border-top: 0;
+			border-left: 1px solid var(--ta-border);
+		}
+	}
+
+	.ta-account-total {
+		@apply mt-2 text-2xl font-semibold tabular-nums;
+		color: var(--ta-text);
+		overflow-wrap: anywhere;
+	}
+
+	.ta-account-nav {
+		@apply mb-5 flex gap-5 overflow-x-auto border-b;
+		border-color: var(--ta-border);
+	}
+
+	.ta-account-nav a {
+		@apply flex min-h-11 shrink-0 items-center border-b-2 border-transparent px-1 py-3 text-sm font-semibold;
+		color: var(--ta-text-muted);
+	}
+
+	.ta-account-nav a[aria-current="page"] {
+		color: var(--ta-text);
+		border-color: var(--ta-accent);
+	}
+
+	.ta-account-coverage {
+		@apply border-t px-5 py-3 text-sm;
+		color: var(--ta-warning);
+		background: var(--ta-warning-soft);
+		border-color: var(--ta-border);
+	}
+
+	.ta-account-disclosure > summary {
+		@apply min-h-14 cursor-pointer px-5 py-4 text-sm font-semibold;
+		color: var(--ta-text);
+	}
+
+	.ta-account-disclosure > summary:hover {
+		background: var(--ta-surface-alt);
+	}
+
+	.ta-disclosure-body {
+		@apply min-w-0 border-t p-4 sm:p-5;
+		border-color: var(--ta-border);
+	}
+
+	.ta-accounts-table th,
+	.ta-accounts-table td {
+		@apply px-3 py-5 align-middle;
+	}
+
+	.ta-accounts-table thead th {
+		@apply pb-3 pt-0;
+	}
+
+	.ta-accounts-table th:first-child {
+		@apply pl-0;
+		width: 32%;
+	}
+
+	.ta-accounts-table td:last-child {
+		@apply pr-0;
+		width: 1%;
+	}
+
+	.ta-account-row,
+	.ta-account-mobile-row {
+		border-top: 1px solid var(--ta-border);
+	}
+
+	.ta-account-mobile-row {
+		@apply py-5;
+	}
+
+	.ta-account-name {
+		@apply text-base font-semibold underline-offset-4 hover:underline;
+		color: var(--ta-text);
+		overflow-wrap: anywhere;
+	}
+
+	.ta-account-meta {
+		@apply text-xs leading-5;
+		color: var(--ta-text-muted);
+		overflow-wrap: anywhere;
+	}
+
+	.ta-account-column-label {
+		@apply text-xs font-semibold uppercase tracking-wide;
+		color: var(--ta-text-muted);
+	}
+
+	.ta-account-amount {
+		@apply text-base font-semibold tabular-nums;
+		color: var(--ta-text);
+		font-family: var(--ta-font-numeric);
+		overflow-wrap: anywhere;
+	}
+
+	.ta-account-unresolved {
+		@apply text-sm font-normal;
+		font-family: var(--ta-font-body);
+		color: var(--ta-text-muted);
+	}
+
+	.ta-account-notice {
+		@apply text-xs leading-5;
+		color: var(--ta-warning);
+	}
+
+	.ta-account-next-action {
+		@apply inline-flex min-h-11 items-center whitespace-nowrap text-sm font-semibold underline underline-offset-4;
+		color: var(--ta-accent);
+	}
+
+	.ta-row-actions {
+		@apply relative shrink-0;
+	}
+
+	.ta-row-actions-trigger {
+		@apply flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg;
+		color: var(--ta-text-muted);
+	}
+
+	.ta-row-actions-trigger::-webkit-details-marker {
+		display: none;
+	}
+
+	.ta-row-actions-trigger:hover,
+	.ta-row-actions[open] .ta-row-actions-trigger {
+		background-color: var(--ta-surface-alt);
+		color: var(--ta-text);
+	}
+
+	.ta-row-actions-trigger:focus-visible {
+		outline: 2px solid var(--ta-focus);
+		outline-offset: 2px;
+	}
+
+	.ta-row-actions-panel {
+		@apply absolute right-0 top-full z-30 w-52 rounded-xl border p-1 text-left;
+		border-color: var(--ta-border);
+		background-color: var(--ta-surface);
+		box-shadow: var(--ta-shadow-low);
+	}
+
+	.ta-row-actions-label {
+		@apply px-3 pb-1 pt-2 text-xs;
+		color: var(--ta-text-muted);
+	}
+
+	.ta-row-actions-panel a {
+		@apply flex min-h-11 items-center rounded-lg px-3 py-2 text-sm;
+		color: var(--ta-text);
+	}
+
+	.ta-row-actions-panel a:hover,
+	.ta-row-actions-panel a:focus-visible {
+		background-color: var(--ta-accent-soft);
+	}
+
+	.ta-row-actions-divider {
+		@apply my-1 border-t;
+		border-color: var(--ta-border);
+	}
+
+	@media (max-width: 1023px) {
+		.ta-row-actions-panel {
+			@apply fixed left-4 right-4 top-auto z-50 w-auto overflow-y-auto;
+			bottom: calc(5rem + env(safe-area-inset-bottom));
+			max-height: 60dvh;
+		}
+	}
+
+	.ta-full-list {
+		@apply relative min-w-[760px];
+	}
+
+	.ta-full-list td {
+		@apply px-3 py-4 align-middle;
+	}
+
+	.ta-full-list tbody tr + tr {
+		border-top: 1px solid var(--ta-border);
+	}
+
+	.ta-full-list-date {
+		@apply whitespace-nowrap;
+		width: 1%;
+		font-family: var(--ta-font-display);
+		font-size: 1.125rem;
+	}
+
+	.ta-full-list-payee {
+		width: 100%;
+		min-width: 13rem;
+		max-width: 30rem;
+		overflow-wrap: anywhere;
+	}
+
+	.ta-full-list-name {
+		font-family: var(--ta-font-display);
+		@apply text-lg font-semibold leading-snug;
+	}
+
+	.ta-full-list-detail {
+		@apply text-xs leading-relaxed;
+		font-family: var(--ta-font-body);
+		color: var(--ta-text-muted);
+	}
+
+	.ta-full-list-number {
+		@apply text-xl leading-snug tabular-nums;
+		font-family: var(--ta-font-display);
+	}
+
+	.ta-full-list-income {
+		color: var(--ta-info);
+	}
+
+	.ta-full-list-status {
+		@apply inline-flex items-center gap-2 text-sm;
+		color: var(--ta-text-muted);
+	}
+
+	.ta-full-list-status--paid svg {
+		color: var(--ta-info);
+	}
+
+	.ta-full-list-action {
+		@apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg;
+		color: var(--ta-text-muted);
+	}
+
+	.ta-full-list-action:hover {
+		background-color: var(--ta-surface-alt);
+		color: var(--ta-text);
+	}
+
+	.ta-full-list-action--delete:hover {
+		color: var(--ta-danger);
+	}
+
+	.ta-full-list-action:focus-visible {
+		outline: 2px solid var(--ta-focus);
+		outline-offset: 2px;
+	}
+
+	.ta-full-list .ta-full-list-balance {
+		padding-left: 1.5rem;
 	}
 
 	.ta-th {

@@ -1,0 +1,20 @@
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb "Bank connections" %>
+<% page_header title: "Bank connections", eyebrow: "SimpleFIN", subtitle: "Bring dated balances and activity into your monthly workflow." do %>
+  <%= link_to "Connect SimpleFIN", new_bank_connection_path, class: "fb-btn-primary" %>
+<% end %>
+<div class="mx-auto max-w-4xl space-y-5">
+  <section class="ta-section-frame p-5">
+    <% if @connections.empty? %><p class="ta-muted">No bank connections yet. Connect your SimpleFIN subscription, then choose which accounts to use. Manual accounts and CSV imports remain available.</p><% end %>
+    <ul class="divide-y divide-slate-200"><% @connections.each do |connection| %><li class="flex flex-wrap items-center justify-between gap-3 py-4"><%= link_to connection.name, connection, class: "font-semibold underline" %><span><%= connection.status.humanize %><%= " · #{connection.error_message}" if connection.error_message.present? %></span></li><% end %></ul>
+  </section>
+  <details class="ta-section-frame ta-account-disclosure">
+    <summary>Transaction timezone · <%= @workspace.time_zone %></summary>
+    <div class="ta-disclosure-body">
+    <p class="ta-muted mt-2">Dates and optional times use this timezone. Incoming money without a time comes first; untimed payments come last.</p>
+    <%= form_with url: timezone_bank_connections_path, method: :patch, class: "mt-4 flex flex-wrap items-end gap-3" do |form| %>
+      <div><%= form.label :time_zone, "Timezone", class: "fb-label" %><%= form.select :time_zone, ActiveSupport::TimeZone.all.map { |zone| [zone.to_s, zone.tzinfo.identifier] }, { selected: @workspace.time_zone }, class: "fb-select" %></div><%= form.submit "Save timezone", class: "fb-btn-secondary" %>
+    <% end %>
+    </div>
+  </details>
+</div>

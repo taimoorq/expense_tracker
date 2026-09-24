@@ -9,7 +9,9 @@ Rails.application.routes.draw do
   }
   resource :profile, only: :show
   resource :theme, only: :update
-  resource :settings, only: [ :show, :update ]
+  resource :settings, only: [ :show, :update ] do
+    patch :workspace
+  end
   resource :onboarding_preference, only: :update
   resource :recent_operations_preference, only: :update
   resources :operation_runs, only: :show, path: "operations"
@@ -18,6 +20,20 @@ Rails.application.routes.draw do
     post :run_now, on: :member
   end
   resources :backup_archives, only: :show
+  resources :bank_connections do
+    patch :timezone, on: :collection
+    post :refresh, on: :member
+    post :reconnect, on: :member
+    patch :map_account, on: :member
+  end
+  resources :connected_accounts, only: [] do
+    get :reconcile, on: :member
+    post :accept_balance, on: :member
+    post :manual_source, on: :member
+  end
+  resources :provider_transactions, only: :update
+  resources :payment_settlements, only: %i[create destroy]
+  resources :activity_transactions, only: %i[new create update destroy]
 
   namespace :admin do
     root "dashboard#show"
@@ -31,6 +47,7 @@ Rails.application.routes.draw do
 
   root "overview#show"
   get "activity", to: "activity#index", as: :activity
+  get "activity/import", to: "activity#import", as: :activity_import
   resources :activity_matches, only: [ :create, :destroy ]
   resources :migration_discrepancy_resolutions, only: :update
   get "reports", to: "reports#index", as: :reports
@@ -51,6 +68,10 @@ Rails.application.routes.draw do
   get "planning_templates/payment-plans/:edit_payment_plan_id/edit", to: "planning_templates#index", as: :edit_payment_plan_planning_templates
   get "planning_templates/credit-cards/:edit_credit_card_id/edit", to: "planning_templates#index", as: :edit_credit_card_planning_templates
   resources :accounts, except: [ :destroy ] do
+    resources :recurring_candidates, only: [ :index, :show, :update ] do
+      get :month, on: :member
+      post :add_to_month, on: :member
+    end
     resources :account_snapshots, only: [ :new, :create, :edit, :update, :destroy ]
     resources :account_activity_imports, only: [ :new, :create ] do
       post :preview, on: :collection

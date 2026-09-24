@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["kind", "schedulePanel", "scheduleToggle", "scheduleInput"]
+  static targets = ["kind", "schedulePanel", "scheduleToggle", "scheduleInput", "scheduleFields"]
 
   connect() {
     this.syncScheduleFields()
@@ -22,6 +22,7 @@ export default class extends Controller {
     const scheduleEnabled = isCreditCard && this.hasScheduleToggleTarget && this.scheduleToggleTarget.checked
 
     this.schedulePanelTarget.classList.toggle("hidden", !isCreditCard)
+    if (this.hasScheduleFieldsTarget) this.scheduleFieldsTarget.classList.toggle("hidden", !scheduleEnabled)
 
     if (this.hasScheduleToggleTarget) {
       this.scheduleToggleTarget.disabled = !isCreditCard

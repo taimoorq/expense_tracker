@@ -27,12 +27,16 @@ module Accounts
     attr_reader :budget_month, :account, :movement_type
 
     def matching_entries
-      entries.select { |entry| matches_movement?(entry) }
+      rows = entries.select { |entry| matches_movement?(entry) }
+      source_rows = rows.select { |entry| entry.source_account_id.present? }
+      destination_rows = rows.select { |entry| entry.destination_account_id.present? }
+      ActiveRecord::Associations::Preloader.new(records: source_rows, associations: :source_account).call if source_rows.any?
+      ActiveRecord::Associations::Preloader.new(records: destination_rows, associations: :destination_account).call if destination_rows.any?
+      rows
     end
 
     def entries
       @entries ||= budget_month.expense_entries
-                             .includes(:source_account, :destination_account, :source_template)
                              .where.not(occurred_on: nil)
                              .order(:occurred_on, :created_at)
                              .to_a

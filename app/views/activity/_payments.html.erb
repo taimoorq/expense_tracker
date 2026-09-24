@@ -1,0 +1,23 @@
+<section class="ta-section-frame p-5">
+  <h2 class="ta-section-title">Payments waiting to clear</h2>
+  <p class="ta-muted mt-2">These payments reserve money while you wait for evidence that it moved. Match posted bank activity, or confirm clearing yourself from your statement. A new balance alone does not settle a payment.</p>
+  <% if @commitments.empty? %><p class="mt-5 text-sm">No payments waiting to clear.</p><% end %>
+  <% @commitments.each do |payment| %>
+    <article class="mt-4 border-t border-slate-200 pt-4">
+      <h3 class="font-semibold"><%= payment.expense_entry&.payee.presence || payment.expense_entry&.category || "Recorded payment" %> · <%= number_to_currency(payment.outstanding_amount) %></h3>
+      <p class="ta-muted text-sm"><%= payment.account.name %> · initiated <%= l(payment.initiated_on, format: :long) %></p>
+      <%= form_with url: payment_settlements_path, class: "mt-3 flex flex-wrap items-end gap-3" do |form| %>
+        <%= form.hidden_field :payment_commitment_id, value: payment.id %>
+        <div><%= form.label :cleared_on, "Cleared on", for: "cleared_#{payment.id}", class: "fb-label" %><%= form.date_field :cleared_on, id: "cleared_#{payment.id}", value: Date.current, min: payment.initiated_on, max: Date.current, required: true, class: "fb-input" %></div>
+        <label class="flex items-center gap-2 text-sm"><%= form.check_box :confirmed, { required: true }, "1", "0" %> I confirmed this payment cleared</label>
+        <%= form.submit "Confirm cleared", class: "fb-btn-primary" %>
+      <% end %>
+    </article>
+  <% end %>
+</section>
+
+<% if @manual_settlements.any? %>
+  <details class="ta-section-frame p-5"><summary class="font-semibold cursor-pointer">Recently cleared manually</summary>
+    <% @manual_settlements.each do |settlement| %><div class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t pt-3"><p class="text-sm"><%= settlement.payment_commitment.account.name %> · <%= settlement.financial_transaction.description %> · <%= number_to_currency(settlement.amount) %> · <%= l(settlement.financial_transaction.effective_on, format: :long) %></p><%= button_to "Undo clearing", payment_settlement_path(settlement), method: :delete, class: "fb-btn-secondary", form: { data: { turbo_confirm: "Restore this payment reservation and reverse its manually recorded clearing?" } } %></div><% end %>
+  </details>
+<% end %>

@@ -25,8 +25,8 @@ RSpec.describe "Reports", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Plan versus actual", "August 2026", "$1,200.00", "$1,150.00")
-    expect(response.body).to include("Actual outflow by category", "Housing")
-    expect(response.body).to include("Accessible values for the planned and actual monthly outflow chart")
+    expect(response.body).to include("Recorded outflow by category", "Housing")
+    expect(response.body).to include("Monthly outflow: planned, matched, recorded, unallocated, and remaining")
     expect(response.body).to include('data-controller="chart"')
   end
 
@@ -34,7 +34,7 @@ RSpec.describe "Reports", type: :request do
     get reports_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("No monthly history yet", "Paid outflows with categories will appear here")
+    expect(response.body).to include("No monthly history yet", "Recorded spending, including Uncategorized, will appear here")
   end
 
   it "uses one target calculation bundle after read cutover" do
@@ -57,7 +57,7 @@ RSpec.describe "Reports", type: :request do
     get reports_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Calculations: target-v1", "Housing", "$1,150.00")
+    expect(response.body).to include("Matched to plan follows the plan month", "Housing", "$1,150.00")
   end
 
   it "uses frozen close totals and source lines even when late activity arrives" do

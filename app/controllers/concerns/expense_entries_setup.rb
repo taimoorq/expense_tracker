@@ -14,6 +14,7 @@ module ExpenseEntriesSetup
   def expense_entry_params
     params.require(:expense_entry).permit(
       :occurred_on,
+      :transaction_time,
       :section,
       :category,
       :payee,

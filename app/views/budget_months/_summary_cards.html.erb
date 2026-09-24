@@ -4,10 +4,13 @@
   <% metrics = [
     { label: "Income", value: summary.income, tone: "text-emerald-700", note: "Effective income" },
     { label: "Planned outflow", value: summary.planned_outflow, tone: "text-slate-900", note: "Expected this month" },
-    { label: "Actual outflow", value: summary.actual_outflow, tone: "text-rose-700", note: "#{summary.actual_coverage_count} of #{summary.outflow_count} recorded" },
+    { label: summary.calculation_version.start_with?("target-") ? "Matched outflow" : "Actual outflow", value: summary.actual_outflow, tone: "text-rose-700", note: "#{summary.actual_coverage_count} of #{summary.outflow_count} recorded" },
     { label: "Leftover", value: summary.leftover, tone: (summary.leftover >= 0 ? "text-emerald-700" : "text-rose-700"), note: "Income minus effective outflow" }
   ] %>
   <section class="ta-section-frame mb-5" aria-labelledby="month-summary-title">
+    <% if summary.recorded_totals %>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3 text-sm"><p><strong>Recorded this month:</strong> <%= number_to_currency(summary.recorded_totals.fetch("income").to_d) %> income · <%= number_to_currency(summary.recorded_totals.fetch("outflow").to_d) %> outflow. Includes unplanned posted activity; matched totals below follow the plan.</p><%= link_to "Review Activity", activity_path(view: "all", starts_on: budget_month.month_on, ends_on: budget_month.month_on.end_of_month), class: "shrink-0 font-semibold underline" %></div>
+    <% end %>
     <details class="group ta-summary-collapse sm:open">
       <summary class="ta-section-header flex cursor-pointer list-none items-center gap-3 sm:hidden">
         <span id="month-summary-title" class="ta-section-title inline-flex items-center gap-2"><%= tabler_icon("calculator", classes: "h-4 w-4") %> Month summary</span>

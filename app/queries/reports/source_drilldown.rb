@@ -86,7 +86,7 @@ module Reports
         .where(occurred_on: starts_on..ends_on, category: category)
         .where.not(section: ExpenseEntry.sections.fetch("income"))
         .includes(:budget_month)
-        .order(occurred_on: :desc, created_at: :desc)
+        .order(Arel.sql(Accounts::TransactionTiming.sql(table: "expense_entries", date: "occurred_on", timestamp: "occurred_at", incoming: "expense_entries.section = 0", descending: true)))
       scope.map do |entry|
         Row.new(
           id: entry.id,

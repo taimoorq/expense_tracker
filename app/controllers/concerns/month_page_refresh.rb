@@ -55,16 +55,11 @@ module MonthPageRefresh
 
   def preload_month_expense_entries(entries)
     loaded_entries = entries.to_a
-    ActiveRecord::Associations::Preloader.new(records: loaded_entries, associations: [ :budget_month, :source_account ]).call
+    loaded_entries.each { |entry| entry.association(:budget_month).target = @budget_month }
     loaded_entries
   end
 
   def preload_plan_expense_entries(entries)
-    loaded_entries = entries.to_a
-    entries_with_source_accounts = loaded_entries.select { |entry| entry.source_account_id.present? }
-    if entries_with_source_accounts.any?
-      ActiveRecord::Associations::Preloader.new(records: entries_with_source_accounts, associations: :source_account).call
-    end
-    loaded_entries
+    entries.to_a
   end
 end

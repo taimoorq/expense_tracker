@@ -52,7 +52,7 @@ module Recurring
       source_lookup = source_attributes_by_relation(planning_template_data)
 
       TEMPLATE_ASSOCIATIONS.each do |mapping|
-        records = user.public_send(mapping[:relation]).includes(mapping[:includes])
+        records = user.public_send(mapping[:relation])
         relink_records(user: user, records: records, mapping: mapping, source_lookup: source_lookup)
       end
     end

@@ -1,6 +1,20 @@
 require "rails_helper"
 
 RSpec.describe "Theme picker", type: :system, js: true do
+  it "uses the editorial default typeface in text and controls" do
+    user = create(:user)
+
+    sign_in_as(user)
+    visit settings_path
+
+    font_families = page.evaluate_script(<<~JS)
+      [document.body, document.querySelector("select")]
+        .map((element) => getComputedStyle(element).fontFamily)
+    JS
+
+    expect(font_families).to all(include("Iowan Old Style"))
+  end
+
   it "updates the app theme when a new color scheme is selected" do
     user = create(:user)
 

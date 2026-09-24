@@ -1,7 +1,7 @@
 module Reports
   class OverviewQuery
     PeriodRow = Data.define(
-      :month, :summary, :source_label, :calculation_version, :closed_at, :source_path, :close_id
+      :month, :summary, :source_label, :calculation_version, :closed_at, :source_path, :close_id, :recorded_totals
     )
     CategoryRow = Data.define(:label, :value, :source_path)
     Result = Data.define(
@@ -67,6 +67,7 @@ module Reports
               calculation_version: close.calculation_version,
               closed_at: close.closed_at,
               source_path: routes.budget_month_month_close_path(month),
+              recorded_totals: close.recorded_totals,
               close_id: close.id
             )
           else
@@ -77,6 +78,7 @@ module Reports
               calculation_version: Budgeting::PeriodSummary::CALCULATION_VERSION,
               closed_at: nil,
               source_path: routes.budget_month_path(month),
+              recorded_totals: recorded_totals_by_period.fetch(period.id),
               close_id: nil
             )
           end
@@ -88,6 +90,7 @@ module Reports
             calculation_version: "legacy-compatible-v1",
             closed_at: nil,
             source_path: routes.budget_month_path(month),
+            recorded_totals: nil,
             close_id: nil
           )
         end
@@ -176,6 +179,10 @@ module Reports
       @open_periods ||= mapped_periods_by_month_id.values.reject do |period|
         active_closes_by_period_id.key?(period.id)
       end
+    end
+
+    def recorded_totals_by_period
+      @recorded_totals_by_period ||= Budgeting::RecordedActuals.for_periods(periods: open_periods)
     end
 
     def live_target_summaries

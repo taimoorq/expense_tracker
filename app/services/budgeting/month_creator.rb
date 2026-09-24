@@ -118,6 +118,8 @@ module Budgeting
       source_month.expense_entries.where.not(source_file: CreditCard.template_source_file).find_each.sum do |entry|
         target_month.expense_entries.create!(
           occurred_on: shifted_date(entry.occurred_on, target_month.month_on),
+          transaction_time: entry.transaction_time,
+          timing_time_zone: entry.timing_zone_name,
           section: entry.section,
           category: entry.category,
           payee: entry.payee,

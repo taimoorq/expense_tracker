@@ -1,0 +1,14 @@
+<% if evidence %>
+  <% mapping, balance = evidence.values_at(:mapping, :balance) %>
+  <section class="ta-section-frame p-4 space-y-2" aria-label="Bank balance for <%= mapping.name %>">
+    <div class="flex flex-wrap items-start justify-between gap-3"><div><p class="ta-ledger-label">SimpleFIN · <%= mapping.institution_name %></p><p class="font-semibold"><%= mapping.name %></p></div><%= link_to "Manage connection", mapping.bank_connection, class: "underline text-sm", data: { turbo_frame: "_top" } %></div>
+    <% if balance %>
+      <p><strong class="ta-money"><%= number_to_currency(balance.balance * mapping.sign_multiplier) %></strong> bank reported balance</p>
+      <p class="ta-muted text-sm">As of <%= bank_timestamp(balance.reported_at, mapping.budget_workspace) %><%= " · Stale" if balance.stale? %>.</p>
+      <p class="ta-muted text-sm"><%= account.liability? ? "Provider available value (not cash)" : "Bank available balance" %>: <%= balance.available_balance.nil? ? "Not provided" : number_to_currency(balance.available_balance) %>.</p>
+      <%= link_to "Review balance and recorded payments", reconcile_connected_account_path(mapping), class: "underline text-sm", data: { turbo_frame: "_top" } %>
+    <% else %><p class="ta-muted text-sm">No usable bank balance yet.</p><% end %>
+    <% if mapping.error_message.present? || mapping.bank_connection.error_message.present? %><p class="ta-alert-danger text-sm"><%= mapping.error_message.presence || mapping.bank_connection.error_message %></p><% end %>
+    <% if mapping.bank_connection.status == "disconnected" %><p class="ta-muted text-sm">Disconnected · showing saved history.</p><% end %>
+  </section>
+<% end %>

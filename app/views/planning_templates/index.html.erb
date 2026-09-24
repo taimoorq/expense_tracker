@@ -1,4 +1,5 @@
 <% breadcrumb "Recurring" %>
+<details class="ta-section-frame p-4 mb-5"><summary class="font-semibold cursor-pointer">Suggestions from activity</summary><p class="ta-muted mt-2 text-sm">Review repeat charges from manual entries, accepted bank transactions, and statement imports. Suggestions never create future bills until you confirm them.</p><div class="mt-3 flex flex-wrap gap-2"><% current_user.accounts.active_first.order(:name).each do |account| %><%= link_to account.name, account_recurring_candidates_path(account), class: "fb-btn-secondary" %><% end %></div></details>
 
 <% recurring_groups = [
   {

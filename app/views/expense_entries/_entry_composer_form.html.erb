@@ -93,6 +93,8 @@
           </div>
         </div>
 
+
+
         <div class="grid gap-3 sm:grid-cols-2">
           <div>
             <%= form.label :payee, "Payee", class: "fb-label", data: { entry_wizard_target: "payeeLabel" } %>
@@ -114,6 +116,12 @@
                                 data: { entry_wizard_target: "category", action: "input->entry-wizard#update" } %>
           </div>
         </div>
+
+        <details class="ta-muted text-sm" <%= "open" if expense_entry.transaction_time.present? %>>
+          <summary class="cursor-pointer">Transaction time (optional)</summary>
+          <div class="mt-2 max-w-xs"><%= form.label :transaction_time, "Time", class: "fb-label" %><%= form.time_field :transaction_time, step: 1, class: "fb-input" %></div>
+          <p class="mt-1">Timezone: <%= expense_entry.timing_zone_name %>. Leave blank to use the usual daily order.</p>
+        </details>
 
         <div class="grid gap-3 sm:grid-cols-2">
           <div>

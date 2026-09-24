@@ -1,4 +1,5 @@
 class MonthlyBill < ApplicationRecord
+  include CandidateReviewable
   include LegacyWorkspaceOwned
   include PlanningTemplateMetadata
   include RecurringEntryTemplate

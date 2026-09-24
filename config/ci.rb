@@ -11,7 +11,7 @@ CI.run do
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Assets: Tailwind", "env RAILS_ENV=test bin/rails tailwindcss:build"
   step "Tests: Rails", "env RAILS_ENV=test bin/rails test"
-  step "Tests: RSpec", "env RAILS_ENV=test bundle exec rspec spec/models spec/requests spec/services spec/jobs spec/db spec/config"
+  step "Tests: RSpec", "env RAILS_ENV=test bundle exec rspec spec/models spec/requests spec/services spec/jobs spec/db spec/config spec/queries"
   step "Tests: System", "env RAILS_ENV=test bundle exec rspec spec/system"
   step "Tests: Seeds", "env RAILS_ENV=test SEED_MODE=users_with_transactions bin/rails db:seed:replant"
 

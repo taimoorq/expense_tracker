@@ -1,0 +1,15 @@
+<p class="ta-account-amount <%= 'ta-account-unresolved' unless row.balance_available? %>"><%= row.balance_available? ? number_to_currency(row.summary.fetch(:current_balance)) : "Needs source" %></p>
+<% unless row.summary.fetch(:source_type) == :none %>
+  <p class="ta-account-meta mt-1"><%= row.summary.fetch(:source_label) %></p>
+<% end %>
+<% if (date = row.summary.fetch(:source_date)) %>
+  <p class="ta-account-meta"><time datetime="<%= date.iso8601 %>" title="<%= l(date, format: :long) %>"><%= date.strftime("%b %-d, %Y") %></time></p>
+<% end %>
+<% unless row.balance_available? %>
+  <% if row.summary.fetch(:imported_activity_count).positive? %>
+    <p class="ta-account-meta mt-1">Imported rows need a balance source</p>
+    <% if (date = row.summary.fetch(:imported_activity_through_on)) %>
+      <p class="ta-account-meta">Activity through <time datetime="<%= date.iso8601 %>" title="<%= l(date, format: :long) %>"><%= date.strftime("%b %-d, %Y") %></time></p>
+    <% end %>
+  <% end %>
+<% end %>

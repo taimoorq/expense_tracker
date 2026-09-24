@@ -1,0 +1,17 @@
+<% if row.mapping %>
+  <% if row.bank_balance %>
+    <p class="ta-account-amount"><%= number_to_currency(row.bank_amount) %></p>
+    <p class="ta-account-meta mt-1">SimpleFIN · <time datetime="<%= row.bank_reported_at.iso8601 %>" title="<%= bank_timestamp(row.bank_reported_at, row.mapping.budget_workspace) %>"><%= row.bank_reported_at.strftime("%b %-d, %Y") %></time></p>
+    <% if row.bank_balance.stale? %><p class="ta-account-notice">Stale balance</p><% end %>
+  <% else %>
+    <p class="ta-account-meta">Waiting for balance</p>
+    <p class="ta-account-meta mt-1">SimpleFIN</p>
+  <% end %>
+  <% status = bank_account_connection_status(row.mapping) %>
+  <% unless status == "Connected" %>
+    <p class="ta-account-meta mt-1"><%= status %></p>
+  <% end %>
+<% else %>
+  <p class="ta-account-meta" aria-hidden="true">—</p>
+  <p class="ta-account-meta mt-1">Not connected</p>
+<% end %>

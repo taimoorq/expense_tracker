@@ -54,6 +54,6 @@ class BudgetMonth < ApplicationRecord
   end
 
   def loaded_expense_entries
-    association(:expense_entries).target
+    expense_entries.to_a
   end
 end

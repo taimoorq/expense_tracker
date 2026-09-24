@@ -35,6 +35,7 @@ RSpec.describe Accounts::MovementDrilldown do
 
     expect(result[:title]).to eq("Credit card payments made")
     expect(result[:entries]).to eq([ paid_card_payment ])
+    expect(result[:entries].map { |entry| [ entry.source_account.name, entry.destination_account.name ] }).to eq([ [ "Checking", "Rewards Visa" ] ])
     expect(result[:total]).to eq(300.to_d)
     expect(result[:entry_count]).to eq(1)
   end

@@ -5,7 +5,7 @@
 <% cancel_data[:turbo_submit_target] = "cancelButton" if enable_submit_state %>
 <div class="<%= wrapper_class %>">
   <% unless expense_entry.paid? %>
-    <%= button_tag "Mark as Paid",
+    <%= button_tag record_movement_label(expense_entry),
                    type: :submit,
                    name: "mark_as_paid",
                    value: "1",

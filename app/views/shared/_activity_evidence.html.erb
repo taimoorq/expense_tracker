@@ -1,0 +1,6 @@
+<p>
+  <%= l(activity.transaction_on, format: :short) %> · <%= activity.description %> · <%= number_to_currency(activity.amount) %>
+  <% if activity.respond_to?(:detail_path) %>
+    <br><%= link_to activity.source_label, activity.detail_path, class: "font-semibold text-indigo-700 underline", data: { turbo_frame: "_top" }, aria: { label: "Review #{activity.description} from #{activity.source_label}" } %>
+  <% end %>
+</p>

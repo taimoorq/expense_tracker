@@ -2,6 +2,7 @@ module Platform
   module Operations
     module JobRegistry
       JOBS = {
+        "BankConnections::RefreshJob" => -> { BankConnections::RefreshJob },
         "Accounts::ActivityImports::CommitJob" => -> { Accounts::ActivityImports::CommitJob },
         "Platform::Backup::V2::RestoreJob" => -> { Platform::Backup::V2::RestoreJob },
         "Platform::Backup::V2::ExportJob" => -> { Platform::Backup::V2::ExportJob },

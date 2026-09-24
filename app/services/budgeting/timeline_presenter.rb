@@ -92,11 +92,13 @@ module Budgeting
     private
 
     def ordered_entries
-      @ordered_entries ||= expense_entries.sort_by { |entry| [ entry.occurred_on || Date.new(9999, 12, 31), entry.created_at ] }
+      @ordered_entries ||= expense_entries.sort_by(&:chronological_key)
     end
 
     def preload_entries(entries)
-      ActiveRecord::Associations::Preloader.new(records: entries, associations: [ :budget_month, :source_account ]).call
+      entries.each { |entry| entry.association(:budget_month).target = budget_month if entry.budget_month_id == budget_month.id }
+      with_source = entries.select { |entry| entry.source_account_id.present? }
+      ActiveRecord::Associations::Preloader.new(records: with_source, associations: :source_account).call if with_source.any?
       entries
     end
 

@@ -20,6 +20,7 @@ module Budgeting
       MonthCloseItemSnapshot.insert_all!(item_rows) if item_rows.any?
       MonthCloseTransactionSnapshot.insert_all!(transaction_rows) if transaction_rows.any?
       verify_summary!(item_rows)
+      verify_recorded_summary!(transaction_rows) if month_close.recorded_totals.present?
 
       Result.new(item_count: item_rows.size, transaction_count: transaction_rows.size)
     end
@@ -40,6 +41,8 @@ module Budgeting
           name_snapshot: item.name_snapshot.presence || item.payee_snapshot.presence || item.category_snapshot,
           category_snapshot: item.category&.name.presence || item.category_snapshot,
           scheduled_on: item.scheduled_on,
+          scheduled_at: item.scheduled_at,
+          timing_time_zone: item.timing_time_zone,
           planned_amount: item.planned_amount,
           actual_amount: actual,
           remaining_amount: [ item.planned_amount - actual, 0 ].max,
@@ -61,6 +64,8 @@ module Budgeting
           description_snapshot: transaction.description,
           category_snapshot: transaction.category&.name.presence || "Uncategorized",
           effective_on: transaction.effective_on,
+          transacted_at: transaction.transacted_at,
+          timing_time_zone: transaction.timing_time_zone,
           gross_amount: transaction.gross_amount,
           allocated_amount: transaction_allocation_totals.fetch(transaction.id, 0.to_d),
           currency_code: transaction.currency_code,
@@ -113,6 +118,17 @@ module Budgeting
 
     def timestamp
       @timestamp ||= Time.current
+    end
+
+    def verify_recorded_summary!(transaction_rows)
+      totals = transaction_rows.each_with_object(Hash.new(0.to_d)) do |row, result|
+        flow = row.fetch(:flow_kind)
+        result[flow] += row.fetch(:gross_amount)
+        result["unallocated_#{flow}"] += [ row.fetch(:gross_amount) - row.fetch(:allocated_amount), 0 ].max
+      end
+      return if %w[income outflow transfer unallocated_income unallocated_outflow].all? { |key| totals[key] == month_close.recorded_totals.fetch(key).to_d }
+
+      raise SummaryMismatch, "The close transaction snapshots do not match the frozen recorded totals."
     end
 
     class SummaryMismatch < StandardError; end

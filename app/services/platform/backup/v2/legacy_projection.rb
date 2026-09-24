@@ -36,16 +36,26 @@ module Platform
           :mapping_store, :user, :workspace
 
         def project_templates
-          workspace.planning_templates.includes(
-            :payment_plan_term,
-            :credit_card_payment_policy,
-            recurrence_rule: :recurrence_months
-          ).find_each do |template|
-            legacy = build_legacy_template(template)
-            legacy.save!
-            legacy_templates[template.id] = legacy
-            record_mapping(legacy, template)
-            counts["legacy_planning_templates"] += 1
+          workspace.planning_templates.find_in_batches do |templates|
+            rules = templates.reject(&:kind_credit_card_payment?)
+            bills = rules.select(&:kind_bill?)
+            payment_plans = templates.select(&:kind_payment_plan?)
+            credit_cards = templates.select(&:kind_credit_card_payment?)
+            ActiveRecord::Associations::Preloader.new(records: templates, associations: :source_account).call
+            ActiveRecord::Associations::Preloader.new(records: rules, associations: :recurrence_rule).call if rules.any?
+            ActiveRecord::Associations::Preloader.new(records: bills.filter_map(&:recurrence_rule), associations: :recurrence_months).call if bills.any?
+            ActiveRecord::Associations::Preloader.new(records: payment_plans, associations: :payment_plan_term).call if payment_plans.any?
+            if credit_cards.any?
+              ActiveRecord::Associations::Preloader.new(records: credit_cards, associations: [ :destination_account, { credit_card_payment_policy: [ :payment_account, :liability_account ] } ]).call
+            end
+
+            templates.each do |template|
+              legacy = build_legacy_template(template)
+              legacy.save!
+              legacy_templates[template.id] = legacy
+              record_mapping(legacy, template)
+              counts["legacy_planning_templates"] += 1
+            end
           end
         end
 
@@ -117,7 +127,7 @@ module Platform
         end
 
         def legacy_billing_schedule(rule)
-          months = rule.recurrence_months.order(:month_number).pluck(:month_number)
+          months = rule.recurrence_months.sort_by(&:month_number).map(&:month_number)
           return [ "monthly", (1..12).to_a ] if months.empty? || months.size == 12
           return [ "quarterly", months ] if months.size == 4
           return [ "semiannual", months ] if months.size == 2
@@ -185,7 +195,7 @@ module Platform
             record_mapping(entry, item)
             record_mapping(entry, item.recurring_occurrence) if item.recurring_occurrence.present?
             transaction = first_transactions[item.id]
-            record_mapping(entry, transaction) if transaction.present?
+            record_mapping(entry, transaction) if transaction&.origin_kind_manual?
             counts["legacy_expense_entries"] += 1
           end
         end
@@ -206,6 +216,8 @@ module Platform
             source_account: item.intended_source_account,
             destination_account: item.intended_destination_account,
             occurred_on: item.scheduled_on || item.budget_period.starts_on,
+            occurred_at: item.scheduled_at,
+            timing_time_zone: item.timing_time_zone,
             section: legacy_section(item),
             category: item.category&.name.presence || item.category_snapshot,
             payee: item.payee_snapshot.presence || item.name_snapshot,
@@ -247,7 +259,7 @@ module Platform
         end
 
         def project_snapshots
-          workspace.balance_observations.status_trusted.order(:effective_through_at, :created_at).find_each do |observation|
+          workspace.balance_observations.status_trusted.where.not(source_kind: "bank_sync").order(:effective_through_at, :created_at).find_each do |observation|
             recorded_on = observation.effective_through_at.to_date
             snapshot = observation.account.account_snapshots.find_or_initialize_by(recorded_on: recorded_on)
             snapshot.assign_attributes(
@@ -311,6 +323,9 @@ module Platform
               expense_entry: entry,
               transaction_on: transaction.effective_on,
               posted_on: transaction.posted_on,
+              transacted_at: transaction.transacted_at,
+              posted_at: transaction.posted_at,
+              timing_time_zone: transaction.timing_time_zone,
               description: transaction.description,
               memo: transaction.memo,
               category: transaction.category&.name,

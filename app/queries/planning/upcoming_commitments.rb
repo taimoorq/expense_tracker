@@ -40,16 +40,23 @@ module Planning
     attr_reader :ends_on, :starts_on, :workspace
 
     def templates
-      @templates ||= workspace.planning_templates
+      @templates ||= begin
+        rows = workspace.planning_templates
         .active
         .includes(
           :source_account,
           :destination_account,
-          :payment_plan_term,
-          :credit_card_payment_policy,
-          recurrence_rule: :recurrence_months
+          :recurrence_rule
         )
         .to_a
+        plans = rows.select(&:kind_payment_plan?)
+        cards = rows.select(&:kind_credit_card_payment?)
+        custom_rules = rows.filter_map(&:recurrence_rule).select(&:cadence_custom_months?)
+        ActiveRecord::Associations::Preloader.new(records: plans, associations: :payment_plan_term).call if plans.any?
+        ActiveRecord::Associations::Preloader.new(records: cards, associations: :credit_card_payment_policy).call if cards.any?
+        ActiveRecord::Associations::Preloader.new(records: custom_rules, associations: :recurrence_months).call if custom_rules.any?
+        rows
+      end
     end
 
     def build_rows

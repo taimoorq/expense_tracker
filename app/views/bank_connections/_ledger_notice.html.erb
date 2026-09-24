@@ -1,0 +1,3 @@
+<% unless bank_ledger_enabled? %>
+  <p class="ta-muted rounded-lg border border-slate-200 p-4 text-sm">You can view bank balances now. Before using them in forecasts or accepting bank activity, your server administrator needs to complete this workspace's ledger upgrade. <%= link_to "Upgrade instructions", "https://github.com/taimoorq/expense_tracker#upgrade-an-existing-installation-safely", target: "_blank", rel: "noopener noreferrer", class: "underline" %></p>
+<% end %>

@@ -7,6 +7,7 @@ class ApplicationController < ActionController::Base
   before_action :enforce_current_user_access_state, unless: :devise_controller?
   before_action :set_operational_event_context
   before_action :set_current_theme
+  around_action :use_workspace_timezone
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
@@ -96,6 +97,12 @@ class ApplicationController < ActionController::Base
       request_id: request.request_id,
       user_id: user_signed_in? ? current_user.id : nil
     )
+  end
+
+  def use_workspace_timezone(&action)
+    zone = current_user && BudgetWorkspace.where(legacy_owner_user_id: current_user.id).pick(:time_zone)
+    zone ||= "UTC"
+    Time.use_zone(zone, &action)
   end
 
   def set_current_theme

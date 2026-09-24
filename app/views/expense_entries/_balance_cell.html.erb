@@ -1,0 +1,7 @@
+<% balance_label = balance.amount.nil? ? "Balance unavailable" : number_to_currency(balance.amount) %>
+<td class="px-3 py-2 text-right whitespace-nowrap tabular-nums hidden <%= 'ta-full-list-balance' if local_assigns[:full_list] %> <%= 'text-rose-700 font-semibold' if balance.amount&.negative? && balance.account&.asset? %>" data-balance-column-target="column" data-running-balance title="<%= balance.message %>" aria-label="<%= balance_label %>. <%= balance.message %>">
+  <span class="<%= 'ta-full-list-number' if local_assigns[:full_list] %>"><%= balance.amount.nil? ? "—" : number_to_currency(balance.amount) %></span>
+  <% if balance.effective_on && balance.effective_on != entry.occurred_on %>
+    <span class="block text-xs text-slate-600">Activity <%= balance.effective_on %></span>
+  <% end %>
+</td>

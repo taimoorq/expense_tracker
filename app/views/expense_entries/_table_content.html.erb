@@ -2,7 +2,7 @@
 <% selected_review = local_assigns[:selected_review] %>
 
 <div class="overflow-x-auto">
-  <table class="ta-table min-w-[840px]" data-controller="sortable-table">
+  <table class="ta-table min-w-[840px]" data-controller="sortable-table" <%= tag.attributes(id: "month-entry-balances-#{budget_month.id}") if local_assigns[:running_balances] %>>
     <thead class="ta-table-head">
       <tr>
         <%= sortable_table_header("Date", key: "date", type: "date") %>
@@ -14,11 +14,14 @@
         <%= sortable_table_header("Actual", key: "actual", type: "number", classes: "text-right") %>
         <%= sortable_table_header("Status", key: "status") %>
         <th class="ta-th">Action</th>
+        <% if local_assigns[:running_balances] %>
+          <th scope="col" class="ta-th text-right whitespace-nowrap hidden" data-balance-column-target="column">Balance after</th>
+        <% end %>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">
       <% expense_entries.each do |entry| %>
-        <%= render "expense_entries/row", budget_month: budget_month, entry: entry, timeline_view: timeline_view, selected_review: selected_review, read_only: local_assigns[:read_only] %>
+        <%= render "expense_entries/row", budget_month: budget_month, entry: entry, timeline_view: timeline_view, selected_review: selected_review, read_only: local_assigns[:read_only], running_balances: local_assigns[:running_balances] %>
       <% end %>
     </tbody>
   </table>

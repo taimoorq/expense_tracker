@@ -1,0 +1,16 @@
+<% breadcrumb "Activity", activity_path %>
+<% page_header title: "Import a statement", subtitle: "Choose the account this file belongs to before previewing its transactions." %>
+<section class="ta-section-frame mx-auto max-w-2xl p-5 space-y-4">
+  <% if @accounts.any? %>
+    <%= form_with url: activity_import_path, method: :get, class: "space-y-4" do |form| %>
+      <%= hidden_field_tag :continue, "1" %>
+      <div><%= form.label :account_id, "Account", class: "fb-label" %><%= form.collection_select :account_id, @accounts, :id, :name, { prompt: "Choose an account", selected: params[:account_id] }, required: true, class: "fb-select" %></div>
+      <p class="ta-muted">Statement imports record actual activity. Use Plan to import a monthly plan instead. You will review the file before any transactions are saved.</p>
+      <%= form.submit "Choose statement file", class: "fb-btn-primary" %>
+    <% end %>
+  <% else %>
+    <p>Add the account this statement belongs to, then return here to preview its file.</p>
+    <%= link_to "Add an account", new_account_path, class: "fb-btn-primary" %>
+  <% end %>
+  <%= link_to "Back to Activity", activity_path, class: "underline" %>
+</section>

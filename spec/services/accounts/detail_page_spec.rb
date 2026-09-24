@@ -129,7 +129,8 @@ RSpec.describe Accounts::DetailPage do
 
     bucket = result.fetch(:movement_timeline).fetch(:buckets).last
     progress = result.fetch(:credit_card_progress)
-    expect(queries).to be <= 14
+    # Two bounded reads check bank source selection and outstanding reservations.
+    expect(queries).to be <= 16
     expect(result).to include(calculation_version: "target-v1")
     expect(result.fetch(:balance_summary)).to include(current_balance: -800.to_d, projected_balance: -725.to_d)
     expect(bucket).to include(

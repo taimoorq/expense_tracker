@@ -71,7 +71,7 @@ RSpec.describe "target budget period lifecycle" do
     expect(readiness).to have_attributes(
       unmatched_count: 1,
       unresolved_account_count: 1,
-      issue_count: 2,
+      issue_count: 1,
       ready?: false,
       calculation_version: "target-v1"
     )

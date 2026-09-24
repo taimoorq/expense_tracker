@@ -10,6 +10,7 @@ export default class extends Controller {
     "chip",
     "day",
     "empty",
+    "listEmpty",
     "date",
     "payee",
     "reason",
@@ -83,6 +84,10 @@ export default class extends Controller {
     if (this.hasRowTarget) {
       this.filterRows(categoryValue, noCategoryFilter, accountValue, noAccountFilter, dateValue, payeeValue, reasonValue, statusValue)
       this.updateGroups()
+    }
+
+    if (this.hasListEmptyTarget) {
+      this.listEmptyTarget.classList.toggle("hidden", this.rowTargets.some((row) => !row.classList.contains("hidden")))
     }
 
     if (this.hasChipTarget) {

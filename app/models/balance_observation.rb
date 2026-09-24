@@ -4,6 +4,7 @@ class BalanceObservation < ApplicationRecord
   enum :source_kind, {
     manual: "manual",
     institution_file: "institution_file",
+    bank_sync: "bank_sync",
     migration: "migration",
     adjustment: "adjustment"
   }, prefix: true
@@ -15,6 +16,7 @@ class BalanceObservation < ApplicationRecord
 
   belongs_to :budget_workspace
   belongs_to :account
+  belongs_to :provider_balance, optional: true
   belongs_to :actor_membership, class_name: "WorkspaceMembership", optional: true
   belongs_to :source_import_batch, class_name: "ImportBatch", optional: true
   belongs_to :source_import_row, class_name: "ImportRow", optional: true

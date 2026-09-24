@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -28,10 +28,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.uuid "expense_entry_id"
     t.string "fingerprint", null: false
     t.text "memo"
+    t.datetime "posted_at"
     t.date "posted_on"
     t.decimal "raw_amount", precision: 14, scale: 2, null: false
     t.jsonb "raw_payload", default: {}, null: false
     t.integer "row_number", null: false
+    t.string "timing_time_zone"
+    t.datetime "transacted_at"
     t.date "transaction_on", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
@@ -70,7 +73,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.uuid "user_id", null: false
     t.index ["account_id"], name: "index_account_activity_import_drafts_on_account_id"
     t.index ["budget_workspace_id"], name: "index_account_activity_import_drafts_on_budget_workspace_id"
-    t.index ["expires_at"], name: "index_activity_import_drafts_on_expiration", where: "((state)::text = ANY ((ARRAY['previewed'::character varying, 'failed'::character varying])::text[]))"
+    t.index ["expires_at"], name: "index_activity_import_drafts_on_expiration", where: "((state)::text = ANY (ARRAY[('previewed'::character varying)::text, ('failed'::character varying)::text]))"
     t.index ["id", "budget_workspace_id"], name: "uidx_activity_import_drafts_id_workspace", unique: true
     t.index ["operation_run_id"], name: "index_account_activity_import_drafts_on_operation_run_id"
     t.index ["operation_run_id"], name: "uidx_activity_import_drafts_operation", unique: true, where: "(operation_run_id IS NOT NULL)"
@@ -86,7 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "jsonb_typeof(preview_payload) = 'object'::text", name: "activity_import_drafts_payload_object"
     t.check_constraint "lock_version >= 0", name: "activity_import_drafts_lock_version_nonnegative"
     t.check_constraint "rows_count >= 0 AND imported_count >= 0 AND duplicate_count >= 0", name: "activity_import_drafts_counts_nonnegative"
-    t.check_constraint "state::text = ANY (ARRAY['previewed'::character varying, 'queued'::character varying, 'consumed'::character varying, 'failed'::character varying, 'expired'::character varying]::text[])", name: "activity_import_drafts_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['previewed'::character varying::text, 'queued'::character varying::text, 'consumed'::character varying::text, 'failed'::character varying::text, 'expired'::character varying::text])", name: "activity_import_drafts_state_valid"
     t.check_constraint "token_digest::text ~ '^[0-9a-f]{64}$'::text", name: "activity_import_drafts_token_valid"
   end
 
@@ -118,7 +121,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["user_id", "commit_idempotency_key"], name: "uidx_activity_imports_user_commit_key", unique: true, where: "(commit_idempotency_key IS NOT NULL)"
     t.index ["user_id"], name: "index_account_activity_imports_on_user_id"
     t.check_constraint "(imported_count + duplicate_count) <= rows_count", name: "activity_imports_counts_coherent"
-    t.check_constraint "amount_strategy::text = ANY (ARRAY['charges_are_negative'::character varying, 'charges_are_positive'::character varying, 'type_column'::character varying]::text[])", name: "activity_imports_amount_strategy_valid"
+    t.check_constraint "amount_strategy::text = ANY (ARRAY['charges_are_negative'::character varying::text, 'charges_are_positive'::character varying::text, 'type_column'::character varying::text])", name: "activity_imports_amount_strategy_valid"
     t.check_constraint "commit_idempotency_key IS NULL OR commit_idempotency_key::text ~ '^[0-9a-f]{64}$'::text", name: "activity_imports_commit_key_valid"
     t.check_constraint "file_digest IS NULL OR file_digest::text ~ '^[0-9a-f]{64}$'::text", name: "activity_imports_file_digest_valid"
     t.check_constraint "header_row_number >= 1", name: "activity_imports_header_row_positive"
@@ -133,6 +136,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.uuid "budget_workspace_id", null: false
     t.datetime "created_at", null: false
     t.string "currency_code", limit: 3, null: false
+    t.datetime "effective_at"
     t.uuid "financial_transaction_id", null: false
     t.string "role", null: false
     t.integer "sequence_number", default: 0, null: false
@@ -145,8 +149,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["id", "budget_workspace_id"], name: "uidx_postings_id_workspace", unique: true
     t.check_constraint "amount <> 0::numeric", name: "postings_amount_nonzero"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "postings_currency_valid"
-    t.check_constraint "role::text = ANY (ARRAY['primary'::character varying, 'source'::character varying, 'destination'::character varying, 'adjustment'::character varying]::text[])", name: "postings_role_valid"
+    t.check_constraint "role::text = ANY (ARRAY['primary'::character varying::text, 'source'::character varying::text, 'destination'::character varying::text, 'adjustment'::character varying::text])", name: "postings_role_valid"
     t.check_constraint "sequence_number >= 0", name: "postings_sequence_nonnegative"
+  end
+
+  create_table "account_recurring_candidate_decisions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id", null: false
+    t.uuid "budget_workspace_id"
+    t.datetime "created_at", null: false
+    t.jsonb "evidence_summary", default: {}, null: false
+    t.integer "key_version", default: 1, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.string "merchant_key", null: false
+    t.uuid "monthly_bill_id"
+    t.string "request_digest"
+    t.datetime "reviewed_at"
+    t.string "status", default: "unreviewed", null: false
+    t.uuid "subscription_id"
+    t.datetime "updated_at", null: false
+    t.uuid "user_id", null: false
+    t.index ["account_id", "key_version", "merchant_key"], name: "recurring_candidate_identity", unique: true
+    t.index ["account_id"], name: "index_account_recurring_candidate_decisions_on_account_id"
+    t.index ["budget_workspace_id"], name: "idx_on_budget_workspace_id_90c2cb5f35"
+    t.index ["monthly_bill_id"], name: "index_account_recurring_candidate_decisions_on_monthly_bill_id"
+    t.index ["subscription_id"], name: "index_account_recurring_candidate_decisions_on_subscription_id"
+    t.index ["user_id"], name: "index_account_recurring_candidate_decisions_on_user_id"
+    t.check_constraint "key_version = 1 AND merchant_key::text ~ '^[0-9a-f]{64}$'::text", name: "recurring_candidate_key"
+    t.check_constraint "status::text = 'linked'::text AND num_nonnulls(subscription_id, monthly_bill_id) = 1 OR (status::text = ANY (ARRAY['unreviewed'::character varying::text, 'ignored'::character varying::text])) AND num_nonnulls(subscription_id, monthly_bill_id) = 0", name: "recurring_candidate_resolution"
   end
 
   create_table "account_snapshots", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -251,7 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id"], name: "index_audit_events_on_budget_workspace_id"
     t.index ["id", "budget_workspace_id"], name: "uidx_audit_events_id_workspace", unique: true
     t.index ["operation_run_id"], name: "index_audit_events_on_operation_run_id"
-    t.check_constraint "action::text = ANY (ARRAY['create'::character varying, 'edit'::character varying, 'void'::character varying, 'reverse'::character varying, 'archive'::character varying, 'import'::character varying, 'import_reversal'::character varying, 'match'::character varying, 'unmatch'::character varying, 'generate'::character varying, 'trust_observation'::character varying, 'supersede_observation'::character varying, 'close'::character varying, 'reopen'::character varying, 'backup_export'::character varying, 'backup_restore'::character varying, 'access_change'::character varying, 'resolve_migration_discrepancy'::character varying, 'restore_checkpoint'::character varying, 'restore_rollback'::character varying]::text[])", name: "audit_events_action_valid"
+    t.check_constraint "action::text = ANY (ARRAY['create'::character varying::text, 'edit'::character varying::text, 'void'::character varying::text, 'reverse'::character varying::text, 'archive'::character varying::text, 'import'::character varying::text, 'import_reversal'::character varying::text, 'match'::character varying::text, 'unmatch'::character varying::text, 'generate'::character varying::text, 'trust_observation'::character varying::text, 'supersede_observation'::character varying::text, 'close'::character varying::text, 'reopen'::character varying::text, 'backup_export'::character varying::text, 'backup_restore'::character varying::text, 'access_change'::character varying::text, 'resolve_migration_discrepancy'::character varying::text, 'restore_checkpoint'::character varying::text, 'restore_rollback'::character varying::text])", name: "audit_events_action_valid"
   end
 
   create_table "backup_archives", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -288,14 +317,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["backup_schedule_id"], name: "index_backup_archives_on_backup_schedule_id"
     t.index ["budget_workspace_id", "state", "created_at"], name: "idx_backup_archives_workspace_state"
     t.index ["budget_workspace_id"], name: "index_backup_archives_on_budget_workspace_id"
-    t.index ["budget_workspace_id"], name: "uidx_backup_archives_active_workspace", unique: true, where: "((state)::text = ANY ((ARRAY['pending'::character varying, 'writing'::character varying])::text[]))"
+    t.index ["budget_workspace_id"], name: "uidx_backup_archives_active_workspace", unique: true, where: "((state)::text = ANY (ARRAY[('pending'::character varying)::text, ('writing'::character varying)::text]))"
     t.index ["data_transfer_run_id"], name: "index_backup_archives_on_data_transfer_run_id"
     t.index ["data_transfer_run_id"], name: "uidx_backup_archives_transfer", unique: true
     t.index ["id", "budget_workspace_id"], name: "uidx_backup_archives_id_workspace", unique: true
     t.index ["operation_run_id"], name: "index_backup_archives_on_operation_run_id"
     t.index ["operation_run_id"], name: "uidx_backup_archives_operation", unique: true
     t.index ["storage_adapter", "storage_key"], name: "uidx_backup_archives_storage_effect", unique: true
-    t.check_constraint "(state::text <> ALL (ARRAY['ready'::character varying, 'deleting'::character varying, 'deleted'::character varying]::text[])) OR stored_at IS NOT NULL AND payload_checksum IS NOT NULL AND archive_checksum IS NOT NULL AND byte_size IS NOT NULL", name: "backup_archives_stored_metadata_coherent"
+    t.check_constraint "(state::text <> ALL (ARRAY['ready'::character varying::text, 'deleting'::character varying::text, 'deleted'::character varying::text])) OR stored_at IS NOT NULL AND payload_checksum IS NOT NULL AND archive_checksum IS NOT NULL AND byte_size IS NOT NULL", name: "backup_archives_stored_metadata_coherent"
     t.check_constraint "(state::text = 'deleted'::text) = (deleted_at IS NOT NULL)", name: "backup_archives_deleted_coherent"
     t.check_constraint "(state::text = 'deleting'::text) = (deleting_at IS NOT NULL)", name: "backup_archives_deleting_coherent"
     t.check_constraint "(state::text = 'failed'::text) = (failed_at IS NOT NULL)", name: "backup_archives_failed_coherent"
@@ -304,9 +333,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "byte_size IS NULL OR byte_size >= 0", name: "backup_archives_byte_size_nonnegative"
     t.check_constraint "lock_version >= 0", name: "backup_archives_lock_version_nonnegative"
     t.check_constraint "payload_checksum IS NULL OR payload_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "backup_archives_payload_checksum_valid"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'writing'::character varying, 'ready'::character varying, 'failed'::character varying, 'deleting'::character varying, 'deleted'::character varying]::text[])", name: "backup_archives_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'writing'::character varying::text, 'ready'::character varying::text, 'failed'::character varying::text, 'deleting'::character varying::text, 'deleted'::character varying::text])", name: "backup_archives_state_valid"
     t.check_constraint "trigger::text = 'manual'::text AND backup_schedule_id IS NULL AND scheduled_for IS NULL OR trigger::text = 'scheduled'::text AND backup_schedule_id IS NOT NULL AND scheduled_for IS NOT NULL", name: "backup_archives_schedule_slot_coherent"
-    t.check_constraint "trigger::text = ANY (ARRAY['manual'::character varying, 'scheduled'::character varying]::text[])", name: "backup_archives_trigger_valid"
+    t.check_constraint "trigger::text = ANY (ARRAY['manual'::character varying::text, 'scheduled'::character varying::text])", name: "backup_archives_trigger_valid"
   end
 
   create_table "backup_export_artifacts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -330,7 +359,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id"], name: "index_backup_export_artifacts_on_budget_workspace_id"
     t.index ["data_transfer_run_id"], name: "index_backup_export_artifacts_on_data_transfer_run_id"
     t.index ["data_transfer_run_id"], name: "uidx_backup_export_artifacts_transfer", unique: true
-    t.index ["expires_at"], name: "index_backup_export_artifacts_on_expiration", where: "((state)::text = ANY ((ARRAY['ready'::character varying, 'failed'::character varying])::text[]))"
+    t.index ["expires_at"], name: "index_backup_export_artifacts_on_expiration", where: "((state)::text = ANY (ARRAY[('ready'::character varying)::text, ('failed'::character varying)::text]))"
     t.index ["id", "budget_workspace_id"], name: "uidx_backup_export_artifacts_id_workspace", unique: true
     t.index ["operation_run_id"], name: "index_backup_export_artifacts_on_operation_run_id"
     t.index ["operation_run_id"], name: "uidx_backup_export_artifacts_operation", unique: true
@@ -342,7 +371,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "expires_at > created_at", name: "backup_export_artifacts_expiration_valid"
     t.check_constraint "lock_version >= 0", name: "backup_export_artifacts_lock_version_nonnegative"
     t.check_constraint "state::text <> 'ready'::text OR encrypted_contents IS NOT NULL AND filename IS NOT NULL", name: "backup_export_artifacts_contents_coherent"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'ready'::character varying, 'failed'::character varying, 'expired'::character varying]::text[])", name: "backup_export_artifacts_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'ready'::character varying::text, 'failed'::character varying::text, 'expired'::character varying::text])", name: "backup_export_artifacts_state_valid"
   end
 
   create_table "backup_restore_drafts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -370,7 +399,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id"], name: "index_backup_restore_drafts_on_budget_workspace_id"
     t.index ["data_transfer_run_id"], name: "index_backup_restore_drafts_on_data_transfer_run_id"
     t.index ["data_transfer_run_id"], name: "uidx_backup_restore_drafts_transfer", unique: true, where: "(data_transfer_run_id IS NOT NULL)"
-    t.index ["expires_at"], name: "index_backup_restore_drafts_on_expiration", where: "((state)::text = ANY ((ARRAY['previewed'::character varying, 'failed'::character varying])::text[]))"
+    t.index ["expires_at"], name: "index_backup_restore_drafts_on_expiration", where: "((state)::text = ANY (ARRAY[('previewed'::character varying)::text, ('failed'::character varying)::text]))"
     t.index ["id", "budget_workspace_id"], name: "uidx_backup_restore_drafts_id_workspace", unique: true
     t.index ["operation_run_id"], name: "index_backup_restore_drafts_on_operation_run_id"
     t.index ["operation_run_id"], name: "uidx_backup_restore_drafts_operation", unique: true, where: "(operation_run_id IS NOT NULL)"
@@ -386,7 +415,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "jsonb_typeof(validation_manifest) = 'object'::text", name: "backup_restore_drafts_manifest_object"
     t.check_constraint "lock_version >= 0", name: "backup_restore_drafts_lock_version_nonnegative"
     t.check_constraint "payload_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "backup_restore_drafts_checksum_valid"
-    t.check_constraint "state::text = ANY (ARRAY['previewed'::character varying, 'queued'::character varying, 'consumed'::character varying, 'failed'::character varying, 'expired'::character varying]::text[])", name: "backup_restore_drafts_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['previewed'::character varying::text, 'queued'::character varying::text, 'consumed'::character varying::text, 'failed'::character varying::text, 'expired'::character varying::text])", name: "backup_restore_drafts_state_valid"
     t.check_constraint "token_digest::text ~ '^[0-9a-f]{64}$'::text", name: "backup_restore_drafts_token_valid"
   end
 
@@ -415,11 +444,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["state", "next_run_at"], name: "idx_backup_schedules_due", where: "((state)::text = 'enabled'::text)"
     t.check_constraint "(state::text = 'enabled'::text) = (next_run_at IS NOT NULL)", name: "backup_schedules_next_run_coherent"
     t.check_constraint "cadence::text = 'daily'::text AND weekday IS NULL AND day_of_month IS NULL OR cadence::text = 'weekly'::text AND weekday >= 0 AND weekday <= 6 AND day_of_month IS NULL OR cadence::text = 'monthly'::text AND weekday IS NULL AND day_of_month >= 1 AND day_of_month <= 28", name: "backup_schedules_cadence_fields_coherent"
-    t.check_constraint "cadence::text = ANY (ARRAY['daily'::character varying, 'weekly'::character varying, 'monthly'::character varying]::text[])", name: "backup_schedules_cadence_valid"
+    t.check_constraint "cadence::text = ANY (ARRAY['daily'::character varying::text, 'weekly'::character varying::text, 'monthly'::character varying::text])", name: "backup_schedules_cadence_valid"
     t.check_constraint "local_minute_of_day >= 0 AND local_minute_of_day <= 1439", name: "backup_schedules_local_time_valid"
     t.check_constraint "lock_version >= 0", name: "backup_schedules_lock_version_nonnegative"
     t.check_constraint "retention_count >= 1 AND retention_count <= 365", name: "backup_schedules_retention_valid"
-    t.check_constraint "state::text = ANY (ARRAY['enabled'::character varying, 'paused'::character varying]::text[])", name: "backup_schedules_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['enabled'::character varying::text, 'paused'::character varying::text])", name: "backup_schedules_state_valid"
   end
 
   create_table "balance_observations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -434,23 +463,74 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.integer "lock_version", default: 0, null: false
     t.text "notes"
     t.datetime "observed_at", null: false
+    t.uuid "provider_balance_id"
     t.uuid "source_import_batch_id"
     t.uuid "source_import_row_id"
     t.string "source_kind", null: false
     t.string "status", default: "trusted", null: false
+    t.jsonb "transaction_coverage", default: {}, null: false
     t.datetime "updated_at", null: false
     t.index ["account_id", "effective_through_at", "created_at"], name: "index_observations_on_account_effective", order: { effective_through_at: :desc, created_at: :desc }
     t.index ["account_id"], name: "index_balance_observations_on_account_id"
     t.index ["actor_membership_id"], name: "index_balance_observations_on_actor_membership_id"
     t.index ["budget_workspace_id"], name: "index_balance_observations_on_budget_workspace_id"
     t.index ["id", "budget_workspace_id"], name: "uidx_observations_id_workspace", unique: true
+    t.index ["provider_balance_id"], name: "index_balance_observations_on_provider_balance_id"
+    t.index ["provider_balance_id"], name: "one_observation_per_provider_balance", unique: true, where: "(provider_balance_id IS NOT NULL)"
     t.index ["source_import_batch_id"], name: "index_balance_observations_on_source_import_batch_id"
     t.index ["source_import_row_id"], name: "index_balance_observations_on_source_import_row_id"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "observations_currency_valid"
     t.check_constraint "lock_version >= 0", name: "observations_lock_version_nonnegative"
     t.check_constraint "observed_at >= effective_through_at", name: "observations_effective_window_valid"
-    t.check_constraint "source_kind::text = ANY (ARRAY['manual'::character varying, 'institution_file'::character varying, 'migration'::character varying, 'adjustment'::character varying]::text[])", name: "observations_source_kind_valid"
-    t.check_constraint "status::text = ANY (ARRAY['trusted'::character varying, 'superseded'::character varying, 'disputed'::character varying]::text[])", name: "observations_status_valid"
+    t.check_constraint "source_kind::text = ANY (ARRAY['manual'::character varying::text, 'institution_file'::character varying::text, 'migration'::character varying::text, 'adjustment'::character varying::text, 'bank_sync'::character varying::text])", name: "observations_source_kind_valid"
+    t.check_constraint "status::text = ANY (ARRAY['trusted'::character varying::text, 'superseded'::character varying::text, 'disputed'::character varying::text])", name: "observations_status_valid"
+  end
+
+  create_table "bank_connections", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "actor_membership_id", null: false
+    t.boolean "automatic_refresh", default: false, null: false
+    t.uuid "budget_workspace_id", null: false
+    t.string "claim_fingerprint", null: false
+    t.datetime "created_at", null: false
+    t.integer "credential_generation", default: 0, null: false
+    t.text "encrypted_access_url"
+    t.string "error_message"
+    t.datetime "last_checked_at"
+    t.string "name", default: "SimpleFIN", null: false
+    t.datetime "next_refresh_at"
+    t.jsonb "request_times", default: [], null: false
+    t.string "status", default: "connecting", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_membership_id"], name: "index_bank_connections_on_actor_membership_id"
+    t.index ["budget_workspace_id", "claim_fingerprint"], name: "index_bank_connections_on_claim", unique: true
+    t.index ["budget_workspace_id"], name: "index_bank_connections_on_budget_workspace_id"
+    t.index ["id", "budget_workspace_id"], name: "index_bank_connections_on_id_and_budget_workspace_id", unique: true
+    t.check_constraint "status::text = ANY (ARRAY['connecting'::character varying::text, 'active'::character varying::text, 'needs_attention'::character varying::text, 'disconnected'::character varying::text])", name: "bank_connections_status"
+  end
+
+  create_table "bank_refreshes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "attempts", default: 0, null: false
+    t.uuid "bank_connection_id", null: false
+    t.uuid "budget_workspace_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.integer "credential_generation", null: false
+    t.boolean "include_transactions", default: false, null: false
+    t.datetime "lease_expires_at"
+    t.string "lease_token"
+    t.uuid "operation_run_id", null: false
+    t.jsonb "provider_errors", default: [], null: false
+    t.jsonb "results", default: {}, null: false
+    t.datetime "started_at"
+    t.string "state", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.integer "workspace_epoch", null: false
+    t.index ["bank_connection_id"], name: "index_bank_refreshes_on_bank_connection_id"
+    t.index ["bank_connection_id"], name: "one_open_bank_refresh", unique: true, where: "((state)::text = ANY (ARRAY[('pending'::character varying)::text, ('running'::character varying)::text]))"
+    t.index ["budget_workspace_id"], name: "index_bank_refreshes_on_budget_workspace_id"
+    t.index ["id", "budget_workspace_id"], name: "index_bank_refreshes_on_id_and_budget_workspace_id", unique: true
+    t.index ["operation_run_id"], name: "index_bank_refreshes_on_operation_run_id", unique: true
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'running'::character varying::text, 'succeeded'::character varying::text, 'partial'::character varying::text, 'failed'::character varying::text, 'cancelled'::character varying::text])", name: "bank_refreshes_state"
   end
 
   create_table "budget_allocations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -476,7 +556,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "allocations_currency_valid"
     t.check_constraint "lock_version >= 0", name: "allocations_lock_version_nonnegative"
     t.check_constraint "match_confidence IS NULL OR match_confidence >= 0::numeric AND match_confidence <= 1::numeric", name: "allocations_confidence_valid"
-    t.check_constraint "match_kind::text = ANY (ARRAY['manual'::character varying, 'suggested'::character varying, 'exact_import'::character varying, 'migration'::character varying]::text[])", name: "allocations_match_kind_valid"
+    t.check_constraint "match_kind::text = ANY (ARRAY['manual'::character varying::text, 'suggested'::character varying::text, 'exact_import'::character varying::text, 'migration'::character varying::text])", name: "allocations_match_kind_valid"
   end
 
   create_table "budget_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -498,8 +578,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.decimal "planned_amount", precision: 19, scale: 4, default: "0.0", null: false
     t.string "priority_classification"
     t.uuid "recurring_occurrence_id"
+    t.datetime "scheduled_at"
     t.date "scheduled_on"
     t.string "state", default: "open", null: false
+    t.string "timing_time_zone"
     t.datetime "updated_at", null: false
     t.string "void_reason"
     t.datetime "voided_at"
@@ -514,15 +596,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["intended_source_account_id"], name: "index_budget_items_on_intended_source_account_id"
     t.index ["recurring_occurrence_id"], name: "index_budget_items_on_recurring_occurrence_id"
     t.check_constraint "(state::text = 'voided'::text) = (voided_at IS NOT NULL AND void_reason IS NOT NULL AND btrim(void_reason::text) <> ''::text)", name: "budget_items_void_state_coherent"
-    t.check_constraint "budget_group::text = ANY (ARRAY['fixed'::character varying, 'variable'::character varying, 'debt'::character varying, 'savings'::character varying, 'other'::character varying]::text[])", name: "budget_items_budget_group_valid"
+    t.check_constraint "budget_group::text = ANY (ARRAY['fixed'::character varying::text, 'variable'::character varying::text, 'debt'::character varying::text, 'savings'::character varying::text, 'other'::character varying::text])", name: "budget_items_budget_group_valid"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "budget_items_currency_valid"
-    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying, 'outflow'::character varying, 'transfer'::character varying]::text[])", name: "budget_items_flow_kind_valid"
+    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying::text, 'outflow'::character varying::text, 'transfer'::character varying::text])", name: "budget_items_flow_kind_valid"
     t.check_constraint "intended_source_account_id IS NULL OR intended_destination_account_id IS NULL OR intended_source_account_id <> intended_destination_account_id", name: "budget_items_accounts_distinct"
     t.check_constraint "lock_version >= 0", name: "budget_items_lock_version_nonnegative"
-    t.check_constraint "origin_kind::text = ANY (ARRAY['manual'::character varying, 'recurring'::character varying, 'clone'::character varying, 'budget_import'::character varying, 'migration'::character varying]::text[])", name: "budget_items_origin_valid"
+    t.check_constraint "origin_kind::text = ANY (ARRAY['manual'::character varying::text, 'recurring'::character varying::text, 'clone'::character varying::text, 'budget_import'::character varying::text, 'migration'::character varying::text])", name: "budget_items_origin_valid"
     t.check_constraint "planned_amount >= 0::numeric", name: "budget_items_amount_nonnegative"
-    t.check_constraint "priority_classification IS NULL OR (priority_classification::text = ANY (ARRAY['need'::character varying, 'want'::character varying, 'goal'::character varying, 'unclassified'::character varying]::text[]))", name: "budget_items_priority_valid"
-    t.check_constraint "state::text = ANY (ARRAY['open'::character varying, 'skipped'::character varying, 'cancelled'::character varying, 'voided'::character varying]::text[])", name: "budget_items_state_valid"
+    t.check_constraint "priority_classification IS NULL OR (priority_classification::text = ANY (ARRAY['need'::character varying::text, 'want'::character varying::text, 'goal'::character varying::text, 'unclassified'::character varying::text]))", name: "budget_items_priority_valid"
+    t.check_constraint "state::text = ANY (ARRAY['open'::character varying::text, 'skipped'::character varying::text, 'cancelled'::character varying::text, 'voided'::character varying::text])", name: "budget_items_state_valid"
   end
 
   create_table "budget_months", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -559,10 +641,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "EXTRACT(day FROM starts_on) = 1::numeric", name: "periods_first_day"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "periods_currency_valid"
     t.check_constraint "lock_version >= 0", name: "periods_lock_version_nonnegative"
-    t.check_constraint "state::text = ANY (ARRAY['open'::character varying, 'closing'::character varying, 'closed'::character varying, 'reopened'::character varying]::text[])", name: "periods_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['open'::character varying::text, 'closing'::character varying::text, 'closed'::character varying::text, 'reopened'::character varying::text])", name: "periods_state_valid"
   end
 
   create_table "budget_workspaces", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "bank_sync_epoch", default: 0, null: false
     t.datetime "closed_at"
     t.datetime "created_at", null: false
     t.string "default_currency_code", limit: 3, default: "USD", null: false
@@ -574,6 +657,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.datetime "target_backfilled_at"
     t.boolean "target_reads_enabled", default: false, null: false
     t.boolean "target_writes_enabled", default: false, null: false
+    t.string "time_zone", default: "UTC", null: false
     t.datetime "updated_at", null: false
     t.index ["id", "default_currency_code"], name: "uidx_workspaces_id_currency", unique: true
     t.index ["legacy_owner_user_id"], name: "index_budget_workspaces_on_legacy_owner_user_id", unique: true
@@ -581,7 +665,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "NOT target_reads_enabled OR target_writes_enabled", name: "workspaces_target_read_requires_write"
     t.check_constraint "default_currency_code::text ~ '^[A-Z]{3}$'::text", name: "workspaces_currency_valid"
     t.check_constraint "lock_version >= 0", name: "workspaces_lock_version_nonnegative"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'suspended'::character varying, 'closing'::character varying, 'closed'::character varying]::text[])", name: "workspaces_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'suspended'::character varying::text, 'closing'::character varying::text, 'closed'::character varying::text])", name: "workspaces_status_valid"
   end
 
   create_table "categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -599,10 +683,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id", "flow_kind", "display_order"], name: "index_categories_on_workspace_flow_order"
     t.index ["budget_workspace_id"], name: "index_categories_on_budget_workspace_id"
     t.index ["id", "budget_workspace_id"], name: "uidx_categories_id_workspace", unique: true
-    t.check_constraint "budget_group::text = ANY (ARRAY['fixed'::character varying, 'variable'::character varying, 'debt'::character varying, 'savings'::character varying, 'other'::character varying]::text[])", name: "categories_budget_group_valid"
+    t.check_constraint "budget_group::text = ANY (ARRAY['fixed'::character varying::text, 'variable'::character varying::text, 'debt'::character varying::text, 'savings'::character varying::text, 'other'::character varying::text])", name: "categories_budget_group_valid"
     t.check_constraint "display_order >= 0", name: "categories_display_order_nonnegative"
-    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying, 'outflow'::character varying, 'transfer'::character varying]::text[])", name: "categories_flow_kind_valid"
+    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying::text, 'outflow'::character varying::text, 'transfer'::character varying::text])", name: "categories_flow_kind_valid"
     t.check_constraint "lock_version >= 0", name: "categories_lock_version_nonnegative"
+  end
+
+  create_table "connected_accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id"
+    t.uuid "bank_connection_id", null: false
+    t.uuid "budget_workspace_id", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", null: false
+    t.string "error_message"
+    t.boolean "import_transactions", default: false, null: false
+    t.string "institution_name", null: false
+    t.datetime "last_checked_at"
+    t.datetime "last_seen_at"
+    t.integer "mapping_version", default: 0, null: false
+    t.string "name", null: false
+    t.string "provider_account_id", null: false
+    t.string "provider_connection_id", null: false
+    t.integer "sign_multiplier", default: 1, null: false
+    t.string "state", default: "discovered", null: false
+    t.datetime "transactions_through_at"
+    t.datetime "updated_at", null: false
+    t.boolean "use_bank_balance", default: false, null: false
+    t.index ["account_id"], name: "index_connected_accounts_on_account_id"
+    t.index ["account_id"], name: "one_connection_per_account", unique: true, where: "(account_id IS NOT NULL)"
+    t.index ["bank_connection_id", "provider_connection_id", "provider_account_id"], name: "connected_account_provider_identity", unique: true
+    t.index ["bank_connection_id"], name: "index_connected_accounts_on_bank_connection_id"
+    t.index ["budget_workspace_id"], name: "index_connected_accounts_on_budget_workspace_id"
+    t.index ["id", "budget_workspace_id"], name: "index_connected_accounts_on_id_and_budget_workspace_id", unique: true
+    t.check_constraint "NOT use_bank_balance OR account_id IS NOT NULL", name: "bank_source_requires_mapping"
+    t.check_constraint "sign_multiplier = ANY (ARRAY['-1'::integer, 1])", name: "connected_accounts_sign"
+    t.check_constraint "state::text = ANY (ARRAY['discovered'::character varying::text, 'mapped'::character varying::text, 'ignored'::character varying::text, 'missing'::character varying::text])", name: "connected_accounts_state"
   end
 
   create_table "credit_card_payment_policies", primary_key: "planning_template_id", id: :uuid, default: nil, force: :cascade do |t|
@@ -621,7 +736,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["payment_account_id"], name: "index_credit_card_payment_policies_on_payment_account_id"
     t.index ["planning_template_id"], name: "index_credit_card_payment_policies_on_planning_template_id"
     t.check_constraint "due_day >= 1 AND due_day <= 31", name: "card_policies_due_day_valid"
-    t.check_constraint "estimate_policy::text = ANY (ARRAY['minimum'::character varying, 'statement_balance'::character varying, 'available_cash'::character varying, 'fixed_amount'::character varying]::text[])", name: "card_policies_estimate_valid"
+    t.check_constraint "estimate_policy::text = ANY (ARRAY['minimum'::character varying::text, 'statement_balance'::character varying::text, 'available_cash'::character varying::text, 'fixed_amount'::character varying::text])", name: "card_policies_estimate_valid"
     t.check_constraint "liability_account_id <> payment_account_id", name: "card_policies_accounts_distinct"
     t.check_constraint "lock_version >= 0", name: "card_policies_lock_version_nonnegative"
     t.check_constraint "minimum_payment >= 0::numeric", name: "card_policies_minimum_nonnegative"
@@ -680,11 +795,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id"], name: "index_data_transfer_runs_on_budget_workspace_id"
     t.index ["id", "budget_workspace_id"], name: "uidx_transfer_runs_id_workspace", unique: true
     t.index ["operation_run_id"], name: "index_data_transfer_runs_on_operation_run_id"
-    t.check_constraint "(state::text = ANY (ARRAY['succeeded'::character varying, 'failed'::character varying]::text[])) = (completed_at IS NOT NULL)", name: "transfer_runs_completion_state_coherent"
+    t.check_constraint "(state::text = ANY (ARRAY['succeeded'::character varying::text, 'failed'::character varying::text])) = (completed_at IS NOT NULL)", name: "transfer_runs_completion_state_coherent"
     t.check_constraint "lock_version >= 0", name: "transfer_runs_lock_version_nonnegative"
-    t.check_constraint "operation::text = ANY (ARRAY['export'::character varying, 'preview'::character varying, 'restore'::character varying]::text[])", name: "transfer_runs_operation_valid"
+    t.check_constraint "operation::text = ANY (ARRAY['export'::character varying::text, 'preview'::character varying::text, 'restore'::character varying::text])", name: "transfer_runs_operation_valid"
     t.check_constraint "payload_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "transfer_runs_checksum_valid"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'running'::character varying, 'succeeded'::character varying, 'failed'::character varying]::text[])", name: "transfer_runs_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'running'::character varying::text, 'succeeded'::character varying::text, 'failed'::character varying::text])", name: "transfer_runs_state_valid"
   end
 
   create_table "expense_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -700,6 +815,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.integer "lock_version", default: 0, null: false
     t.string "need_or_want"
     t.text "notes"
+    t.datetime "occurred_at"
     t.date "occurred_on"
     t.string "payee"
     t.decimal "planned_amount", precision: 12, scale: 2
@@ -709,6 +825,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.uuid "source_template_id"
     t.string "source_template_type"
     t.integer "status", default: 0, null: false
+    t.string "timing_time_zone"
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["auto_completed_at"], name: "index_expense_entries_on_auto_completed_at"
@@ -718,6 +835,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["destination_account_id", "occurred_on", "created_at"], name: "index_expense_entries_on_destination_account_recent", order: { occurred_on: :desc, created_at: :desc }, where: "(destination_account_id IS NOT NULL)"
     t.index ["destination_account_id"], name: "index_expense_entries_on_destination_account_id"
     t.index ["generated_entry_key"], name: "index_expense_entries_on_generated_entry_key_unique", unique: true, where: "(generated_entry_key IS NOT NULL)"
+    t.index ["id", "budget_workspace_id"], name: "index_expense_entries_on_id_and_budget_workspace_id", unique: true
     t.index ["id", "user_id"], name: "uidx_expense_entries_id_user", unique: true
     t.index ["occurred_on"], name: "index_expense_entries_on_occurred_on"
     t.index ["section"], name: "index_expense_entries_on_section"
@@ -725,7 +843,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["source_account_id"], name: "index_expense_entries_on_source_account_id"
     t.index ["source_template_type", "source_template_id"], name: "index_expense_entries_on_source_template"
     t.index ["status"], name: "index_expense_entries_on_status"
-    t.index ["user_id", "status", "occurred_on"], name: "index_expense_entries_on_user_due_recurring", where: "((occurred_on IS NOT NULL) AND ((source_file)::text = ANY ((ARRAY['pay_schedule'::character varying, 'subscription'::character varying, 'monthly_bill'::character varying, 'payment_plan'::character varying])::text[])))"
+    t.index ["user_id", "status", "occurred_on"], name: "index_expense_entries_on_user_due_recurring", where: "((occurred_on IS NOT NULL) AND ((source_file)::text = ANY (ARRAY[('pay_schedule'::character varying)::text, ('subscription'::character varying)::text, ('monthly_bill'::character varying)::text, ('payment_plan'::character varying)::text])))"
     t.index ["user_id"], name: "index_expense_entries_on_user_id"
     t.check_constraint "actual_amount IS NULL OR actual_amount >= 0::numeric", name: "expense_entries_actual_amount_nonnegative"
     t.check_constraint "lock_version >= 0", name: "expense_entries_lock_version_nonnegative"
@@ -750,16 +868,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.text "memo"
     t.string "origin_kind", null: false
     t.string "payee"
+    t.datetime "posted_at"
     t.date "posted_on"
     t.string "provider_transaction_id"
     t.uuid "reversal_transaction_id"
+    t.datetime "reviewed_at"
     t.string "state", default: "posted", null: false
+    t.string "timing_time_zone"
+    t.datetime "transacted_at"
     t.datetime "updated_at", null: false
     t.string "void_reason"
     t.datetime "voided_at"
     t.index ["budget_workspace_id", "effective_on"], name: "index_transactions_on_workspace_effective", order: { effective_on: :desc }
     t.index ["budget_workspace_id", "idempotency_key"], name: "uidx_transactions_workspace_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["budget_workspace_id", "provider_transaction_id"], name: "uidx_transactions_workspace_provider_id", unique: true, where: "(provider_transaction_id IS NOT NULL)"
+    t.index ["budget_workspace_id", "transacted_at", "id"], name: "index_transactions_on_workspace_time"
     t.index ["budget_workspace_id"], name: "index_financial_transactions_on_budget_workspace_id"
     t.index ["category_id"], name: "index_financial_transactions_on_category_id"
     t.index ["id", "budget_workspace_id", "currency_code"], name: "uidx_transactions_id_workspace_currency", unique: true
@@ -768,12 +891,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["reversal_transaction_id"], name: "index_financial_transactions_on_reversal_transaction_id"
     t.check_constraint "(state::text = 'voided'::text) = (voided_at IS NOT NULL AND void_reason IS NOT NULL AND btrim(void_reason::text) <> ''::text)", name: "transactions_void_state_coherent"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "transactions_currency_valid"
-    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying, 'outflow'::character varying, 'transfer'::character varying, 'adjustment'::character varying]::text[])", name: "transactions_flow_kind_valid"
+    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying::text, 'outflow'::character varying::text, 'transfer'::character varying::text, 'adjustment'::character varying::text])", name: "transactions_flow_kind_valid"
     t.check_constraint "gross_amount >= 0::numeric", name: "transactions_gross_nonnegative"
     t.check_constraint "lock_version >= 0", name: "transactions_lock_version_nonnegative"
-    t.check_constraint "origin_kind::text = ANY (ARRAY['manual'::character varying, 'institution_import'::character varying, 'migration'::character varying, 'system_adjustment'::character varying]::text[])", name: "transactions_origin_valid"
-    t.check_constraint "reversal_transaction_id IS NULL OR (state::text = ANY (ARRAY['reversed'::character varying, 'posted'::character varying]::text[]))", name: "transactions_reversal_coherent"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'posted'::character varying, 'voided'::character varying, 'reversed'::character varying]::text[])", name: "transactions_state_valid"
+    t.check_constraint "origin_kind::text = ANY (ARRAY['manual'::character varying::text, 'institution_import'::character varying::text, 'migration'::character varying::text, 'system_adjustment'::character varying::text])", name: "transactions_origin_valid"
+    t.check_constraint "reversal_transaction_id IS NULL OR (state::text = ANY (ARRAY['reversed'::character varying::text, 'posted'::character varying::text]))", name: "transactions_reversal_coherent"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'posted'::character varying::text, 'voided'::character varying::text, 'reversed'::character varying::text])", name: "transactions_state_valid"
   end
 
   create_table "import_batches", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -814,13 +937,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["import_profile_id"], name: "index_import_batches_on_import_profile_id"
     t.index ["operation_run_id"], name: "index_import_batches_on_operation_run_id"
     t.check_constraint "(imported_count + duplicate_count + error_count) <= row_count", name: "import_batches_counts_coherent"
-    t.check_constraint "(status::text = ANY (ARRAY['committed'::character varying, 'reverting'::character varying, 'reverted'::character varying]::text[])) = (committed_at IS NOT NULL) AND (status::text = 'failed'::text) = (failed_at IS NOT NULL) AND (status::text = 'reverted'::text) = (reverted_at IS NOT NULL)", name: "import_batches_terminal_state_coherent"
+    t.check_constraint "(status::text = ANY (ARRAY['committed'::character varying::text, 'reverting'::character varying::text, 'reverted'::character varying::text])) = (committed_at IS NOT NULL) AND (status::text = 'failed'::text) = (failed_at IS NOT NULL) AND (status::text = 'reverted'::text) = (reverted_at IS NOT NULL)", name: "import_batches_terminal_state_coherent"
     t.check_constraint "coverage_starts_on IS NULL OR coverage_ends_on IS NULL OR coverage_ends_on >= coverage_starts_on", name: "import_batches_coverage_valid"
     t.check_constraint "file_digest::text ~ '^[0-9a-f]{64}$'::text", name: "import_batches_digest_valid"
-    t.check_constraint "import_kind::text = ANY (ARRAY['account_activity'::character varying, 'budget_plan'::character varying, 'backup_restore'::character varying]::text[])", name: "import_batches_kind_valid"
+    t.check_constraint "import_kind::text = ANY (ARRAY['account_activity'::character varying::text, 'budget_plan'::character varying::text, 'backup_restore'::character varying::text])", name: "import_batches_kind_valid"
     t.check_constraint "lock_version >= 0", name: "import_batches_lock_version_nonnegative"
     t.check_constraint "row_count >= 0 AND imported_count >= 0 AND duplicate_count >= 0 AND error_count >= 0", name: "import_batches_counts_nonnegative"
-    t.check_constraint "status::text = ANY (ARRAY['previewed'::character varying, 'committing'::character varying, 'committed'::character varying, 'failed'::character varying, 'reverting'::character varying, 'reverted'::character varying]::text[])", name: "import_batches_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['previewed'::character varying::text, 'committing'::character varying::text, 'committed'::character varying::text, 'failed'::character varying::text, 'reverting'::character varying::text, 'reverted'::character varying::text])", name: "import_batches_status_valid"
   end
 
   create_table "import_profiles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -841,7 +964,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["account_id"], name: "index_import_profiles_on_account_id"
     t.index ["budget_workspace_id"], name: "index_import_profiles_on_budget_workspace_id"
     t.index ["id", "budget_workspace_id"], name: "uidx_import_profiles_id_workspace", unique: true
-    t.check_constraint "amount_strategy::text = ANY (ARRAY['charges_are_negative'::character varying, 'charges_are_positive'::character varying, 'type_column'::character varying]::text[])", name: "import_profiles_amount_strategy_valid"
+    t.check_constraint "amount_strategy::text = ANY (ARRAY['charges_are_negative'::character varying::text, 'charges_are_positive'::character varying::text, 'type_column'::character varying::text])", name: "import_profiles_amount_strategy_valid"
     t.check_constraint "header_row_number > 0", name: "import_profiles_header_positive"
     t.check_constraint "lock_version >= 0", name: "import_profiles_lock_version_nonnegative"
   end
@@ -868,10 +991,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["id", "budget_workspace_id"], name: "uidx_import_rows_id_workspace", unique: true
     t.index ["import_batch_id", "row_number"], name: "uidx_import_rows_batch_row", unique: true
     t.index ["import_batch_id"], name: "index_import_rows_on_import_batch_id"
-    t.check_constraint "normalization_result::text = ANY (ARRAY['normalized'::character varying, 'duplicate'::character varying, 'invalid'::character varying, 'unsupported'::character varying]::text[])", name: "import_rows_normalization_valid"
+    t.check_constraint "normalization_result::text = ANY (ARRAY['normalized'::character varying::text, 'duplicate'::character varying::text, 'invalid'::character varying::text, 'unsupported'::character varying::text])", name: "import_rows_normalization_valid"
     t.check_constraint "row_number > 0", name: "import_rows_number_positive"
     t.check_constraint "status::text <> 'rejected'::text OR error_code IS NOT NULL", name: "import_rows_rejection_coherent"
-    t.check_constraint "status::text = ANY (ARRAY['accepted'::character varying, 'duplicate'::character varying, 'rejected'::character varying, 'reversed'::character varying]::text[])", name: "import_rows_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['accepted'::character varying::text, 'duplicate'::character varying::text, 'rejected'::character varying::text, 'reversed'::character varying::text])", name: "import_rows_status_valid"
   end
 
   create_table "legacy_record_mappings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -890,7 +1013,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id", "target_record_type", "target_record_id"], name: "index_legacy_mappings_target"
     t.index ["budget_workspace_id"], name: "index_legacy_record_mappings_on_budget_workspace_id"
     t.check_constraint "source_checksum IS NULL OR source_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "legacy_mappings_checksum_valid"
-    t.check_constraint "status::text = ANY (ARRAY['mapped'::character varying, 'omitted'::character varying, 'quarantined'::character varying]::text[])", name: "legacy_mappings_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['mapped'::character varying::text, 'omitted'::character varying::text, 'quarantined'::character varying::text])", name: "legacy_mappings_status_valid"
   end
 
   create_table "migration_discrepancies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -909,7 +1032,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id"], name: "index_migration_discrepancies_on_budget_workspace_id"
     t.index ["operation_run_id"], name: "index_migration_discrepancies_on_operation_run_id"
     t.check_constraint "status::text = 'open'::text OR resolved_at IS NOT NULL", name: "migration_discrepancies_resolution_coherent"
-    t.check_constraint "status::text = ANY (ARRAY['open'::character varying, 'resolved'::character varying, 'accepted'::character varying]::text[])", name: "migration_discrepancies_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['open'::character varying::text, 'resolved'::character varying::text, 'accepted'::character varying::text])", name: "migration_discrepancies_status_valid"
   end
 
   create_table "month_close_item_snapshots", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -925,7 +1048,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.string "name_snapshot"
     t.decimal "planned_amount", precision: 19, scale: 4, null: false
     t.decimal "remaining_amount", precision: 19, scale: 4, default: "0.0", null: false
+    t.datetime "scheduled_at"
     t.date "scheduled_on"
+    t.string "timing_time_zone"
     t.datetime "updated_at", null: false
     t.index ["budget_item_id"], name: "index_month_close_item_snapshots_on_budget_item_id"
     t.index ["budget_workspace_id"], name: "index_month_close_item_snapshots_on_budget_workspace_id"
@@ -933,7 +1058,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["month_close_id", "flow_kind"], name: "idx_close_item_snapshots_close_flow"
     t.index ["month_close_id"], name: "index_month_close_item_snapshots_on_month_close_id"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "close_item_snapshots_currency_valid"
-    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying, 'outflow'::character varying, 'transfer'::character varying]::text[])", name: "close_item_snapshots_flow_valid"
+    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying::text, 'outflow'::character varying::text, 'transfer'::character varying::text])", name: "close_item_snapshots_flow_valid"
     t.check_constraint "planned_amount >= 0::numeric AND actual_amount >= 0::numeric AND remaining_amount >= 0::numeric", name: "close_item_snapshots_amounts_nonnegative"
   end
 
@@ -950,6 +1075,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.decimal "gross_amount", precision: 19, scale: 4, null: false
     t.uuid "month_close_id", null: false
     t.string "origin_kind", null: false
+    t.string "timing_time_zone"
+    t.datetime "transacted_at"
     t.datetime "updated_at", null: false
     t.index ["budget_workspace_id"], name: "index_month_close_transaction_snapshots_on_budget_workspace_id"
     t.index ["financial_transaction_id"], name: "idx_on_financial_transaction_id_0253eecd13"
@@ -957,7 +1084,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["month_close_id", "flow_kind", "category_snapshot"], name: "idx_close_transaction_snapshots_reporting"
     t.index ["month_close_id"], name: "index_month_close_transaction_snapshots_on_month_close_id"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "close_transaction_snapshots_currency_valid"
-    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying, 'outflow'::character varying, 'transfer'::character varying, 'adjustment'::character varying]::text[])", name: "close_transaction_snapshots_flow_valid"
+    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying::text, 'outflow'::character varying::text, 'transfer'::character varying::text, 'adjustment'::character varying::text])", name: "close_transaction_snapshots_flow_valid"
     t.check_constraint "gross_amount >= 0::numeric AND allocated_amount >= 0::numeric AND allocated_amount <= gross_amount", name: "close_transaction_snapshots_amounts_valid"
   end
 
@@ -981,6 +1108,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.decimal "planned_income", precision: 19, scale: 4, default: "0.0", null: false
     t.decimal "planned_net", precision: 19, scale: 4, default: "0.0", null: false
     t.decimal "planned_outflow", precision: 19, scale: 4, default: "0.0", null: false
+    t.jsonb "recorded_totals"
     t.decimal "remaining_income", precision: 19, scale: 4, default: "0.0", null: false
     t.decimal "remaining_outflow", precision: 19, scale: 4, default: "0.0", null: false
     t.uuid "reopens_month_close_id"
@@ -996,7 +1124,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["id", "budget_workspace_id"], name: "uidx_month_closes_id_workspace", unique: true
     t.index ["reopens_month_close_id"], name: "index_month_closes_on_reopens_month_close_id"
     t.check_constraint "calculation_input_digest::text ~ '^[0-9a-f]{64}$'::text", name: "month_closes_digest_valid"
-    t.check_constraint "state::text = ANY (ARRAY['closed'::character varying, 'superseded'::character varying]::text[])", name: "month_closes_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['closed'::character varying::text, 'superseded'::character varying::text])", name: "month_closes_state_valid"
     t.check_constraint "unresolved_count >= 0 AND unmatched_count >= 0", name: "month_closes_counts_nonnegative"
   end
 
@@ -1062,14 +1190,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["budget_workspace_id"], name: "index_operation_runs_on_budget_workspace_id"
     t.index ["id", "budget_workspace_id"], name: "uidx_operations_id_workspace", unique: true
     t.index ["state", "enqueued_at", "last_enqueue_attempt_at"], name: "index_operations_on_pending_dispatch", where: "((job_class IS NOT NULL) AND ((state)::text = 'pending'::text))"
-    t.check_constraint "(state::text = ANY (ARRAY['succeeded'::character varying, 'failed'::character varying, 'reversed'::character varying]::text[])) = (completed_at IS NOT NULL)", name: "operations_completion_state_coherent"
+    t.check_constraint "(state::text = ANY (ARRAY['succeeded'::character varying::text, 'failed'::character varying::text, 'reversed'::character varying::text])) = (completed_at IS NOT NULL)", name: "operations_completion_state_coherent"
     t.check_constraint "enqueued_at IS NULL OR job_class IS NOT NULL", name: "operations_enqueue_state_coherent"
     t.check_constraint "job_class IS NOT NULL OR job_arguments = '[]'::jsonb", name: "operations_job_metadata_coherent"
     t.check_constraint "jsonb_typeof(job_arguments) = 'array'::text", name: "operations_job_arguments_array"
     t.check_constraint "lock_version >= 0", name: "operations_lock_version_nonnegative"
     t.check_constraint "progress_current >= 0 AND (progress_total IS NULL OR progress_total >= 0 AND progress_current <= progress_total)", name: "operations_progress_valid"
     t.check_constraint "request_digest::text ~ '^[0-9a-f]{64}$'::text", name: "operations_request_digest_valid"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'running'::character varying, 'succeeded'::character varying, 'failed'::character varying, 'reversed'::character varying]::text[])", name: "operations_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'running'::character varying::text, 'succeeded'::character varying::text, 'failed'::character varying::text, 'reversed'::character varying::text])", name: "operations_state_valid"
   end
 
   create_table "pay_schedules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1103,6 +1231,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "ends_on IS NULL OR ends_on >= first_pay_on", name: "pay_schedules_date_window_valid"
     t.check_constraint "lock_version >= 0", name: "pay_schedules_lock_version_nonnegative"
     t.check_constraint "weekend_adjustment >= 0 AND weekend_adjustment <= 2", name: "pay_schedules_weekend_adjustment_valid"
+  end
+
+  create_table "payment_commitments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id", null: false
+    t.decimal "amount", precision: 19, scale: 4, null: false
+    t.uuid "budget_workspace_id", null: false
+    t.datetime "created_at", null: false
+    t.string "currency_code", null: false
+    t.uuid "destination_account_id"
+    t.uuid "excluded_provider_balance_id"
+    t.uuid "expense_entry_id"
+    t.uuid "included_provider_balance_id"
+    t.datetime "initiated_at"
+    t.date "initiated_on", null: false
+    t.datetime "reserved_at"
+    t.string "state", default: "reserved", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_payment_commitments_on_account_id"
+    t.index ["budget_workspace_id"], name: "index_payment_commitments_on_budget_workspace_id"
+    t.index ["destination_account_id"], name: "index_payment_commitments_on_destination_account_id"
+    t.index ["excluded_provider_balance_id"], name: "index_payment_commitments_on_excluded_provider_balance_id"
+    t.index ["expense_entry_id"], name: "index_payment_commitments_on_expense_entry_id"
+    t.index ["expense_entry_id"], name: "one_active_entry_commitment", unique: true, where: "((state)::text = 'reserved'::text)"
+    t.index ["id", "budget_workspace_id"], name: "index_payment_commitments_on_id_and_budget_workspace_id", unique: true
+    t.index ["included_provider_balance_id"], name: "index_payment_commitments_on_included_provider_balance_id"
+    t.check_constraint "amount > 0::numeric AND (state::text = ANY (ARRAY['reserved'::character varying::text, 'settled'::character varying::text, 'cancelled'::character varying::text]))", name: "payment_commitments_valid"
   end
 
   create_table "payment_plan_terms", primary_key: "planning_template_id", id: :uuid, default: nil, force: :cascade do |t|
@@ -1146,6 +1300,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "total_due > 0::numeric", name: "payment_plans_total_positive"
   end
 
+  create_table "payment_settlements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.decimal "amount", precision: 19, scale: 4, null: false
+    t.uuid "budget_workspace_id", null: false
+    t.datetime "created_at", null: false
+    t.uuid "financial_transaction_id", null: false
+    t.uuid "payment_commitment_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["budget_workspace_id"], name: "index_payment_settlements_on_budget_workspace_id"
+    t.index ["financial_transaction_id"], name: "index_payment_settlements_on_financial_transaction_id"
+    t.index ["payment_commitment_id", "financial_transaction_id"], name: "payment_settlement_identity", unique: true
+    t.index ["payment_commitment_id"], name: "index_payment_settlements_on_payment_commitment_id"
+    t.check_constraint "amount > 0::numeric", name: "payment_settlement_positive"
+  end
+
   create_table "planning_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.date "active_from"
     t.date "active_until"
@@ -1172,13 +1340,65 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["id", "budget_workspace_id"], name: "uidx_templates_id_workspace", unique: true
     t.index ["source_account_id"], name: "index_planning_templates_on_source_account_id"
     t.check_constraint "active_from IS NULL OR active_until IS NULL OR active_until >= active_from", name: "templates_active_window_valid"
-    t.check_constraint "budget_group::text = ANY (ARRAY['fixed'::character varying, 'variable'::character varying, 'debt'::character varying, 'savings'::character varying, 'other'::character varying]::text[])", name: "templates_budget_group_valid"
+    t.check_constraint "budget_group::text = ANY (ARRAY['fixed'::character varying::text, 'variable'::character varying::text, 'debt'::character varying::text, 'savings'::character varying::text, 'other'::character varying::text])", name: "templates_budget_group_valid"
     t.check_constraint "currency_code::text ~ '^[A-Z]{3}$'::text", name: "templates_currency_valid"
     t.check_constraint "default_amount >= 0::numeric", name: "templates_amount_nonnegative"
-    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying, 'outflow'::character varying, 'transfer'::character varying]::text[])", name: "templates_flow_kind_valid"
-    t.check_constraint "kind::text = ANY (ARRAY['paycheck'::character varying, 'subscription'::character varying, 'bill'::character varying, 'payment_plan'::character varying, 'credit_card_payment'::character varying]::text[])", name: "templates_kind_valid"
+    t.check_constraint "flow_kind::text = ANY (ARRAY['income'::character varying::text, 'outflow'::character varying::text, 'transfer'::character varying::text])", name: "templates_flow_kind_valid"
+    t.check_constraint "kind::text = ANY (ARRAY['paycheck'::character varying::text, 'subscription'::character varying::text, 'bill'::character varying::text, 'payment_plan'::character varying::text, 'credit_card_payment'::character varying::text])", name: "templates_kind_valid"
     t.check_constraint "lock_version >= 0", name: "templates_lock_version_nonnegative"
     t.check_constraint "source_account_id IS NULL OR destination_account_id IS NULL OR source_account_id <> destination_account_id", name: "templates_accounts_distinct"
+  end
+
+  create_table "provider_balances", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.decimal "available_balance", precision: 19, scale: 4
+    t.decimal "balance", precision: 19, scale: 4
+    t.uuid "bank_refresh_id"
+    t.uuid "budget_workspace_id", null: false
+    t.uuid "connected_account_id", null: false
+    t.string "content_digest", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", null: false
+    t.datetime "fetched_at", null: false
+    t.datetime "reported_at", null: false
+    t.string "state", default: "reported", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bank_refresh_id"], name: "index_provider_balances_on_bank_refresh_id"
+    t.index ["budget_workspace_id"], name: "index_provider_balances_on_budget_workspace_id"
+    t.index ["connected_account_id", "reported_at", "content_digest"], name: "provider_balance_revision", unique: true
+    t.index ["connected_account_id"], name: "index_provider_balances_on_connected_account_id"
+    t.index ["id", "budget_workspace_id"], name: "index_provider_balances_on_id_and_budget_workspace_id", unique: true
+    t.check_constraint "balance IS NOT NULL AND reported_at <= fetched_at", name: "provider_balances_valid"
+    t.check_constraint "state::text = ANY (ARRAY['reported'::character varying::text, 'accepted'::character varying::text, 'disputed'::character varying::text])", name: "provider_balances_state"
+  end
+
+  create_table "provider_transactions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.decimal "amount", precision: 19, scale: 4, null: false
+    t.uuid "budget_workspace_id", null: false
+    t.uuid "connected_account_id", null: false
+    t.string "content_digest", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", null: false
+    t.string "description", null: false
+    t.uuid "expense_entry_id"
+    t.datetime "fetched_at", null: false
+    t.uuid "financial_transaction_id"
+    t.boolean "pending", default: false, null: false
+    t.datetime "posted_at"
+    t.jsonb "previous_revisions", default: [], null: false
+    t.string "provider_id", null: false
+    t.string "resolution_kind", default: "imported", null: false
+    t.string "state", default: "review", null: false
+    t.datetime "transacted_at"
+    t.datetime "updated_at", null: false
+    t.index ["budget_workspace_id"], name: "index_provider_transactions_on_budget_workspace_id"
+    t.index ["connected_account_id", "provider_id"], name: "idx_on_connected_account_id_provider_id_798bf0fb49", unique: true
+    t.index ["connected_account_id"], name: "index_provider_transactions_on_connected_account_id"
+    t.index ["expense_entry_id"], name: "index_provider_transactions_on_expense_entry_id"
+    t.index ["financial_transaction_id"], name: "index_provider_transactions_on_financial_transaction_id"
+    t.index ["id", "budget_workspace_id"], name: "index_provider_transactions_on_id_and_budget_workspace_id", unique: true
+    t.check_constraint "amount <> 0::numeric AND (pending OR posted_at IS NOT NULL)", name: "provider_transactions_valid_movement"
+    t.check_constraint "resolution_kind::text = ANY (ARRAY['imported'::character varying::text, 'existing'::character varying::text])", name: "provider_transaction_resolution_kind"
+    t.check_constraint "state::text = ANY (ARRAY['review'::character varying::text, 'accepted'::character varying::text, 'ignored'::character varying::text, 'changed'::character varying::text])", name: "provider_transactions_state"
   end
 
   create_table "recurrence_months", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1205,13 +1425,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.datetime "updated_at", null: false
     t.string "weekend_policy", default: "none", null: false
     t.index ["planning_template_id"], name: "index_recurrence_rules_on_planning_template_id", unique: true
-    t.check_constraint "cadence::text = ANY (ARRAY['weekly'::character varying, 'monthly'::character varying, 'yearly'::character varying, 'custom_months'::character varying]::text[])", name: "recurrence_rules_cadence_valid"
+    t.check_constraint "cadence::text = ANY (ARRAY['weekly'::character varying::text, 'monthly'::character varying::text, 'yearly'::character varying::text, 'custom_months'::character varying::text])", name: "recurrence_rules_cadence_valid"
     t.check_constraint "day_one IS NULL OR day_one >= 1 AND day_one <= 31", name: "recurrence_rules_day_one_valid"
     t.check_constraint "day_two IS NULL OR day_two >= 1 AND day_two <= 31", name: "recurrence_rules_day_two_valid"
     t.check_constraint "ends_on IS NULL OR ends_on >= starts_on", name: "recurrence_rules_window_valid"
     t.check_constraint "interval_count > 0", name: "recurrence_rules_interval_positive"
     t.check_constraint "lock_version >= 0", name: "recurrence_rules_lock_version_nonnegative"
-    t.check_constraint "weekend_policy::text = ANY (ARRAY['none'::character varying, 'previous_friday'::character varying, 'next_monday'::character varying]::text[])", name: "recurrence_rules_weekend_valid"
+    t.check_constraint "weekend_policy::text = ANY (ARRAY['none'::character varying::text, 'previous_friday'::character varying::text, 'next_monday'::character varying::text])", name: "recurrence_rules_weekend_valid"
   end
 
   create_table "recurring_occurrences", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1232,7 +1452,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["id", "budget_workspace_id"], name: "uidx_occurrences_id_workspace", unique: true
     t.index ["planning_template_id", "budget_period_id", "scheduled_on", "slot_key"], name: "uidx_occurrences_template_period_date_slot", unique: true
     t.index ["planning_template_id"], name: "index_recurring_occurrences_on_planning_template_id"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'materialized'::character varying, 'skipped'::character varying, 'cancelled'::character varying, 'failed'::character varying]::text[])", name: "occurrences_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'materialized'::character varying::text, 'skipped'::character varying::text, 'cancelled'::character varying::text, 'failed'::character varying::text])", name: "occurrences_state_valid"
   end
 
   create_table "restore_checkpoints", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1259,7 +1479,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.check_constraint "(state::text = 'restored'::text) = (restored_at IS NOT NULL)", name: "restore_checkpoints_restored_at_coherent"
     t.check_constraint "lock_version >= 0", name: "restore_checkpoints_lock_version_nonnegative"
     t.check_constraint "payload_checksum::text ~ '^[0-9a-f]{64}$'::text", name: "restore_checkpoints_checksum_valid"
-    t.check_constraint "state::text = ANY (ARRAY['ready'::character varying, 'restored'::character varying, 'expired'::character varying]::text[])", name: "restore_checkpoints_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['ready'::character varying::text, 'restored'::character varying::text, 'expired'::character varying::text])", name: "restore_checkpoints_state_valid"
   end
 
   create_table "subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1309,18 +1529,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
     t.check_constraint "access_state >= 0 AND access_state <= 1", name: "users_access_state_valid"
-    t.check_constraint "default_landing_page::text = ANY (ARRAY['overview'::character varying, 'months'::character varying, 'planning_templates'::character varying, 'accounts'::character varying, 'settings'::character varying]::text[])", name: "users_landing_page_valid"
+    t.check_constraint "default_landing_page::text = ANY (ARRAY['overview'::character varying::text, 'months'::character varying::text, 'planning_templates'::character varying::text, 'accounts'::character varying::text, 'settings'::character varying::text])", name: "users_landing_page_valid"
     t.check_constraint "failed_attempts >= 0", name: "users_failed_attempts_nonnegative"
-    t.check_constraint "financial_rhythm::text = ANY (ARRAY['steady_income'::character varying, 'variable_income'::character varying, 'shared_household'::character varying, 'debt_payoff'::character varying]::text[])", name: "users_financial_rhythm_valid"
-    t.check_constraint "preferred_month_view::text = ANY (ARRAY['timeline'::character varying, 'breakdown'::character varying, 'calendar'::character varying, 'entries'::character varying]::text[])", name: "users_month_view_valid"
+    t.check_constraint "financial_rhythm::text = ANY (ARRAY['steady_income'::character varying::text, 'variable_income'::character varying::text, 'shared_household'::character varying::text, 'debt_payoff'::character varying::text])", name: "users_financial_rhythm_valid"
+    t.check_constraint "preferred_month_view::text = ANY (ARRAY['timeline'::character varying::text, 'breakdown'::character varying::text, 'calendar'::character varying::text, 'entries'::character varying::text])", name: "users_month_view_valid"
   end
 
   create_table "workspace_memberships", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "budget_workspace_id", null: false
     t.datetime "created_at", null: false
     t.datetime "joined_at"
+    t.datetime "onboarding_balance_deferred_at"
     t.datetime "onboarding_completed_at"
     t.datetime "onboarding_dismissed_at"
+    t.string "onboarding_path"
+    t.datetime "onboarding_recurring_skipped_at"
+    t.datetime "onboarding_reviewed_at"
     t.string "onboarding_version"
     t.datetime "recent_operations_dismissed_through_at"
     t.datetime "removed_at"
@@ -1333,8 +1557,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
     t.index ["id", "budget_workspace_id"], name: "uidx_memberships_id_workspace", unique: true
     t.index ["user_id"], name: "index_workspace_memberships_on_user_id"
     t.check_constraint "(status::text = 'removed'::text) = (removed_at IS NOT NULL)", name: "memberships_removed_state_coherent"
-    t.check_constraint "role::text = ANY (ARRAY['owner'::character varying, 'editor'::character varying, 'viewer'::character varying]::text[])", name: "memberships_role_valid"
-    t.check_constraint "status::text = ANY (ARRAY['invited'::character varying, 'active'::character varying, 'suspended'::character varying, 'removed'::character varying]::text[])", name: "memberships_status_valid"
+    t.check_constraint "onboarding_path IS NULL OR (onboarding_path::text = ANY (ARRAY['simplefin'::character varying::text, 'manual'::character varying::text, 'import'::character varying::text]))", name: "membership_onboarding_path_valid"
+    t.check_constraint "role::text = ANY (ARRAY['owner'::character varying::text, 'editor'::character varying::text, 'viewer'::character varying::text])", name: "memberships_role_valid"
+    t.check_constraint "status::text = ANY (ARRAY['invited'::character varying::text, 'active'::character varying::text, 'suspended'::character varying::text, 'removed'::character varying::text])", name: "memberships_status_valid"
   end
 
   add_foreign_key "account_activities", "account_activity_imports"
@@ -1361,6 +1586,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
   add_foreign_key "account_postings", "budget_workspaces", column: ["budget_workspace_id", "currency_code"], primary_key: ["id", "default_currency_code"], name: "fk_account_postings_workspace_currency"
   add_foreign_key "account_postings", "financial_transactions", column: ["financial_transaction_id", "budget_workspace_id", "currency_code"], primary_key: ["id", "budget_workspace_id", "currency_code"], name: "fk_postings_transaction_currency"
   add_foreign_key "account_postings", "financial_transactions", column: ["financial_transaction_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "account_recurring_candidate_decisions", "accounts"
+  add_foreign_key "account_recurring_candidate_decisions", "budget_workspaces"
+  add_foreign_key "account_recurring_candidate_decisions", "monthly_bills"
+  add_foreign_key "account_recurring_candidate_decisions", "subscriptions"
+  add_foreign_key "account_recurring_candidate_decisions", "users"
   add_foreign_key "account_snapshots", "accounts"
   add_foreign_key "accounts", "budget_workspaces", column: ["budget_workspace_id", "currency_code"], primary_key: ["id", "default_currency_code"], name: "fk_accounts_workspace_currency"
   add_foreign_key "accounts", "budget_workspaces", validate: false
@@ -1397,7 +1627,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
   add_foreign_key "balance_observations", "budget_workspaces", column: ["budget_workspace_id", "currency_code"], primary_key: ["id", "default_currency_code"], name: "fk_balance_observations_workspace_currency"
   add_foreign_key "balance_observations", "import_batches", column: ["source_import_batch_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "balance_observations", "import_rows", column: ["source_import_row_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "balance_observations", "provider_balances"
+  add_foreign_key "balance_observations", "provider_balances", column: ["provider_balance_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "balance_observations", "workspace_memberships", column: ["actor_membership_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "bank_connections", "budget_workspaces"
+  add_foreign_key "bank_connections", "workspace_memberships", column: "actor_membership_id"
+  add_foreign_key "bank_connections", "workspace_memberships", column: ["actor_membership_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "bank_refreshes", "bank_connections"
+  add_foreign_key "bank_refreshes", "bank_connections", column: ["bank_connection_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "bank_refreshes", "budget_workspaces"
+  add_foreign_key "bank_refreshes", "operation_runs"
+  add_foreign_key "bank_refreshes", "operation_runs", column: ["operation_run_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "budget_allocations", "budget_items", column: ["budget_item_id", "budget_workspace_id", "currency_code"], primary_key: ["id", "budget_workspace_id", "currency_code"], name: "fk_allocations_item_currency"
   add_foreign_key "budget_allocations", "budget_items", column: ["budget_item_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "budget_allocations", "budget_workspaces"
@@ -1421,6 +1661,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
   add_foreign_key "budget_periods", "budget_workspaces", column: ["budget_workspace_id", "currency_code"], primary_key: ["id", "default_currency_code"], name: "fk_budget_periods_workspace_currency"
   add_foreign_key "budget_workspaces", "users", column: "legacy_owner_user_id"
   add_foreign_key "categories", "budget_workspaces"
+  add_foreign_key "connected_accounts", "accounts"
+  add_foreign_key "connected_accounts", "accounts", column: ["account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "connected_accounts", "bank_connections"
+  add_foreign_key "connected_accounts", "bank_connections", column: ["bank_connection_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "connected_accounts", "budget_workspaces"
   add_foreign_key "credit_card_payment_policies", "accounts", column: ["liability_account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "credit_card_payment_policies", "accounts", column: ["payment_account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "credit_card_payment_policies", "budget_workspaces"
@@ -1486,11 +1731,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
   add_foreign_key "pay_schedules", "accounts", column: ["linked_account_id", "user_id"], primary_key: ["id", "user_id"], name: "fk_pay_schedules_account_owner"
   add_foreign_key "pay_schedules", "budget_workspaces", validate: false
   add_foreign_key "pay_schedules", "users"
+  add_foreign_key "payment_commitments", "accounts"
+  add_foreign_key "payment_commitments", "accounts", column: "destination_account_id"
+  add_foreign_key "payment_commitments", "accounts", column: ["account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "payment_commitments", "accounts", column: ["destination_account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "payment_commitments", "budget_workspaces"
+  add_foreign_key "payment_commitments", "expense_entries"
+  add_foreign_key "payment_commitments", "expense_entries", column: ["expense_entry_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "payment_commitments", "provider_balances", column: "excluded_provider_balance_id"
+  add_foreign_key "payment_commitments", "provider_balances", column: "included_provider_balance_id"
+  add_foreign_key "payment_commitments", "provider_balances", column: ["excluded_provider_balance_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "payment_commitments", "provider_balances", column: ["included_provider_balance_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "payment_plan_terms", "planning_templates"
   add_foreign_key "payment_plans", "accounts", column: "linked_account_id"
   add_foreign_key "payment_plans", "accounts", column: ["linked_account_id", "user_id"], primary_key: ["id", "user_id"], name: "fk_payment_plans_account_owner"
   add_foreign_key "payment_plans", "budget_workspaces", validate: false
   add_foreign_key "payment_plans", "users"
+  add_foreign_key "payment_settlements", "budget_workspaces"
+  add_foreign_key "payment_settlements", "financial_transactions"
+  add_foreign_key "payment_settlements", "financial_transactions", column: ["financial_transaction_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "payment_settlements", "payment_commitments"
+  add_foreign_key "payment_settlements", "payment_commitments", column: ["payment_commitment_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "planning_templates", "accounts", column: ["destination_account_id", "budget_workspace_id", "currency_code"], primary_key: ["id", "budget_workspace_id", "currency_code"], name: "fk_templates_destination_account_currency"
   add_foreign_key "planning_templates", "accounts", column: ["destination_account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "planning_templates", "accounts", column: ["source_account_id", "budget_workspace_id", "currency_code"], primary_key: ["id", "budget_workspace_id", "currency_code"], name: "fk_templates_source_account_currency"
@@ -1498,6 +1759,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
   add_foreign_key "planning_templates", "budget_workspaces"
   add_foreign_key "planning_templates", "budget_workspaces", column: ["budget_workspace_id", "currency_code"], primary_key: ["id", "default_currency_code"], name: "fk_planning_templates_workspace_currency"
   add_foreign_key "planning_templates", "categories", column: ["category_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "provider_balances", "bank_refreshes"
+  add_foreign_key "provider_balances", "bank_refreshes", column: ["bank_refresh_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "provider_balances", "budget_workspaces"
+  add_foreign_key "provider_balances", "connected_accounts"
+  add_foreign_key "provider_balances", "connected_accounts", column: ["connected_account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "provider_transactions", "budget_workspaces"
+  add_foreign_key "provider_transactions", "connected_accounts"
+  add_foreign_key "provider_transactions", "connected_accounts", column: ["connected_account_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "provider_transactions", "expense_entries"
+  add_foreign_key "provider_transactions", "expense_entries", column: ["expense_entry_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
+  add_foreign_key "provider_transactions", "financial_transactions"
+  add_foreign_key "provider_transactions", "financial_transactions", column: ["financial_transaction_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]
   add_foreign_key "recurrence_months", "recurrence_rules"
   add_foreign_key "recurrence_rules", "planning_templates"
   add_foreign_key "recurring_occurrences", "budget_items", column: ["budget_item_id", "budget_workspace_id"], primary_key: ["id", "budget_workspace_id"]

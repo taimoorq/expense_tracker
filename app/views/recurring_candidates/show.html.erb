@@ -1,0 +1,68 @@
+<%= render "header" %>
+<%= turbo_frame_tag "recurring_review", data: { turbo_action: "advance", controller: "recurring-review", action: "turbo:frame-load->recurring-review#refresh" } do %>
+  <%= render "feedback" %>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <%= link_to "All candidates", account_recurring_candidates_path(@account), class: "fb-btn-secondary" %>
+    <% if @next_candidate %><%= link_to "Review next", account_recurring_candidate_path(@account, @next_candidate[:key]), class: "fb-btn-secondary" %><% end %>
+  </div>
+  <div class="grid items-start gap-6 lg:grid-cols-3">
+    <aside class="ta-section-frame p-5 lg:col-span-1">
+      <h2 class="break-words text-xl font-semibold" data-recurring-review-target="heading"><%= @candidate[:merchant] %></h2>
+      <p class="mt-2 text-2xl font-semibold"><%= number_to_currency(@candidate[:estimated_amount]) %><span class="ml-1 text-sm font-normal">estimated charge</span></p>
+      <p class="ta-muted mt-3"><%= pluralize(@candidate[:count], "charge") %> across <%= pluralize(@candidate[:months_seen], "month") %>.</p>
+      <p class="ta-muted mt-1 text-sm">Pattern confidence: <%= @candidate[:confidence].to_s.humanize %></p>
+      <% if @candidate[:history_through] %><p class="ta-muted mt-1 text-xs">Recorded history through <%= l(@candidate[:history_through], format: :long) %>. Recent in this history does not confirm it is still active today.</p><% end %>
+      <% if @candidate[:ambiguous] %><p class="mt-3 text-sm font-medium">Some months have multiple charges. Check whether this is one service or several before choosing a schedule.</p><% end %>
+      <% if @candidate[:evidence_available] %>
+        <details class="mt-4"><summary class="cursor-pointer font-semibold">Supporting charges</summary>
+          <ul class="mt-3 space-y-2 text-sm"><% @candidate[:rows].first(8).each do |row| %><li><%= render "shared/activity_evidence", activity: row %></li><% end %></ul>
+          <%= link_to "Review account activity", account_path(@account, view: "activity", source: "institution_activity", direction: "outgoing", merchant: @candidate[:merchant], recurring_candidate: @candidate[:key]), class: "mt-3 inline-block text-sm font-semibold text-indigo-700", data: { turbo_frame: "_top" } %>
+        </details>
+      <% else %><p class="ta-muted mt-3">The supporting activity is no longer available. Your review decision is retained.</p><% end %>
+    </aside>
+    <section class="ta-section-frame p-5 lg:col-span-2">
+      <% if @decision&.status_linked? %>
+        <h2 class="text-xl font-semibold">Linked to <%= @decision.template.name %></h2>
+        <p class="ta-muted mt-2"><%= candidate_template_label(@decision.template) %></p>
+        <p class="mt-3 text-sm">The recurring transaction is saved. Adding a planned item to a month is optional.</p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <%= link_to "Add to month", month_account_recurring_candidate_path(@account, @candidate[:key]), class: "fb-btn-primary" %>
+          <%= link_to "View recurring transaction", candidate_template_edit_path(@decision.template), class: "fb-btn-secondary", data: { turbo_frame: "_top" } %>
+        </div>
+        <%= form_with url: account_recurring_candidate_path(@account, @candidate[:key]), method: :patch, class: "mt-6" do %>
+          <%= candidate_decision_fields(@candidate) %><%= hidden_field_tag :decision_action, "reopen", id: nil %>
+          <%= submit_tag "Unlink candidate", class: "fb-btn-secondary" %><p class="ta-muted mt-2 text-xs">Keeps the recurring transaction and any month entries.</p>
+        <% end %>
+      <% elsif @decision&.status_ignored? %>
+        <h2 class="text-xl font-semibold">Candidate ignored</h2><p class="ta-muted mt-2">This only hides the suggestion from your review queue.</p>
+        <%= form_with url: account_recurring_candidate_path(@account, @candidate[:key]), method: :patch, class: "mt-5" do %>
+          <%= candidate_decision_fields(@candidate) %><%= hidden_field_tag :decision_action, "reopen", id: nil %><%= submit_tag "Restore to review", class: "fb-btn-primary" %>
+        <% end %>
+      <% elsif @candidate[:evidence_available] %>
+        <% if @possible_matches.any? %>
+          <div class="mb-5 border-b border-slate-200 pb-4">
+            <h2 class="font-semibold">Possible existing recurring transactions</h2>
+            <ul class="mt-2 space-y-2 text-sm"><% @possible_matches.each do |template, reason| %><li><span class="font-semibold"><%= template.name %></span> · <%= reason %></li><% end %></ul>
+            <p class="ta-muted mt-2 text-sm">Use “Link an existing recurring transaction” below if one already covers these charges.</p>
+          </div>
+        <% end %>
+        <%= render "form" %>
+        <details class="mt-6 border-t border-slate-200 pt-5" <%= "open" if @possible_matches.any? || params[:mode] == "link" || params[:decision_action] == "link" %>>
+          <summary class="cursor-pointer font-semibold">Link an existing recurring transaction</summary>
+          <p class="ta-muted mt-2 text-sm">Matching names appear first. Confirm the account, amount, and schedule; linking keeps the existing settings.</p>
+          <% if @templates.any? %>
+            <%= form_with url: account_recurring_candidate_path(@account, @candidate[:key]), method: :patch, class: "mt-4 space-y-3" do %>
+              <%= candidate_decision_fields(@candidate) %><%= hidden_field_tag :decision_action, "link", id: nil %>
+              <%= label_tag :template_token, "Existing recurring transaction", class: "fb-label" %>
+              <%= select_tag :template_token, options_for_select(@templates.map { |template| [candidate_template_label(template), candidate_template_token(template)] }, params[:template_token]), prompt: "Choose a subscription or bill", required: true, class: "fb-select w-full" %>
+              <%= submit_tag "Link existing", class: "fb-btn-secondary" %>
+            <% end %>
+          <% else %><p class="ta-muted mt-3">No subscriptions or bills are saved yet.</p><% end %>
+        </details>
+        <%= form_with url: account_recurring_candidate_path(@account, @candidate[:key]), method: :patch, class: "mt-5 border-t border-slate-200 pt-5" do %>
+          <%= candidate_decision_fields(@candidate) %><%= hidden_field_tag :decision_action, "ignore", id: nil %><%= submit_tag "Ignore candidate", class: "fb-btn-secondary" %>
+        <% end %>
+      <% else %><h2 class="text-lg font-semibold">Record or import recent activity to review this pattern again</h2><% end %>
+    </section>
+  </div>
+<% end %>

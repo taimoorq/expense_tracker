@@ -317,7 +317,7 @@ module Budgeting
     end
 
     def account_by_name
-      @account_by_name ||= user.accounts.index_by(&:name)
+      @account_by_name ||= Account.where(user_id: user.id).index_by(&:name)
     end
 
     def failed_import_from(plan)

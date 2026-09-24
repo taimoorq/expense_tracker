@@ -14,6 +14,8 @@ module Accounts
         assets_total: assets_total,
         liabilities_total: liabilities_total,
         net_worth_total: assets_total - liabilities_total,
+        net_worth_complete: net_worth_accounts.all? { |account| account_balance_for(account).balance_available },
+        net_worth_coverage_count: net_worth_accounts.count { |account| account_balance_for(account).balance_available },
         latest_snapshot: latest_snapshot,
         latest_balance_source: latest_balance_source,
         accounts_with_balance_sources_count: accounts_with_balance_sources_count,
@@ -36,7 +38,13 @@ module Accounts
     end
 
     def accounts
-      @accounts ||= user.accounts.includes(:budget_workspace, :account_snapshots, :account_activity_imports).active_first.to_a
+      @accounts ||= begin
+        records = user.accounts.includes(:budget_workspace, :account_snapshots).active_first.to_a
+        target, legacy = records.partition { |account| account.budget_workspace&.target_reads_enabled? }
+        ActiveRecord::Associations::Preloader.new(records: target, associations: :connected_account).call if target.any?
+        ActiveRecord::Associations::Preloader.new(records: legacy, associations: :account_activity_imports).call if legacy.any?
+        records
+      end
     end
 
     def net_worth_accounts
@@ -53,16 +61,12 @@ module Accounts
     def liabilities_total
       @liabilities_total ||= net_worth_accounts.select(&:liability?).sum do |account|
         balance = account_balance_for(account)
-        balance.balance_available ? balance.current_balance.abs : 0.to_d
+        balance.balance_available ? -balance.current_balance : 0.to_d
       end
     end
 
     def latest_snapshot
-      @latest_snapshot ||= user.account_snapshots
-        .joins(:account)
-        .merge(Account.where(user: user))
-        .order(recorded_on: :desc, created_at: :desc)
-        .first
+      @latest_snapshot ||= accounts.flat_map(&:account_snapshots).max_by { |snapshot| [ snapshot.recorded_on, snapshot.created_at ] }
     end
 
     def accounts_with_snapshots_count

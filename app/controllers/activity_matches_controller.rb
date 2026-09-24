@@ -12,13 +12,13 @@ class ActivityMatchesController < ApplicationController
       transaction: transaction,
       budget_item: budget_item,
       amount: amount,
-      idempotency_key: "ui:match:#{transaction.id}:#{budget_item.id}:#{amount}"
+      idempotency_key: "ui:match:#{transaction.id}:#{budget_item.id}:#{amount}:#{params[:match_token]}"
     )
-    redirect_to activity_path(view: "review"), notice: "Transaction matched to the plan."
+    redirect_to return_activity_path("review"), notice: "Transaction matched to the plan."
   rescue Accounts::MatchTransaction::InvalidMatch,
     Accounts::LegacyMatchBridge::MissingLegacyPair,
     Accounts::LegacyMatchBridge::ConflictingLegacyMatch => error
-    redirect_to activity_path(view: "review"), alert: error.message
+    redirect_to return_activity_path("review"), alert: error.message
   end
 
   def destroy
@@ -29,13 +29,18 @@ class ActivityMatchesController < ApplicationController
       allocation: allocation,
       idempotency_key: "ui:unmatch:#{allocation.id}"
     )
-    redirect_to activity_path(view: "all"), notice: "Transaction returned to review."
+    redirect_to return_activity_path("all"), notice: "Transaction returned to review."
   rescue Accounts::UnmatchTransaction::InvalidMatch,
-    Accounts::LegacyMatchBridge::MissingLegacyPair => error
-    redirect_to activity_path(view: "all"), alert: error.message
+    Accounts::LegacyMatchBridge::MissingLegacyPair,
+    Accounts::LegacyMatchBridge::ConflictingLegacyMatch => error
+    redirect_to return_activity_path("all"), alert: error.message
   end
 
   private
+
+  def return_activity_path(default_view)
+    activity_path(view: params[:return_view].presence_in(Activity::IndexQuery::VIEWS) || default_view, account_id: params[:account_id].presence, starts_on: params[:starts_on].presence, ends_on: params[:ends_on].presence)
+  end
 
   def activity_match_parameters
     financial_transaction_id, budget_item_id = params.expect(:financial_transaction_id, :budget_item_id)

@@ -1,0 +1,42 @@
+<% quiet = local_assigns[:quiet] %>
+<% action_class = quiet ? "ta-full-list-action" : "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs" %>
+<% delete_class = quiet ? "ta-full-list-action ta-full-list-action--delete" : "fb-btn-danger ta-action-btn !px-2.5 !py-1.5 !text-xs" %>
+<% if local_assigns[:read_only] %>
+  <span class="text-xs font-semibold text-slate-500">Read only</span>
+<% else %>
+  <div class="flex items-center <%= quiet ? "justify-end gap-1" : "gap-2" %>">
+  <% unless entry.paid? %>
+    <%= button_to budget_month_expense_entry_path(budget_month, entry),
+                  method: :patch,
+                  params: {
+                    mark_as_paid: "1",
+                    timeline_view: timeline_view,
+                    review: selected_review,
+                    expense_entry: {
+                      actual_amount: entry.actual_amount.presence || entry.planned_amount
+                    }
+                  },
+                  class: action_class,
+                  title: record_movement_label(entry),
+                  aria: { label: record_movement_label(entry) } do %>
+      <%= tabler_icon("check-circle", classes: quiet ? "h-5 w-5" : "h-4 w-4 text-emerald-600") %>
+    <% end %>
+  <% end %>
+  <%= link_to edit_budget_month_expense_entry_path(budget_month, entry, timeline_view: timeline_view, review: selected_review),
+              data: { turbo_frame: "entry_editor_modal" },
+              class: action_class,
+              title: "Edit entry",
+              aria: { label: "Edit entry" } do %>
+    <%= tabler_icon("pencil", classes: quiet ? "h-5 w-5" : "h-4 w-4 text-indigo-600") %>
+  <% end %>
+  <%= button_to budget_month_expense_entry_path(budget_month, entry),
+                method: :delete,
+                params: { timeline_view: timeline_view, review: selected_review },
+                class: delete_class,
+                title: "Delete entry",
+                aria: { label: "Delete entry" },
+                form: { data: { turbo_confirm: "Delete this entry?" } } do %>
+    <%= tabler_icon("trash", classes: quiet ? "h-5 w-5" : "h-4 w-4 text-rose-600") %>
+  <% end %>
+  </div>
+<% end %>

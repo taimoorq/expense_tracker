@@ -13,6 +13,7 @@
       </span>
       <div>
         <p class="font-semibold">Backups are designed to be inspectable and reversible before they change data.</p>
+        <p class="mt-1">SimpleFIN history, reviewed sources, payment clearing, and duplicate evidence links travel with Backup v2. Bank credentials and refresh schedules do not. After a restore, reconnect with a fresh token or continue manually.</p>
         <p class="mt-1">Exports are versioned JSON, optional passwords encrypt the payload, and imports must be previewed before restore. Account source and destination links are preserved by stable IDs.</p>
         <% if @target_backup_v2 %><p class="mt-1 font-semibold">This workspace exports Backup V2 with checksums, currency, provenance, and calculation-version metadata.</p><% end %>
       </div>

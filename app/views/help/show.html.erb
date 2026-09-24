@@ -13,7 +13,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <h2 class="text-lg font-semibold text-slate-900">Start here</h2>
-        <p class="mt-1 text-sm leading-6 text-slate-600">FinanceTracking.app 2.2 follows one monthly loop: set up accounts and recurring items, build the plan, bring in real activity, review the evidence, then close the month when it is ready.</p>
+        <p class="mt-1 text-sm leading-6 text-slate-600">Choose connected or manual accounts, build a useful plan, bring in real activity, review the evidence, then close the month when it is ready. Recurring setup is optional.</p>
       </div>
     </div>
     <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
@@ -44,6 +44,7 @@
       <a href="#entries" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Plan and Edit</a>
       <a href="#templates" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Recurring</a>
       <a href="#activity" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Activity</a>
+      <a href="#accounts" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Accounts</a>
       <a href="#review" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Review</a>
       <a href="#reports" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Reports and close</a>
       <a href="#recovery" class="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Recovery</a>
@@ -55,6 +56,12 @@
       <% end %>
     </div>
   </section>
+
+  <section class="grid gap-4 md:grid-cols-2" aria-label="Two starting paths">
+    <article id="simplefin" class="ta-section-frame p-5"><h2 class="ta-section-title">Connect with SimpleFIN</h2><p class="ta-muted mt-2">Use your own read-only SimpleFIN subscription. Connect a fresh Setup Token, map accounts, choose transactions or balances only, and review the source before using it.</p><p class="ta-muted mt-2">Home points to bank activity and payments needing review. Pending bank items do not affect posted totals. Bank review lets you accept, match, pair transfers, ignore, or attach evidence to an existing manual or CSV transaction.</p><div class="mt-3 flex flex-wrap gap-3"><%= link_to "Bank connections", bank_connections_path, class: "fb-btn-secondary" %><%= link_to "Complete SimpleFIN guide", "https://financetracking.app/docs/simplefin/", class: "underline", target: "_blank", rel: "noopener" %></div></article>
+    <article id="manual" class="ta-section-frame p-5"><h2 class="ta-section-title">Track without a connection</h2><p class="ta-muted mt-2">Add accounts and dated balances, then create a month. Record actual income, spending, and transfers in Activity, or choose an account and preview a statement import. Recurring templates and suggestions remain optional.</p><p class="ta-muted mt-2">Match actuals when they fulfill a plan. Keep valid unplanned activity reviewed without a match. Correct a direct manual transaction by unmatching, reversing, and recording its replacement.</p><div class="mt-3 flex flex-wrap gap-3"><%= link_to "Open Activity", activity_path, class: "fb-btn-secondary" %><%= link_to "Complete manual guide", "https://financetracking.app/docs/manual-and-imports/", class: "underline", target: "_blank", rel: "noopener" %></div></article>
+  </section>
+  <section class="ta-section-frame p-5"><h2 class="ta-section-title">Review, clear, and close</h2><p class="ta-muted mt-2">A reserved payment records that money is committed, not that the bank has cleared it. Match posted bank activity or confirm its clearing date yourself in Activity → Payments clearing. This continues to work after disconnecting.</p><p class="ta-muted mt-2">Reports separates recorded actuals by transaction date from amounts matched to a planning month. Closing freezes both definitions for new closes. Resolve reserved payments, accepted bank corrections, and uncertain balance coverage first. Older closed snapshots retain their original evidence.</p><p class="ta-muted mt-2">Use Settings → Workspace for timezone and your starting approach. Backup v2 preserves financial evidence and setup preferences; bank credentials and automatic refresh do not travel with it. After restore, reconnect with a fresh token or continue manually.</p></section>
 
   <div class="grid gap-6 xl:grid-cols-[1.5fr,1fr]">
     <div class="space-y-6">
@@ -69,7 +76,7 @@
           <li><strong class="text-slate-900">Use the weekly check-in:</strong> the Overview check-in card gives you a short list of due items, upcoming plans, missing actuals, and linked activity so you can keep the month current without a long review session.</li>
           <li><strong class="text-slate-900">Tune the guidance:</strong> choose a financial rhythm during signup or in Settings for steady income, variable income, shared household, or debt payoff workflows.</li>
           <li><strong class="text-slate-900">Add accounts first:</strong> linked accounts show up in monthly views, make account filters more useful, and keep account balance rollups accurate.</li>
-          <li><strong class="text-slate-900">Save recurring transactions before the first month:</strong> doing that makes Plan and Edit much faster once the month exists.</li>
+          <li><strong class="text-slate-900">Add recurring transactions when useful:</strong> doing that makes Plan and Edit much faster once the month exists.</li>
           <li><strong class="text-slate-900">Use Plan to open a month fast:</strong> jump back into an active month or revisit an older one.</li>
           <li><strong class="text-slate-900">Follow the evidence:</strong> chart totals repeat as labeled values and link to the month, account, or source records behind them.</li>
         </ul>
@@ -160,6 +167,13 @@
         </div>
       </section>
 
+      <section id="accounts" class="ta-section-frame scroll-mt-24 p-5">
+        <h2 class="ta-section-title">Accounts and balances</h2>
+        <p class="ta-muted mt-2">Accounts opens with net worth and your tracked accounts. Compare App balance and Bank balance, then open an account for recent activity. Net worth history and balance guidance expand when you need them.</p>
+        <p class="ta-muted mt-2">Within an account, open How this balance is calculated for source details or Movement and history for charts and exact records. Manage holds account settings, manual snapshots, recurring connections, and import history. Use the ••• menu to edit an account or import a file.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Connect SimpleFIN from Accounts → Bank connections using your own app-specific Setup Token. Map accounts, then compare App balance and Bank balance in Tracked accounts. Review actions stay visible; the ••• menu holds imports, balance edits, and connection settings. Open an account name for full balance details. Review the bank balance and its payment coverage, then optionally fetch recent transactions for review. Refresh twice daily or manually; bank source timestamps show how fresh the data is. Disconnect keeps saved history. Restored backups require reconnection.</p>
+      </section>
+
       <section id="review" class="ta-section-frame scroll-mt-24 p-5">
         <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
           <%= tabler_icon("chart-pie", classes: "h-5 w-5 text-indigo-600") %>
@@ -169,7 +183,9 @@
         <div class="mt-4 space-y-4">
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h4 class="font-medium text-slate-900">Budget view</h4>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Use this for a grouped, list-style, or calendar view with totals, filters, and quick scanning across the month.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Use this for a grouped, list-style, or calendar view with totals, filters, and quick scanning across the month. Full List keeps entries in date order, with category, section, and account beneath the payee. Amount shows the actual value for paid entries, the planned value for planned entries, and zero for skipped entries. A different planned amount appears below a paid amount. Filter by category, account, date, payee, reason, or status to narrow the list.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">In an open month’s Full List, select Show balances to add a Balance after column after the row actions. It projects each row’s account balance from reported balances, paid activity, and outstanding plans, carrying movement between months. Filtering does not change those balances. A dash means the account, date, or earlier balance evidence is missing; manage reported balances in Accounts. A new report resets the forecast, including older planned amounts. For a month’s starting balance, choose Opening and the first of the month in the balance form; choose Closing for a balance after that day’s transactions.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Set an optional transaction time when adding or editing an entry. Untimed income sorts first and untimed debits last on their date; assumed times are not displayed. Choose your timezone in Settings → Bank connections.</p>
           </div>
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h4 class="font-medium text-slate-900">Breakdown view</h4>
@@ -242,6 +258,8 @@
           <li><strong class="text-slate-900">Card payment estimates:</strong> the app creates minimum-payment entries for active cards and uses leftover cash to increase those estimates when the month has room.</li>
           <li><strong class="text-slate-900">Exact graph values:</strong> financial charts repeat their data in labeled totals, tables, or record drilldowns for auditability and accessibility.</li>
           <li><strong class="text-slate-900">Closed-period evidence:</strong> late activity does not rewrite a closed report; reopen the period before incorporating it.</li>
+          <li><strong class="text-slate-900">Build from account activity:</strong> Accounts → Insights → Review recurring candidates lets you confirm a suggested subscription or bill, link an existing recurring transaction, or ignore a pattern. Review the amount, account, and schedule before saving. Your decisions stay saved across imports and full financial backups.</li>
+          <li><strong class="text-slate-900">Add one recurring item:</strong> after saving a candidate, optionally choose an open month and preview the planned item. Existing items are kept, closed months require reopening, and imported charges are never automatically marked paid or matched.</li>
           <li><strong class="text-slate-900">Recurring safeguards:</strong> older months that look complete hide recurring action buttons to reduce accidental duplication.</li>
           <li><strong class="text-slate-900">Private account data:</strong> each signed-in user only sees their own months, entries, imports, and recurring transactions.</li>
         </ul>

@@ -72,12 +72,12 @@ RSpec.configure do |config|
   # config.filter_gems_from_backtrace("gem name")
 
   if defined?(Bullet)
-    config.before(:each) do
-      Bullet.start_request if Bullet.enable?
+    config.before(:each) do |example|
+      Bullet.start_request if Bullet.enable? && !example.metadata[:type].in?([ :request, :system ])
     end
 
-    config.after(:each) do
-      if Bullet.enable?
+    config.after(:each) do |example|
+      if Bullet.enable? && !example.metadata[:type].in?([ :request, :system ])
         Bullet.perform_out_of_channel_notifications if Bullet.notification?
         Bullet.end_request
       end

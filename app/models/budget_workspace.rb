@@ -1,4 +1,5 @@
 class BudgetWorkspace < ApplicationRecord
+  has_many :recurring_candidate_decisions, class_name: "AccountRecurringCandidateDecision", dependent: :destroy
   enum :status, {
     active: "active",
     suspended: "suspended",
@@ -9,6 +10,13 @@ class BudgetWorkspace < ApplicationRecord
   has_many :workspace_memberships, dependent: :restrict_with_error
   has_many :users, through: :workspace_memberships
   has_many :accounts, dependent: :restrict_with_error
+  has_many :bank_connections, dependent: :restrict_with_error
+  has_many :bank_refreshes, dependent: :restrict_with_error
+  has_many :connected_accounts, dependent: :restrict_with_error
+  has_many :provider_balances, dependent: :restrict_with_error
+  has_many :provider_transactions, dependent: :restrict_with_error
+  has_many :payment_commitments, dependent: :restrict_with_error
+  has_many :payment_settlements, dependent: :restrict_with_error
   has_many :budget_periods, dependent: :restrict_with_error
   has_many :categories, dependent: :restrict_with_error
   has_many :planning_templates, dependent: :restrict_with_error
@@ -36,10 +44,14 @@ class BudgetWorkspace < ApplicationRecord
   has_many :migration_discrepancies, dependent: :restrict_with_error
   belongs_to :legacy_owner_user, class_name: "User", optional: true
 
+  before_validation { self.time_zone = ActiveSupport::TimeZone[time_zone]&.tzinfo&.identifier || time_zone }
+
   validates :name, presence: true
+  validates :time_zone, inclusion: { in: ->(_) { ActiveSupport::TimeZone.all.map(&:name) + TZInfo::Timezone.all_identifiers } }
   validates :default_currency_code, presence: true, format: { with: /\A[A-Z]{3}\z/ }
   validate :closed_state_is_coherent
   validate :target_flags_are_coherent
+  validate :bank_history_requires_target_ledger
 
   private
 
@@ -47,6 +59,14 @@ class BudgetWorkspace < ApplicationRecord
     return if status_closed? == closed_at.present?
 
     errors.add(:closed_at, status_closed? ? "is required when closed" : "must be blank unless closed")
+  end
+
+  def bank_history_requires_target_ledger
+    return unless will_save_change_to_target_reads_enabled? && target_reads_enabled_in_database && !target_reads_enabled?
+    return if will_save_change_to_bank_sync_epoch? # Replacement restore fences and replaces the entire ledger.
+    if provider_transactions.where.not(financial_transaction_id: nil).exists? || payment_commitments.exists? || balance_observations.where(source_kind: "bank_sync").exists?
+      errors.add(:target_reads_enabled, "must remain enabled while SimpleFIN ledger history exists; use a full pre-integration backup to roll back")
+    end
   end
 
   def target_flags_are_coherent

@@ -133,7 +133,44 @@ module Platform
             ids[type] = Set.new
             records[type].each { |record| register!(type, record) }
           end
+          collect_candidate_decisions!
+          collect_bank_records!
           collect_nested_template_records!
+        end
+
+        def collect_candidate_decisions!
+          records[:candidate_decision] = Array(payload.dig(:data, :recurring_candidate_decisions))
+          ids[:candidate_decision] = Set.new
+          records[:candidate_decision].each do |record|
+            register!(:candidate_decision, record)
+            validate_reference!(:candidate_decision, record, :account_external_id, :account, true)
+            linked = record.dig(:attributes, :status) == "linked"
+            validate_reference!(:candidate_decision, record, :planning_template_external_id, :template, linked)
+          end
+        end
+
+        def collect_bank_records!
+          BankData::DEFINITIONS.each_key do |type|
+            records[type] = Array(payload.dig(:data, :accounts, :bank_data, type))
+            ids[type] = Set.new
+            records[type].each { |record| register!(type, record) }
+          end
+          BankData::DEFINITIONS.each do |type, (_, _, references)|
+            records[type].each do |record|
+              references.each do |association, target_type|
+                validate_reference!(type, record, "#{association}_external_id".to_sym, target_type, !%i[account financial_transaction destination_account included_provider_balance excluded_provider_balance].include?(association))
+              end
+              validate_reference!(type, record, :budget_item_external_id, :item, false)
+            end
+          end
+          records[:observation].each do |record|
+            validate_reference!(:observation, record, :provider_balance_external_id, :provider_balance, false)
+            record.fetch(:transaction_coverage, {}).each do |id, disposition|
+              unless ids[:transaction].include?(id.to_s) && %w[included outside].include?(disposition)
+                raise RelationshipError, "The backup has invalid bank balance coverage."
+              end
+            end
+          end
         end
 
         def collect_nested_template_records!

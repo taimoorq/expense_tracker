@@ -41,20 +41,20 @@
         </select>
       </div>
       <div>
-        <label class="fb-label">Date</label>
-        <input type="date" class="fb-input" data-expense-entries-filter-target="date" data-action="input->expense-entries-filter#filter change->expense-entries-filter#filter" />
+        <label class="fb-label" for="<%= id_prefix %>_date_filter">Date</label>
+        <input id="<%= id_prefix %>_date_filter" type="date" class="fb-input" data-expense-entries-filter-target="date" data-action="input->expense-entries-filter#filter change->expense-entries-filter#filter" />
       </div>
       <div>
-        <label class="fb-label">Payee</label>
-        <input type="text" placeholder="Filter payee" class="fb-input" data-expense-entries-filter-target="payee" data-action="input->expense-entries-filter#filter" />
+        <label class="fb-label" for="<%= id_prefix %>_payee_filter">Payee</label>
+        <input id="<%= id_prefix %>_payee_filter" type="text" placeholder="Filter payee" class="fb-input" data-expense-entries-filter-target="payee" data-action="input->expense-entries-filter#filter" />
       </div>
       <div>
-        <label class="fb-label">Reason</label>
-        <input type="text" placeholder="Filter reason" class="fb-input" data-expense-entries-filter-target="reason" data-action="input->expense-entries-filter#filter" />
+        <label class="fb-label" for="<%= id_prefix %>_reason_filter">Reason</label>
+        <input id="<%= id_prefix %>_reason_filter" type="text" placeholder="Filter reason" class="fb-input" data-expense-entries-filter-target="reason" data-action="input->expense-entries-filter#filter" />
       </div>
       <div>
-        <label class="fb-label">Status</label>
-        <select class="fb-select" data-expense-entries-filter-target="status" data-action="change->expense-entries-filter#filter">
+        <label class="fb-label" for="<%= id_prefix %>_status_filter">Status</label>
+        <select id="<%= id_prefix %>_status_filter" class="fb-select" data-expense-entries-filter-target="status" data-action="change->expense-entries-filter#filter">
           <option value="">All statuses</option>
           <% ExpenseEntry.statuses.keys.each do |status_key| %>
             <option value="<%= status_key %>"><%= status_key.humanize %></option>

@@ -1,5 +1,9 @@
 class FinancialTransaction < ApplicationRecord
   include CurrencyQualified
+  include TransactionTimed
+  self.timing_date_column = :effective_on
+  self.timing_timestamp_column = :transacted_at
+  self.timing_income_method = :flow_kind_income?
 
   enum :flow_kind, {
     income: "income",
@@ -25,6 +29,8 @@ class FinancialTransaction < ApplicationRecord
   belongs_to :reversal_transaction, class_name: "FinancialTransaction", optional: true
   belongs_to :import_row, optional: true
   has_many :account_postings, dependent: :restrict_with_error
+  has_many :provider_transactions, dependent: :restrict_with_error
+  has_many :payment_settlements, dependent: :restrict_with_error
   has_many :budget_allocations, dependent: :restrict_with_error
   has_many :budget_items, through: :budget_allocations
   has_many :month_close_transaction_snapshots, dependent: :restrict_with_error

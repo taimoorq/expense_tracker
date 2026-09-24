@@ -10,7 +10,11 @@ module Users
     def create
       return render_turnstile_failure unless turnstile_verified?
 
-      super
+      User.transaction do
+        super do |user|
+          Identity::NewWorkspaceSetup.call(user: user) if user.persisted?
+        end
+      end
     end
 
     private

@@ -8,20 +8,22 @@ RSpec.describe "Account activity imports", type: :request do
 
   before { sign_in user }
 
-  it "describes the account activity import stages and pending preview state" do
+  it "puts the upload first and keeps import history available on demand" do
     get new_account_account_activity_import_path(account)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Import stages")
+    expect(response.body).to include("Choose your activity file")
     expect(response.body).to include('aria-label="Breadcrumb"')
     expect(response.body).to include("Rewards Card")
     expect(response.body).to include("Import Account Activity")
     expect(response.body).to include("What has already been imported")
     expect(response.body).to include("No account files imported yet")
-    expect(response.body).to include("Building preview...")
-    expect(response.body).to include("Preview submitted")
-    expect(response.body).to include("imported account balances become the trusted balance source over snapshots")
-    expect(response.body).to include('data-controller="file-drop turbo-submit"')
+    expect(response.body).to include("Building preview…")
+    expect(response.body).to include("Reading your file and checking for duplicates…")
+    document = Nokogiri::HTML(response.body)
+    expect(document.at_css("input[type='file']")[:class]).not_to include("hidden")
+    expect(document.at_css("#import-history").ancestors("details").first["open"]).to be_nil
+    expect(response.body).to include('data-controller="turbo-submit"')
     expect(response.body).to include('data-turbo="false"')
   end
 

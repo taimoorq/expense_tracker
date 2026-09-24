@@ -1,0 +1,23 @@
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb @mapping.account.name, account_path(@mapping.account) %>
+<% page_header title: "Review bank balance", eyebrow: @mapping.account.name %>
+<div class="mx-auto max-w-3xl ta-section-frame p-6 space-y-4">
+  <%= render "bank_connections/ledger_notice" %>
+  <% if @balance %>
+    <p class="text-3xl font-semibold ta-money"><%= number_to_currency(@balance.normalized_balance) %></p>
+    <p>Bank reported as of <strong><%= @balance.reported_at.in_time_zone(@workspace.time_zone).strftime("%b %-d, %Y at %-I:%M %p %Z") %></strong>.</p>
+    <p class="ta-muted">Review what this reported balance already includes. This sets the starting point for app estimates; it does not send money or mark bills paid.</p>
+    <%= form_with url: accept_balance_connected_account_path(@mapping), class: "space-y-5" do |form| %>
+      <%= form.hidden_field :balance_id, value: @balance.id %><%= form.hidden_field :mapping_version, value: @mapping.mapping_version %>
+      <h2 class="ta-section-title">Recorded payments still waiting to settle</h2>
+      <% if @commitments.empty? %><p class="ta-muted">No outstanding recorded payments.</p><% end %>
+      <% @commitments.each do |payment| %><div><label class="fb-label" for="payment_<%= payment.id %>"><%= payment.expense_entry&.payee.presence || "Recorded payment" %> · <%= number_to_currency(payment.outstanding_amount) %> · <%= payment.initiated_on %></label><%= select_tag "payments[#{payment.id}]", options_for_select([["Choose whether this balance includes it", ""], ["Already included in the bank balance", "included"], ["Not included — keep this cash reserved", "outside"]]), required: true, id: "payment_#{payment.id}", class: "fb-select" %></div><% end %>
+      <h2 class="ta-section-title">Activity on the balance date</h2>
+      <% if @transactions.empty? %><p class="ta-muted">No recorded activity on that date needs confirmation.</p><% end %>
+      <% @transactions.each do |transaction| %><div><label class="fb-label" for="coverage_<%= transaction.id %>"><%= transaction.description %> · <%= number_to_currency(transaction.gross_amount) %></label><%= select_tag "coverage[#{transaction.id}]", options_for_select([["Choose whether this balance includes it", ""], ["Already included", "included"], ["Not included — apply after the balance", "outside"]]), required: true, id: "coverage_#{transaction.id}", class: "fb-select" %></div><% end %>
+      <label class="flex items-start gap-2"><%= check_box_tag :confirmed, "1", false, required: true %><span>I reviewed the balance and recorded activity above.</span></label>
+      <div class="flex flex-wrap gap-2"><%= form.submit "Use this bank balance", class: "fb-btn-primary", disabled: !bank_ledger_enabled? %><%= link_to "Back", @mapping.bank_connection, class: "fb-btn-secondary" %></div>
+    <% end %>
+    <% if @mapping.use_bank_balance? %><%= button_to "Use manual balance sources instead", manual_source_connected_account_path(@mapping), class: "fb-btn-secondary" %><% end %>
+  <% else %><p>No usable bank balance is available yet. Refresh the connection and review any account warnings.</p><% end %>
+</div>

@@ -1,5 +1,9 @@
 class ExpenseEntry < ApplicationRecord
   include ExpenseEntryProvenance
+  include TransactionTimed
+  self.timing_date_column = :occurred_on
+  self.timing_timestamp_column = :occurred_at
+  self.timing_income_method = :income?
 
   RECURRING_TEMPLATE_SOURCES = Recurring::TemplateCatalog.recurring_source_files.freeze
 
@@ -10,6 +14,8 @@ class ExpenseEntry < ApplicationRecord
   belongs_to :destination_account, class_name: "Account", optional: true
   belongs_to :source_template, polymorphic: true, optional: true
   has_many :account_activities, dependent: :nullify
+  has_many :provider_transactions, dependent: :restrict_with_error
+  has_many :payment_commitments, dependent: :restrict_with_error
 
   enum :section, {
     income: 0,
@@ -39,7 +45,7 @@ class ExpenseEntry < ApplicationRecord
 
   before_validation :assign_user_from_budget_month
   before_validation :assign_workspace_from_budget_month
-  scope :chronological, -> { order(:occurred_on, :created_at) }
+  scope :chronological, -> { order(Arel.sql(Accounts::TransactionTiming.sql(table: "expense_entries", date: "occurred_on", timestamp: "occurred_at", incoming: "expense_entries.section = 0"))) }
   scope :recurring_templates, -> { where(source_file: RECURRING_TEMPLATE_SOURCES) }
   scope :due_on_or_before, ->(date) { where(occurred_on: ..date) }
   scope :auto_completed, -> { where.not(auto_completed_at: nil) }
@@ -61,6 +67,8 @@ class ExpenseEntry < ApplicationRecord
   end
 
   def account_name
+    return account if source_account_id.blank? && !association(:source_account).loaded?
+
     source_account&.name.presence || account
   end
 

@@ -1,0 +1,32 @@
+<%= render "header" %>
+<%= turbo_frame_tag "recurring_review", data: { turbo_action: "advance", controller: "recurring-review", action: "turbo:frame-load->recurring-review#refresh" } do %>
+  <%= render "feedback" %>
+  <section class="ta-section-frame mx-auto max-w-3xl p-5">
+    <h2 class="text-xl font-semibold" data-recurring-review-target="heading">Add <%= @template.name %> to a month</h2>
+    <p class="ta-muted mt-2">The recurring transaction is already saved. This adds a planned item; matching recorded activity is a separate step.</p>
+    <%= form_with url: month_account_recurring_candidate_path(@account, @candidate[:key]), method: :get, class: "mt-5 flex flex-wrap items-end gap-3" do %>
+      <div class="min-w-0 flex-1"><%= label_tag :budget_month_id, "Budget month", class: "fb-label" %><%= select_tag :budget_month_id, options_from_collection_for_select(@months, :id, :label, @month&.id), prompt: "Choose an open month", required: true, class: "fb-select w-full" %></div>
+      <%= submit_tag "Preview month", class: "fb-btn-secondary" %>
+    <% end %>
+    <% if @months.empty? %><p class="ta-muted mt-4">No open months are available. <%= link_to "Create a month", new_budget_month_path, class: "font-semibold text-indigo-700", data: { turbo_frame: "_top" } %> or reopen one from its month page.</p><% end %>
+    <% if @preview %>
+      <div class="mt-5 border-y border-slate-200 py-4" id="candidate-month-preview">
+        <% if @preview.status == :already_present %>
+          <p class="font-semibold">Already in this month</p><p class="ta-muted mt-1">An existing item covers this recurring transaction. Its date, amount, and status have been kept.</p>
+        <% elsif @preview.status == :not_scheduled %>
+          <p class="font-semibold">Not scheduled this month</p><p class="ta-muted mt-1">Choose one of the billing months saved on the recurring transaction.</p>
+        <% else %>
+          <p class="font-semibold"><%= number_to_currency(@preview.amount) %> · <%= l(@preview.date, format: :long) %></p>
+          <p class="ta-muted mt-1">Money leaves / activity account: <%= @template.account_name.presence || "No linked account" %></p>
+          <p class="ta-muted mt-1">Status: Planned</p>
+          <%= form_with url: add_to_month_account_recurring_candidate_path(@account, @candidate[:key]), method: :post, class: "mt-4" do %>
+            <%= hidden_field_tag :budget_month_id, @month.id, id: nil %><%= hidden_field_tag :preview_digest, @preview.digest %><%= submit_tag "Add planned item", class: "fb-btn-primary" %>
+          <% end %>
+        <% end %>
+        <%= link_to "Open #{@month.label}", budget_month_path(@month), class: "mt-3 inline-block text-sm font-semibold text-indigo-700", data: { turbo_frame: "_top" } %>
+      </div>
+    <% end %>
+    <div class="mt-5 flex flex-wrap gap-3"><%= link_to "Back to saved recurring", account_recurring_candidate_path(@account, @candidate[:key]), class: "fb-btn-secondary" %><%= link_to "Review more candidates", account_recurring_candidates_path(@account), class: "fb-btn-secondary" %></div>
+    <%= link_to "Review matching account activity", account_path(@account, view: "activity", source: "institution_activity", direction: "outgoing", merchant: @candidate[:merchant], recurring_candidate: @candidate[:key]), class: "mt-4 inline-block text-sm font-semibold text-indigo-700", data: { turbo_frame: "_top" } %>
+  </section>
+<% end %>

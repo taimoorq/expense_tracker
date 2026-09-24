@@ -35,7 +35,7 @@ module Accounts
       return {} if account_ids.empty?
 
       @observations ||= BalanceObservation
-        .where(account_id: account_ids, status: "trusted")
+        .where(account_id: account_ids, status: "trusted").where.not(source_kind: "bank_sync")
         .where(effective_through_at: ..as_of.end_of_day)
         .select("DISTINCT ON (account_id) balance_observations.*")
         .order(:account_id, effective_through_at: :desc, created_at: :desc)
@@ -64,24 +64,22 @@ module Accounts
         workspace.budget_items
           .where(state: "open", scheduled_on: as_of..)
           .where("intended_source_account_id IN (:ids) OR intended_destination_account_id IN (:ids)", ids: account_ids)
-          .where(<<~SQL.squish)
-            NOT EXISTS (
-              SELECT 1
-              FROM budget_allocations
-              INNER JOIN financial_transactions
-                ON financial_transactions.id = budget_allocations.financial_transaction_id
-              WHERE budget_allocations.budget_item_id = budget_items.id
-                AND financial_transactions.state = 'posted'
-            )
-          SQL
           .to_a
       end
+    end
+
+    def remainders
+      @remainders ||= PlannedRemainders.call(workspace: workspace, items: planned_items)
+    end
+
+    def reservations
+      @reservations ||= PaymentCommitment.where(account_id: account_ids, state: "reserved", initiated_on: ..as_of).includes(:payment_settlements).group_by(&:account_id)
     end
 
     def planned_by_account
       @planned_by_account ||= account_ids.index_with do |account_id|
         planned_items.select do |item|
-          item.intended_source_account_id == account_id || item.intended_destination_account_id == account_id
+          remainders.fetch(item.id).positive? && (item.intended_source_account_id == account_id || item.intended_destination_account_id == account_id)
         end
       end
     end
@@ -90,13 +88,21 @@ module Accounts
       observations.values.map { |observation| observation.effective_through_at.to_date.next_day }.min
     end
 
+    def bank_evidence
+      @bank_evidence ||= BankEvidence.new(accounts: accounts, through_on: as_of)
+    end
+
     def result_for(account)
+      bank = Accounts::BankPosition.new(account: account, as_of: as_of, evidence: bank_evidence).result
+      return bank if bank
+
       observation = observations[account.id]
       return without_balance_source(account) if observation.blank?
 
       postings = relevant_postings(account, observation)
       plans = planned_by_account.fetch(account.id)
       posted_delta = postings.sum { |_account_id, amount, _date, _transaction_id, _origin| amount.to_d }
+      posted_delta -= reservations.fetch(account.id, []).select { |payment| payment.initiated_on > observation.effective_through_at.to_date }.sum(&:outstanding_amount)
       planned_delta = plans.sum { |item| planned_item_delta(account, item) }
       current_balance = observation.balance.to_d + posted_delta
       source = balance_source(observation, postings)
@@ -129,9 +135,9 @@ module Accounts
     def planned_item_delta(account, item)
       delta = 0.to_d
       if item.intended_source_account_id == account.id
-        delta += item.flow_kind_income? ? item.planned_amount : -item.planned_amount
+        delta += item.flow_kind_income? ? remainders.fetch(item.id) : -remainders.fetch(item.id)
       end
-      delta += item.planned_amount if item.intended_destination_account_id == account.id
+      delta += remainders.fetch(item.id) if item.intended_destination_account_id == account.id
       delta
     end
 

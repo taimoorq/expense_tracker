@@ -49,6 +49,7 @@ module Platform
         data[:accounts] = serialize_accounts if scopes.include?("accounts")
         data[:account_activity] = serialize_account_activity if scopes.include?("account_activity")
         data[:preferences] = serialize_preferences if scopes.include?("preferences")
+        data[:recurring_candidate_decisions] = Backup::CandidateDecisions.export_v1(user) if (%w[accounts planning_templates] - scopes).empty?
       end
     end
 
@@ -76,7 +77,7 @@ module Platform
             active: record.active
           }
         end,
-        subscriptions: user.subscriptions.order(:due_day, :name).map do |record|
+        subscriptions: user.subscriptions.order(:due_day, :name, :id).map do |record|
           {
             name: record.name,
             amount: decimal_string(record.amount),
@@ -86,7 +87,7 @@ module Platform
             active: record.active
           }
         end,
-        monthly_bills: user.monthly_bills.order(:kind, :due_day, :name).map do |record|
+        monthly_bills: user.monthly_bills.order(:kind, :due_day, :name, :id).map do |record|
           {
             name: record.name,
             kind: record.kind,
@@ -127,15 +128,25 @@ module Platform
     end
 
     def serialize_budget_months
-      user.budget_months.includes(:expense_entries).order(:month_on).map do |month|
+      months = user.budget_months.order(:month_on).to_a
+      entries = user.expense_entries.where(budget_month_id: months.map(&:id)).chronological.to_a
+      %i[source_account destination_account source_template].each do |association|
+        records = entries.select { |entry| entry.public_send("#{association}_id").present? }
+        ActiveRecord::Associations::Preloader.new(records: records, associations: association).call if records.any?
+      end
+      entries_by_month = entries.group_by(&:budget_month_id)
+
+      months.map do |month|
         {
           label: month.label,
           month_on: month.month_on&.to_s,
           leftover: decimal_string(month.leftover),
           notes: month.notes,
-          expense_entries: month.expense_entries.chronological.map do |entry|
+          expense_entries: entries_by_month.fetch(month.id, []).map do |entry|
             {
               occurred_on: entry.occurred_on&.to_s,
+              occurred_at: entry.occurred_at&.iso8601(6),
+              timing_time_zone: entry.timing_time_zone,
               section: entry.section,
               category: entry.category,
               payee: entry.payee,
@@ -183,7 +194,10 @@ module Platform
     end
 
     def serialize_account_activity
-      user.account_activity_imports.includes(:account, :account_activities).order(:created_at).map do |import|
+      imports = user.account_activity_imports.includes(:account).order(:created_at).to_a
+      activities_by_import = user.account_activities.where(account_activity_import_id: imports.map(&:id))
+        .recent_first.to_a.group_by(&:account_activity_import_id)
+      imports.map do |import|
         {
           account: import.account.name,
           original_filename: import.original_filename,
@@ -199,9 +213,12 @@ module Platform
           metadata: import.metadata,
           created_at: import.created_at&.iso8601,
           updated_at: import.updated_at&.iso8601,
-          account_activities: import.account_activities.recent_first.reverse.map do |activity|
+          account_activities: activities_by_import.fetch(import.id, []).reverse.map do |activity|
             {
               transaction_on: activity.transaction_on&.to_s,
+              transacted_at: activity.transacted_at&.iso8601(6),
+              posted_at: activity.posted_at&.iso8601(6),
+              timing_time_zone: activity.timing_time_zone,
               posted_on: activity.posted_on&.to_s,
               description: activity.description,
               category: activity.category,

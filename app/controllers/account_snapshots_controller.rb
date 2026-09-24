@@ -55,8 +55,12 @@ class AccountSnapshotsController < ApplicationController
   def respond_with_snapshot_success(message)
     respond_to do |format|
       format.turbo_stream do
-        flash[:notice] = message
-        render turbo_stream: turbo_stream.refresh(request_id: nil)
+        if turbo_frame_request?
+          flash[:notice] = message
+          render turbo_stream: turbo_stream.refresh(request_id: nil)
+        else
+          redirect_to account_path(@account, view: "manage"), notice: message, status: :see_other
+        end
       end
       format.html do
         redirect_to account_path(@account, view: "manage"), notice: message, status: :see_other
@@ -98,9 +102,11 @@ class AccountSnapshotsController < ApplicationController
     @connected_templates = detail_page.fetch(:connected_templates)
     @connected_templates_count = detail_page.fetch(:connected_templates_count)
     @import_history = detail_page.fetch(:import_history)
+    @calculation_version = detail_page.fetch(:calculation_version)
+    @bank_evidence = BankConnections::AccountEvidence.call([ @account ])
   end
 
   def account_snapshot_params
-    params.require(:account_snapshot).permit(:recorded_on, :balance, :available_balance, :notes)
+    params.require(:account_snapshot).permit(:recorded_on, :balance_date, :balance_timing, :balance, :available_balance, :notes)
   end
 end

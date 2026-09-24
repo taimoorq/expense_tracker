@@ -2,12 +2,25 @@
 
 FinanceTracking.app is a self-hosted app for people who plan their money one month at a time. Build the plan, record what actually happened, check account balances, and open the transactions behind every report total.
 
-The app favors manual planning and CSV imports over live bank sync. It is a good fit if you want a private, hands-on budget that you control and host yourself.
+The app combines manual planning and CSV imports with optional, read-only SimpleFIN bank data. It is a good fit if you want a private, hands-on budget that you control and host yourself.
 
 [Product overview](https://financetracking.app/) · [User guide](https://financetracking.app/docs/) · [Trust center](https://financetracking.app/trust/) · [Support](SUPPORT.md) · [Releases](https://github.com/taimoorq/expense_tracker/releases)
 
+## Start connected or manual
+
+Choose **Connect with SimpleFIN** or **Track without a connection** on Home. Both lead to the same monthly plan, Activity, Accounts, Reports, close, and recovery tools. Recurring setup is optional; accounts can mix sources.
+
+- [SimpleFIN walkthrough](https://financetracking.app/docs/simplefin/): token, mapping, transactions or balances only, source review, matching, refresh, and reconnect.
+- [Manual and statement walkthrough](https://financetracking.app/docs/manual-and-imports/): dated balances, direct income/spending/transfers, statement previews, review, clearing, close, and backup.
+- Settings → Workspace owns the timezone. New signups receive a verified ledger automatically; existing workspaces still follow the audited upgrade process.
+- Activity separates posted records, bank review, pending, ignored, clearing, and import history. Attaching bank evidence to an existing manual/CSV transaction preserves one financial effect.
+- Reports labels recorded actuals by transaction date separately from amounts matched to a planning month. New closes freeze both; old snapshots retain their original version.
+- Backup v2 includes review and clearing evidence, but excludes bank credentials and refresh schedules. After restore, reconnect with a fresh token or continue manually.
+
+
 ## Contents
 
+- [SimpleFIN and transaction times](#simplefin-and-transaction-times)
 - [Quick start](#quick-start)
 - [What you can do](#what-you-can-do)
 - [Product tour](#product-tour)
@@ -19,6 +32,32 @@ The app favors manual planning and CSV imports over live bank sync. It is a good
 - [Security and support](#security-and-support)
 - [License](#license)
 - [Troubleshooting](#troubleshooting)
+
+## Accounts workflow
+
+Accounts opens with a compact net worth summary and the tracked account list. Expand **Net worth history** or **How account balances work** when you need trends or source guidance. Missing balances remain visibly unresolved.
+
+Open an account to see its app balance, projection, latest bank report, and recent activity. **How this balance is calculated** holds source evidence; **Movement and history** holds charts, exact values, and payoff progress. **Manage** groups account settings, manual snapshots, recurring connections, and import history. The **•••** menu provides imports, account edits, and bank connection settings.
+
+Account creation keeps an initial balance optional. Balance forms show date, timing, and amount first, with available balance and notes in an expandable section. CSV imports start with file selection and a preview; confirmation queues the import. Linked bank accounts expose mapping settings on demand, while connection warnings and required reconciliation remain visible.
+
+## SimpleFIN and transaction times
+
+Open **Accounts → Bank connections → Connect SimpleFIN**. Create an app-specific Setup Token in [SimpleFIN Bridge](https://bridge.simplefin.org/simplefin/create), paste it into the app, then map each discovered bank account to an existing account or create one. Ignore accounts you do not want to use. Review the bank's debt sign before accepting a liability balance. Only the workspace currency is supported; foreign or custom currencies remain excluded.
+
+The **Tracked accounts** table separates **App balance** from **Bank balance**, with each source and date directly below its amount. Review and connection issues appear as the row's next action. Open the account name for balance details, including optional available balances; use the **•••** menu for balance edits, imports, and connection settings. Review a bank balance before using it for app calculations. For recorded payments and activity on the balance date, choose what the bank already included. New balances update the selected bank source automatically when their coverage is unambiguous; outstanding payment reservations require another review. Missing or failed accounts keep their last saved data, and balances older than 48 hours are labelled stale.
+
+Enable **Fetch recent transactions for review** per account, then refresh. Pending transactions stay in review. Accept posted activity as new activity or match it to an existing plan/payment; use transfer pairing when both bank sides arrive. Matching settles a recorded payment without deducting it twice. Review CSV/manual duplicates before accepting new activity. Undo acceptance to correct a match; reopen closed months before changing their accepted activity. Recorded payments must settle before closing their month.
+
+Optional **Transaction time** fields on entry creation and editing use the workspace timezone selected in Settings → Workspace. Blank times sort income at the start of its date and debits at the end; these assumed times are hidden and never treated as proof of bank clearing. Explicit times survive date edits, cloning and backups. Ambiguous or nonexistent daylight-saving times require another time.
+
+Manual refresh has a 15-minute cooldown. Opt-in scheduling runs twice daily with jitter; the app caps all data requests at 12 per rolling 24 hours, including failures. A refresh reads SimpleFIN's latest available data; it does not force an institution to update. Recent transaction requests overlap by five days and stay within 90 days. See the [Bridge developer guide](https://beta-bridge.simplefin.org/info/developers) and [protocol](https://www.simplefin.org/protocol.html).
+
+Bank balance calculations and transaction acceptance require the workspace's existing target ledger migration to be enabled. Discovery and bank-reported values remain available beforehand. See the existing workspace migration instructions below; connecting does not silently change migration flags.
+
+Operators: run the database migrations and restart both web and worker processes. The existing `imports` queue and recurring-job scheduler process refreshes. Retain `SECRET_KEY_BASE`: it encrypts stored access credentials; changing it requires users to reconnect. Setup Tokens, access URLs and encrypted credentials are excluded from portable backups and filtered from logs. Backup v2 retains mappings, balance evidence, provider history, payment reservations and settlement links, restores connections as disconnected, and fences work from the previous workspace generation. Database disaster-recovery copies still require protection as described in the backup runbook.
+
+Disconnect removes the local access credential and stops refreshes while retaining history. Users can also revoke the app in SimpleFIN. Manual balances and CSV imports remain available.
 
 ## Quick start
 
@@ -159,7 +198,7 @@ The app includes in-product help for day-to-day workflows. The hosted [user guid
 4. **Check balances and reports.** Use Home, the monthly view, Accounts, and Reports to compare the plan, actual spending, what remains, the forecast, and confirmed balances. Graphs keep exact values and transaction details within reach.
 5. **Close and back up.** Close a ready month to save its final totals. Download a backup before important changes; a replacement restore keeps an encrypted seven-day safety copy.
 
-Accounts are tracked manually. A confirmed balance provides a known starting point; completed transactions explain the current balance, and planned transactions contribute to the projected balance.
+Accounts can use manual snapshots, institution imports, or reviewed bank balances. A confirmed balance provides a known starting point; completed transactions explain the current balance, and planned transactions contribute to the projected balance.
 
 ## Self-hosting
 
@@ -249,7 +288,7 @@ Periodically restore a PostgreSQL dump and one automatic workspace archive into 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.3.0
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.4.0
 ```
 
 Then pull and start it without building locally:

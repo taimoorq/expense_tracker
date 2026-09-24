@@ -14,6 +14,10 @@ module Platform
       def call
         @context = Context.for(entry)
         return if context.blank?
+        protected_changes = entry.previous_changes.keys & %w[actual_amount status source_account_id destination_account_id occurred_on occurred_at]
+        if protected_changes.any? && (direct_recorded_actual? || entry.provider_transactions.where.not(financial_transaction_id: nil).exists? || PaymentSettlement.joins(:payment_commitment).where(payment_commitments: { expense_entry_id: entry.id }).exists?)
+          raise WriteRejected, "Review the accepted activity or cleared payment before changing its amount, date, status, or accounts."
+        end
 
         Platform::Operations::Executor.call(
           workspace: workspace,
@@ -50,6 +54,14 @@ module Platform
       attr_reader :context, :entry, :mapping_store
 
       delegate :membership, :workspace, to: :context
+
+      def direct_recorded_actual?
+        mapping = workspace.legacy_record_mappings.status_mapped.find_by(legacy_record_type: "ExpenseEntry", legacy_record_id: entry.id, target_record_type: "BudgetItem")
+        return false unless mapping
+        workspace.budget_allocations.where(budget_item_id: mapping.target_record_id).joins(:financial_transaction)
+          .where(financial_transactions: { state: "posted", origin_kind: "manual" })
+          .where("financial_transactions.idempotency_key LIKE ?", "operation:%").exists?
+      end
 
       def sync_period
         month = entry.budget_month
@@ -139,11 +151,12 @@ module Platform
       end
 
       def sync_actual(item, operation)
+        Accounts::PaymentReservations.ensure_for!(entry)
         linked_transactions = mapped_linked_transactions
         if linked_transactions.any?
           reverse_synthetic_transaction(operation)
-          linked_transactions.each { |transaction| sync_allocation(item, transaction, "exact_import") }
-        elsif !entry.paid? || covered_by_legacy_import?
+          linked_transactions.each { |transaction| sync_allocation(item, transaction, "exact_import") unless transaction.provider_transactions.exists? || transaction.idempotency_key.to_s.start_with?("operation:") }
+        elsif !entry.paid? || covered_by_legacy_import? || entry.payment_commitments.where(state: "reserved").exists?
           reverse_synthetic_transaction(operation)
         else
           sync_synthetic_transaction(item, operation)
@@ -151,13 +164,17 @@ module Platform
       end
 
       def mapped_linked_transactions
-        entry.account_activities.filter_map do |activity|
+        imported = entry.account_activities.filter_map do |activity|
           transaction = mapping_store.target_for(source: activity, target_class: FinancialTransaction)
           if transaction.blank?
             raise MissingImportedTransaction, "Imported activity #{activity.id} has not been backfilled"
           end
           transaction
         end
+        item = mapping_store.target_for(source: entry, target_class: BudgetItem)
+        manual = item ? item.financial_transactions.where(origin_kind: "manual", state: "posted").where("financial_transactions.idempotency_key LIKE ?", "operation:%").to_a : []
+        (manual + imported + entry.provider_transactions.where(state: %w[accepted changed]).includes(:financial_transaction).filter_map(&:financial_transaction) +
+          PaymentSettlement.joins(:payment_commitment).where(payment_commitments: { expense_entry_id: entry.id }).includes(:financial_transaction).map(&:financial_transaction)).uniq
       end
 
       def sync_synthetic_transaction(item, operation)
@@ -170,6 +187,8 @@ module Platform
         transaction.assign_attributes(
           budget_workspace: workspace,
           effective_on: entry.occurred_on || entry.budget_month.month_on,
+          transacted_at: entry.occurred_at,
+          timing_time_zone: entry.timing_time_zone,
           description: entry.payee.presence || entry.category.presence || "Budget item actual",
           payee: entry.payee,
           memo: entry.notes,
@@ -241,7 +260,7 @@ module Platform
 
       def reverse_synthetic_transaction(operation)
         transaction = mapping_store.target_for(source: entry, target_class: FinancialTransaction)
-        return if transaction.blank? || transaction.state_reversed?
+        return if transaction.blank? || transaction.state_reversed? || !transaction.origin_kind_manual?
 
         transaction.update!(state: "reversed")
         Audit::Recorder.call(

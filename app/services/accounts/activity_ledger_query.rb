@@ -53,7 +53,7 @@ module Accounts
         scope = user.expense_entries
           .where("source_account_id = :account_id OR destination_account_id = :account_id", account_id: account.id)
           .where.not(occurred_on: nil)
-          .order(occurred_on: :desc, created_at: :desc)
+          .order(Arel.sql(Accounts::TransactionTiming.sql(table: "expense_entries", date: "occurred_on", timestamp: "occurred_at", incoming: "expense_entries.section = 0", descending: true)))
         scope = scope.includes(:budget_month) if preload_ledger_associations
         scope = scope.where(occurred_on: starts_on..) if starts_on
         scope = scope.where(occurred_on: ..ends_on) if ends_on
@@ -74,6 +74,9 @@ module Accounts
     end
 
     def merchant_matches?(row)
+      if filters[:recurring_candidate].present?
+        return RecurringCandidates::Detector.key(row.description) == filters[:recurring_candidate] && RecurringCandidates::Detector.eligible?(row)
+      end
       return true if merchant.blank?
 
       Accounts::ActivityInsights::MerchantNormalizer.call(row.description) == merchant

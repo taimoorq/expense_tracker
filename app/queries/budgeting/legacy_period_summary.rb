@@ -36,10 +36,12 @@ module Budgeting
     attr_reader :budget_month
 
     def entries
-      @entries ||= budget_month.expense_entries
-        .where.not(status: ExpenseEntry.statuses.fetch("skipped"))
-        .includes(:account_activities, source_account: :account_activity_imports, destination_account: :account_activity_imports)
-        .to_a
+      @entries ||= begin
+        rows = budget_month.expense_entries.where.not(status: ExpenseEntry.statuses.fetch("skipped")).to_a
+        paid = rows.select(&:paid?)
+        ActiveRecord::Associations::Preloader.new(records: paid, associations: :account_activities).call if paid.any?
+        rows
+      end
     end
 
     def totals_by_flow
@@ -59,12 +61,23 @@ module Budgeting
     end
 
     def covered_by_import?(entry)
-      account = entry.source_account || entry.destination_account
-      return false if account.blank? || entry.occurred_on.blank?
+      account_id = entry.source_account_id || entry.destination_account_id
+      return false if account_id.blank? || entry.occurred_on.blank?
 
-      account.account_activity_imports.any? do |activity_import|
+      imports_by_account.fetch(account_id, []).any? do |activity_import|
         activity_import.started_on.present? && activity_import.ended_on.present? &&
           activity_import.started_on <= entry.occurred_on && activity_import.ended_on >= entry.occurred_on
+      end
+    end
+
+    def imports_by_account
+      @imports_by_account ||= begin
+        account_ids = entries.filter_map do |entry|
+          next unless entry.paid? && entry.account_activities.empty? && entry.occurred_on.present?
+
+          entry.source_account_id || entry.destination_account_id
+        end.uniq
+        budget_month.user.account_activity_imports.where(account_id: account_ids).to_a.group_by(&:account_id)
       end
     end
 

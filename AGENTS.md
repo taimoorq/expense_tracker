@@ -29,7 +29,7 @@ The product is intentionally opinionated around a month-based workflow:
 - reports keep exact values and source records close to each graph
 - close freezes the period evidence; Backup v2 and restore checkpoints protect recovery
 
-This is not a bank-sync-first app. Manual planning, recurring reuse, account context, privacy, and self-hosting are the core value proposition.
+Connected and manual tracking are equally complete paths in one monthly workspace. SimpleFIN optionally supplies read-only source evidence; explicit review, manual entry, recurring reuse, account context, privacy, and self-hosting remain core.
 
 ## Core Features
 
@@ -171,7 +171,7 @@ Current GitHub Actions behavior:
 - lint runs `bin/rubocop -f github`
 - Ruby security scans run `bin/brakeman --no-pager` and `bin/bundler-audit`
 - JS dependency scanning runs `bin/importmap audit`
-- main test job runs `bin/rails db:test:prepare test`
+- main test job runs Rails tests and the RSpec model, request, service, job, database, configuration, and query suites; `config/ci.rb` is the local check manifest
 - system test job builds Tailwind assets and runs `bundle exec rspec spec/system`
 
 When changing behavior, prefer running the narrowest relevant test first, then broaden out if the change touches shared flows.
@@ -218,6 +218,7 @@ Compose services:
 
 - `db` uses PostgreSQL 16
 - `web` runs `bin/dev`
+- `worker` runs `bin/jobs start` for imports, backups, and optional bank refreshes
 
 `bin/dev` uses `Procfile.dev`, which currently starts:
 

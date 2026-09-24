@@ -2,7 +2,7 @@ module AccountPageSetup
   extend ActiveSupport::Concern
 
   INDEX_PAGE_ATTRIBUTES = %i[
-    accounts account_balance_rows net_worth_accounts assets_total liabilities_total net_worth_total
+    accounts account_balance_rows net_worth_accounts assets_total liabilities_total net_worth_total net_worth_complete net_worth_coverage_count
     latest_snapshot latest_balance_source accounts_with_balance_sources_count accounts_missing_balance_sources_count
     accounts_with_snapshots_count accounts_missing_snapshots_count trend_labels trend_values trend_rows calculation_version
   ].freeze
@@ -16,15 +16,20 @@ module AccountPageSetup
   def load_accounts_index_page
     page_data = Accounts::Summary.new(user: current_user, include_trend: true).call
     assign_accounts_index_data(page_data)
+    @bank_evidence = BankConnections::AccountEvidence.call(@accounts)
+    @tracked_account_rows = @account_balance_rows.map do |summary|
+      Accounts::TrackedAccountRow.new(summary: summary, evidence: @bank_evidence[summary.fetch(:account).id])
+    end
     @account = current_user.accounts.new
   end
 
   def load_account_detail_page
-    @account ||= current_user.accounts.includes(:account_snapshots).find(params[:id])
+    @account ||= current_user.accounts.find(params[:id])
     @account_snapshot = AccountSnapshot.new(account: @account, recorded_on: Date.current)
     @account_view = normalized_account_view
     @selected_range = normalized_account_range
     assign_account_detail_data(account_detail_page_data)
+    @bank_evidence = BankConnections::AccountEvidence.call([ @account ])
     @activity_ledger = account_activity_ledger if @account_view == "activity"
   end
 
@@ -45,7 +50,7 @@ module AccountPageSetup
   end
 
   def activity_ledger_filters
-    params.permit(:source, :direction, :starts_on, :ends_on, :merchant, :classification)
+    params.permit(:source, :direction, :starts_on, :ends_on, :merchant, :classification, :recurring_candidate)
   end
 
   def normalized_account_view

@@ -26,8 +26,7 @@ module Platform
         end
       end
 
-      def self.recent(user:, limit: LIMIT)
-        workspace = user.legacy_owned_budget_workspace
+      def self.recent(user:, workspace:, limit: LIMIT)
         return [] if workspace.blank?
 
         scope = workspace.operation_runs

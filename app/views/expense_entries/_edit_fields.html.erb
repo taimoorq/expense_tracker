@@ -82,3 +82,9 @@
     <%= form.text_field :notes, class: "fb-input" %>
   <% end %>
 </div>
+
+<details class="sm:col-span-2 ta-muted text-sm" <%= "open" if form.object.transaction_time.present? %>>
+  <summary class="cursor-pointer">Transaction time (optional)</summary>
+  <div class="mt-2 max-w-xs"><%= form.label :transaction_time, "Time", class: "fb-label" %><%= form.time_field :transaction_time, step: 1, class: "fb-input" %></div>
+  <p class="mt-1">Timezone: <%= form.object.timing_zone_name %>. Leave blank to use the usual daily order.</p>
+</details>

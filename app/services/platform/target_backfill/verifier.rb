@@ -86,39 +86,45 @@ module Platform
         mismatch_count = 0
         unclassified_count = 0
 
-        user.expense_entries
-          .paid
-          .includes(:account_activities, source_account: :account_activity_imports, destination_account: :account_activity_imports)
-          .find_each do |entry|
-          item = mapped_target(entry, BudgetItem)
-          if item.blank?
-            unclassified_count += 1
-            next
-          end
+        user.expense_entries.paid.includes(:account_activities).find_in_batches do |entries|
+          account_ids = entries.filter_map do |entry|
+            next unless entry.account_activities.empty? && entry.occurred_on.present?
 
-          linked_amount = entry.account_activities.sum(&:amount)
-          expected_amount = if entry.account_activities.any?
-            linked_amount
-          elsif paid_entry_covered_by_import?(entry)
-            unclassified_count += 1
-            0
-          else
-            entry.effective_amount
+            entry.source_account_id || entry.destination_account_id
+          end.uniq
+          imports_by_account = user.account_activity_imports.where(account_id: account_ids).to_a.group_by(&:account_id)
+
+          entries.each do |entry|
+            item = mapped_target(entry, BudgetItem)
+            if item.blank?
+              unclassified_count += 1
+              next
+            end
+
+            linked_amount = entry.account_activities.sum(&:amount)
+            expected_amount = if entry.account_activities.any?
+              linked_amount
+            elsif paid_entry_covered_by_import?(entry, imports_by_account)
+              unclassified_count += 1
+              0
+            else
+              entry.effective_amount
+            end
+            mismatch_count += 1 unless item.budget_allocations.sum(:amount) == expected_amount
           end
-          mismatch_count += 1 unless item.budget_allocations.sum(:amount) == expected_amount
         end
 
         { mismatch_count: mismatch_count, unclassified_count: unclassified_count }
       end
 
-      def paid_entry_covered_by_import?(entry)
-        account = entry.source_account || entry.destination_account
-        return false if account.blank? || entry.occurred_on.blank?
+      def paid_entry_covered_by_import?(entry, imports_by_account)
+        account_id = entry.source_account_id || entry.destination_account_id
+        return false if account_id.blank? || entry.occurred_on.blank?
 
-        account.account_activity_imports
-          .where(started_on: ..entry.occurred_on)
-          .where(ended_on: entry.occurred_on..)
-          .exists?
+        imports_by_account.fetch(account_id, []).any? do |activity_import|
+          activity_import.started_on.present? && activity_import.ended_on.present? &&
+            activity_import.started_on <= entry.occurred_on && activity_import.ended_on >= entry.occurred_on
+        end
       end
 
       def overallocated_transaction_count

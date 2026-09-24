@@ -1,0 +1,14 @@
+<%= render layout: "shared/row_actions", locals: { label: "Actions for #{row.account.name}", title: row.account.name } do %>
+    <% if row.snapshot_action? && row.primary_action != :snapshot %>
+      <%= link_to row.snapshot_label, row.snapshot ? edit_account_account_snapshot_path(row.account, row.snapshot) : new_account_account_snapshot_path(row.account), data: { turbo_frame: frame_id } %>
+    <% end %>
+    <%= link_to "Import activity", new_account_account_activity_import_path(row.account) %>
+    <%= link_to "Edit account", edit_account_path(row.account) %>
+    <% if row.mapping %>
+      <div class="ta-row-actions-divider"></div>
+      <% if row.bank_balance && row.primary_action != :review %>
+        <%= link_to "Review bank balance", reconcile_connected_account_path(row.mapping) %>
+      <% end %>
+      <%= link_to "Manage connection", bank_connection_path(row.mapping.bank_connection, anchor: dom_id(row.mapping)) %>
+    <% end %>
+<% end %>

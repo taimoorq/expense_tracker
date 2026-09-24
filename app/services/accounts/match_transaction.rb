@@ -35,6 +35,7 @@ module Accounts
         redacted_parameters: { "field_names" => %w[amount budget_item_id financial_transaction_id match_kind] },
         on_replay: ->(reference) { BudgetAllocation.find(reference.fetch("id")) }
       ) do |operation|
+        workspace.lock!
         transaction.lock!
         budget_item.lock!
         validate_state!
@@ -81,9 +82,11 @@ module Accounts
     def validate_state!
       raise InvalidMatch, "only posted transactions can be matched" unless transaction.state_posted?
       raise InvalidMatch, "only open budget items can be matched" unless budget_item.state_open?
-      unless budget_item.budget_period.state_open? || budget_item.budget_period.state_reopened?
-        raise InvalidMatch, "Reopen the closed month before matching late activity to its plan."
-      end
+      raise InvalidMatch, "Choose a plan with the same money movement." unless transaction.flow_kind == budget_item.flow_kind
+
+      OpenPeriodGuard.call(workspace: workspace, dates: [ transaction.effective_on, budget_item.budget_period.starts_on ])
+    rescue ArgumentError => error
+      raise InvalidMatch, error.message
     end
 
     def validate_available_amount!

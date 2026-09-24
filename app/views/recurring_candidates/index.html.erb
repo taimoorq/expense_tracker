@@ -1,0 +1,35 @@
+<%= render "header" %>
+<%= turbo_frame_tag "recurring_review", data: { turbo_action: "advance", controller: "recurring-review", action: "turbo:frame-load->recurring-review#refresh" } do %>
+  <%= render "feedback" %>
+  <h2 class="sr-only" data-recurring-review-target="heading">Recurring candidate queue</h2>
+  <nav class="mb-5 flex flex-wrap gap-2" aria-label="Candidate review status">
+    <% { "unreviewed" => "Needs review", "linked" => "Linked", "ignored" => "Ignored" }.each do |status, label| %>
+      <%= link_to "#{label} (#{@counts.fetch(status, 0)})", account_recurring_candidates_path(@account, status: status), class: status == @filter ? "fb-btn-primary" : "fb-btn-secondary", aria: { current: status == @filter ? "page" : nil } %>
+    <% end %>
+  </nav>
+  <section class="ta-section-frame overflow-hidden" aria-label="Recurring candidates">
+    <% if @candidates.empty? %>
+      <div class="p-6"><h2 class="text-lg font-semibold">No candidates in this view</h2><p class="ta-muted mt-2">New posted activity can reveal more patterns. Your linked and ignored decisions stay saved.</p></div>
+    <% else %>
+      <ul class="divide-y divide-slate-200">
+        <% @candidates.each do |candidate| %>
+          <li class="flex flex-wrap items-center justify-between gap-4 p-4" id="candidate_<%= candidate[:key] %>">
+            <div class="min-w-0"><h2 class="font-semibold break-words"><%= candidate[:merchant] %></h2>
+              <p class="ta-muted mt-1"><%= number_to_currency(candidate[:estimated_amount]) %> estimated charge · <%= pluralize(candidate[:months_seen], "month") %></p>
+              <p class="ta-muted text-xs"><%= candidate[:evidence_available] ? (candidate[:status] == :active ? "Recent in recorded history" : "Previously recurring") : "Supporting evidence is no longer available" %></p>
+            </div>
+            <%= link_to @filter == "unreviewed" ? "Review candidate" : "View decision", account_recurring_candidate_path(@account, candidate[:key]), class: "fb-btn-secondary", aria: { label: "Review #{candidate[:merchant]}" } %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+  <nav class="mt-4 flex items-center justify-between gap-4 text-sm" aria-label="Candidate pages">
+    <span class="ta-muted"><%= @total %> in this view · page <%= @page %></span>
+    <div class="flex gap-3">
+      <% if @page > 1 %><%= link_to "Previous", account_recurring_candidates_path(@account, status: @filter, page: @page - 1), class: "fb-btn-secondary" %><% end %>
+      <% if @page * 12 < @total %><%= link_to "Next", account_recurring_candidates_path(@account, status: @filter, page: @page + 1), class: "fb-btn-secondary" %><% end %>
+    </div>
+  </nav>
+  <p class="mt-5"><%= link_to "Back to account insights", account_path(@account, view: "insights"), class: "text-sm font-semibold text-indigo-700", data: { turbo_frame: "_top" } %></p>
+<% end %>

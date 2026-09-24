@@ -1,0 +1,45 @@
+<% row = Budgeting::FullListRow.new(entry) %>
+<% reason_for_entry = entry.category.presence || entry.section.humanize %>
+<tr id="<%= dom_id(entry) %>"
+  data-expense-entries-filter-target="row"
+  data-date="<%= entry.occurred_on&.iso8601 %>"
+  data-payee="<%= entry.payee.to_s %>"
+  data-reason="<%= reason_for_entry.to_s %>"
+  data-value="<%= reason_for_entry.to_s.downcase %>"
+  data-account="<%= entry.account_name.to_s %>"
+  data-status="<%= entry.status %>"
+  style="view-transition-name: table-entry-<%= dom_id(entry) %>; view-transition-class: ta-vt-row;">
+  <td class="ta-full-list-date">
+    <% if entry.occurred_on %>
+      <time datetime="<%= entry.occurred_on.iso8601 %>" aria-label="<%= entry.occurred_on.strftime('%B %-d, %Y') %>"><%= entry.occurred_on.strftime('%b %-d') %></time>
+      <span class="ta-full-list-detail block"><%= entry.occurred_on.strftime('%a') %></span>
+    <% else %>
+      <span class="ta-full-list-detail">No date</span>
+    <% end %>
+  </td>
+  <td class="ta-full-list-payee">
+    <div class="ta-full-list-name" data-full-list-payee><%= entry.payee.presence || "No payee" %></div>
+    <div class="ta-full-list-detail mt-1"><%= [entry.category.presence, entry.section.humanize, entry.account_name.presence || "No account"].compact.join(" · ") %></div>
+  </td>
+  <td class="whitespace-nowrap">
+    <span class="ta-full-list-status ta-full-list-status--<%= entry.status %>">
+      <%= tabler_icon(row.status_icon, classes: "h-4 w-4 shrink-0") %>
+      <%= entry.status.humanize %>
+    </span>
+  </td>
+  <td class="text-right whitespace-nowrap" data-full-list-amount>
+    <div class="ta-full-list-number <%= 'ta-full-list-income' if row.income? %>"><%= row.amount.nil? ? "—" : "#{row.sign}#{number_to_currency(row.amount)}" %></div>
+    <% if row.amount.nil? %>
+      <div class="ta-full-list-detail"><%= row.missing_amount_label %></div>
+    <% end %>
+    <% if (comparison = row.comparison) %>
+      <div class="ta-full-list-detail"><%= comparison.first %> <%= number_to_currency(comparison.last) %></div>
+    <% end %>
+  </td>
+  <td>
+    <%= render "expense_entries/row_actions", budget_month: budget_month, entry: entry, timeline_view: timeline_view, selected_review: selected_review, read_only: read_only, quiet: true %>
+  </td>
+  <% if running_balances %>
+    <%= render "expense_entries/balance_cell", entry: entry, balance: running_balances.fetch(entry.id), full_list: true %>
+  <% end %>
+</tr>

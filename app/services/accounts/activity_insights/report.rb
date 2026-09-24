@@ -4,10 +4,6 @@ module Accounts
       LEDGER_LIMIT = 75
       ROLLUP_LIMIT = 12
       SUBSCRIPTION_LIMIT = 12
-      RECENT_ACTIVE_WINDOW = 45.days
-      PAST_OVERDUE_WINDOW = 60.days
-      VARIABLE_CATEGORY_PATTERN = /\b(?:restaurant|restaurants|dining|supermarket|supermarkets|grocery|groceries|gas|gasoline|food|travel|automotive)\b/i
-      SUBSCRIPTION_HINT_PATTERN = /\b(?:subscription|member|membership|stream|cloud|hosting|storage|software|internet|wireless|phone|insurance|substack|youtube|netflix|spotify|github|anthropic|aws|geico|tesla|prisma|fly\.io)\b/i
 
       def initialize(account:)
         @account = account
@@ -36,7 +32,7 @@ module Accounts
       attr_reader :account
 
       def activities
-        @activities ||= account.account_activities.includes(:account_activity_import).recent_first.to_a
+        @activities ||= Accounts::ActivityEvidence.call(account: account)
       end
 
       def latest_rows
@@ -107,80 +103,13 @@ module Accounts
 
       def recurring_candidates
         @recurring_candidates ||= begin
-          latest_date = charges.map(&:transaction_on).max
-          candidates = merchant_rollups.filter_map do |rollup|
-            build_recurring_candidate(rollup, latest_date)
-          end
-
+          candidates = Accounts::RecurringCandidates::Query.new(account: account, activities: activities).call
+          unresolved = candidates.select { |candidate| candidate[:review_status] == "unreviewed" && candidate[:evidence_available] }
           {
-            active: candidates.select { |candidate| candidate.fetch(:status) == :active }.sort_by { |candidate| [ -confidence_rank(candidate), -candidate.fetch(:last_on).jd ] },
-            past: candidates.select { |candidate| candidate.fetch(:status) == :past }.sort_by { |candidate| [ candidate.fetch(:last_on), -confidence_rank(candidate) ] }
+            active: unresolved.select { |candidate| candidate[:status] == :active },
+            past: unresolved.select { |candidate| candidate[:status] == :past }
           }
         end
-      end
-
-      def build_recurring_candidate(rollup, latest_date)
-        return if latest_date.blank?
-        return if rollup.fetch(:count) < 2
-        return if recurring_exclusion?(rollup)
-
-        rows = rollup.fetch(:rows)
-        months_seen = rows.map { |row| row.transaction_on.beginning_of_month }.uniq.sort
-        return if months_seen.size < 2
-
-        last_on = rows.map(&:transaction_on).max
-        stable = stable_amounts?(rows)
-        hinted = subscription_hint?(rollup)
-        return if !stable && !hinted
-
-        status = if last_on >= latest_date - RECENT_ACTIVE_WINDOW
-          :active
-        elsif months_seen.size >= 3 && last_on < latest_date - PAST_OVERDUE_WINDOW
-          :past
-        end
-        return if status.blank?
-
-        {
-          merchant: rollup.fetch(:merchant),
-          estimated_amount: median(rows.map { |row| row.amount.to_d }),
-          last_on: last_on,
-          months_seen: months_seen.size,
-          count: rollup.fetch(:count),
-          confidence: confidence(months_seen: months_seen, stable: stable, hinted: hinted),
-          status: status,
-          category: rollup.fetch(:category),
-          rows: rows
-        }
-      end
-
-      def recurring_exclusion?(rollup)
-        category = rollup.fetch(:category).to_s
-        category.match?(VARIABLE_CATEGORY_PATTERN) && !subscription_hint?(rollup)
-      end
-
-      def subscription_hint?(rollup)
-        [ rollup.fetch(:merchant), rollup.fetch(:category), rollup.fetch(:activity_type) ].join(" ").match?(SUBSCRIPTION_HINT_PATTERN)
-      end
-
-      def stable_amounts?(rows)
-        amounts = rows.map { |row| row.amount.to_d }.sort
-        return false if amounts.empty?
-
-        baseline = median(amounts)
-        return true if baseline.zero?
-
-        (amounts.last - amounts.first) <= (baseline * 0.15)
-      end
-
-      def confidence(months_seen:, stable:, hinted:)
-        return :high if months_seen.size >= 3 && stable && hinted
-        return :medium if stable || hinted
-
-        :low
-      end
-
-      def confidence_rank(candidate)
-        { high: 3, medium: 2, low: 1 }.fetch(candidate.fetch(:confidence), 0)
       end
 
       def merchant_for(activity)
@@ -189,15 +118,6 @@ module Accounts
 
       def primary_value(values)
         values.compact_blank.tally.max_by { |_value, count| count }&.first
-      end
-
-      def median(values)
-        sorted = values.sort
-        midpoint = sorted.length / 2
-
-        return sorted[midpoint] if sorted.length.odd?
-
-        (sorted[midpoint - 1] + sorted[midpoint]) / 2
       end
     end
   end

@@ -26,6 +26,7 @@ module Overview
     end
 
     def legacy_payload
+      ActiveRecord::Associations::Preloader.new(records: year_budget_months, associations: :expense_entries).call if year_budget_months.any?
       Budgeting::YearCashflowSankey.cached_payload(
         user: user,
         year: year,
@@ -36,7 +37,6 @@ module Overview
     def year_budget_months
       @year_budget_months ||= user.budget_months
         .where(month_on: Date.new(year, 1, 1)..Date.new(year, 12, 31))
-        .includes(:expense_entries)
         .order(:month_on)
         .to_a
     end

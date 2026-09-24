@@ -55,7 +55,7 @@ RSpec.describe "Activity", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to match(/Unmatched.*?105/m)
-    expect(response.body).to include("Showing the newest 100 records")
+    expect(response.body).to include("Older activity")
     expect(response.body.scan("data-activity-row").count).to eq(100)
   end
 

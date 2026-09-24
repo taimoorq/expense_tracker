@@ -115,7 +115,7 @@ RSpec.describe "target account reconciliation commands" do
         amount: 25,
         idempotency_key: "late-closed-match"
       )
-    end.to raise_error(Accounts::MatchTransaction::InvalidMatch, /Reopen the closed month/)
+    end.to raise_error(Accounts::MatchTransaction::InvalidMatch, /Reopen the affected month/)
 
     expect(workspace.budget_allocations).to be_empty
   end

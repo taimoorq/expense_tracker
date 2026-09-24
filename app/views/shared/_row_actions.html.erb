@@ -1,0 +1,8 @@
+<%# locals: (label:, title:) %>
+<details class="ta-row-actions" data-controller="row-actions" data-action="click@window->row-actions#closeOutside focusin@window->row-actions#closeOutside keydown.esc->row-actions#closeOnEscape turbo:before-cache@document->row-actions#close">
+  <summary class="ta-row-actions-trigger" aria-label="<%= label %>" data-row-actions-target="trigger"><%= app_icon("ellipsis-horizontal", classes: "h-5 w-5") %></summary>
+  <div class="ta-row-actions-panel" data-action="click->row-actions#select">
+    <p class="ta-row-actions-label"><%= title %></p>
+    <%= yield %>
+  </div>
+</details>

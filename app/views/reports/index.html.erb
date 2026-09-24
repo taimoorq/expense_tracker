@@ -7,20 +7,20 @@
 <div class="space-y-6">
   <section class="ta-section-frame" aria-labelledby="plan-actual-report-title">
     <div class="ta-section-header flex flex-wrap items-start justify-between gap-3">
-      <div><p class="ta-page-eyebrow">Plan versus actual</p><h2 id="plan-actual-report-title" class="ta-section-title mt-1">Monthly outflow</h2><p class="mt-1 text-sm text-slate-600">Open months use live values; closed months use their immutable close snapshots. Calculations: <%= @report.calculation_version %>.</p></div>
+      <div><p class="ta-page-eyebrow">Plan versus actual</p><h2 id="plan-actual-report-title" class="ta-section-title mt-1">Monthly outflow</h2><p class="mt-1 text-sm text-slate-600">Open months use live values; closed months use their immutable close snapshots. Matched to plan follows the plan month. Recorded actual follows transaction dates and includes unplanned spending. A cross-month match can make these totals differ. Transfers are separate.</p></div>
       <span class="ta-status-badge bg-slate-100 text-slate-700"><%= pluralize(@report.period_rows.size, "month") %></span>
     </div>
     <% if @report.period_rows.any? %>
-      <div class="grid gap-0 border-t border-slate-200 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
-        <div class="min-h-80 border-b border-slate-200 p-4 xl:border-b-0 xl:border-r sm:p-5">
-          <canvas data-controller="chart" data-chart-type-value="bar" data-chart-title-value="Planned and actual monthly outflow" data-chart-labels-value="<%= @report.labels.to_json %>" data-chart-datasets-value="<%= [
+      <div class="grid gap-0 border-t border-slate-200">
+        <div class="relative h-80 min-w-0 border-b border-slate-200 p-4 sm:p-5">
+          <canvas data-controller="chart" data-chart-type-value="bar" data-chart-title-value="Planned and matched monthly outflow" data-chart-labels-value="<%= @report.labels.to_json %>" data-chart-datasets-value="<%= [
             { label: "Planned", data: @report.planned_outflow, backgroundColor: "rgba(79, 70, 229, 0.35)", borderColor: "#4f46e5", borderWidth: 1 },
-            { label: "Actual", data: @report.actual_outflow, backgroundColor: "rgba(15, 118, 110, 0.55)", borderColor: "#0f766e", borderWidth: 1 }
+            { label: "Matched to plan", data: @report.actual_outflow, backgroundColor: "rgba(15, 118, 110, 0.55)", borderColor: "#0f766e", borderWidth: 1 }
           ].to_json %>" data-chart-options-value="<%= { scales: { y: { beginAtZero: true } } }.to_json %>"></canvas>
         </div>
         <div class="max-h-96 overflow-auto">
-          <table class="min-w-full text-sm"><caption class="sr-only">Accessible values for the planned and actual monthly outflow chart</caption><thead class="sticky top-0 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-4 py-3">Month</th><th class="px-4 py-3">Source</th><th class="px-4 py-3 text-right">Planned</th><th class="px-4 py-3 text-right">Actual</th><th class="px-4 py-3 text-right">Remaining</th></tr></thead><tbody class="divide-y divide-slate-200">
-            <% @report.period_rows.each do |row| %><tr><td class="px-4 py-3 font-semibold"><%= link_to row.month.label, row.source_path, class: "hover:text-indigo-700" %></td><td class="px-4 py-3"><span class="ta-status-badge <%= row.close_id ? "bg-slate-100 text-slate-800" : "bg-sky-100 text-sky-800" %>"><%= row.source_label %></span><p class="mt-1 text-xs text-slate-500"><%= row.calculation_version %><%= row.closed_at ? " · closed #{l(row.closed_at.to_date, format: :long)}" : "" %></p></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(row.summary.planned_outflow) %></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(row.summary.actual_outflow) %></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(row.summary.remaining_outflow) %></td></tr><% end %>
+          <table class="min-w-full text-sm"><caption class="sr-only">Monthly outflow: planned, matched, recorded, unallocated, and remaining</caption><thead class="sticky top-0 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-4 py-3">Month</th><th class="px-4 py-3">Source</th><th class="px-4 py-3 text-right">Planned</th><th class="px-4 py-3 text-right">Matched to plan</th><th class="px-4 py-3 text-right">Recorded actual</th><th class="px-4 py-3 text-right">Unallocated actual</th><th class="px-4 py-3 text-right">Remaining</th></tr></thead><tbody class="divide-y divide-slate-200">
+            <% @report.period_rows.each do |row| %><tr><td class="px-4 py-3 font-semibold"><%= link_to row.month.label, row.source_path, class: "hover:text-indigo-700" %></td><td class="px-4 py-3"><span class="ta-status-badge <%= row.close_id ? "bg-slate-100 text-slate-800" : "bg-sky-100 text-sky-800" %>"><%= row.source_label %></span><p class="mt-1 text-xs text-slate-500"><%= row.calculation_version %><%= row.closed_at ? " · closed #{l(row.closed_at.to_date, format: :long)}" : "" %></p></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(row.summary.planned_outflow) %></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(row.summary.actual_outflow) %></td><td class="ta-number px-4 py-3 text-right"><%= row.recorded_totals ? number_to_currency(row.recorded_totals.fetch("outflow").to_d) : "Not frozen in this version" %></td><td class="ta-number px-4 py-3 text-right"><%= row.recorded_totals ? number_to_currency(row.recorded_totals.fetch("unallocated_outflow").to_d) : "—" %></td><td class="ta-number px-4 py-3 text-right"><%= number_to_currency(row.summary.remaining_outflow) %></td></tr><% end %>
           </tbody></table>
         </div>
       </div>
@@ -31,11 +31,11 @@
 
   <section class="grid gap-6 xl:grid-cols-2">
     <article class="ta-section-frame" aria-labelledby="category-report-title">
-      <div class="ta-section-header"><p class="ta-page-eyebrow">Spending</p><h2 id="category-report-title" class="ta-section-title mt-1">Actual outflow by category</h2><p class="mt-1 text-sm text-slate-600">Top categories across the months shown above.</p></div>
+      <div class="ta-section-header"><p class="ta-page-eyebrow">Spending</p><h2 id="category-report-title" class="ta-section-title mt-1">Recorded outflow by category</h2><p class="mt-1 text-sm text-slate-600">Top categories across the months shown above.</p></div>
       <% if @report.category_labels.any? %>
-        <div class="min-h-72 border-t border-slate-200 p-4"><canvas data-controller="chart" data-chart-type-value="doughnut" data-chart-title-value="Actual outflow by category" data-chart-labels-value="<%= @report.category_labels.to_json %>" data-chart-data-value="<%= @report.category_values.to_json %>"></canvas></div>
+        <div class="min-h-72 border-t border-slate-200 p-4"><canvas data-controller="chart" data-chart-type-value="doughnut" data-chart-title-value="Recorded outflow by category" data-chart-labels-value="<%= @report.category_labels.to_json %>" data-chart-data-value="<%= @report.category_values.to_json %>"></canvas></div>
         <ul class="divide-y divide-slate-200 border-t border-slate-200"><% @report.category_rows.each do |row| %><li class="flex justify-between gap-3 px-5 py-3 text-sm"><%= link_to row.label, row.source_path, class: "font-semibold text-slate-900 hover:text-indigo-700" %><strong class="ta-number"><%= number_to_currency(row.value) %></strong></li><% end %></ul>
-      <% else %><div class="border-t border-slate-200 px-5 py-10 text-center text-sm text-slate-600">Paid outflows with categories will appear here.</div><% end %>
+      <% else %><div class="border-t border-slate-200 px-5 py-10 text-center text-sm text-slate-600">Recorded spending, including Uncategorized, will appear here.</div><% end %>
     </article>
 
     <article class="ta-section-frame" aria-labelledby="net-worth-report-title">

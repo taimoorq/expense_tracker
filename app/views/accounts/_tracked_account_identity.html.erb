@@ -1,0 +1,5 @@
+<%= link_to row.account.name, account_path(row.account), class: "ta-account-name" %>
+<p class="ta-account-meta mt-1"><%= row.account_metadata %></p>
+<% if row.account_flags.present? %>
+  <p class="ta-account-meta mt-1"><%= row.account_flags %></p>
+<% end %>

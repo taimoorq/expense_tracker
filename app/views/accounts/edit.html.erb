@@ -4,8 +4,7 @@
 <% breadcrumb "Edit Account" %>
 
 <% page_header title: "Edit Account",
-  eyebrow: "Account metadata",
-  subtitle: "Update how this account is named, grouped, and included in reporting." %>
+  subtitle: @account.name %>
 
 <section class="ta-section-frame max-w-4xl p-5">
   <%= render "form", account: @account %>

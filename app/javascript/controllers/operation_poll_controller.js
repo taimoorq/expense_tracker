@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static values = { active: Boolean, interval: { type: Number, default: 2000 } }
+  static values = { url: String, active: Boolean, interval: { type: Number, default: 2000 } }
 
   connect() {
     this.schedule()
@@ -18,7 +18,8 @@ export default class extends Controller {
       if (!this.element.isConnected) return
 
       const frame = this.element.closest("turbo-frame")
-      if (typeof frame?.reload === "function") frame.reload()
+      if (frame && this.hasUrlValue && !frame.src) frame.src = this.urlValue
+      else if (typeof frame?.reload === "function") frame.reload()
       this.schedule()
     }, this.intervalValue)
   }

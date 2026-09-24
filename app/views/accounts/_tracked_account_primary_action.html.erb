@@ -1,0 +1,7 @@
+<% if row.primary_action == :connection %>
+  <%= link_to "Check connection", bank_connection_path(row.mapping.bank_connection, anchor: dom_id(row.mapping)), class: "ta-account-next-action" %>
+<% elsif row.primary_action == :review %>
+  <%= link_to "Review balance", reconcile_connected_account_path(row.mapping), class: "ta-account-next-action" %>
+<% elsif row.primary_action == :snapshot %>
+  <%= link_to row.snapshot_label, row.snapshot ? edit_account_account_snapshot_path(row.account, row.snapshot) : new_account_account_snapshot_path(row.account), class: "ta-account-next-action", data: { turbo_frame: frame_id } %>
+<% end %>

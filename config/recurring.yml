@@ -10,6 +10,10 @@
 #     schedule: at 5am every day
 
 development:
+  dispatch_due_bank_refreshes:
+    class: BankConnections::DispatchDueJob
+    queue: maintenance
+    schedule: every 5 minutes
   dispatch_due_backup_schedules:
     class: Platform::Backup::DispatchDueSchedulesJob
     queue: maintenance
@@ -20,6 +24,10 @@ development:
     schedule: every hour at minute 27
 
 production:
+  dispatch_due_bank_refreshes:
+    class: BankConnections::DispatchDueJob
+    queue: maintenance
+    schedule: every 5 minutes
   reconcile_pending_operation_dispatches:
     class: Platform::Operations::ReconcileDispatchesJob
     queue: maintenance

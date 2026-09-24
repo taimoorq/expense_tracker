@@ -1,0 +1,5 @@
+<% content_for :title, "Recurring candidates · #{@account.name}" %>
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb @account.name, account_path(@account, view: "insights") %>
+<% breadcrumb "Recurring candidates" %>
+<% page_header title: "Build your recurring transactions", eyebrow: @account.name, subtitle: "Review one pattern at a time, then choose what belongs in your plan.", icon: "repeat" %>

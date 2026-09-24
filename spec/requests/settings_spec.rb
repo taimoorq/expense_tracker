@@ -42,13 +42,12 @@ RSpec.describe "Settings", type: :request do
     expect(response.body).to include('aria-selected="true"')
   end
 
-  it "places the decision-first continue section above secondary quick actions" do
+  it "shows the setup choices without an empty dashboard for a new workspace" do
     get root_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Quick Actions")
-    expect(response.body.index(">Continue</p>")).to be < response.body.index("<span>Quick Actions</span>")
-    expect(response.body).to include("<details class=\"group mt-5")
+    expect(response.body).to include("Choose how you want to start", "Connect with SimpleFIN", "Track without a connection")
+    expect(response.body).not_to include("Quick Actions")
   end
 
   it "uses the saved landing page after a fresh sign in" do

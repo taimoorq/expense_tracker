@@ -12,6 +12,7 @@ module Platform
 
         def call
           return failure("Choose at least one section to import.") if scopes.empty?
+          CandidateDecisions.validate_restore_scopes!(user: user, scopes: scopes)
 
           data = payload.fetch(:data, {})
           missing_scope = scopes.find { |scope| required_scope?(scope) && !data.key?(scope.to_sym) }
@@ -29,11 +30,16 @@ module Platform
             counts[:preferences] = import_preferences(data[:preferences]) if scopes.include?("preferences") && data.key?(:preferences)
             relink_planning_template_accounts(data)
             relink_expense_entry_provenance
+            CandidateDecisions.restore_v1(user: user, records: data[:recurring_candidate_decisions], templates: @candidate_templates) if (%w[accounts planning_templates] - scopes).empty?
           end
 
           { success: true, counts: counts }
+        rescue CandidateDecisions::PartialRestore => error
+          failure(error.message)
         rescue ActiveRecord::RecordInvalid => error
           failure(error.record.errors.full_messages.to_sentence.presence || error.message)
+        rescue ActiveRecord::RecordNotFound, ArgumentError, KeyError, IndexError
+          failure("The backup contains an invalid recurring candidate reference.")
         end
 
         private
@@ -108,12 +114,13 @@ module Platform
         end
 
         def import_planning_templates(data)
+          @candidate_templates = { "subscriptions" => [], "monthly_bills" => [] }
           {
             pay_schedules: Array(data[:pay_schedules]).count do |attributes|
               user.pay_schedules.create!(attributes.slice(:name, :cadence, :amount, :first_pay_on, :ends_on, :day_of_month_one, :day_of_month_two, :weekend_adjustment, :account, :active))
             end,
             subscriptions: Array(data[:subscriptions]).count do |attributes|
-              user.subscriptions.create!(attributes.slice(:name, :amount, :due_day, :account, :notes, :active))
+              @candidate_templates["subscriptions"] << user.subscriptions.create!(attributes.slice(:name, :amount, :due_day, :account, :notes, :active))
             end,
             monthly_bills: Array(data[:monthly_bills]).count do |attributes|
               user.monthly_bills.create!(attributes.slice(:name, :kind, :default_amount, :due_day, :billing_frequency, :billing_months, :account, :notes, :active))
@@ -145,7 +152,7 @@ module Platform
             Array(attributes[:expense_entries]).each do |entry_attributes|
               entry = month.expense_entries.create!(
                 entry_attributes.slice(
-                  :occurred_on,
+                  :occurred_on, :occurred_at, :timing_time_zone,
                   :section,
                   :category,
                   :payee,
@@ -226,6 +233,9 @@ module Platform
                 user: user,
                 account: account,
                 transaction_on: activity_attributes[:transaction_on],
+                transacted_at: activity_attributes[:transacted_at],
+                posted_at: activity_attributes[:posted_at],
+                timing_time_zone: activity_attributes[:timing_time_zone],
                 posted_on: activity_attributes[:posted_on],
                 description: activity_attributes[:description],
                 category: activity_attributes[:category],

@@ -343,6 +343,11 @@ module ApplicationHelper
     }.fetch(section.to_s, section.to_s.humanize)
   end
 
+  def record_movement_label(entry)
+    return "Confirm received" if entry.income?
+    entry.destination_account_id.present? ? "Record transfer" : "Record payment"
+  end
+
   def expense_entry_status_label(status)
     {
       "planned" => "Planned",

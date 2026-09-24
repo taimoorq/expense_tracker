@@ -1,5 +1,9 @@
 class BudgetItem < ApplicationRecord
   include CurrencyQualified
+  include TransactionTimed
+  self.timing_date_column = :scheduled_on
+  self.timing_timestamp_column = :scheduled_at
+  self.timing_income_method = :flow_kind_income?
 
   enum :flow_kind, { income: "income", outflow: "outflow", transfer: "transfer" }, prefix: true
   enum :budget_group, {

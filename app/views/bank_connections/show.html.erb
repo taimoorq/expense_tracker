@@ -1,0 +1,72 @@
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb "Bank connections", bank_connections_path %>
+<% page_header title: @connection.name, eyebrow: @connection.status.humanize, subtitle: "Choose accounts, check bank balances, and review new activity." do %>
+
+<% end %>
+<%= turbo_frame_tag "bank_connection_status", target: "_top" do %>
+<div class="space-y-5">
+  <section class="ta-section-frame p-5" aria-label="Connection setup progress">
+    <h2 class="ta-section-title">From connection to your first review</h2>
+    <ol class="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+      <li><strong>1. Choose accounts</strong><p class="ta-muted mt-1">Map an existing account, create one, or ignore it. Choose recent transactions or balances only for each account.</p></li>
+      <li><strong>2. Review the source</strong><p class="ta-muted mt-1">Check the balance date and any payments it already includes. You can keep your manual balance.</p></li>
+      <li><strong>3. Review Activity</strong><p class="ta-muted mt-1">Transactions arrive on the next allowed refresh after mapping. Accept, attach to existing activity, match, or ignore.</p><%= link_to "Open bank review", activity_path(view: "bank"), class: "underline" %></li>
+    </ol>
+    <p class="ta-muted mt-3 text-xs">Refresh is limited to once every 15 minutes and 12 requests per rolling day. Background refresh is optional. You can keep recording activity while a bank is unavailable.</p>
+  </section>
+  <% if @connection.connected? %><%= button_to "Refresh from SimpleFIN", refresh_bank_connection_path(@connection), class: "fb-btn-primary", disabled: @refresh && !@refresh.terminal? %><% end %>
+    <section class="ta-section-frame p-5" data-controller="operation-poll" data-operation-poll-url-value="<%= bank_connection_path(@connection) %>" data-operation-poll-active-value="<%= @refresh && !@refresh.terminal? %>" aria-live="polite">
+      <p class="font-semibold"><%= @refresh ? @refresh.operation_run.progress_label.presence || @refresh.state.humanize : "Waiting for the first check" %></p>
+      <p class="ta-muted mt-1">A refresh gets the latest data available from SimpleFIN. Your bank may not have updated yet.</p>
+      <% if @connection.last_checked_at %><p class="ta-muted text-sm mt-1">Last checked <%= @connection.last_checked_at.in_time_zone(@workspace.time_zone).strftime("%b %-d, %Y at %-I:%M %p %Z") %>. Balance source times appear below.</p><% end %>
+      <% if @connection.error_message.present? %><p class="ta-alert-danger mt-3"><%= @connection.error_message %></p><% end %>
+      <% if @refresh %><%= link_to "Refresh details", operation_run_path(@refresh.operation_run), class: "underline text-sm" %><% end %>
+    </section>
+  <% if @mappings.empty? %><div class="ta-section-frame p-5 ta-muted">Your accounts will appear after the first successful check. If a bank needs attention, open SimpleFIN and repair its connection.</div><% end %>
+  <% @mappings.each do |mapping| %>
+    <% balance = @balances[mapping.id] %>
+    <section class="ta-section-frame p-5" id="<%= dom_id(mapping) %>">
+      <div class="flex flex-wrap justify-between gap-3"><div><h2 class="ta-section-title"><%= mapping.name %></h2><p class="ta-muted"><%= mapping.institution_name %> · <%= mapping.currency %> · <%= mapping.state.humanize %></p></div>
+        <% if balance %><div class="text-right"><p class="ta-muted text-sm">Bank reported</p><p class="ta-money text-2xl font-semibold"><%= number_to_currency(balance.balance * mapping.sign_multiplier) %></p><p class="ta-muted text-xs">As of <%= balance.reported_at.in_time_zone(@workspace.time_zone).strftime("%b %-d, %Y at %-I:%M %p %Z") %><%= " · Stale" if balance.stale? %></p></div><% end %>
+      </div>
+      <% if balance %><p class="ta-muted mt-2 text-sm"><%= mapping.account&.liability? ? "Provider available value" : "Bank available balance" %>: <%= balance.available_balance.nil? ? "Not provided" : number_to_currency(balance.available_balance) %><%= " · Not cash available for bills" if mapping.account&.liability? %></p><% end %>
+      <% if mapping.error_message.present? %><p class="ta-alert-danger mt-3"><%= mapping.error_message %></p><% end %>
+      <% if mapping.account %><p class="ta-muted mt-2 text-sm">Tracked as <%= link_to mapping.account.name, account_path(mapping.account), class: "font-semibold underline" %></p><% end %>
+      <% if mapping.supported_currency? %>
+        <details class="ta-account-disclosure mt-3" <%= "open" if mapping.account.nil? && mapping.state != "ignored" %>>
+          <summary><%= mapping.account ? "Account connection settings" : "Choose an account to track" %></summary>
+        <%= form_with url: map_account_bank_connection_path(@connection), method: :patch, class: "space-y-3 pb-3", data: { controller: "bank-account-mapping" } do |form| %>
+          <%= form.hidden_field :mapping_id, value: mapping.id %>
+          <div class="grid gap-3 md:grid-cols-3">
+            <div><%= form.label :account_id, "Use existing account", class: "fb-label", for: "account_#{mapping.id}" %><%= form.select :account_id, @accounts.map { |account| [account.name, account.id] }, { selected: mapping.account_id, include_blank: "Create a new account" }, id: "account_#{mapping.id}", class: "fb-select", data: { bank_account_mapping_target: "account", action: "bank-account-mapping#sync" } %></div>
+            <div data-bank-account-mapping-target="newAccount"><%= form.label :name, "New account name", class: "fb-label", for: "name_#{mapping.id}" %><%= form.text_field :name, value: mapping.name, id: "name_#{mapping.id}", class: "fb-input" %></div>
+            <div data-bank-account-mapping-target="newAccount"><%= form.label :kind, "New account type", class: "fb-label", for: "kind_#{mapping.id}" %><%= form.select :kind, Account.kinds.keys.map { |kind| [kind.humanize, kind] }, { selected: mapping.account&.kind }, id: "kind_#{mapping.id}", class: "fb-select" %></div>
+          </div>
+          <div><%= form.label :sign_multiplier, "How the bank reports debt", class: "fb-label", for: "sign_#{mapping.id}" %><%= form.select :sign_multiplier, [["Keep the reported sign (debt is negative)", 1], ["Bank reports debt as positive; reverse balance sign", -1]], { selected: mapping.sign_multiplier }, id: "sign_#{mapping.id}", class: "fb-select" %></div>
+          <label class="flex gap-2 items-center"><%= form.check_box :import_transactions, { checked: mapping.import_transactions?, id: "import_#{mapping.id}" }, "1", "0" %>Fetch recent transactions for review</label>
+          <div class="flex flex-wrap gap-2"><%= form.button "Save mapping", class: "fb-btn-secondary" %><%= form.button "Ignore account", name: :choice, value: "ignore", class: "fb-btn-secondary" %></div>
+        <% end %>
+        </details>
+      <% end %>
+      <% if mapping.account && balance %><div class="mt-4 border-t border-slate-200 pt-4"><%= link_to "Review balance and recorded payments", reconcile_connected_account_path(mapping), class: "fb-btn-secondary" %></div><% end %>
+    </section>
+  <% end %>
+  <%= render "bank_connections/transactions" %>
+  <details id="connection-settings" class="ta-section-frame ta-account-disclosure" <%= "open" if @connection.status.in?(["disconnected", "needs_attention"]) %>>
+    <summary>Connection settings</summary>
+    <div class="ta-disclosure-body space-y-4">
+    <%= form_with model: @connection, class: "flex flex-wrap items-center gap-3" do |form| %>
+      <%= hidden_field_tag :automatic_refresh, "0" %><label class="flex items-center gap-2"><%= check_box_tag :automatic_refresh, "1", @connection.automatic_refresh?, disabled: !@connection.connected? %>Refresh twice daily</label><%= form.submit "Save schedule", class: "fb-btn-secondary", disabled: !@connection.connected? %>
+    <% end %>
+    <%= link_to "Manage banks or billing in SimpleFIN", "https://bridge.simplefin.org/", target: "_blank", rel: "noopener noreferrer", class: "underline" %>
+    <details><summary class="cursor-pointer font-semibold">Reconnect with a fresh token</summary><%= form_with url: reconnect_bank_connection_path(@connection), class: "mt-3 space-y-3", data: { turbo: false } do |form| %><%= form.label :setup_token, "New Setup Token", class: "fb-label" %><%= form.password_field :setup_token, required: true, autocomplete: "off", maxlength: 4096, class: "fb-input", data: { turbo_temporary: true } %><%= form.submit "Reconnect", class: "fb-btn-secondary" %><% end %></details>
+    <% unless @connection.status == "disconnected" %><%= button_to "Disconnect SimpleFIN", @connection, method: :delete, class: "fb-btn-secondary" %><% end %>
+    <p class="ta-muted text-sm">To continue manually, choose a manual balance on each account and use Activity to record or import transactions. Clear outstanding reservations in Activity → Payments clearing.</p>
+    <%= link_to "Record manual activity", new_activity_transaction_path, class: "underline" if bank_ledger_enabled? %>
+    <p class="ta-muted text-sm">Disconnecting stops refreshes and removes the local credential. Your saved financial history remains. Revoke this app in SimpleFIN to remove its access there too.</p>
+    </div>
+  </details>
+</div>
+
+<% end %>

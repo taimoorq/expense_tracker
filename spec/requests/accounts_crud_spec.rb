@@ -27,6 +27,9 @@ RSpec.describe "Accounts CRUD", type: :request do
     expect(response.body).to include("$2,175.00")
     expect(response.body).to include("Institution import")
     expect(response.body).to include("Latest trusted source")
+    expect(document.at_css("#net-worth-history")["open"]).to be_nil
+    expect(document.at_css("#account-balance-help")["open"]).to be_nil
+    expect(document.at_css("#tracked_accounts").ancestors("details")).to be_empty
   end
 
   it "does not show imported activity as a balance without a trusted source" do
@@ -69,15 +72,16 @@ RSpec.describe "Accounts CRUD", type: :request do
     expect(response.body).to include("Am I adding debt faster than I am paying it down?")
     expect(response.body).to include("Charges and payments over time")
     expect(response.body).to include("Payments &amp; credits")
-    expect(response.body).to include("Current Debt")
+    expect(response.body).to include("App balance", "-$500.00")
     expect(response.body).to include('aria-label="Account information"')
     expect(response.body).to include('aria-current="page"')
+    expect(Nokogiri::HTML(response.body).at_css("#account-movement")["open"]).not_to be_nil
 
     get account_path(card, view: "manage")
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Monthly balance history")
-    expect(response.body).to include("How balance is calculated")
+    expect(response.body).to include("Account settings")
     expect(response.body).to include("Record balance")
   end
 
@@ -168,8 +172,9 @@ RSpec.describe "Accounts CRUD", type: :request do
       get account_path(account)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("What This View Answers")
+      expect(response.body).to include("App balance", "Movement and history")
       expect(response.body).to include("Period and source")
+      expect(Nokogiri::HTML(response.body).at_css("#account-movement")["open"]).to be_nil
     end
 
     tracked_asset = create(:account, user: user, kind: :brokerage, name: "Tracked Brokerage")

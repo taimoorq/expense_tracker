@@ -30,10 +30,9 @@ module Accounts
         redacted_parameters: { "field_names" => [ "allocation_id" ] },
         on_replay: ->(reference) { BudgetItem.find(reference.fetch("id")) }
       ) do |operation|
+        workspace.lock!
         allocation.lock!
-        unless budget_item.budget_period.state_open? || budget_item.budget_period.state_reopened?
-          raise InvalidMatch, "Reopen the closed month before changing its transaction matches."
-        end
+        validate_open_periods!(budget_item)
         Audit::Recorder.call(
           workspace: workspace,
           actor_membership: actor_membership,
@@ -54,6 +53,12 @@ module Accounts
     private
 
     attr_reader :actor_membership, :allocation, :idempotency_key, :workspace
+
+    def validate_open_periods!(budget_item)
+      OpenPeriodGuard.call(workspace: workspace, dates: [ allocation.financial_transaction.effective_on, budget_item.budget_period.starts_on ])
+    rescue ArgumentError => error
+      raise InvalidMatch, error.message
+    end
 
     class InvalidMatch < StandardError; end
   end

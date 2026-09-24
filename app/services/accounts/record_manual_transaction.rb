@@ -27,6 +27,8 @@ module Accounts
         redacted_parameters: { "field_names" => attributes.keys.map(&:to_s).sort },
         on_replay: ->(reference) { FinancialTransaction.find(reference.fetch("id")) }
       ) do |operation|
+        workspace.lock!
+        OpenPeriodGuard.call(workspace: workspace, dates: [ attributes.fetch(:effective_on) ])
         transaction = TransactionBuilder.new(
           workspace: workspace,
           attributes: attributes.merge(idempotency_key: "operation:#{operation.id}")

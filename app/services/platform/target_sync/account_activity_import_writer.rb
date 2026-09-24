@@ -167,6 +167,9 @@ module Platform
         transaction.assign_attributes(
           budget_workspace: workspace,
           effective_on: activity.transaction_on,
+          transacted_at: activity.transacted_at,
+          posted_at: activity.posted_at,
+          timing_time_zone: activity.timing_time_zone,
           posted_on: activity.posted_on,
           description: activity.description,
           memo: activity.memo,

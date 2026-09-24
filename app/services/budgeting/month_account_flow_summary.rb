@@ -35,11 +35,11 @@ module Budgeting
       entries = expense_entries.to_a
       ActiveRecord::Associations::Preloader.new(records: entries, associations: :source_template).call
 
-      card_payment_entries, account_activity_entries = entries.partition do |entry|
+      card_payment_entries = entries.select do |entry|
         entry.source_template.is_a?(CreditCard) || entry.source_file == CreditCard.template_source_file
       end
 
-      entries_with_source_accounts = account_activity_entries.select { |entry| entry.source_account_id.present? }
+      entries_with_source_accounts = entries.select { |entry| entry.source_account_id.present? }
       if entries_with_source_accounts.any?
         ActiveRecord::Associations::Preloader.new(records: entries_with_source_accounts, associations: :source_account).call
       end

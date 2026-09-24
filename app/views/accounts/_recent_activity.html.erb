@@ -1,0 +1,61 @@
+<section class="ta-section-frame min-w-0 p-5">
+    <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 class="ta-section-title">Recent activity</h2>
+        <p class="ta-muted mt-1"><%= @recent_activity.key?(:canonical_rows) ? "Your latest posted transactions." : "Recent imported and budget-linked activity." %></p>
+      </div>
+      <%= link_to account_path(account, view: "activity"), class: "ta-account-next-action" do %>
+        <%= tabler_icon("list-details", classes: "ta-action-icon text-indigo-600") %>
+        <span>View all activity</span>
+      <% end %>
+    </div>
+
+    <% if @recent_activity.values_at(:canonical_rows, :institution_rows, :budget_entries).compact.all?(&:empty?) %>
+      <p class="ta-muted">No recorded activity yet. Imported transactions and linked budget entries will appear here.</p>
+      <%= link_to "Import a file", new_account_account_activity_import_path(account), class: "ta-account-next-action mt-2" %>
+    <% elsif @recent_activity.key?(:canonical_rows) %>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold text-slate-900">Posted transactions</h3>
+        <% if @recent_activity[:canonical_rows].any? %>
+          <ul class="mt-3 space-y-3">
+            <% @recent_activity[:canonical_rows].each do |row| %>
+              <li class="flex items-start justify-between gap-3 text-sm">
+                <span><%= l(row.effective_on, format: :short) %> · <%= row.description %> · <%= row.origin_kind.humanize %></span>
+                <span class="shrink-0 font-semibold <%= row.amount >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= row.amount >= 0 ? "+" : "" %><%= number_to_currency(row.amount) %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-500">No posted account transactions yet.</p>
+        <% end %>
+      </div>
+    <% else %>
+    <div class="grid gap-4 lg:grid-cols-2">
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold text-slate-900">Institution activity</h3>
+        <% if @recent_activity[:institution_rows].any? %>
+          <ul class="mt-3 space-y-3">
+            <% @recent_activity[:institution_rows].each do |row| %>
+              <li class="flex items-start justify-between gap-3 text-sm"><span><%= l(row.transaction_on, format: :short) %> · <%= row.description %></span><span class="shrink-0 font-semibold <%= row.account_delta >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= row.account_delta >= 0 ? "+" : "" %><%= number_to_currency(row.account_delta) %></span></li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-500">No imported institution rows yet.</p>
+        <% end %>
+      </div>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold text-slate-900">Budget-linked activity</h3>
+        <% if @recent_activity[:budget_entries].any? %>
+          <ul class="mt-3 space-y-3">
+            <% @recent_activity[:budget_entries].each do |entry| %>
+              <% impact = account.account_delta_for(entry) %>
+              <li class="flex items-start justify-between gap-3 text-sm"><span><%= l(entry.occurred_on, format: :short) %> · <%= entry.payee.presence || entry.category.presence || entry.section.humanize %></span><span class="shrink-0 font-semibold <%= impact >= 0 ? 'text-emerald-700' : 'text-rose-700' %>"><%= impact >= 0 ? "+" : "" %><%= number_to_currency(impact) %></span></li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="mt-3 text-sm text-slate-500">No linked month entries yet.</p>
+        <% end %>
+      </div>
+    </div>
+    <% end %>
+  </section>

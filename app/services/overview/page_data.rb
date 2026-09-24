@@ -14,10 +14,11 @@ module Overview
       data.merge!(account_flow_summary)
       data.merge!(cashflow_summary)
       data[:financial_rhythm] = user.financial_rhythm
+      data[:workflow_status] = WorkflowStatus.call(user: user)
       onboarding = Overview::OnboardingProgress.call(user: user, data: data)
       data[:onboarding_visible] = onboarding.visible
       data[:onboarding_progress] = onboarding
-      data[:recent_operations] = Platform::Operations::Status.recent(user: user)
+      data[:recent_operations] = Platform::Operations::Status.recent(user: user, workspace: data.fetch(:workflow_status).workspace)
       data[:next_step] = NextStepPolicy.new(context: data).call
       data
     end

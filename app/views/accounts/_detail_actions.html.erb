@@ -1,0 +1,15 @@
+<% evidence = @bank_evidence&.fetch(account.id, nil) %>
+<% mapping, balance = evidence&.values_at(:mapping, :balance) %>
+<% if balance %>
+  <%= link_to "Review bank balance", reconcile_connected_account_path(mapping), class: "fb-btn-primary" %>
+<% else %>
+  <%= link_to "Record balance", new_account_account_snapshot_path(account), class: "fb-btn-primary" %>
+<% end %>
+<%= render layout: "shared/row_actions", locals: { label: "Actions for #{account.name}", title: account.name } do %>
+    <% if account.budget_workspace&.target_reads_enabled? %><%= link_to "Record transaction", new_activity_transaction_path(account_id: account.id) %><% end %>
+    <%= link_to "Review payments clearing", activity_path(view: "payments", account_id: account.id) %>
+    <%= link_to "Import activity", new_account_account_activity_import_path(account) %>
+    <%= link_to "Edit account", edit_account_path(account) %>
+    <% if balance %><%= link_to "Record balance", new_account_account_snapshot_path(account) %><% end %>
+    <% if mapping %><%= link_to "Manage connection", bank_connection_path(mapping.bank_connection, anchor: dom_id(mapping)) %><% end %>
+<% end %>

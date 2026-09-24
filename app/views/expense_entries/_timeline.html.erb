@@ -140,8 +140,8 @@
                                           method: :patch,
                                           params: row[:mark_as_paid_params],
                                           class: "fb-btn-secondary ta-action-btn !px-2.5 !py-1.5 !text-xs",
-                                          title: "Mark as paid",
-                                          aria: { label: "Mark as paid" } do %>
+                                          title: record_movement_label(row[:entry]),
+                                          aria: { label: record_movement_label(row[:entry]) } do %>
                               <%= tabler_icon("check-circle", classes: "h-4 w-4 text-emerald-600") %>
                             <% end %>
                           <% end %>
@@ -207,7 +207,7 @@
 
     <% if default_timeline_view == "full-list" %>
     <div data-panel-name="full-list" role="tabpanel" class="space-y-4" style="view-transition-name: month-budget-panel; view-transition-class: ta-vt-panel;">
-      <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4", timeline_view: default_timeline_view, read_only: read_only %>
+      <%= render "expense_entries/table", budget_month: budget_month, expense_entries: expense_entries, show_header: false, wrapper_classes: "rounded-[22px] border border-slate-200 bg-white/85 p-4", timeline_view: default_timeline_view, read_only: read_only, balance_column: !read_only, full_list: true %>
     </div>
     <% end %>
 

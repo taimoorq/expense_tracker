@@ -36,6 +36,7 @@ module Platform
       attr_reader :checkpoint, :payload, :replace_existing, :rollback, :scopes, :user
 
       def restore_v1
+        CandidateDecisions.validate_restore_scopes!(user: user, scopes: scopes)
         provisioned = Identity::PersonalWorkspaceProvisioner.call(user: user)
         workspace = provisioned.workspace
         membership = provisioned.membership
@@ -160,7 +161,7 @@ module Platform
       def fail_transfer(transfer, error)
         return if transfer.blank? || !transfer.persisted?
 
-        transfer.update!(
+        transfer.reload.update!(
           state: "failed",
           error_code: error.class.name.underscore.tr("/", "_"),
           completed_at: Time.current

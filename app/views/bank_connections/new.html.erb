@@ -1,0 +1,15 @@
+<% breadcrumb "Accounts", accounts_path %>
+<% breadcrumb "Bank connections", bank_connections_path %>
+<% page_header title: "Connect SimpleFIN", eyebrow: "Optional bank connection" %>
+<div class="mx-auto max-w-2xl ta-section-frame p-6 space-y-5">
+  <p>Use your own SimpleFIN subscription to share balances and transactions with this app. Bank sign-in and subscription billing happen at SimpleFIN. This connection cannot send payments.</p>
+  <%= render "bank_connections/ledger_notice" %>
+  <%= link_to "Get a Setup Token at SimpleFIN", "https://bridge.simplefin.org/simplefin/create", target: "_blank", rel: "noopener noreferrer", class: "fb-btn-secondary inline-flex" %>
+  <p class="ta-muted text-sm">Prefer manual tracking? <%= link_to "Add an account", new_account_path, class: "underline" %> or <%= link_to "import a statement", activity_import_path, class: "underline" %>. You can connect later.</p>
+  <%= form_with url: bank_connections_path, class: "space-y-4", data: { turbo: false } do |form| %>
+    <div><%= form.label :setup_token, "Setup Token", class: "fb-label" %><%= form.password_field :setup_token, required: true, autocomplete: "off", spellcheck: false, maxlength: 4096, class: "fb-input", data: { turbo_temporary: true } %></div>
+    <div><%= form.label :time_zone, "Transaction timezone", class: "fb-label" %><%= form.select :time_zone, ActiveSupport::TimeZone.all.map { |zone| [zone.to_s, zone.tzinfo.identifier] }, { selected: @workspace.time_zone }, class: "fb-select" %><p class="ta-muted mt-1 text-sm">Choose the timezone for bank dates and the optional times you enter.</p></div>
+    <p class="ta-muted text-sm">Paste a fresh app-specific token. The app stores the resulting access credential encrypted on your server. You will choose accounts before using their data.</p>
+    <%= form.submit "Connect SimpleFIN", class: "fb-btn-primary", data: { turbo_submits_with: "Connecting…" } %>
+  <% end %>
+</div>

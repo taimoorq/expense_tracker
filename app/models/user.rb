@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  has_many :recurring_candidate_decisions, class_name: "AccountRecurringCandidateDecision", dependent: :destroy
   LEGACY_ASSOCIATION_OPTIONS = {
     deprecated: Rails.configuration.x.legacy_association_telemetry_enabled
   }.freeze

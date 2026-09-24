@@ -1,10 +1,11 @@
 <div class="mx-auto max-w-3xl space-y-4">
+  <% return_path = budget_month_path(@budget_month) %>
   <% breadcrumb "Months", budget_months_path %>
   <% breadcrumb @budget_month.label, budget_month_path(@budget_month) %>
   <% breadcrumb "Edit Entry" %>
 
   <% page_header title: "Edit Entry", eyebrow: "Month entry" do %>
-      <%= link_to budget_month_path(@budget_month), class: "fb-btn-secondary ta-action-btn" do %>
+      <%= link_to return_path, class: "fb-btn-secondary ta-action-btn" do %>
         <%= tabler_icon("arrow-left", classes: "h-4 w-4 text-slate-600") %>
         <span>Back to Month</span>
       <% end %>
@@ -28,7 +29,7 @@
                  submit_class: "fb-btn-primary",
                  cancel_button: false,
                  cancel_label: "Cancel",
-                 cancel_path: budget_month_path(@budget_month),
+                 cancel_path: return_path,
                  cancel_class: "fb-btn-secondary",
                  cancel_options: {} %>
     <% end %>

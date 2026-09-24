@@ -34,6 +34,7 @@ module Platform
                 external_id: workspace.id,
                 name: workspace.name,
                 default_currency_code: workspace.default_currency_code,
+                time_zone: workspace.time_zone,
                 calculation_version: CALCULATION_VERSION
               },
               data: export_data
@@ -66,6 +67,7 @@ module Platform
             data[:budget_months] = serialize_budget_months if scopes.include?("budget_months")
             data[:account_activity] = serialize_account_activity if scopes.include?("account_activity")
             data[:preferences] = serialize_preferences if scopes.include?("preferences")
+            data[:recurring_candidate_decisions] = CandidateDecisions.export_v2(user: user, workspace: workspace) if (%w[accounts planning_templates] - scopes).empty?
           end
         end
 
@@ -73,7 +75,8 @@ module Platform
           {
             default_landing_page: user.default_landing_page,
             preferred_month_view: user.preferred_month_view,
-            financial_rhythm: user.financial_rhythm
+            financial_rhythm: user.financial_rhythm,
+            onboarding: membership.attributes.slice("onboarding_path", "onboarding_recurring_skipped_at", "onboarding_balance_deferred_at", "onboarding_reviewed_at", "onboarding_completed_at", "onboarding_dismissed_at", "onboarding_version")
           }
         end
 
@@ -85,6 +88,7 @@ module Platform
 
         def serialize_accounts
           {
+            bank_data: BankData.export(workspace),
             records: workspace.accounts.order(:name).map do |account|
               portable_record(
                 account,
@@ -96,6 +100,8 @@ module Platform
                 observation,
                 %w[observed_at effective_through_at balance available_balance currency_code source_kind status notes created_at updated_at],
                 account_external_id: observation.account_id,
+                provider_balance_external_id: observation.provider_balance_id,
+                transaction_coverage: observation.transaction_coverage,
                 source_import_batch_external_id: observation.source_import_batch_id,
                 source_import_row_external_id: observation.source_import_row_id
               )
@@ -132,7 +138,7 @@ module Platform
           portable_record(
             rule,
             %w[cadence interval_count anchor_on day_one day_two starts_on ends_on weekend_policy created_at updated_at]
-          ).merge(months: rule.recurrence_months.order(:month_number).pluck(:month_number))
+          ).merge(months: rule.recurrence_months.sort_by(&:month_number).map(&:month_number))
         end
 
         def serialize_payment_plan_term(term)
@@ -160,7 +166,7 @@ module Platform
             items: workspace.budget_items.order(:scheduled_on, :created_at).map do |item|
               portable_record(
                 item,
-                %w[flow_kind budget_group planned_amount currency_code scheduled_on state origin_kind name_snapshot payee_snapshot category_snapshot priority_classification notes voided_at void_reason created_at updated_at],
+                %w[flow_kind budget_group planned_amount currency_code scheduled_on scheduled_at timing_time_zone state origin_kind name_snapshot payee_snapshot category_snapshot priority_classification notes voided_at void_reason created_at updated_at],
                 budget_period_external_id: item.budget_period_id,
                 category_external_id: item.category_id,
                 recurring_occurrence_external_id: item.recurring_occurrence_id,
@@ -180,7 +186,7 @@ module Platform
             month_closes: workspace.month_closes.order(:closed_at).map do |close|
               portable_record(
                 close,
-                %w[state calculation_version planned_income planned_outflow planned_net actual_income actual_outflow actual_net remaining_income remaining_outflow forecast_income forecast_outflow forecast_net income_variance outflow_variance unresolved_count unmatched_count calculation_input_digest closed_at created_at updated_at],
+                %w[state calculation_version planned_income planned_outflow planned_net actual_income actual_outflow actual_net remaining_income remaining_outflow forecast_income forecast_outflow forecast_net income_variance outflow_variance unresolved_count unmatched_count recorded_totals calculation_input_digest closed_at created_at updated_at],
                 budget_period_external_id: close.budget_period_id,
                 reopens_month_close_external_id: close.reopens_month_close_id
               )
@@ -188,7 +194,7 @@ module Platform
             month_close_item_snapshots: workspace.month_close_item_snapshots.order(:month_close_id, :scheduled_on, :created_at).map do |snapshot|
               portable_record(
                 snapshot,
-                %w[flow_kind budget_group name_snapshot category_snapshot scheduled_on planned_amount actual_amount remaining_amount currency_code created_at updated_at],
+                %w[flow_kind budget_group name_snapshot category_snapshot scheduled_on scheduled_at timing_time_zone planned_amount actual_amount remaining_amount currency_code created_at updated_at],
                 month_close_external_id: snapshot.month_close_id,
                 budget_item_external_id: snapshot.budget_item_id
               )
@@ -196,7 +202,7 @@ module Platform
             month_close_transaction_snapshots: workspace.month_close_transaction_snapshots.order(:month_close_id, :effective_on, :created_at).map do |snapshot|
               portable_record(
                 snapshot,
-                %w[flow_kind origin_kind description_snapshot category_snapshot effective_on gross_amount allocated_amount currency_code created_at updated_at],
+                %w[flow_kind origin_kind description_snapshot category_snapshot effective_on transacted_at timing_time_zone gross_amount allocated_amount currency_code created_at updated_at],
                 month_close_external_id: snapshot.month_close_id,
                 financial_transaction_external_id: snapshot.financial_transaction_id
               )
@@ -232,7 +238,7 @@ module Platform
             transactions: workspace.financial_transactions.order(:effective_on, :created_at).map do |transaction|
               portable_record(
                 transaction,
-                %w[effective_on posted_on description payee memo gross_amount currency_code flow_kind state origin_kind provider_transaction_id idempotency_key voided_at void_reason created_at updated_at],
+                %w[effective_on transacted_at posted_on posted_at timing_time_zone description payee memo gross_amount currency_code flow_kind state origin_kind provider_transaction_id idempotency_key voided_at void_reason reviewed_at created_at updated_at],
                 category_external_id: transaction.category_id,
                 import_row_external_id: transaction.import_row_id,
                 reversal_transaction_external_id: transaction.reversal_transaction_id
@@ -241,7 +247,7 @@ module Platform
             account_postings: workspace.account_postings.order(:financial_transaction_id, :sequence_number).map do |posting|
               portable_record(
                 posting,
-                %w[amount currency_code role sequence_number created_at updated_at],
+                %w[amount currency_code role sequence_number effective_at created_at updated_at],
                 financial_transaction_external_id: posting.financial_transaction_id,
                 account_external_id: posting.account_id
               )

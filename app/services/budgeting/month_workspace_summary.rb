@@ -8,7 +8,7 @@ module Budgeting
       :review_count,
       :actual_coverage_count,
       :outflow_count,
-      :calculation_version
+      :calculation_version, :recorded_totals
     )
 
     def self.call(budget_month:, expense_entries: budget_month.expense_entries.to_a, today: Date.current)
@@ -32,7 +32,7 @@ module Budgeting
         review_count: review_result.issue_count,
         actual_coverage_count: outflow_entries.count { |entry| entry.actual_amount.present? },
         outflow_count: outflow_entries.count,
-        calculation_version: "legacy-compatible-v1"
+        recorded_totals: nil, calculation_version: "legacy-compatible-v1"
       )
     end
 
@@ -49,7 +49,8 @@ module Budgeting
     end
 
     def target_result
-      summary = Budgeting::PeriodSummary.call(period: target_period)
+      close = target_period.month_closes.state_closed.first
+      summary = close&.report_summary || Budgeting::PeriodSummary.call(period: target_period)
       target_outflow_items = target_period.budget_items
         .flow_kind_outflow
         .where.not(state: %w[skipped cancelled voided])
@@ -66,7 +67,8 @@ module Budgeting
         review_count: target_review_summary.fetch(:review_attention_count),
         actual_coverage_count: covered_count,
         outflow_count: target_outflow_items.count,
-        calculation_version: Budgeting::PeriodSummary::CALCULATION_VERSION
+        recorded_totals: close ? close.recorded_totals : Budgeting::RecordedActuals.call(period: target_period),
+        calculation_version: close&.calculation_version || Budgeting::PeriodSummary::CALCULATION_VERSION
       )
     end
 

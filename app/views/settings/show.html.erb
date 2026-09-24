@@ -14,6 +14,25 @@
 <% end %>
 
 <div class="space-y-6">
+  <section id="workspace" class="ta-section-frame p-5 space-y-4">
+    <h2 class="ta-section-title">Workspace</h2>
+    <p class="ta-muted">Dates and optional transaction times use this timezone for manual, imported, and connected accounts.</p>
+    <% if @workspace.errors.any? %><div role="alert" class="ta-alert-danger"><%= @workspace.errors.full_messages.to_sentence %></div><% end %>
+    <%= form_with scope: :workspace, url: workspace_settings_path, method: :patch, class: "flex flex-wrap items-end gap-3" do |form| %>
+      <div><%= form.label :time_zone, "Workspace timezone", class: "fb-label" %><%= form.select :time_zone, ActiveSupport::TimeZone.all.map { |zone| [zone.to_s, zone.tzinfo.identifier] }, { selected: @workspace.time_zone }, class: "fb-select" %></div>
+      <%= form.submit "Save timezone", class: "fb-btn-secondary" %>
+    <% end %>
+    <p class="ta-muted text-sm">Currency: <%= @workspace.default_currency_code %>. Balances in other currencies are excluded.</p>
+  </section>
+  <section class="ta-section-frame p-5 space-y-4">
+    <h2 class="ta-section-title">How you track activity</h2>
+    <p class="ta-muted">This preference tunes setup guidance. You can use connected and manual accounts together without changing your history.</p>
+    <%= form_with url: onboarding_preference_path, method: :patch, class: "flex flex-wrap items-end gap-3" do |form| %>
+      <div><%= form.label :path, "Starting approach", class: "fb-label" %><%= form.select :path, [["Enter transactions myself", "manual"], ["Import statements", "import"], ["Connect with SimpleFIN", "simplefin"]], { selected: @onboarding_membership.onboarding_path, include_blank: "Choose an approach" }, required: true, class: "fb-select" %></div>
+      <%= form.submit "Save approach", class: "fb-btn-secondary" %>
+    <% end %>
+    <%= link_to "Manage bank connections", bank_connections_path, class: "font-semibold underline" %>
+  </section>
   <section class="ta-section-frame p-5">
     <div class="max-w-xl">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Workflow</p>

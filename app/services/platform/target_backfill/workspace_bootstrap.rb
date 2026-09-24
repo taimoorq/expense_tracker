@@ -7,6 +7,7 @@ module Platform
       DEFAULT_CURRENCY = "USD".freeze
       BATCH_SIZE = 1_000
       LEGACY_TABLES = [
+        AccountRecurringCandidateDecision,
         AccountActivity,
         AccountActivityImport,
         BudgetMonth,

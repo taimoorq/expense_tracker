@@ -1,6 +1,32 @@
 require "rails_helper"
 
 RSpec.describe Accounts::SnapshotWriter do
+  it "records an opening balance at the previous day's cutoff in both stores" do
+    user = create(:user)
+    account = create(:account, user: user)
+    workspace = prepare_target(user)
+
+    snapshot = described_class.create(account: account,
+      attributes: { balance_date: "2026-09-01", balance_timing: "opening", balance: 200 })
+
+    expect(snapshot).to be_persisted
+    expect(snapshot.recorded_on).to eq(Date.new(2026, 8, 31))
+    expect(workspace.balance_observations.trusted.sole).to have_attributes(
+      balance: 200.to_d, effective_through_at: Date.new(2026, 8, 31).end_of_day.change(usec: 999999))
+    expect(snapshot.attributes).not_to have_key("balance_timing")
+    expect(snapshot.attributes).not_to have_key("balance_date")
+  end
+
+  it "retains the opening date through validation retries without shifting it twice" do
+    snapshot = described_class.create(account: create(:account),
+      attributes: { balance_date: "2026-09-01", balance_timing: "opening", balance: "" })
+
+    expect(snapshot).not_to be_persisted
+    expect(snapshot.balance_date).to eq("2026-09-01")
+    expect(described_class.update(snapshot: snapshot, attributes: { balance: 200 })).to be(true)
+    expect(snapshot.recorded_on).to eq(Date.new(2026, 8, 31))
+  end
+
   def prepare_target(user)
     result = Platform::TargetBackfill::Runner.call(user: user)
     expect(result).to be_success

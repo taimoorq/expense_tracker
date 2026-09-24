@@ -1,0 +1,76 @@
+<section id="tracked_accounts" class="ta-section-frame ta-accounts-section min-w-0 p-4 sm:p-5" aria-labelledby="tracked-accounts-title">
+  <div class="mb-5 flex items-start justify-between gap-3">
+    <div>
+      <h2 id="tracked-accounts-title" class="ta-section-title">Tracked accounts</h2>
+      <p class="ta-muted mt-1">Your app balance alongside the latest bank report. Review bank balances before using them.</p>
+    </div>
+    <span class="ta-account-meta shrink-0 pt-1"><%= pluralize(@accounts.count, "account") %></span>
+  </div>
+
+  <% if @tracked_account_rows.any? %>
+    <div class="md:hidden">
+      <% @tracked_account_rows.each do |row| %>
+        <% frame_id = dom_id(row.account, "mobile_snapshot_editor") %>
+        <article id="mobile_<%= dom_id(row.account) %>" class="ta-account-mobile-row">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0"><%= render "accounts/tracked_account_identity", row: row %></div>
+            <%= render "accounts/tracked_account_actions", row: row, frame_id: frame_id %>
+          </div>
+          <dl class="mt-4 grid grid-cols-2 gap-4">
+            <div class="min-w-0">
+              <dt class="ta-account-column-label mb-2">App balance</dt>
+              <dd><%= render "accounts/tracked_app_balance", row: row %></dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="ta-account-column-label mb-2">Bank balance</dt>
+              <dd><%= render "accounts/tracked_bank_balance", row: row %></dd>
+            </div>
+          </dl>
+          <% if row.primary_action %>
+            <div class="mt-3"><%= render "accounts/tracked_account_primary_action", row: row, frame_id: frame_id %></div>
+          <% end %>
+          <% if row.snapshot_action? %><%= turbo_frame_tag frame_id, class: "block" %><% end %>
+        </article>
+      <% end %>
+    </div>
+
+    <div class="hidden md:block">
+      <table class="ta-table ta-accounts-table">
+        <caption class="sr-only">Tracked accounts with the balance used by the app and the latest bank-reported balance. Open an account for balance details and activity.</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="ta-account-column-label text-left">Account</th>
+            <th scope="col" class="ta-account-column-label text-right">App balance</th>
+            <th scope="col" class="ta-account-column-label text-right">Bank balance</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tracked_account_rows.each do |row| %>
+            <% frame_id = dom_id(row.account, "desktop_snapshot_editor") %>
+            <tr id="<%= dom_id(row.account) %>" class="ta-account-row">
+              <th scope="row" class="text-left font-normal"><%= render "accounts/tracked_account_identity", row: row %></th>
+              <td class="text-right"><%= render "accounts/tracked_app_balance", row: row %></td>
+              <td class="text-right"><%= render "accounts/tracked_bank_balance", row: row %></td>
+              <td>
+                <div class="flex items-center justify-end gap-2">
+                  <%= render "accounts/tracked_account_primary_action", row: row, frame_id: frame_id %>
+                  <%= render "accounts/tracked_account_actions", row: row, frame_id: frame_id %>
+                </div>
+              </td>
+            </tr>
+            <% if row.snapshot_action? %>
+              <tr><td colspan="4" class="!p-0"><%= turbo_frame_tag frame_id, class: "block" %></td></tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="py-8 text-center">
+      <p class="text-lg font-semibold">No accounts yet</p>
+      <p class="ta-muted mx-auto mt-2 max-w-xl">Add an account, then connect your bank or record a balance to start tracking it.</p>
+      <%= link_to "Add First Account", new_account_path, class: "fb-btn-primary mt-5" %>
+    </div>
+  <% end %>
+</section>

@@ -63,9 +63,17 @@ module Accounts
         .last(MAX_POINTS)
     end
 
+    def bank_evidence
+      @bank_evidence ||= BankEvidence.new(accounts: accounts, through_on: as_of)
+    end
+
     def balance_on(account, date)
+      if account.connected_account&.use_bank_balance?
+        balance = Accounts::BankPosition.new(account: account, as_of: date, evidence: bank_evidence).result
+        return balance.balance_available ? balance.current_balance : nil if balance
+      end
       observation = observations_by_account.fetch(account.id, []).reverse.find do |candidate|
-        candidate.effective_through_at.to_date <= date
+        !candidate.source_kind_bank_sync? && candidate.effective_through_at.to_date <= date
       end
       return if observation.blank?
 

@@ -46,7 +46,7 @@ RSpec.describe "Overview", type: :system do
     expect(page).to have_content("#{Date.current.year} money flow")
     expect(page).to have_content("Loading the #{Date.current.year} cash flow graph")
     expect(page).to have_link("Set Up Recurring")
-    expect(page).to have_content("Adjust as the month unfolds")
+    expect(page).to have_content("Review your first result")
     expect(page).to have_content("Done")
 
     all(:link, "Open Plan and Edit").first.click
@@ -61,14 +61,12 @@ RSpec.describe "Overview", type: :system do
     sign_in_as(user)
     visit root_path
 
-    expect(page).to have_content("No active month yet")
-    expect(page).to have_content("Add your first account")
-    expect(page).to have_link("Set up Accounts")
-    expect(page).to have_link("Create Account")
     expect(page).to have_content("Choose how you want to start")
-    expect(page).to have_content("First useful step")
-    expect(page).to have_content("Start small, then build from there")
-    expect(page).to have_content("No #{Date.current.year} cash flow to chart yet")
+    expect(page).to have_button("Connect with SimpleFIN")
+    expect(page).to have_button("Enter transactions myself")
+    expect(page).to have_link("Add First Account")
+    expect(page).to have_button("Skip recurring for now")
+    expect(page).not_to have_content("The evidence behind this month")
     expect(page).to have_content("Next")
   end
 
@@ -213,6 +211,7 @@ RSpec.describe "Overview", type: :system do
       click_link "Open Account"
 
       expect(page).to have_current_path(account_path(card), ignore_query: false)
+      find("summary", text: "Movement and history").click
       expect(page).to have_content("Credit card payoff progress")
       expect(page).to have_text(/paid down this month/i)
       expect(page).to have_content("$300.00")

@@ -6,6 +6,7 @@ class BudgetMonthClosesController < ApplicationController
     @active_close = @target_period.month_closes
       .includes(:item_snapshots, :transaction_snapshots)
       .find_by(state: "closed")
+    @recorded_totals = @active_close ? @active_close.recorded_totals : Budgeting::RecordedActuals.call(period: @target_period)
     @summary = @active_close&.report_summary || @readiness.summary
     @unresolved_account_count = @active_close&.unresolved_count || @readiness.unresolved_account_count
   end

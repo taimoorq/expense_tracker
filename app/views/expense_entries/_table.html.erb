@@ -1,7 +1,9 @@
 <%= turbo_frame_tag "entries_table" do %>
   <% show_header = local_assigns.fetch(:show_header, true) %>
   <% wrapper_classes = local_assigns.fetch(:wrapper_classes, "ta-card") %>
-  <section class="<%= wrapper_classes %>">
+  <% balance_column = local_assigns[:balance_column] %>
+  <% running_balances = Accounts::EntryRunningBalances.call(budget_month: budget_month, entries: expense_entries) if balance_column %>
+  <section class="<%= wrapper_classes %>" data-controller="<%= "balance-column" if balance_column %>" data-balance-column-storage-key-value="month-balances-<%= budget_month.user_id %>-<%= budget_month.id %>">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <% if show_header %>
         <div>
@@ -9,7 +11,18 @@
           <p class="mt-1 text-sm text-slate-500">Everything currently planned or recorded for this month, with quick actions for editing and status updates after reviewing the guidance above.</p>
         </div>
       <% end %>
+      <% if balance_column %>
+        <button type="button" class="fb-btn-secondary ta-action-btn ml-auto" data-action="balance-column#toggle" data-balance-column-target="button" aria-pressed="false" aria-controls="month-entry-balances-<%= budget_month.id %>">
+          Show balances
+        </button>
+      <% end %>
     </div>
-    <%= render "expense_entries/table_content", budget_month: budget_month, expense_entries: expense_entries, timeline_view: local_assigns[:timeline_view], selected_review: local_assigns[:selected_review], read_only: local_assigns[:read_only] %>
+    <% if balance_column %>
+      <p class="mb-3 text-xs text-slate-600 hidden" data-balance-column-target="column">
+        Projected balances from reported balances, paid activity, and outstanding plans. Each row keeps its balance in date order, including other account activity, even when filtered. “—” means a balance is unavailable.
+        <%= link_to "Update account balances", accounts_path, class: "font-medium underline", data: { turbo_frame: "_top" } %>
+      </p>
+    <% end %>
+    <%= render (local_assigns[:full_list] ? "expense_entries/full_list_content" : "expense_entries/table_content"), budget_month: budget_month, expense_entries: expense_entries, timeline_view: local_assigns[:timeline_view], selected_review: local_assigns[:selected_review], read_only: local_assigns[:read_only], running_balances: running_balances %>
   </section>
 <% end %>

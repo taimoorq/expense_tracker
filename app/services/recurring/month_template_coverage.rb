@@ -145,6 +145,16 @@ module Recurring
       end
       return keyed_entry if keyed_entry.present?
 
+      # Bills and subscriptions have at most one occurrence in a month. A linked
+      # item still covers it after the user edits its name, amount, or date.
+      if template.is_a?(Subscription) || template.is_a?(MonthlyBill)
+        linked_entry = ordered_entries.find do |entry|
+          unused_entry?(entry, used_entry_keys) && entry.source_template_type == template.class.name &&
+            entry.source_template_id == template.id && budget_month.month_on.all_month.cover?(entry.occurred_on)
+        end
+        return linked_entry if linked_entry
+      end
+
       ordered_entries.find do |entry|
         unused_entry?(entry, used_entry_keys) &&
           entry.occurred_on == occurred_on &&
