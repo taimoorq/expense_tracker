@@ -52,10 +52,13 @@ jobs:
       - name: Run the authoritative verification manifest
         run: bin/ci
 
-      - name: Keep screenshots from failed system tests
+      - name: Keep diagnostics from failed tests
         uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: screenshots
-          path: ${{ github.workspace }}/tmp/screenshots
+          name: test-diagnostics
+          path: |
+            ${{ github.workspace }}/tmp/screenshots
+            ${{ github.workspace }}/tmp/capybara
+            ${{ github.workspace }}/log/test.log
           if-no-files-found: ignore

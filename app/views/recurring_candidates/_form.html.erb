@@ -9,7 +9,7 @@
     <div><%= form.label :due_day, "Charge / due day", class: "fb-label" %><%= form.number_field :due_day, min: 1, max: 31, required: true, class: "fb-input", aria: { describedby: "candidate-day-hint" } %><p id="candidate-day-hint" class="ta-muted mt-1 text-xs">Suggested from the latest charge; confirm the usual day.</p></div>
   </div>
   <div><%= form.label :linked_account_id, "Money leaves / activity account", class: "fb-label" %><%= form.collection_select :linked_account_id, @accounts, :id, :name, {}, class: "fb-select w-full" %></div>
-  <details data-recurring-review-target="billSchedule" <%= "open" if @form.template_kind == "monthly_bill" %>>
+  <%= tag.details data: { recurring_review_target: "billSchedule" }, open: @form.template_kind == "monthly_bill", hidden: @form.template_kind != "monthly_bill" do %>
     <summary class="cursor-pointer text-sm font-semibold">Bill schedule (for Monthly bill)</summary>
     <div class="mt-3 grid gap-3 sm:grid-cols-2">
       <div><%= form.label :kind, "Bill type", class: "fb-label" %><%= form.select :kind, [["Fixed payment", "fixed_payment"], ["Variable bill", "variable_bill"]], {}, class: "fb-select" %></div>
@@ -19,7 +19,7 @@
       <%= hidden_field_tag "candidate_template[billing_months][]", "" %>
       <div class="flex flex-wrap gap-3"><% (1..12).each do |month| %><label class="inline-flex items-center gap-1 text-sm"><%= check_box_tag "candidate_template[billing_months][]", month, Array(@form.billing_months).map(&:to_i).include?(month), id: "candidate_billing_month_#{month}", class: "fb-checkbox" %><%= Date::ABBR_MONTHNAMES[month] %></label><% end %></div>
     </fieldset>
-  </details>
+  <% end %>
   <details><summary class="cursor-pointer text-sm font-semibold">Notes and active state</summary><div class="mt-3 space-y-3"><div><%= form.label :notes, "Notes", class: "fb-label" %><%= form.text_area :notes, rows: 2, class: "fb-input" %></div><label class="flex items-center gap-2"><%= form.check_box :active, class: "fb-checkbox" %>Active recurring transaction</label></div></details>
   <div class="flex flex-wrap items-center gap-3"><%= form.submit "Save recurring transaction", class: "fb-btn-primary" %><%= link_to "Cancel", account_recurring_candidates_path(@account), class: "fb-btn-secondary" %></div>
   <p class="ta-muted text-xs">Saves the template first. You can optionally add it to a month afterward.</p>
