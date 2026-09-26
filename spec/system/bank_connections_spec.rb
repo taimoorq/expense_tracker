@@ -24,6 +24,7 @@ RSpec.describe "SimpleFIN account onboarding", type: :system, js: true do
       page.save_page(Rails.root.join("tmp/simplefin-browser.html"))
       raise
     end
+    expect(page).to have_css('[data-controller="operation-poll"][data-operation-poll-active-value="false"]')
     click_button "Save mapping"
     expect(page).to have_content("Account mapping saved")
     find("summary", text: "Account connection settings").click

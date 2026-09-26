@@ -50,7 +50,8 @@ RSpec.describe "Account recurring candidates", type: :request do
     expect(response.body).to include("Edited name", "greater than 0")
     expect(user.subscriptions).to be_empty
     patch account_recurring_candidate_path(account, candidate[:key]), params: { decision_action: "ignore", expected_version: -1, evidence_digest: candidate[:evidence_digest] }, headers: { "Accept" => "text/vnd.turbo-stream.html", "Turbo-Frame" => "recurring_review" }
-    expect(response).to have_http_status(:see_other)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('id="recurring_review"', "Candidate ignored")
     get account_recurring_candidates_path(account, status: "ignored")
     expect(response.body).to include("Ignored (1)", "Cloud storage")
   end

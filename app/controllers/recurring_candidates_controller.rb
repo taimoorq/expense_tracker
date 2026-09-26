@@ -31,7 +31,14 @@ class RecurringCandidatesController < ApplicationController
     when "ignored" then "Candidate ignored. You can restore it from Ignored."
     else "Candidate restored to review."
     end
-    redirect_to account_recurring_candidate_path(@account, params[:id]), notice: @message, status: :see_other
+    if turbo_frame_request?
+      set_candidate
+      prepare_review
+      flash.now[:notice] = @message
+      render :show, formats: [ :html ]
+    else
+      redirect_to account_recurring_candidate_path(@account, params[:id]), notice: @message, status: :see_other
+    end
   rescue Accounts::RecurringCandidates::Resolve::Invalid, ActiveRecord::RecordInvalid, Platform::TargetSync::WriteRejected, Platform::TargetSync::Context::IncompleteBackfill => error
     @error = error.message
     set_candidate
