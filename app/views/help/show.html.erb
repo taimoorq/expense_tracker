@@ -63,7 +63,7 @@
   </section>
   <section class="ta-section-frame p-5"><h2 class="ta-section-title">Review, clear, and close</h2><p class="ta-muted mt-2">A reserved payment records that money is committed, not that the bank has cleared it. Match posted bank activity or confirm its clearing date yourself in Activity → Payments clearing. This continues to work after disconnecting.</p><p class="ta-muted mt-2">Reports separates recorded actuals by transaction date from amounts matched to a planning month. Closing freezes both definitions for new closes. Resolve reserved payments, accepted bank corrections, and uncertain balance coverage first. Older closed snapshots retain their original evidence.</p><p class="ta-muted mt-2">Use Settings → Workspace for timezone and your starting approach. Backup v2 preserves financial evidence and setup preferences; bank credentials and automatic refresh do not travel with it. After restore, reconnect with a fresh token or continue manually.</p></section>
 
-  <div class="grid gap-6 xl:grid-cols-[1.5fr,1fr]">
+  <div class="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
     <div class="space-y-6">
       <section id="dashboard" class="ta-section-frame scroll-mt-24 p-5">
         <h2 class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
@@ -122,6 +122,7 @@
         <p class="mt-2 text-sm leading-6 text-slate-600">Entries are the building blocks of each month. They represent income, bills, spending, debt payments, and manual adjustments. The Add entry composer handles routine one-offs and recurring context in one place.</p>
         <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
           <li><strong class="text-slate-900">Add a one-time entry:</strong> enter the kind, status, date, payee, category, amount, and saved-account context on one screen. Less common details stay under More options.</li>
+          <li><strong class="text-slate-900">Reuse payees and categories:</strong> type to search saved values, then select a match. Similar spellings appear as suggestions. If you need a new value, type it and save the entry; suggestions only replace your text when you select one.</li>
           <li><strong class="text-slate-900">Start from recurring:</strong> choose an existing paycheck, subscription, bill, payment plan, or credit card to fill its expected details. The composer shows whether it is missing, already added, or found on another date this month.</li>
           <li><strong class="text-slate-900">Repeat this in future:</strong> turn a new one-time entry into a reusable recurring item without leaving the form. The saved recurring item remains linked to the entry that created it.</li>
           <li><strong class="text-slate-900">CSV import:</strong> useful when you already have transaction data outside the app and want to avoid retyping it. Use Money Leaves Account and Money Goes To Account columns when the imported activity should affect account movement.</li>

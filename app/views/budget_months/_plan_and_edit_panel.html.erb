@@ -199,7 +199,7 @@
       <% plan.review_cards.each do |card| %>
         <%= link_to card[:path],
                     class: [
-                      "group rounded-[22px] border bg-white/85 p-4 transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none",
+                      "group rounded-[22px] border bg-white/85 p-4 transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline-hidden",
                       (card[:active] ? "border-indigo-400 ring-4 ring-indigo-100" : "border-slate-200")
                     ],
                     aria: { current: ("true" if card[:active]), label: "Review #{card[:count]} #{card[:label].downcase} entries" },

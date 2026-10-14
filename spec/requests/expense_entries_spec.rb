@@ -15,6 +15,43 @@ RSpec.describe "Expense entries", type: :request do
     expect(response.body).not_to include("Add Entry with Wizard")
   end
 
+  it "renders the user's saved choices and native fallback in both the composer and editor" do
+    earlier_month = create(:budget_month, user: user, month_on: Date.new(2026, 2, 1))
+    create(:expense_entry, budget_month: earlier_month, payee: "Pepco", category: "Utilities")
+    entry = create(:expense_entry, budget_month: budget_month, payee: "Water", category: "Utilities")
+    create(:expense_entry, payee: "Private payee", category: "Private category")
+
+    [ new_wizard_budget_month_expense_entries_path(budget_month), edit_budget_month_expense_entry_path(budget_month, entry) ].each do |path|
+      get path
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      expect(document.css('[data-controller="value-picker"]').size).to eq(2)
+      expect(document.css('datalist option').map { |option| option["value"] }).to include("Pepco", "Utilities")
+      expect(document.css('datalist option').map { |option| option["value"] }).not_to include("Private payee", "Private category")
+      document.css('[data-value-picker-target="input"]').each do |input|
+        expect(document.at_css("datalist##{input['list']}")).to be_present
+      end
+    end
+  end
+
+  it "reuses saved category and payee spelling on create and update" do
+    create(:expense_entry, budget_month: budget_month, payee: "Pepco", category: "Utilities")
+
+    post budget_month_expense_entries_path(budget_month), params: {
+      expense_entry: { occurred_on: "2026-03-05", section: "fixed", category: " utilities ", payee: " PEPCO ", planned_amount: "89.33", status: "planned" }
+    }
+
+    expect(response).to have_http_status(:redirect)
+    entry = budget_month.expense_entries.order(:created_at).last
+    expect(entry.attributes.slice("category", "payee")).to eq("category" => "Utilities", "payee" => "Pepco")
+
+    patch budget_month_expense_entry_path(budget_month, entry), params: { expense_entry: { category: "UTILITIES", payee: "pepco" } }
+
+    expect(response).to have_http_status(:redirect)
+    expect(entry.reload.attributes.slice("category", "payee")).to eq("category" => "Utilities", "payee" => "Pepco")
+  end
+
   it "leaves enhancement-only disclosures operable when JavaScript is unavailable" do
     get new_wizard_budget_month_expense_entries_path(budget_month)
 

@@ -3,6 +3,8 @@
 This folder is for documentation that is safe to publish with the source-available
 repository.
 
+Shared form behavior and enhancement contracts are documented in [UI patterns](ui-patterns.md).
+
 The GitHub README and the hosted documentation in `../financetrackingapp` describe
 the product workflows implemented in this repository. Keep their version labels,
 feature names, setup commands, screenshots, captions, and recovery guidance aligned

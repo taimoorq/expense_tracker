@@ -64,7 +64,7 @@ module ExpenseEntries
     attr_reader :user, :budget_month, :expense_entry_params, :planning_template_params, :recurring_link_token, :recurring_extra_occurrence
 
     def normalized_entry_params
-      @normalized_entry_params ||= expense_entry_params.to_h.symbolize_keys.tap do |attributes|
+      @normalized_entry_params ||= ValueOptions.new(user: user, budget_month: budget_month).normalize(expense_entry_params).tap do |attributes|
         if attributes[:status].to_s == "paid" && attributes[:actual_amount].blank? && attributes[:planned_amount].present?
           attributes[:actual_amount] = attributes[:planned_amount]
         end

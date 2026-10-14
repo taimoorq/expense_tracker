@@ -35,7 +35,7 @@ module ExpenseEntries
     attr_reader :expense_entry, :params, :mark_as_paid
 
     def normalized_params
-      permitted = params.to_h.symbolize_keys
+      permitted = ValueOptions.new(user: expense_entry.user, budget_month: expense_entry.budget_month).normalize(params)
       permitted[:auto_completed_at] = nil if expense_entry.auto_completed?
       return permitted unless mark_as_paid
 

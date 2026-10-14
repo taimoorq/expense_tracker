@@ -17,7 +17,7 @@
           type="text"
           autocomplete="off"
           placeholder="<%= months.any? ? "Month or year" : "No months yet" %>"
-          class="w-full border-0 bg-transparent px-0 py-0 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+          class="w-full border-0 bg-transparent px-0 py-0 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-0"
           <%= "disabled" if months.empty? %>
           data-month-jump-target="input"
           data-action="focus->month-jump#open input->month-jump#search keydown->month-jump#keydown"

@@ -323,6 +323,11 @@ module ApplicationHelper
     )
   end
 
+  def expense_entry_value_options(budget_month)
+    @expense_entry_value_options ||= {}
+    @expense_entry_value_options[budget_month.id] ||= ExpenseEntries::ValueOptions.new(user: current_user, budget_month: budget_month)
+  end
+
   def expense_entry_section_options
     ExpenseEntry.sections.keys.map { |key| [ expense_entry_section_label(key), key ] }
   end

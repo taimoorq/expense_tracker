@@ -8,15 +8,9 @@
   <%= form.select :section, expense_entry_section_options, {}, class: "fb-select" %>
 </div>
 
-<div>
-  <%= form.label :category, class: "fb-label" %>
-  <%= form.text_field :category, class: "fb-input" %>
-</div>
-
-<div>
-  <%= form.label :payee, class: "fb-label" %>
-  <%= form.text_field :payee, class: "fb-input" %>
-</div>
+<% value_options = expense_entry_value_options(form.object.budget_month) %>
+<%= render "shared/value_picker", form: form, attribute: :category, options: value_options.categories, placeholder: "Search categories or enter a new one…" %>
+<%= render "shared/value_picker", form: form, attribute: :payee, options: value_options.payees, placeholder: "Search payees or enter a new one…" %>
 
 <div>
   <%= form.label :planned_amount, class: "fb-label" %>

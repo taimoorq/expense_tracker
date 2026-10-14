@@ -430,7 +430,7 @@ Use this path when you want to change the app without Docker.
 
 ### Prerequisites
 
-- Ruby 4.0.6
+- Ruby 7
 - Bundler
 - PostgreSQL
 - libpq development headers
@@ -454,7 +454,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Stack
 
-- Rails 8.1.3 and Ruby 4.0.6
+- Rails 8.1.3 and Ruby 4.0.7
 - PostgreSQL
 - Hotwire with Turbo and Stimulus
 - Tailwind CSS through `tailwindcss-rails`

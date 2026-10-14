@@ -1,4 +1,5 @@
 <% wizard = entry_wizard_presenter(budget_month: budget_month, expense_entry: expense_entry) %>
+<% value_options = expense_entry_value_options(budget_month) %>
 <% month_start = budget_month.month_on.to_date.beginning_of_month %>
 <% month_end = month_start.end_of_month %>
 <% more_options_open = expense_entry.actual_amount.present? || expense_entry.need_or_want.present? || expense_entry.notes.present? || expense_entry.account.present? || expense_entry.errors.attribute_names.intersect?(%i[actual_amount need_or_want notes account]) %>
@@ -96,25 +97,12 @@
 
 
         <div class="grid gap-3 sm:grid-cols-2">
-          <div>
-            <%= form.label :payee, "Payee", class: "fb-label", data: { entry_wizard_target: "payeeLabel" } %>
-            <%= form.text_field :payee,
-                                required: true,
-                                autocomplete: "organization",
-                                placeholder: "Power company, employer, landlord…",
-                                class: "fb-input",
-                                aria: { invalid: expense_entry.errors[:payee].any? },
-                                data: { entry_wizard_target: "payee", action: "input->entry-wizard#update" } %>
-          </div>
-          <div>
-            <%= form.label :category, class: "fb-label" %>
-            <%= form.text_field :category,
-                                required: true,
-                                placeholder: "Utilities, paycheck, groceries…",
-                                class: "fb-input",
-                                aria: { invalid: expense_entry.errors[:category].any? },
-                                data: { entry_wizard_target: "category", action: "input->entry-wizard#update" } %>
-          </div>
+          <%= render "shared/value_picker", form: form, attribute: :payee, options: value_options.payees, required: true,
+                     placeholder: "Search payees or enter a new one…", label_data: { entry_wizard_target: "payeeLabel" },
+                     input_data: { entry_wizard_target: "payee", action: "input->entry-wizard#update" } %>
+          <%= render "shared/value_picker", form: form, attribute: :category, options: value_options.categories, required: true,
+                     placeholder: "Search categories or enter a new one…",
+                     input_data: { entry_wizard_target: "category", action: "input->entry-wizard#update" } %>
         </div>
 
         <details class="ta-muted text-sm" <%= "open" if expense_entry.transaction_time.present? %>>

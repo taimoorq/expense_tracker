@@ -1,0 +1,28 @@
+<% input_data = local_assigns.fetch(:input_data, {}) %>
+<% label_data = local_assigns.fetch(:label_data, {}) %>
+<% picker_id = "#{form.field_id(attribute)}_#{form.object.id || form.object.object_id}" %>
+<div class="relative" data-controller="value-picker" data-action="click@window->value-picker#closeFromOutside turbo:before-cache@document->value-picker#close" data-value-picker-label-value="<%= attribute.to_s.humanize.downcase %>">
+  <%= form.label attribute, class: "fb-label", data: label_data %>
+  <div class="relative">
+    <%= form.text_field attribute,
+                        required: local_assigns.fetch(:required, false),
+                        autocomplete: "off",
+                        spellcheck: false,
+                        placeholder: local_assigns[:placeholder],
+                        list: "#{picker_id}_fallback",
+                        class: "fb-input pr-11",
+                        aria: { invalid: form.object.errors[attribute].any?, describedby: "#{picker_id}_hint" },
+                        data: input_data.merge(value_picker_target: "input", action: [input_data[:action], "focus->value-picker#search click->value-picker#search input->value-picker#search keydown->value-picker#keydown blur->value-picker#blur"].compact.join(" ")) %>
+    <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center ta-muted" aria-hidden="true"><%= tabler_icon("chevron-down", classes: "h-4 w-4") %></span>
+  </div>
+  <datalist id="<%= picker_id %>_fallback" data-value-picker-target="fallback">
+    <% options.each do |value| %>
+      <option value="<%= value %>"></option>
+    <% end %>
+  </datalist>
+  <div class="ta-value-picker-panel absolute left-0 right-0 z-40 mt-1 hidden overflow-hidden rounded-2xl border shadow-xl" data-value-picker-target="panel">
+    <p class="border-b px-3.5 py-2 text-xs ta-muted" data-value-picker-target="status" role="status"></p>
+    <div id="<%= picker_id %>_options" role="listbox" aria-label="<%= attribute.to_s.humanize %> choices" class="max-h-60 overflow-y-auto p-1" data-value-picker-target="list"></div>
+  </div>
+  <p id="<%= picker_id %>_hint" class="mt-1 text-xs ta-muted">Choose an existing value or type a new one.</p>
+</div>

@@ -952,7 +952,7 @@
 	}
 
 	.ta-sort-button {
-		@apply inline-flex w-full items-center gap-1.5 rounded text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200;
+		@apply inline-flex w-full items-center gap-1.5 rounded text-left transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-200;
 	}
 
 	.ta-sort-button:hover {
@@ -1070,7 +1070,7 @@
 	}
 
 	.ta-toast-close {
-		@apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition focus:outline-none;
+		@apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition focus:outline-hidden;
 		color: color-mix(in srgb, currentColor 70%, transparent);
 	}
 
@@ -1089,21 +1089,38 @@
 	}
 
 	.fb-input {
-		@apply block w-full rounded-2xl border px-3.5 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:outline-none;
+		@apply block w-full rounded-2xl border px-3.5 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:outline-hidden;
 		border-color: var(--ta-control-border);
 		background-color: var(--ta-surface);
 		color: var(--ta-text);
 	}
 
 	.fb-select {
-		@apply block w-full rounded-2xl border px-3.5 py-3 text-sm shadow-sm focus:outline-none;
+		@apply block w-full rounded-2xl border px-3.5 py-3 text-sm shadow-sm focus:outline-hidden;
 		border-color: var(--ta-control-border);
 		background-color: var(--ta-surface);
 		color: var(--ta-text);
 	}
 
+	.ta-value-picker-panel {
+		border-color: var(--ta-control-border);
+		background-color: var(--ta-surface);
+		color: var(--ta-text);
+	}
+
+	.ta-value-picker-option {
+		@apply flex min-h-11 cursor-pointer items-center rounded-xl px-3 py-2 text-sm break-words;
+	}
+
+	.ta-value-picker-option:hover,
+	.ta-value-picker-option[aria-selected="true"] {
+		background-color: var(--ta-surface-alt);
+		outline: 1px solid var(--ta-control-border);
+		outline-offset: -1px;
+	}
+
 	.fb-textarea {
-		@apply block w-full rounded-2xl border px-3.5 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:outline-none;
+		@apply block w-full rounded-2xl border px-3.5 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:outline-hidden;
 		border-color: var(--ta-control-border);
 		background-color: var(--ta-surface);
 		color: var(--ta-text);
@@ -1124,7 +1141,7 @@
 	}
 
 	.fb-btn-primary {
-		@apply rounded-2xl px-4 py-2.5 text-sm font-medium shadow-sm transition focus:outline-none;
+		@apply rounded-2xl px-4 py-2.5 text-sm font-medium shadow-sm transition focus:outline-hidden;
 		background-color: var(--ta-accent);
 		color: var(--ta-accent-contrast);
 	}
@@ -1138,7 +1155,7 @@
 	}
 
 	.fb-btn-secondary {
-		@apply rounded-2xl border px-4 py-2.5 text-sm font-medium shadow-sm transition focus:outline-none;
+		@apply rounded-2xl border px-4 py-2.5 text-sm font-medium shadow-sm transition focus:outline-hidden;
 		border-color: var(--ta-control-border);
 		background-color: var(--ta-surface);
 		color: var(--ta-text-muted);
@@ -1154,7 +1171,7 @@
 	}
 
 	.fb-btn-danger {
-		@apply rounded-2xl border bg-white px-3 py-2 text-sm font-medium shadow-sm transition focus:outline-none;
+		@apply rounded-2xl border bg-white px-3 py-2 text-sm font-medium shadow-sm transition focus:outline-hidden;
 		border-color: color-mix(in srgb, var(--ta-danger) 36%, var(--ta-surface));
 		background-color: var(--ta-surface);
 		color: var(--ta-danger);
@@ -1189,7 +1206,7 @@
 	}
 
 	.ta-icon-btn {
-		@apply inline-flex h-11 w-11 items-center justify-center rounded-2xl border shadow-sm transition focus:outline-none;
+		@apply inline-flex h-11 w-11 items-center justify-center rounded-2xl border shadow-sm transition focus:outline-hidden;
 		border-color: var(--ta-control-border);
 		background-color: var(--ta-surface);
 		color: var(--ta-text-muted);
@@ -1371,7 +1388,7 @@
 	}
 
 	.ta-tab {
-		@apply inline-flex min-h-11 items-center gap-2 rounded-2xl border border-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition focus:outline-none;
+		@apply inline-flex min-h-11 items-center gap-2 rounded-2xl border border-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition focus:outline-hidden;
 		color: var(--ta-text-muted);
 	}
 
@@ -1566,7 +1583,7 @@
 	}
 
 	.ta-auth-input {
-		@apply block w-full rounded-2xl border px-4 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:outline-none;
+		@apply block w-full rounded-2xl border px-4 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:outline-hidden;
 		border-color: var(--ta-control-border);
 		background-color: color-mix(in srgb, var(--ta-surface) 90%, white);
 		color: var(--ta-text);
@@ -1578,7 +1595,7 @@
 	}
 
 	.ta-auth-submit {
-		@apply inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r px-4 py-3 text-sm font-semibold text-white shadow-lg transition focus:outline-none;
+		@apply inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r px-4 py-3 text-sm font-semibold text-white shadow-lg transition focus:outline-hidden;
 		box-shadow: 0 20px 40px rgb(var(--ta-accent-rgb) / 0.2);
 	}
 
