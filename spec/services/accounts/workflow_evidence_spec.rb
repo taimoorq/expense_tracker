@@ -17,13 +17,15 @@ RSpec.describe "Workflow evidence integrity" do
     transaction = manual(amount: 100, date: september.starts_on + 10.days)
     item = create(:budget_item, budget_workspace: workspace, budget_period: october, planned_amount: 60)
     create(:budget_allocation, budget_workspace: workspace, budget_item: item, financial_transaction: transaction, amount: 60)
+    second_item = create(:budget_item, budget_workspace: workspace, budget_period: october, planned_amount: 10)
+    create(:budget_allocation, budget_workspace: workspace, budget_item: second_item, financial_transaction: transaction, amount: 10)
     manual(amount: 25, date: september.starts_on + 11.days)
     create(:financial_transaction, budget_workspace: workspace, effective_on: september.starts_on, gross_amount: 500, state: "pending")
     create(:financial_transaction, budget_workspace: workspace, effective_on: september.starts_on, gross_amount: 500, state: "reversed")
 
-    expect(Budgeting::RecordedActuals.call(period: september)).to include("outflow" => 125.to_d, "unallocated_outflow" => 65.to_d)
+    expect(Budgeting::RecordedActuals.call(period: september)).to include("outflow" => 125.to_d, "unallocated_outflow" => 55.to_d, "transaction_count" => 2)
     expect(Budgeting::PeriodSummary.call(period: september).actual_outflow).to eq(0)
-    expect(Budgeting::PeriodSummary.call(period: october).actual_outflow).to eq(60)
+    expect(Budgeting::PeriodSummary.call(period: october).actual_outflow).to eq(70)
     expect(Budgeting::RecordedActuals.call(period: october).fetch("outflow")).to eq(0)
   end
 
