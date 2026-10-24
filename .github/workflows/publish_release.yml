@@ -26,8 +26,6 @@ jobs:
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.4
 
       - name: Read latest release entry
         id: release

@@ -57,8 +57,8 @@ Budgeting UX should make money movement explainable: keep history, drilldowns, a
 
 ## Stack
 
-- Ruby `4.0.7` via `.ruby-version`
-- Rails `8.1.3`
+- Ruby `4.0.9` via `.ruby-version`
+- Rails `8.1.4`
 - PostgreSQL
 - Devise for authentication
 - Solid Queue, Solid Cache, and Solid Cable from Rails
