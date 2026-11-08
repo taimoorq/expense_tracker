@@ -288,7 +288,7 @@ Periodically restore a PostgreSQL dump and one automatic workspace archive into 
 For a repeatable deployment, set a versioned image in `.env.production`:
 
 ```dotenv
-EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.4.0
+EXPENSE_TRACKER_IMAGE=ghcr.io/taimoorq/expense_tracker:v2.4.1
 ```
 
 Then pull and start it without building locally:
