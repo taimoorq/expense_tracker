@@ -8,7 +8,7 @@ class RestoreCheckpoint < ApplicationRecord
 
   validates :payload_format_version, :encryption_version, :expires_at, presence: true
   validates :payload_checksum, format: { with: /\A[0-9a-f]{64}\z/ }
-  validates :encrypted_payload, presence: true
+  validates :encrypted_payload, presence: true, if: :state_ready?
   validate :restored_state_is_coherent
 
   scope :available, -> { state_ready.where(expires_at: Time.current..) }

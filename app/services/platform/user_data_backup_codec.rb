@@ -11,7 +11,9 @@ module Platform
     SUPPORTED_PAYLOAD_VERSIONS = [ 1, 2 ].freeze
 
     def self.encode(payload:, password: nil)
-      plain_json = JSON.pretty_generate(payload)
+      # Whitespace must not push an otherwise valid near-limit backup over the
+      # restore byte limit. Compact JSON also avoids the larger temporary string.
+      plain_json = JSON.generate(payload)
       return plain_json if password.blank?
 
       salt = SecureRandom.random_bytes(SALT_BYTES)
@@ -34,8 +36,14 @@ module Platform
     end
 
     def self.decode(source:, password: nil, archive_configuration: Platform::Backup::ArchiveConfiguration.current)
-      raw_json = source.respond_to?(:read) ? source.read : source.to_s
-      parsed = JSON.parse(raw_json).deep_symbolize_keys
+      raw_json = ImportLimits.read(source, max_bytes: ImportLimits::BACKUP_MAX_WIRE_BYTES, label: "Backup file")
+      parsed = JSON.parse(raw_json)
+      return failure("This file is not a supported FinanceTracking.app backup.") unless parsed.is_a?(Hash)
+
+      if parsed["format"] == Platform::UserDataExport::FORMAT_NAME
+        ImportLimits.check_bytes!(raw_json, max_bytes: ImportLimits::BACKUP_MAX_BYTES, label: "Backup contents")
+      end
+      parsed = parsed.deep_symbolize_keys
 
       if parsed[:format] == Platform::Backup::ArchiveCodec::FORMAT_NAME
         return Platform::Backup::ArchiveCodec.decode_envelope(
@@ -64,11 +72,14 @@ module Platform
       end
 
       decrypted_json = decryptor_for(parsed, password).decrypt_and_verify(parsed.fetch(:payload))
+      ImportLimits.check_bytes!(decrypted_json, max_bytes: ImportLimits::BACKUP_MAX_BYTES, label: "Backup contents")
       payload = JSON.parse(decrypted_json).deep_symbolize_keys
       validation = validate_plain_payload(payload)
       return validation unless validation[:success]
 
       success(payload: payload, encrypted: true)
+    rescue ImportLimits::Exceeded => error
+      failure(error.message)
     rescue JSON::ParserError
       failure("The uploaded file is not valid JSON.")
     rescue ArgumentError, ActiveSupport::MessageVerifier::InvalidSignature, ActiveSupport::MessageEncryptor::InvalidMessage

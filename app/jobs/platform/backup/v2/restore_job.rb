@@ -52,6 +52,7 @@ module Platform
         end
 
         def create_recovery_checkpoint
+          return if operation.state_succeeded?
           return unless draft.replacement_requested?
           return if draft.restore_checkpoint&.available?
 

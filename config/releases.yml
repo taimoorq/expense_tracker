@@ -1,4 +1,17 @@
 releases:
+  - version: "2.4.1"
+    released_on: "2026-11-08"
+    title: "Memory controls and safer background maintenance"
+    summary: "Bounds import and backup work, clears expired payloads, and adds memory diagnostics and Docker resource controls for self-hosted installations."
+    changes:
+      - "Limits CSV input to 10 MiB, 25,000 rows, 100 columns, and 64 KiB per field; bounds backup input to 100 MiB of plaintext and 200 MiB on the wire before further processing."
+      - "Reduces allocations in CSV parsing, duplicate previews, import batches, and Backup v2 validation while preserving canonical backup checksums."
+      - "Writes compact backup JSON so formatting whitespace does not push a near-limit backup over the restore byte limit; supported older backups remain readable."
+      - "Runs imports and backups serially by default, with separate capacity for maintenance, mail, and scheduled cleanup."
+      - "Clears expired preview, export, staged restore, and recovery checkpoint contents in bounded batches while preserving audit references and checkpoints needed by queued restores."
+      - "Filters large payloads from development SQL logs and avoids rebuilding export contents or recovery checkpoints when completed jobs are delivered again."
+      - "Adds opt-in process and container memory diagnostics plus configurable Docker RAM limits; operators should profile their own workloads before choosing limits."
+      - "Protects the development web service from shutdown when an orphaned watcher subprocess exits."
   - version: "2.4.0"
     released_on: "2026-09-24"
     title: "Connected and manual financial workflows"

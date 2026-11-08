@@ -41,7 +41,14 @@ module Budgeting
     def preview
       return @preview if @preview.present?
 
-      data = CSV.read(@file.path, headers: true)
+      parser = CSV.new(Platform::ImportLimits.read_csv(@file.path), headers: true,
+        max_field_size: Platform::ImportLimits::CSV_MAX_FIELD_SIZE)
+      rows = parser.each.with_index(1).map do |row, row_count|
+        Platform::ImportLimits.check_csv_row!(row.fields, row_count: row_count)
+        row
+      end
+      Platform::ImportLimits.check_csv_row!(Array(parser.headers), row_count: 0)
+      data = CSV::Table.new(rows, headers: parser.headers)
       return { ok: false, error: "CSV has no headers." } if data.headers.blank?
 
       if data.headers.include?("Section")

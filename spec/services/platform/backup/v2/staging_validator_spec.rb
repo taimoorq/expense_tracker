@@ -30,4 +30,14 @@ RSpec.describe Platform::Backup::V2::StagingValidator do
     expect(result).to include(success: true)
     expect(result.fetch(:manifest)).to include("account" => 1, "transaction" => 0)
   end
+
+  it "rejects excessive records before copying or canonicalizing the supplied graph" do
+    stub_const("#{described_class}::MAX_RECORDS", 1)
+    payload = { "data" => { "account_activity" => { "transactions" => [ {}, {} ] } } }
+    expect(payload).not_to receive(:deep_symbolize_keys)
+    expect(Platform::CanonicalJson).not_to receive(:dump)
+
+    expect(described_class.new(payload: payload, scopes: scopes).call)
+      .to include(success: false, error: include("record staging limit"))
+  end
 end

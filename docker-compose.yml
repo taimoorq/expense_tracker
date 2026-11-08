@@ -13,6 +13,8 @@ x-app: &app
     EXPENSE_TRACKER_DATABASE_PASSWORD: postgres
     RAILS_ENV: development
     SOLID_QUEUE_ENABLED: "true"
+    MEMORY_DIAGNOSTICS: ${MEMORY_DIAGNOSTICS:-false}
+    JOB_CONCURRENCY: ${JOB_CONCURRENCY:-1}
     ALLOW_ALL_HOSTS: "true"
     PORT: 3000
     SEED_MODE: ${SEED_MODE:-users}
@@ -45,6 +47,7 @@ x-app: &app
 services:
   db:
     image: postgres:16
+    mem_limit: ${DB_MEMORY_LIMIT:-0}
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -59,6 +62,9 @@ services:
 
   web:
     <<: *app
+    # Reap orphaned watcher children before Foreman mistakes them for a service exit.
+    init: true
+    mem_limit: ${WEB_MEMORY_LIMIT:-0}
     environment:
       <<: *app-environment
       RUBY_DEBUG_OPEN: "true"
@@ -77,6 +83,7 @@ services:
 
   worker:
     <<: *app
+    mem_limit: ${WORKER_MEMORY_LIMIT:-0}
     depends_on:
       web:
         condition: service_healthy

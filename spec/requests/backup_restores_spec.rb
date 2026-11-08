@@ -7,6 +7,18 @@ RSpec.describe "Backup & restore", type: :request do
 
   before { sign_in user }
 
+  it "rejects excessive upload bytes before staging a restore" do
+    stub_const("Platform::ImportLimits::BACKUP_MAX_WIRE_BYTES", 32)
+    upload = Rack::Test::UploadedFile.new(Rails.root.join("test/fixtures/files/account_activity/signed_amounts_with_type.csv"), "application/json")
+
+    expect do
+      post preview_backup_restore_path, params: { file: upload, import_scopes: [ "preferences" ] }
+    end.not_to change(BackupRestoreDraft, :count)
+
+    expect(response).to redirect_to(backup_restore_path)
+    expect(flash[:alert]).to include("size limit")
+  end
+
   it "rejects a nested restore preview token" do
     post import_backup_restore_path, params: { preview_token: { value: "invalid" } }
 

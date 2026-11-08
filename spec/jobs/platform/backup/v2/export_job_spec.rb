@@ -42,4 +42,25 @@ RSpec.describe Platform::Backup::V2::ExportJob, type: :job do
     decoded = Platform::UserDataBackupCodec.decode(source: artifact.contents, password: "very-secret")
     expect(decoded).to include(success: true, encrypted: true)
   end
+
+  it "shares the workspace archive concurrency limit with automatic backups" do
+    artifact, operation = dispatch
+    export_key = described_class.new(operation.id, artifact.id).concurrency_key
+    archive_key = Platform::Backup::ArchiveJob.new(operation.id, SecureRandom.uuid).concurrency_key
+
+    expect(export_key).to eq(archive_key)
+    expect(export_key).to start_with("workspace_backup_archives/")
+  end
+
+  it "does not rebuild a completed export on duplicate delivery" do
+    artifact, operation = dispatch
+    described_class.perform_now(operation.id, artifact.id)
+    contents = artifact.reload.encrypted_contents
+    expect(Platform::Backup::V2::Exporter).not_to receive(:new)
+
+    described_class.perform_now(operation.id, artifact.id)
+
+    expect(artifact.reload.encrypted_contents).to eq(contents)
+    expect(operation.reload).to be_state_succeeded
+  end
 end

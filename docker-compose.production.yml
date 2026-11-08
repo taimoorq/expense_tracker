@@ -7,6 +7,8 @@ x-app: &app
   environment: &app-environment
     RAILS_ENV: ${RAILS_ENV:-production}
     RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
+    MEMORY_DIAGNOSTICS: ${MEMORY_DIAGNOSTICS:-false}
+    JOB_CONCURRENCY: ${JOB_CONCURRENCY:-1}
     RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
     SECRET_KEY_BASE: ${SECRET_KEY_BASE}
     DATABASE_URL: ${DATABASE_URL}
@@ -36,6 +38,7 @@ x-app: &app
 services:
   db:
     image: postgres:16
+    mem_limit: ${DB_MEMORY_LIMIT:-0}
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -51,6 +54,7 @@ services:
 
   web:
     <<: *app
+    mem_limit: ${WEB_MEMORY_LIMIT:-0}
     depends_on:
       db:
         condition: service_healthy
@@ -65,6 +69,7 @@ services:
 
   worker:
     <<: *app
+    mem_limit: ${WORKER_MEMORY_LIMIT:-0}
     depends_on:
       web:
         condition: service_healthy

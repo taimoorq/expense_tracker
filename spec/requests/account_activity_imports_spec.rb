@@ -8,6 +8,18 @@ RSpec.describe "Account activity imports", type: :request do
 
   before { sign_in user }
 
+  it "rejects an oversized upload before persisting a preview or activity" do
+    stub_const("Platform::ImportLimits::CSV_MAX_BYTES", 32)
+    upload = Rack::Test::UploadedFile.new(Rails.root.join("test/fixtures/files/account_activity/signed_amounts_with_type.csv"), "text/csv")
+
+    expect do
+      post preview_account_account_activity_imports_path(account), params: { file: upload }
+    end.not_to change { [ AccountActivityImportDraft.count, AccountActivity.count ] }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("size limit")
+  end
+
   it "puts the upload first and keeps import history available on demand" do
     get new_account_account_activity_import_path(account)
 

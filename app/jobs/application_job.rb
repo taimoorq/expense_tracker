@@ -7,6 +7,15 @@ class ApplicationJob < ActiveJob::Base
     Rails.event.set_context(job_id: job_id, job_class: self.class.name)
   end
 
+  around_perform do |job, perform|
+    Platform::MemoryDiagnostics.record(source: "job.started", job_class: job.class.name, force: true)
+    begin
+      perform.call
+    ensure
+      Platform::MemoryDiagnostics.record(source: "job.finished", job_class: job.class.name, force: true)
+    end
+  end
+
   # Automatically retry jobs that encountered a deadlock
   # retry_on ActiveRecord::Deadlocked
 

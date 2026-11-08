@@ -67,19 +67,19 @@ module Accounts
 
       def parse_rows(rows, mapping, amount_strategy, direction_header)
         fingerprint_builder = FingerprintBuilder.new
-        existing_fingerprints = account.account_activities.pluck(:fingerprint).to_set
-
-        rows.filter_map do |row|
+        parsed = rows.filter_map do |row|
           normalized = normalize_row(row, mapping, amount_strategy, direction_header)
           next if normalized.blank?
 
           fingerprint = fingerprint_builder.call(normalized)
-          duplicate = existing_fingerprints.include?(fingerprint)
-          normalized.merge(
-            fingerprint: fingerprint,
-            duplicate: duplicate,
-            importable: !duplicate
-          )
+          normalized.merge(fingerprint: fingerprint)
+        end
+        existing_fingerprints = parsed.each_slice(1_000).each_with_object(Set.new) do |batch, fingerprints|
+          fingerprints.merge(account.account_activities.where(fingerprint: batch.map { |row| row[:fingerprint] }).pluck(:fingerprint))
+        end
+        parsed.map do |row|
+          duplicate = existing_fingerprints.include?(row[:fingerprint])
+          row.merge(duplicate: duplicate, importable: !duplicate)
         end
       end
 

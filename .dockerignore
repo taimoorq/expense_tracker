@@ -43,6 +43,8 @@
 # Ignore Kamal files.
 /config/deploy*.yml
 /.kamal
+/.aws-backup/
+/docs/local-plans/
 
 # Ignore development files
 /.devcontainer

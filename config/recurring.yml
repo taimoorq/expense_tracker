@@ -10,6 +10,10 @@
 #     schedule: at 5am every day
 
 development:
+  expire_staged_operation_drafts:
+    class: Platform::Operations::ExpireDraftsJob
+    queue: maintenance
+    schedule: every 10 minutes
   dispatch_due_bank_refreshes:
     class: BankConnections::DispatchDueJob
     queue: maintenance
@@ -22,6 +26,9 @@ development:
     class: Platform::Backup::ReconcileArchivesJob
     queue: maintenance
     schedule: every hour at minute 27
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12
 
 production:
   dispatch_due_bank_refreshes:

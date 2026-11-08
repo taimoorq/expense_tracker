@@ -516,6 +516,69 @@ Because the license restricts commercial use, FinanceTracking.app should be desc
 
 ## Troubleshooting
 
+### Memory grows during long-running Docker use
+
+The quick-start Compose file runs the development server and a CSS watcher. For
+persistent hosting, use the production setup above and explicitly preserve your
+existing database when changing setups.
+
+Imports and backups share one worker thread by default. Maintenance runs in a
+separate pool so expiry can continue during a long export. `JOB_CONCURRENCY=1`
+keeps one heavy-job worker process; increasing it multiplies possible memory use.
+The configured queues are `imports`, `backups`, `maintenance`, `default`,
+`mailers`, and Solid Queue's internal `solid_queue_recurring` queue for scheduled
+commands such as finished-job cleanup. Add new queue names to `config/queue.yml`
+when introducing jobs.
+
+Development and production both clear expired preview/export payloads and
+finished queue history. Expired recovery checkpoints release their encrypted
+contents while keeping audit references and rollback timestamps; checkpoints
+attached to a queued restore remain protected until that operation finishes.
+
+Set `MEMORY_DIAGNOSTICS=true` in your Compose environment to log payload-free
+`memory_sample` JSON records from the actual web/job processes. Request samples
+are limited to one every 30 seconds per process; jobs sample at start and finish.
+Linux samples include process RSS/PSS, swap, cgroup anonymous/file memory, OOM
+counters, and Ruby GC counters. Unavailable OS fields are null. Disable the
+setting after diagnosis. Compare these with `docker stats`; Docker Desktop's
+total and configured VM limit are separate measurements.
+
+Development keeps SQL query tags disabled so prepared statements can retain
+large JSON values in binds where payload filters apply. Verbose query caller
+locations remain available without embedding preview data into SQL log text.
+
+Compose accepts `WEB_MEMORY_LIMIT`, `WORKER_MEMORY_LIMIT`, and `DB_MEMORY_LIMIT`
+from its environment, using Docker sizes such as `2g`, `1g`, or `768m`. Unset
+values default to `0` (no per-container ceiling). Measure startup, concurrent
+previews, exports, and worker peaks before choosing values with headroom, then
+recreate the services with `docker compose up -d` to apply them. The limits cap
+RAM use; they do not reserve that amount. Leave VM capacity for Docker, builds,
+and other containers. Production has a different process/workload profile and
+needs its own measurements.
+
+A production rehearsal with a 98 MiB Backup v2 file (25,000 transactions and
+50,000 postings), a full recovery checkpoint, and a subsequent export exceeded
+the initial 1 GiB worker budget. A warm replacement also exceeded 2 GiB. The
+completed runs used a 3 GiB worker; observed peaks were about 1.7 GiB web,
+2.4 GiB workers, and 1.5 GiB PostgreSQL. Example ceilings of `2g` / `3g` / `2g`
+provide headroom for that workload and total 7 GiB; leave additional VM capacity
+for Docker and other services. These are workload-specific ceilings, not a RAM
+reservation or a universal minimum. Test your own larger or concurrent work.
+
+If a worker is killed by its memory limit, confirm the failed queue execution
+and increase the worker budget before retrying that execution through Solid
+Queue. The operation can still appear pending after a process kill. Preserve
+its staged restore and recovery checkpoint; retrying the same execution allows
+the restore to reuse its checkpoint and avoid duplicate financial records.
+
+CSV uploads are limited to 10 MiB, 25,000 records, 100 columns, and 64 KiB per
+field. Account CSV headers must appear within the first 101 physical lines.
+Backup input is limited to 200 MiB on the wire and 100 MiB of plaintext, with
+the existing 250,000-record V2 staging limit. These initial safeguards bound
+allocation; they are not measured service RAM budgets. Split large CSVs before
+importing. Keep existing oversized backups for a controlled recovery rather
+than editing their checksums or discarding them.
+
 ### Port 4287 is already in use
 
 Set another port in `.env`:

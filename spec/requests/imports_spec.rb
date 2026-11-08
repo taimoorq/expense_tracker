@@ -5,6 +5,18 @@ RSpec.describe "CSV imports", type: :request do
 
   before { sign_in user }
 
+  it "bounds the direct-commit upload path before creating months or entries" do
+    stub_const("Platform::ImportLimits::CSV_MAX_BYTES", 32)
+    upload = Rack::Test::UploadedFile.new(Rails.root.join("test/fixtures/files/account_activity/signed_amounts_with_type.csv"), "text/csv")
+
+    expect do
+      post import_csv_path, params: { file: upload }
+    end.not_to change { [ user.budget_months.count, user.expense_entries.count ] }
+
+    expect(response).to redirect_to(budget_months_path)
+    expect(flash[:alert]).to include("size limit")
+  end
+
   it "imports rows into the signed in user's months only" do
     file = Tempfile.new([ "budget-import", ".csv" ])
     file.write(<<~CSV)

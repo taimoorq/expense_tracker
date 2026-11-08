@@ -55,4 +55,33 @@ RSpec.describe Accounts::ActivityImports::CsvReader do
       expect(result.rows).to be_empty
     end
   end
+
+  it "rejects oversized input before parsing it" do
+    stub_const("Platform::ImportLimits::CSV_MAX_BYTES", 32)
+    with_uploaded_file("x" * 33) do |upload|
+      expect(CSV).not_to receive(:new)
+      expect(described_class.new(file: upload).call).to have_attributes(ok: false, error: include("size limit"))
+    end
+  end
+
+  it "bounds row count and field size while reading records" do
+    stub_const("Platform::ImportLimits::CSV_MAX_ROWS", 1)
+    contents = "Date,Description,Amount\n01/01/2026,One,-1\n01/02/2026,Two,-2\n"
+    with_uploaded_file(contents) do |upload|
+      expect(described_class.new(file: upload).call).to have_attributes(ok: false, error: include("row limit"))
+    end
+
+    stub_const("Platform::ImportLimits::CSV_MAX_FIELD_SIZE", 32)
+    with_uploaded_file("Date,Description,Amount\n01/01/2026,#{'x' * 33},-1\n") do |upload|
+      expect(described_class.new(file: upload).call.ok).to eq(false)
+    end
+  end
+
+  it "preserves UTF-8 fields and quoted multiline records" do
+    with_uploaded_file("Date,Description,Amount\n01/01/2026,\"Café\nBooks\",-1\n") do |upload|
+      result = described_class.new(file: upload).call
+      expect(result.ok).to eq(true)
+      expect(result.rows.sole.attributes.fetch("Description")).to eq("Café\nBooks")
+    end
+  end
 end

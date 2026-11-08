@@ -113,12 +113,11 @@ module Accounts
 
       def create_activity_rows(import_record)
         timestamp = Time.current
-        rows = Array(preview[:rows]).map do |row|
-          activity_attributes(import_record, row.deep_symbolize_keys, timestamp: timestamp)
-        end
+        rows = Array(preview[:rows])
         imported_count = rows.each_slice(INSERT_BATCH_SIZE).sum do |batch|
+          attributes = batch.map { |row| activity_attributes(import_record, row.deep_symbolize_keys, timestamp: timestamp) }
           AccountActivity.insert_all(
-            batch,
+            attributes,
             unique_by: "index_account_activities_on_account_id_and_fingerprint",
             returning: [ :id ]
           ).rows.size

@@ -5,7 +5,7 @@ module Platform
     module V2
       class StagingValidator
         MAX_RECORDS = 250_000
-        MAX_PAYLOAD_BYTES = 100.megabytes
+        MAX_PAYLOAD_BYTES = Platform::ImportLimits::BACKUP_MAX_BYTES
 
         COLLECTION_PATHS = {
           account: %i[accounts records],
@@ -86,17 +86,21 @@ module Platform
         }.freeze
 
         def initialize(payload:, scopes:)
-          @payload = payload.to_h.deep_symbolize_keys
+          @payload = payload.to_h
           @scopes = Array(scopes).map(&:to_s)
           @records = {}
           @ids = {}
         end
 
         def call
+          return failure("The backup exceeds the #{MAX_RECORDS} record staging limit.") if supplied_record_count > MAX_RECORDS
+
+          @payload = payload.deep_symbolize_keys
+          return failure("The backup is too large to stage safely.") if payload_size > MAX_PAYLOAD_BYTES
+
           preview = Preview.new(payload: payload, scopes: scopes).call
           return preview unless preview[:success]
           return preview.merge(manifest: { "preferences" => 1 }) unless financial_restore?
-          return failure("The backup is too large to stage safely.") if payload_size > MAX_PAYLOAD_BYTES
 
           collect_records!
           return failure("The backup exceeds the #{MAX_RECORDS} record staging limit.") if record_count > MAX_RECORDS
@@ -125,11 +129,29 @@ module Platform
           records.values.sum(&:size)
         end
 
+        def supplied_record_count
+          data = value_at(payload, :data)
+          count = COLLECTION_PATHS.values.sum { |path| Array(value_at(data, *path)).size }
+          count += Array(value_at(data, :recurring_candidate_decisions)).size
+          BankData::DEFINITIONS.each_key do |type|
+            count += Array(value_at(data, :accounts, :bank_data, type)).size
+          end
+          count + Array(value_at(data, :planning_templates, :records)).count { |record| value_at(record, :recurrence_rule).present? }
+        end
+
+        def value_at(value, *keys)
+          keys.reduce(value) do |nested, key|
+            break nil unless nested.is_a?(Hash)
+
+            nested.key?(key) ? nested[key] : nested[key.to_s]
+          end
+        end
+
         def collect_records!
           data = payload.fetch(:data)
           COLLECTION_PATHS.each do |type, path|
             collection = path.reduce(data) { |value, key| value.fetch(key) }
-            records[type] = Array(collection).map(&:to_h).map(&:deep_symbolize_keys)
+            records[type] = Array(collection)
             ids[type] = Set.new
             records[type].each { |record| register!(type, record) }
           end

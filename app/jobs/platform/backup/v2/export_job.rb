@@ -7,6 +7,12 @@ module Platform
         class InvalidArtifact < StandardError; end
 
         queue_as :backups
+        limits_concurrency(
+          key: ->(operation_id, *) { OperationRun.find(operation_id).budget_workspace_id },
+          to: 1,
+          group: "workspace_backup_archives",
+          duration: 4.hours
+        )
         retry_on StandardError, wait: :polynomially_longer, attempts: 5, report: true do |job, error|
           job.send(:mark_exhausted_failure, error)
         end
@@ -37,6 +43,8 @@ module Platform
         end
 
         def generate_export
+          return if operation.state_succeeded?
+
           exporter = Exporter.new(user: artifact.user, scopes: artifact.data_transfer_run.selected_scopes)
           payload = exporter.as_json
           password = artifact.export_password

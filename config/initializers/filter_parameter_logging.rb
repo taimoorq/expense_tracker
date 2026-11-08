@@ -9,3 +9,10 @@ Rails.application.config.filter_parameters += [
 ]
 
 Rails.application.config.filter_parameters += %i[candidate_template template_token evidence_digest preview_digest]
+
+# Database bind logging uses Active Record's filter, which may be initialized
+# before the application parameter filters. Avoid inspecting entire import and
+# backup graphs again just to format a debug SQL line.
+ActiveSupport.on_load(:active_record) do
+  self.filter_attributes += %i[payload encrypted_contents encrypted_export_password previous_revisions]
+end

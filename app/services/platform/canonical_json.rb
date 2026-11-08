@@ -9,7 +9,7 @@ module Platform
     def normalize(value)
       case value
       when Hash
-        value.deep_stringify_keys.sort.to_h.transform_values { |nested| normalize(nested) }
+        value.stringify_keys.sort.to_h.transform_values { |nested| normalize(nested) }
       when Array
         value.map { |nested| normalize(nested) }
       when Time, ActiveSupport::TimeWithZone, Date, DateTime

@@ -7,6 +7,7 @@ module Accounts
       Row = Data.define(:row_number, :attributes)
       BEST_BUY_HEADERS = [ "Date", "Amount", "Description", "Details" ].freeze
       BEST_BUY_SOURCE_FORMAT = "best_buy_citibank_headerless_tsv".freeze
+      MAX_PREAMBLE_LINES = 100
       BEST_BUY_AMOUNT_PATTERN = /\A\$-?(?:\d{1,3}(?:,\d{3})*|\d+)\.\d{2}\z/
       BALANCE_PATTERN = /
         (?<label>(?:account|current|beginning|ending)\s+balance)
@@ -25,13 +26,16 @@ module Accounts
         return headerless_best_buy_result if header_index.blank? && headerless_best_buy_rows.present?
         return failure("Could not find a supported account activity CSV header.") if header_index.blank?
 
-        csv_text = lines.drop(header_index).join
-        table = CSV.parse(csv_text, headers: true, liberal_parsing: true, col_sep: col_sep)
+        csv_text = source_text.byteslice(lines.take(header_index).sum(&:bytesize)..)
+        table = CSV.new(csv_text, headers: true, liberal_parsing: true, col_sep: col_sep,
+          max_field_size: Platform::ImportLimits::CSV_MAX_FIELD_SIZE)
         rows = table.each.with_index(header_index + 2).filter_map do |row, row_number|
+          Platform::ImportLimits.check_csv_row!(row.fields, row_count: row_number - header_index - 1)
           next if blank_row?(row)
 
           Row.new(row_number: row_number, attributes: row.to_h)
         end
+        Platform::ImportLimits.check_csv_row!(Array(table.headers), row_count: 0)
 
         Result.new(ok: true, headers: table.headers, header_row_number: header_index + 1, rows: rows, metadata: metadata_for(header_index), error: nil)
       rescue CSV::MalformedCSVError => error
@@ -46,7 +50,8 @@ module Accounts
 
       def find_header_index(col_sep)
         lines.index do |line|
-          parsed = CSV.parse_line(line, liberal_parsing: true, col_sep: col_sep)
+          parsed = CSV.parse_line(line, liberal_parsing: true, col_sep: col_sep,
+            max_field_size: Platform::ImportLimits::CSV_MAX_FIELD_SIZE)
           next false if parsed.blank?
 
           ColumnMapper.call(parsed).missing_fields.empty?
@@ -56,7 +61,11 @@ module Accounts
       end
 
       def lines
-        @lines ||= File.open(file.path, "r:bom|utf-8", &:read).lines
+        @lines ||= source_text.each_line.take(MAX_PREAMBLE_LINES + 1)
+      end
+
+      def source_text
+        @source_text ||= Platform::ImportLimits.read_csv(file.path)
       end
 
       def detected_col_sep
@@ -95,10 +104,13 @@ module Accounts
       def parse_headerless_best_buy_rows
         return unless detected_col_sep == "\t"
 
-        parsed_rows = lines.filter_map do |line|
+        parsed_rows = source_text.each_line.with_index(1).filter_map do |line, row_count|
           next if line.strip.blank?
 
-          CSV.parse_line(line, liberal_parsing: true, col_sep: "\t")
+          values = CSV.parse_line(line, liberal_parsing: true, col_sep: "\t",
+            max_field_size: Platform::ImportLimits::CSV_MAX_FIELD_SIZE)
+          Platform::ImportLimits.check_csv_row!(values, row_count: row_count)
+          values
         end
         return if parsed_rows.empty? || parsed_rows.any? { |values| !best_buy_row?(values) }
 

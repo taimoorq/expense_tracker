@@ -78,6 +78,10 @@ RSpec.describe Platform::Backup::V2::RestoreJob, type: :job do
     expect(checkpoint.encrypted_payload).not_to include("Before checking")
     expect(draft.data_transfer_run.reload.checkpoint_reference).to eq(checkpoint.id)
     expect(destination.accounts.reload.pluck(:name)).to eq([ "After checking" ])
+
+    expect(Platform::Backup::CreateCheckpoint).not_to receive(:call)
+    described_class.perform_now(operation.id, draft.id)
+    expect(draft.reload.restore_checkpoint_id).to eq(checkpoint.id)
   end
 
   it "rolls replacement cleanup back when compatibility activation fails" do

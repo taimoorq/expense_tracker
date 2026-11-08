@@ -143,7 +143,9 @@ module BackupRestoreFlow
     @selected_export_scopes = Platform::UserDataExport::SCOPES
     @selected_import_scopes = selected_import_scopes
     @target_backup_v2 = target_backup_workspace&.target_reads_enabled?
-    @restore_checkpoints = target_backup_workspace&.restore_checkpoints&.available&.order(created_at: :desc)&.limit(5) || []
+    @restore_checkpoints = target_backup_workspace&.restore_checkpoints&.available
+      &.select(:id, :payload_format_version, :selected_scopes, :expires_at)
+      &.order(created_at: :desc)&.limit(5) || []
     prepare_automatic_backups
   end
 
