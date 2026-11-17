@@ -365,9 +365,10 @@ RSpec.describe "Budget month management", type: :system do
     month = create(:budget_month, user: user, month_on: Date.current.beginning_of_month, label: Date.current.strftime("%B %Y"))
 
     sign_in_as(user)
-    visit budget_month_path(month)
+    # Load the tab directly. An empty month already opens on Plan and Edit, so clicking
+    # the tab starts a redundant Turbo visit whose render can swallow the next click.
+    visit budget_month_tab_path(month, "entries")
 
-    click_link "Plan and Edit"
     within("#plan-recurring") do
       click_link "Open Recurring"
     end
